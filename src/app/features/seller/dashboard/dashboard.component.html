@@ -1,1 +1,123 @@
-<p>dashboard works!</p>
+<div class="container-fluid">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold">Welcome back, GadgetStore 👋</h2>
+      <p class="text-muted">Here is your daily store performance overview.</p>
+    </div>
+
+    <div>
+
+      <button class="btn btn-primary">+ Add Product</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-2" *ngFor="let stat of stats">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="text-muted">{{stat.title}}</h6>
+          <h4 class="fw-bold">{{stat.value}}</h4>
+
+          <span
+            *ngIf="stat.change"
+            [class.text-success]="stat.positive"
+            [class.text-danger]="!stat.positive">
+            {{stat.change}}
+          </span>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue + Top Products -->
+  <div class="row g-3 mb-4">
+
+    <!-- Revenue -->
+    <div class="col-md-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3">Revenue Performance</h5>
+          <div class="bg-light rounded p-5 text-center">
+            📊 Chart Placeholder
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Products -->
+<div class="col-md-4">
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <h5 class="fw-bold mb-3">Top Products</h5>
+
+      <div *ngFor="let product of products" class="d-flex align-items-center justify-content-between mb-3">
+
+        <div class="d-flex align-items-center">
+          <img [src]="product.image" alt="{{product.name}}" class="rounded me-2" style="width:40px; height:40px; object-fit:cover;">
+          <div>
+            <div>{{product.name}}</div>
+            <small class="text-muted">{{product.category}}</small>
+          </div>
+        </div>
+
+        <span class="fw-bold">{{product.sold}} Sold</span>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+  </div>
+
+  <!-- Recent Orders -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold">Recent Orders</h5>
+        <button class="btn btn-sm btn-outline-primary">View All</button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle">
+
+          <thead class="table-light">
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let order of orders">
+              <td>{{order.id}}</td>
+              <td>{{order.customer}}</td>
+              <td>{{order.amount}}</td>
+              <td>
+                <span
+                  class="badge"
+                  [ngClass]="{
+                    'bg-success': order.status === 'Delivered',
+                    'bg-warning text-dark': order.status === 'Processing',
+                    'bg-secondary': order.status === 'Pending'
+                  }">
+                  {{order.status}}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div>

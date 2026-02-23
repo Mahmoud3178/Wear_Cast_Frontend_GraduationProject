@@ -1,1 +1,197 @@
-<p>orders works!</p>
+<div class="container-fluid">
+ <nav class="navbar bg-white shadow-sm px-3">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+
+      <!-- شعار / اسم التطبيق على الشمال -->
+      <h1 class="navbar-brand fw-bold">Orders</h1>
+
+      <!-- العناصر على اليمين -->
+      <div class="d-flex align-items-center gap-3">
+
+        <!-- البحث -->
+        <form class="d-flex" role="search">
+          <input class="form-control" type="search" placeholder="Search" aria-label="Search" />
+        </form>
+
+        <!-- أيقونة الإشعارات -->
+        <i class="bi bi-bell-fill fs-5"></i>
+
+        <!-- صورة واسم السيلر -->
+        <div class="d-flex align-items-center gap-2">
+          <img src="data:image/png;base64,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" alt="Seller" class="rounded-circle" style="width:40px; height:40px;">
+          <span>Seller Name</span>
+        </div>
+
+      </div>
+    </div>
+  </nav>
+    <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 pt-5">
+    <div>
+      <h2 class="fw-bold">Orders 👋</h2>
+      <p class="text-muted">Manage your products catalog , price , inventory stock</p>
+    </div>
+
+    <div>
+
+    </div>
+  </div>
+
+    <!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3" *ngFor="let stat of stats">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <!-- نص الكارت على الشمال -->
+        <div>
+          <h6 class="text-muted">{{stat.title}}</h6>
+          <h4 class="fw-bold">{{stat.value}}</h4>
+        </div>
+
+        <!-- الأيقونة على اليمين -->
+        <i class="bi {{stat.icon}} fs-2" [ngClass]="stat.color"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search & Filters -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body d-flex flex-wrap gap-3 justify-content-between align-items-center">
+
+    <!-- Search -->
+    <input
+      type="text"
+      class="form-control w-25"
+      placeholder="Search by name, category, ID..."
+    />
+
+    <!-- Filters -->
+    <div class="d-flex gap-2">
+      <select class="form-select">
+        <option>All Categories</option>
+        <option>Men</option>
+        <option>Women</option>
+        <option>Kids</option>
+      </select>
+
+      <select class="form-select">
+        <option>All Status</option>
+        <option>Approved</option>
+        <option>Pending</option>
+        <option>Rejected</option>
+      </select>
+    </div>
+
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Image</th>
+          <th>Product Name</th>
+          <th>Price</th>
+          <th>Stock Status</th>
+          <th>Approval</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let product of pagedProducts">
+
+          <td class="align-middle">
+            <img
+              [src]="product.image"
+              class="rounded"
+              width="40"
+              height="40"
+            />
+          </td>
+
+          <td class="align-middle">
+            <div class="fw-semibold">{{ product.name }}</div>
+            <small class="text-muted">
+              {{ product.category }} • ID: {{ product.id }}
+            </small>
+          </td>
+
+          <td class="fw-semibold align-middle">
+            ${{ product.price }}
+          </td>
+
+          <td class="align-middle">
+            <span
+              class="badge rounded-pill"
+              [ngClass]="{
+                'bg-success-subtle text-success': product.stockStatus === 'In Stock',
+                'bg-warning-subtle text-warning': product.stockStatus === 'Low Stock',
+                'bg-danger-subtle text-danger': product.stockStatus === 'Out of Stock'
+              }"
+            >
+              {{ product.stockStatus }}
+            </span>
+            <div class="small text-muted">
+              {{ product.stock }} units
+            </div>
+          </td>
+
+          <td class="align-middle">
+            <span
+              class="badge rounded-pill"
+              [ngClass]="{
+                'bg-primary-subtle text-primary': product.approval === 'Approved',
+                'bg-warning-subtle text-warning': product.approval === 'Pending',
+                'bg-danger-subtle text-danger': product.approval === 'Rejected'
+              }"
+            >
+              {{ product.approval }}
+            </span>
+          </td>
+
+          <td class="align-middle">
+            <button class="btn btn-sm btn-light">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination بره الجدول -->
+  <div class="d-flex justify-content-between align-items-center p-3 border-top">
+    <small class="text-muted">
+      Showing {{ startIndex + 1 }}–{{ endIndex }} of {{ products.length }} products
+    </small>
+
+    <nav>
+      <ul class="pagination mb-0">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <button class="page-link" (click)="prevPage()">Prev</button>
+        </li>
+
+        <li
+          class="page-item"
+          *ngFor="let page of totalPages"
+          [class.active]="page === currentPage"
+        >
+          <button class="page-link" (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </li>
+
+        <li class="page-item" [class.disabled]="currentPage === totalPages.length">
+          <button class="page-link" (click)="nextPage()">Next</button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+</div>
+</div>
