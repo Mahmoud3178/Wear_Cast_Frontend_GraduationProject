@@ -1,0 +1,131 @@
+<div class="container-fluid">
+
+  <!-- Header -->
+  <div class="mb-4">
+    <h4 class="fw-bold">
+      Order #{{ order.id }}
+      <span class="badge bg-primary-subtle text-primary ms-2">
+        {{ order.status }}
+      </span>
+    </h4>
+    <small class="text-muted">
+      Placed on {{ order.placedAt }}
+    </small>
+  </div>
+
+  <!-- Order Progress -->
+  <div class="card border-0 shadow-sm mb-4 p-3">
+    <div class="d-flex justify-content-between text-center">
+      <div
+        *ngFor="let step of order.steps; let i = index"
+        class="flex-fill"
+      >
+        <div
+          class="rounded-circle mx-auto mb-2"
+          [class.bg-primary]="i <= order.currentStep"
+          [class.bg-light]="i > order.currentStep"
+          style="width:32px;height:32px;line-height:32px;color:white"
+        >
+          ✓
+        </div>
+        <small class="fw-semibold">{{ step }}</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Order Items -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm p-3">
+
+        <div class="d-flex justify-content-between mb-3">
+          <h6 class="fw-bold mb-0">Order Items</h6>
+          <small class="text-muted">{{ items.length }} items</small>
+        </div>
+
+        <table class="table align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let item of items">
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <img [src]="item.productImage" class="rounded" width="40" height="40">
+                  <div>{{ item.productName }}</div>
+                </div>
+              </td>
+              <td class="text-muted">{{ item.sku }}</td>
+              <td>${{ item.price }}</td>
+              <td>{{ item.qty }}</td>
+              <td class="fw-semibold">${{ item.total }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Summary -->
+        <div class="text-end mt-3">
+          <div>Subtotal: <strong>${{ subtotal }}</strong></div>
+          <div class="text-success">Discount: -${{ discount }}</div>
+          <div>Shipping: ${{ shipping }}</div>
+          <div>Tax: ${{ tax }}</div>
+          <hr>
+          <h6>Total: <span class="text-primary">${{ total }}</span></h6>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Customer Info -->
+    <div class="col-lg-4">
+
+      <div class="card border-0 shadow-sm p-3 mb-3 text-center">
+        <img [src]="customer.avatar" class="rounded-circle mb-2" width="72">
+        <h6 class="fw-bold mb-0">{{ customer.name }}</h6>
+        <small class="text-muted">Loyal Customer</small>
+
+        <div class="d-flex justify-content-between mt-3">
+          <div>
+            <strong>{{ customer.orders }}</strong>
+            <div class="small text-muted">Orders</div>
+          </div>
+          <div>
+            <strong>{{ customer.spent }}</strong>
+            <div class="small text-muted">Spent</div>
+          </div>
+        </div>
+
+        <hr>
+
+        <small>{{ customer.email }}</small><br>
+        <small>{{ customer.phone }}</small>
+      </div>
+
+      <div class="card border-0 shadow-sm p-3 mb-3">
+        <h6 class="fw-bold">Shipping Address</h6>
+        <p class="small text-muted mb-0">{{ shippingAddress }}</p>
+      </div>
+
+      <div class="card border-0 shadow-sm p-3 mb-3">
+        <h6 class="fw-bold">Billing Address</h6>
+        <p class="small text-muted mb-0">{{ billingAddress }}</p>
+      </div>
+
+      <div class="card border-0 shadow-sm p-3 bg-warning-subtle">
+        <h6 class="fw-bold">Note</h6>
+        <small>{{ note }}</small>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

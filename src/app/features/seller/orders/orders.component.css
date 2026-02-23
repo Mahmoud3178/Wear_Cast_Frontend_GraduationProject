@@ -1,0 +1,9 @@
+tr.cursor-pointer {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+tr.cursor-pointer:hover {
+  background-color: #f1f3f5;
+  transform: scale(1.01);
+}

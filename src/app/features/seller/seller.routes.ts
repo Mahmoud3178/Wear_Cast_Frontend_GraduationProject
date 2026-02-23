@@ -25,6 +25,12 @@ export const SELLER_ROUTES: Routes = [
           import('./orders/orders.component')
             .then(m => m.OrdersComponent)
       },
+ {
+  path: 'orders/:id',
+  loadComponent: () =>
+    import('./order-details/order-details.component')
+      .then(m => m.OrderDetailsComponent)
+},
       {
         path: '',
         redirectTo: 'dashboard',
