@@ -1,0 +1,172 @@
+<header class="header">
+  <div class="header-left"></div>
+  <h1 class="logo">Wearcast</h1>
+  <div class="header-actions">
+    <button type="button" class="icon-btn" title="Support"><i class="fa-solid fa-phone"></i></button>
+    <button type="button" class="icon-btn" id="header-save-btn" title="Save design"><i class="fa-solid fa-floppy-disk"></i></button>
+    <button type="button" class="icon-btn" id="header-load-btn" title="My saved designs"><i class="fa-solid fa-folder-open"></i></button>
+    <button type="button" class="icon-btn" title="Share"><i class="fa-solid fa-share-nodes"></i></button>
+    <button type="button" class="icon-btn" title="Full screen"><i class="fa-solid fa-expand"></i></button>
+  </div>
+</header>
+
+<div class="main-layout">
+  <!-- Left sidebar - tools + product picker -->
+  <aside class="sidebar left">
+    <nav class="tool-nav">
+      <button type="button" class="tool-btn active" data-tool="products" title="Products">
+        <span class="tool-icon"><i class="fa-solid fa-tshirt"></i></span>
+        <span class="tool-label">Products</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="designs" title="Designs">
+        <span class="tool-icon"><i class="fa-solid fa-palette"></i></span>
+        <span class="tool-label">Designs</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="text" title="Add Text">
+        <span class="tool-icon"><i class="fa-solid fa-font"></i></span>
+        <span class="tool-label">Text</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="upload" title="Upload Image">
+        <span class="tool-icon"><i class="fa-solid fa-upload"></i></span>
+        <span class="tool-label">Upload</span>
+      </button>
+      <input type="file" id="upload-input" accept="image/*,image/webp,.webp" hidden>
+      <button type="button" class="tool-btn" id="undo-btn" title="Undo">
+        <span class="tool-icon"><i class="fa-solid fa-undo"></i></span>
+        <span class="tool-label">Undo</span>
+      </button>
+      <button type="button" class="tool-btn" id="redo-btn" title="Redo" disabled>
+        <span class="tool-icon"><i class="fa-solid fa-redo"></i></span>
+        <span class="tool-label">Redo</span>
+      </button>
+    </nav>
+    <div id="product-picker" class="product-picker">
+      <p class="picker-title">Choose product</p>
+      <div class="product-list" id="product-list">
+        <button type="button" class="product-card" data-product="hoodie">
+          <img src="assets/hoodie-front.jpg" alt="Hoodie">
+          <span>Hoodie</span>
+        </button>
+        <button type="button" class="product-card" data-product="tshirt">
+          <img src="assets/tshirt-front.webp" alt="T-Shirt">
+          <span>T-Shirt</span>
+        </button>
+        <button type="button" class="product-card" data-product="cap">
+          <img src="assets/cap-front.jpg" alt="Cap">
+          <span>Cap</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Center - canvas area -->
+  <main class="canvas-area">
+    <div class="canvas-wrap">
+      <div class="product-stage" id="product-stage">
+        <img id="product-image" class="product-image" src="assets/hoodie-front.jpg" alt="Product">
+        <canvas id="design-canvas"></canvas>
+      </div>
+    </div>
+    <div class="view-angles">
+      <button type="button" class="view-btn active" data-view="front">Front</button>
+      <button type="button" class="view-btn" data-view="back">Back</button>
+      <button type="button" class="view-btn" data-view="right">Right</button>
+      <button type="button" class="view-btn" data-view="left">Left</button>
+    </div>
+  </main>
+
+  <!-- Right sidebar - product info + text options -->
+  <aside class="sidebar right">
+    <div class="product-info">
+      <h2 class="product-title" id="product-title">Women's Hoodie</h2>
+      <p class="delivery">Delivery time: Mar 09 - 18</p>
+      <p class="rating">&#9733;&#9733;&#9733;&#9733;&#9733; (302)</p>
+      <a href="#" class="details-link">See product details &gt;</a>
+      <p class="print-method">Print method: <strong>Digital Direct</strong></p>
+
+      <div class="color-section">
+        <p class="color-label">Product color: <span id="color-name">black</span></p>
+        <div class="color-swatches" id="color-swatches">
+          <button type="button" class="color-swatch" data-color="purple" style="background:#6b21a8"></button>
+          <button type="button" class="color-swatch" data-color="pink" style="background:#ec4899"></button>
+          <button type="button" class="color-swatch" data-color="lightpink" style="background:#f9a8d4"></button>
+          <button type="button" class="color-swatch" data-color="lightgray" style="background:#d1d5db"></button>
+          <button type="button" class="color-swatch active" data-color="black" style="background:#1a1a1a"></button>
+          <button type="button" class="color-swatch" data-color="darkgray" style="background:#4b5563"></button>
+          <button type="button" class="color-swatch" data-color="white" style="background:#f5f5f5"></button>
+          <button type="button" class="color-swatch" data-color="darkblue" style="background:#1e3a5f"></button>
+        </div>
+      </div>
+
+      <div id="text-options-panel" class="text-options-panel hidden">
+        <h3 class="panel-title">Text options</h3>
+        <label class="option-row">
+          <span>Font</span>
+          <select id="text-font">
+            <option value="Arial">Arial</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Impact">Impact</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+            <option value="Courier New">Courier New</option>
+          </select>
+        </label>
+        <label class="option-row">
+          <span>Color</span>
+          <input type="color" id="text-color" value="#ffffff">
+          <span class="color-hex" id="text-color-hex">#ffffff</span>
+        </label>
+        <label class="option-row">
+          <span>Bend</span>
+          <input type="range" id="text-bend" min="-100" max="100" value="0">
+          <span class="bend-value" id="text-bend-value">0</span>
+        </label>
+      </div>
+
+      <details class="arrange-section">
+        <summary>Arrange designs &gt;</summary>
+        <p class="arrange-hint">Select an element on the product to move, resize or rotate it.</p>
+        <button type="button" class="btn delete-btn hidden" id="delete-selected-btn">Remove selected</button>
+      </details>
+
+      <button type="button" class="cta-btn">Choose size &amp; quantity</button>
+    </div>
+  </aside>
+</div>
+
+<!-- Text prompt modal -->
+<div id="text-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Add Text</h3>
+    <input type="text" id="text-input" placeholder="Enter your text" value="Your text">
+    <div class="modal-actions">
+      <button type="button" class="btn secondary" id="text-cancel">Cancel</button>
+      <button type="button" class="btn primary" id="text-add">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save design modal -->
+<div id="save-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Save design</h3>
+    <input type="text" id="save-name-input" placeholder="Design name">
+    <div class="modal-actions">
+      <button type="button" class="btn secondary" id="save-cancel">Cancel</button>
+      <button type="button" class="btn primary" id="save-confirm">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Load design modal -->
+<div id="load-modal" class="modal hidden">
+  <div class="modal-content modal-wide">
+    <h3>My saved designs</h3>
+    <div class="saved-list" id="saved-list"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn secondary" id="load-close">Close</button>
+    </div>
+  </div>
+</div>
+
