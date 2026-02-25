@@ -3,19 +3,12 @@ import { CommonModule } from '@angular/common';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
 
-type ProfileTab = 'info' | 'addresses' | 'payments' | 'orders' | 'notifications' | 'security';
-
 @Component({
-  selector: 'app-profile',
+  selector: 'app-checkout',
   standalone: true,
   imports: [CommonModule, CustomerNavComponent, CustomerFooterComponent],
-  templateUrl: './profile.component.html',
-  styleUrl: './profile.component.css'
+  templateUrl: './checkout.component.html',
+  styleUrl: './checkout.component.css'
 })
-export class ProfileComponent {
-  activeTab: ProfileTab = 'info';
+export class CheckoutComponent { }
 
-  setTab(tab: ProfileTab) {
-    this.activeTab = tab;
-  }
-}

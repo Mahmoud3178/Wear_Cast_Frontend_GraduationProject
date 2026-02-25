@@ -1,0 +1,224 @@
+.profile-page {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+.profile-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+}
+
+.profile-sidebar {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  padding: 18px 16px 18px;
+}
+
+.profile-user {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.avatar-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  font-weight: 600;
+  font-size: 24px;
+}
+
+.profile-user h2 {
+  font-size: 16px;
+}
+
+.profile-user p {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.profile-nav {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-nav button {
+  border-radius: 999px;
+  border: none;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+  color: #374151;
+}
+
+.profile-nav button.active {
+  background: #2563eb;
+  color: #f9fafb;
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  padding: 18px 20px 20px;
+  font-size: 13px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.card-header h1 {
+  font-size: 18px;
+}
+
+.primary-btn {
+  border-radius: 999px;
+  border: none;
+  padding: 8px 16px;
+  background: #2563eb;
+  color: #f9fafb;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.primary-btn.large {
+  margin-top: 12px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
+}
+
+.info-grid label,
+.field label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.info-grid p {
+  font-size: 14px;
+}
+
+.address-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.address-card {
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+}
+
+.badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: #e5e7eb;
+}
+
+.badge.success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.payment-card {
+  margin-top: 10px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+}
+
+.payment-card .title {
+  font-weight: 600;
+}
+
+.alert {
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+}
+
+.orders-list .order-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.order-id {
+  font-weight: 600;
+}
+
+.order-date {
+  color: #6b7280;
+}
+
+.notifications-list .notification-item {
+  padding: 8px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.notifications-list .title {
+  font-weight: 600;
+}
+
+.notifications-list .time {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.security-form .field {
+  margin-bottom: 8px;
+}
+
+.security-form input {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.requirements {
+  margin: 8px 0 0 16px;
+  font-size: 12px;
+  color: #6b7280;
+}
+

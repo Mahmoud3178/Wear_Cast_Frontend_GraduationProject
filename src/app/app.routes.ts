@@ -16,7 +16,7 @@ export const routes: Routes = [
 },
   {
     path: '',
-    redirectTo: 'seller',
+    redirectTo: 'customer',
     pathMatch: 'full'
   }
 

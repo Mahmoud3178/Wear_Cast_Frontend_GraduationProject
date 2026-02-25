@@ -1,1 +1,155 @@
-<p>profile works!</p>
+<app-customer-nav></app-customer-nav>
+
+<main class="profile-page">
+  <section class="profile-layout">
+    <aside class="profile-sidebar">
+      <div class="profile-user">
+        <div class="avatar-circle">S</div>
+        <h2>Sarah Mitchell</h2>
+        <p>sarah.mitchell&#64;email.com</p>
+      </div>
+
+      <nav class="profile-nav" aria-label="Account navigation">
+        <button [class.active]="activeTab === 'info'" (click)="setTab('info')">Personal Information</button>
+        <button [class.active]="activeTab === 'addresses'" (click)="setTab('addresses')">Addresses</button>
+        <button [class.active]="activeTab === 'payments'" (click)="setTab('payments')">Payment Methods</button>
+        <button [class.active]="activeTab === 'orders'" (click)="setTab('orders')">Orders</button>
+        <button [class.active]="activeTab === 'notifications'" (click)="setTab('notifications')">Notifications</button>
+        <button [class.active]="activeTab === 'security'" (click)="setTab('security')">Security Settings</button>
+      </nav>
+    </aside>
+
+    <section class="profile-content">
+      <div *ngIf="activeTab === 'info'" class="card">
+        <header class="card-header">
+          <h1>Personal Information</h1>
+          <button class="primary-btn">Edit</button>
+        </header>
+        <div class="card-body info-grid">
+          <div>
+            <label>Full Name</label>
+            <p>Sarah Mitchell</p>
+          </div>
+          <div>
+            <label>Email Address</label>
+            <p>sarah.mitchell&#64;email.com</p>
+          </div>
+          <div>
+            <label>Phone Number</label>
+            <p>+1 (555) 123‑4567</p>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'addresses'" class="card">
+        <header class="card-header">
+          <h1>My Addresses</h1>
+          <button class="primary-btn">Add New Address</button>
+        </header>
+        <div class="card-body address-grid">
+          <article class="address-card">
+            <h2>Sarah Mitchell</h2>
+            <p>+1 (555) 123‑4567</p>
+            <p>123 Oak Street, Apt 4B<br>San Francisco, CA 94102</p>
+            <span class="badge">Default</span>
+          </article>
+          <article class="address-card">
+            <h2>Sarah Mitchell</h2>
+            <p>+1 (555) 123‑4567</p>
+            <p>456 Pine Avenue<br>Berkeley, CA 94704</p>
+          </article>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'payments'" class="card">
+        <header class="card-header">
+          <h1>Payment Methods</h1>
+          <button class="primary-btn">Add New Card</button>
+        </header>
+        <div class="card-body">
+          <div class="alert">Your card details are securely tokenized. We do not store card numbers.</div>
+          <div class="payment-card">
+            <div>
+              <p class="title">Visa <span class="badge">Default</span></p>
+              <p>•••• •••• •••• 4532</p>
+              <p>Expires 12/25</p>
+            </div>
+          </div>
+          <div class="payment-card">
+            <div>
+              <p class="title">Mastercard</p>
+              <p>•••• •••• •••• 5412</p>
+              <p>Expires 09/26</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'orders'" class="card">
+        <header class="card-header">
+          <h1>My Orders</h1>
+        </header>
+        <div class="card-body orders-list">
+          <article class="order-row">
+            <div>
+              <p class="order-id">ORD‑2024‑001234</p>
+              <p class="order-date">Nov 28, 2024</p>
+              <p class="badge success">Delivered</p>
+            </div>
+            <div class="order-meta">
+              <p>$149.99</p>
+              <p>2 items</p>
+            </div>
+            <button class="primary-btn">View Details</button>
+          </article>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'notifications'" class="card">
+        <header class="card-header">
+          <h1>Notifications</h1>
+        </header>
+        <div class="card-body notifications-list">
+          <div class="notification-item">
+            <p class="title">Order Delivered</p>
+            <p>Your order #ORD‑2024‑001234 has been delivered successfully.</p>
+            <span class="time">2 hours ago</span>
+          </div>
+          <div class="notification-item">
+            <p class="title">Order Shipped</p>
+            <p>Your order #ORD‑2024‑001189 is on its way.</p>
+            <span class="time">5 hours ago</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'security'" class="card">
+        <header class="card-header">
+          <h1>Security Settings</h1>
+        </header>
+        <div class="card-body security-form">
+          <div class="field">
+            <label>Current Password *</label>
+            <input type="password" />
+          </div>
+          <div class="field">
+            <label>New Password *</label>
+            <input type="password" />
+          </div>
+          <div class="field">
+            <label>Confirm New Password *</label>
+            <input type="password" />
+          </div>
+          <ul class="requirements">
+            <li>At least 8 characters long</li>
+            <li>Mix of uppercase and lowercase letters recommended</li>
+            <li>Include numbers and special characters for stronger security</li>
+          </ul>
+          <button class="primary-btn large">Save new password</button>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <app-customer-footer></app-customer-footer>
+</main>

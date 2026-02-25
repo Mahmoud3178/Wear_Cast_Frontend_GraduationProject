@@ -1,12 +1,12 @@
+<app-customer-nav></app-customer-nav>
+
 <header class="header">
   <div class="header-left"></div>
-  <h1 class="logo">Wearcast</h1>
+  <h1 class="logo">Design your own</h1>
   <div class="header-actions">
     <button type="button" class="icon-btn" title="Support"><i class="fa-solid fa-phone"></i></button>
     <button type="button" class="icon-btn" id="header-save-btn" title="Save design"><i class="fa-solid fa-floppy-disk"></i></button>
     <button type="button" class="icon-btn" id="header-load-btn" title="My saved designs"><i class="fa-solid fa-folder-open"></i></button>
-    <button type="button" class="icon-btn" title="Share"><i class="fa-solid fa-share-nodes"></i></button>
-    <button type="button" class="icon-btn" title="Full screen"><i class="fa-solid fa-expand"></i></button>
   </div>
 </header>
 
@@ -73,15 +73,34 @@
       <button type="button" class="view-btn" data-view="right">Right</button>
       <button type="button" class="view-btn" data-view="left">Left</button>
     </div>
+
+    <section id="designs-panel" class="designs-panel hidden">
+      <div class="designs-header">
+        <h3>Choose a design</h3>
+        <div class="designs-search">
+          <select id="design-category-select">
+            <option value="all">Bestsellers</option>
+            <option value="rose">Rose</option>
+            <option value="sport">Sport</option>
+            <option value="music">Music</option>
+          </select>
+          <input id="design-search" type="search" placeholder="Search designs">
+        </div>
+      </div>
+      <div class="designs-body">
+        <div class="design-tags" id="design-tags"></div>
+        <div class="design-grid" id="design-grid"></div>
+      </div>
+    </section>
   </main>
 
   <!-- Right sidebar - product info + text options -->
   <aside class="sidebar right">
-    <div class="product-info">
+      <div class="product-info">
       <h2 class="product-title" id="product-title">Women's Hoodie</h2>
       <p class="delivery">Delivery time: Mar 09 - 18</p>
       <p class="rating">&#9733;&#9733;&#9733;&#9733;&#9733; (302)</p>
-      <a href="#" class="details-link">See product details &gt;</a>
+      <button type="button" id="product-details-open" class="details-link">See product details &gt;</button>
       <p class="print-method">Print method: <strong>Digital Direct</strong></p>
 
       <div class="color-section">
@@ -170,3 +189,57 @@
   </div>
 </div>
 
+<!-- Product details / size table modal -->
+<div id="product-details-modal" class="modal hidden">
+  <div class="modal-content product-details-content">
+    <div class="product-details-header">
+      <h3>Product details</h3>
+      <button type="button" id="product-details-close" class="details-close-btn">✕</button>
+    </div>
+    <h4 class="pd-title">Women's Hoodie</h4>
+    <p class="pd-pill">Sustainable</p>
+    <p class="pd-rating">★★★★★ <span>(300)</span></p>
+    <p class="pd-copy">
+      This plush pullover is perfect for the gym, errands or kicking around the house. The midweight fabric
+      makes for a versatile under, over or solo layer. A staple in casual comfort, this classic style is a must-own.
+    </p>
+    <ul class="pd-list">
+      <li>50% cotton / 50% polyester · Fabric weight: 8 oz (midweight)</li>
+      <li>Soft, plush inside with adjustable drawstring hood</li>
+      <li>Ribbed cuffs and waist for a secure fit</li>
+      <li>Item runs big – ordering a size down is recommended</li>
+      <li>Imported; printed in the U.S.A. with sustainably sourced cotton</li>
+    </ul>
+
+    <div class="pd-size-table">
+      <div class="pd-size-header">
+        <div>
+          <h4>Size table</h4>
+          <p class="pd-size-sub">Available sizes: S, M, L, XL, 2XL · Fit: Loose fit</p>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>A (in)</th>
+            <th>B (in)</th>
+            <th>C (in)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>S</td><td>26.50</td><td>20.00</td><td>24.49</td></tr>
+          <tr><td>M</td><td>27.44</td><td>21.50</td><td>24.72</td></tr>
+          <tr><td>L</td><td>27.95</td><td>22.99</td><td>25.00</td></tr>
+          <tr><td>XL</td><td>30.43</td><td>25.47</td><td>25.24</td></tr>
+          <tr><td>2XL</td><td>30.94</td><td>27.99</td><td>25.47</td></tr>
+        </tbody>
+      </table>
+      <p class="pd-size-note">
+        Find the right size: compare these measurements with a similar garment you already own.
+      </p>
+    </div>
+  </div>
+</div>
+
+<app-customer-footer></app-customer-footer>

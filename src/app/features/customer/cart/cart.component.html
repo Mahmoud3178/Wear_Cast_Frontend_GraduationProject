@@ -1,0 +1,78 @@
+<app-customer-nav></app-customer-nav>
+
+<main class="wc-page-cart">
+  <section class="wc-cart-main">
+    <h1>Your cart</h1>
+
+    <div class="wc-cart-layout">
+      <div class="wc-cart-items">
+        <article class="cart-item" *ngFor="let i of [1,2,3]">
+          <div class="item-thumb"></div>
+          <div class="item-info">
+            <h2>Gradient Graphic T‑shirt</h2>
+            <p class="meta">Size: Large · Color: White</p>
+            <p class="price">$145</p>
+            <div class="size-rows">
+              <div class="size-row">
+                <span>S</span>
+                <div class="row-qty">
+                  <button>-</button>
+                  <span>0</span>
+                  <button>+</button>
+                </div>
+              </div>
+              <div class="size-row">
+                <span>M</span>
+                <div class="row-qty">
+                  <button>-</button>
+                  <span>1</span>
+                  <button>+</button>
+                </div>
+              </div>
+              <div class="size-row">
+                <span>L</span>
+                <div class="row-qty">
+                  <button>-</button>
+                  <span>0</span>
+                  <button>+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="item-qty">
+            <button>-</button>
+            <span>1</span>
+            <button>+</button>
+          </div>
+        </article>
+      </div>
+
+      <aside class="wc-cart-summary">
+        <h2>Order summary</h2>
+        <dl>
+          <div class="row">
+            <dt>Subtotal</dt>
+            <dd>$1515</dd>
+          </div>
+          <div class="row">
+            <dt>Discount</dt>
+            <dd class="negative">- $303</dd>
+          </div>
+          <div class="row">
+            <dt>Delivery fee</dt>
+            <dd>$15</dd>
+          </div>
+          <div class="row total">
+            <dt>Total</dt>
+            <dd>$1227</dd>
+          </div>
+        </dl>
+
+        <button type="button" class="wc-btn-primary" routerLink="/customer/checkout">Go to checkout</button>
+      </aside>
+    </div>
+  </section>
+
+  <app-customer-footer></app-customer-footer>
+</main>
+

@@ -1,0 +1,93 @@
+<app-customer-nav></app-customer-nav>
+
+<main class="wc-page-detail">
+  <section class="wc-detail-main">
+    <div class="wc-gallery">
+      <div class="wc-gallery-main"></div>
+      <div class="wc-gallery-thumbs">
+        <button class="thumb thumb--active"></button>
+        <button class="thumb"></button>
+        <button class="thumb"></button>
+        <button class="thumb"></button>
+      </div>
+    </div>
+
+    <div class="wc-detail-info">
+      <p class="wc-breadcrumb">Home / Men / T-shirts</p>
+      <h1>One Life Graphic T‑shirt</h1>
+      <p class="wc-price">$260 <span class="wc-price-old">$300</span> <span class="wc-price-badge">-20%</span></p>
+      <p class="wc-rating">4.6 · 1.2k reviews</p>
+      <p class="wc-copy">
+        This graphic T‑shirt is perfect for any occasion. Crafted from a soft and breathable cotton blend.
+      </p>
+
+      <div class="wc-colors">
+        <p class="label">Colors</p>
+        <div class="swatches">
+          <button class="swatch swatch--olive"></button>
+          <button class="swatch swatch--sand"></button>
+          <button class="swatch swatch--navy"></button>
+        </div>
+      </div>
+
+      <div class="wc-sizes">
+        <p class="label">Select size</p>
+        <div class="wc-size-grid">
+          <button *ngFor="let s of ['XS','S','M','L','XL','2XL']" class="size-btn" [class.size-btn--active]="s==='M'">
+            {{ s }}
+          </button>
+        </div>
+      </div>
+
+      <div class="wc-actions-row">
+        <button type="button" class="wc-btn wc-btn-ai">Try it with AI</button>
+        <button type="button" class="wc-btn wc-btn-primary">Add to cart</button>
+      </div>
+
+      <section class="wc-size-table">
+        <h2>Size table</h2>
+        <p class="wc-size-sub">Available sizes: S, M, L, XL, 2XL · Fit: Loose fit</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Size</th>
+              <th>A (in)</th>
+              <th>B (in)</th>
+              <th>C (in)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>S</td><td>26.50</td><td>20.00</td><td>24.49</td></tr>
+            <tr><td>M</td><td>27.44</td><td>21.50</td><td>24.72</td></tr>
+            <tr><td>L</td><td>27.95</td><td>22.99</td><td>25.00</td></tr>
+            <tr><td>XL</td><td>30.43</td><td>25.47</td><td>25.24</td></tr>
+            <tr><td>2XL</td><td>30.94</td><td>27.99</td><td>25.47</td></tr>
+          </tbody>
+        </table>
+        <p class="wc-size-note">
+          Compare these measurements with a similar garment you already own to find the right fit.
+        </p>
+      </section>
+    </div>
+  </section>
+
+  <section class="wc-detail-section">
+    <div class="wc-section-tabs">
+      <button class="tab tab--active">Rating &amp; reviews</button>
+      <button class="tab">Product details</button>
+    </div>
+    <div class="wc-review-grid">
+      <article class="review-card" *ngFor="let i of [1,2,3,4]">
+        <p class="review-name">Samantha D.</p>
+        <p class="review-stars">★★★★★</p>
+        <p class="review-body">
+          Great fit and quality. The fabric feels soft and durable.
+        </p>
+        <p class="review-meta">Posted on August 21, 2023</p>
+      </article>
+    </div>
+  </section>
+
+  <app-customer-footer></app-customer-footer>
+</main>
+

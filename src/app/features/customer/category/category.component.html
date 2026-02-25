@@ -1,0 +1,64 @@
+<app-customer-nav></app-customer-nav>
+
+<main class="wc-page-category">
+  <section class="wc-category-main">
+    <aside class="wc-filters">
+      <h2>Filters</h2>
+      <div class="filter-group">
+        <p class="label">Category</p>
+        <button
+          *ngFor="let c of categories"
+          class="chip"
+          [class.chip--active]="c === selectedCategory"
+          (click)="setCategory(c)">
+          {{ c }}
+        </button>
+      </div>
+
+      <div class="filter-group">
+        <p class="label">Price</p>
+        <input
+          type="range"
+          min="50"
+          max="300"
+          [value]="maxPrice"
+          (input)="onPriceChange($any($event.target).value)">
+        <p class="price-label">Up to ${{ maxPrice }}</p>
+      </div>
+
+      <div class="filter-group">
+        <p class="label">Size</p>
+        <div class="size-chips">
+          <button
+            *ngFor="let s of sizes"
+            class="chip"
+            [class.chip--active]="s === selectedSize"
+            (click)="setSize(s)">
+            {{ s }}
+          </button>
+        </div>
+      </div>
+
+      <button class="wc-btn-primary">Apply filter</button>
+    </aside>
+
+    <section class="wc-category-grid">
+      <div class="wc-category-header">
+        <h1>Casual</h1>
+        <p class="meta">Showing {{ filteredProducts.length }} of {{ products.length }} products</p>
+      </div>
+
+      <div class="grid">
+        <article class="wc-card" *ngFor="let p of filteredProducts" routerLink="/customer/product">
+          <div class="image"></div>
+          <h3>{{ p.name }}</h3>
+          <p class="meta">{{ p.category }} · Rating {{ p.rating }}</p>
+          <p class="price">${{ p.price }}</p>
+        </article>
+      </div>
+    </section>
+  </section>
+
+  <app-customer-footer></app-customer-footer>
+</main>
+

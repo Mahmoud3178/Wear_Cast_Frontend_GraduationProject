@@ -1,0 +1,48 @@
+<app-customer-nav></app-customer-nav>
+
+<main class="wc-page">
+  <section class="wc-hero">
+    <div class="wc-hero-text">
+      <p class="wc-eyebrow">New season, new looks</p>
+      <h1>Find clothes that match your style.</h1>
+      <p class="wc-subtitle">
+        Discover hundreds of carefully curated pieces, from everyday basics to standout fits.
+      </p>
+      <div class="wc-hero-actions">
+        <button type="button" class="wc-btn wc-btn-primary">Shop now</button>
+        <a routerLink="/customer/design" class="wc-btn wc-btn-ghost">Create your own</a>
+      </div>
+    </div>
+    <div class="wc-hero-image"></div>
+  </section>
+
+  <section class="wc-section">
+    <div class="wc-section-header">
+      <h2>New arrivals</h2>
+      <button type="button" class="wc-link-btn">View all</button>
+    </div>
+    <div class="wc-grid">
+      <article class="wc-card" *ngFor="let i of [1,2,3,4,5]" routerLink="/customer/product">
+        <div class="wc-card-image"></div>
+        <h3>Graphic Tee</h3>
+        <p class="wc-card-meta">Unisex · Cotton</p>
+        <p class="wc-card-price">$145</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="wc-section">
+    <div class="wc-section-header">
+      <h2>Browse by style</h2>
+    </div>
+    <div class="wc-style-grid">
+      <a routerLink="/customer/category" class="wc-style-card wc-style-card--casual">Casual</a>
+      <a routerLink="/customer/category" class="wc-style-card wc-style-card--formal">Formal</a>
+      <a routerLink="/customer/category" class="wc-style-card wc-style-card--party">Party</a>
+      <a routerLink="/customer/category" class="wc-style-card wc-style-card--gym">Gym</a>
+    </div>
+  </section>
+
+  <app-customer-footer></app-customer-footer>
+</main>
+

@@ -1,11 +1,14 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, ViewEncapsulation } from '@angular/core';
+import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
+import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
 
 @Component({
   selector: 'app-customer-design',
   standalone: true,
-  imports: [],
+  imports: [CustomerNavComponent, CustomerFooterComponent],
   templateUrl: './design.component.html',
-  styleUrl: './design.component.css'
+  styleUrls: ['./design.component.css'],
+  encapsulation: ViewEncapsulation.None
 })
 export class CustomerDesignComponent implements AfterViewInit {
 

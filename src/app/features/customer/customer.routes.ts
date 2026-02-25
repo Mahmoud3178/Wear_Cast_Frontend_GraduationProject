@@ -5,10 +5,10 @@ export const CUSTOMER_ROUTES: Routes = [
     path: '',
     children: [
       {
-        path: 'dashboard',
+        path: 'home',
         loadComponent: () =>
-          import('./dashboard/dashboard.component')
-            .then(m => m.DashboardComponent)
+          import('./home/home.component')
+            .then(m => m.HomeComponent)
       },
       {
         path: 'orders',
@@ -29,8 +29,32 @@ export const CUSTOMER_ROUTES: Routes = [
             .then(m => m.CustomerDesignComponent)
       },
       {
+        path: 'product',
+        loadComponent: () =>
+          import('./product-detail/product-detail.component')
+            .then(m => m.ProductDetailComponent)
+      },
+      {
+        path: 'cart',
+        loadComponent: () =>
+          import('./cart/cart.component')
+            .then(m => m.CartComponent)
+      },
+      {
+        path: 'checkout',
+        loadComponent: () =>
+          import('./checkout/checkout.component')
+            .then(m => m.CheckoutComponent)
+      },
+      {
+        path: 'category',
+        loadComponent: () =>
+          import('./category/category.component')
+            .then(m => m.CategoryComponent)
+      },
+      {
         path: '',
-        redirectTo: 'dashboard',
+        redirectTo: 'home',
         pathMatch: 'full'
       }
     ]

@@ -93,6 +93,8 @@
   var productImage, productStage, productTitleEl, uploadInput, textModal, textInput, textCancel, textAdd;
   var colorNameEl, colorSwatches, textOptionsPanel, textFontSelect, textColorInput, textColorHex, textBendSlider, textBendValue;
   var saveModal, saveNameInput, saveCancel, saveConfirm, loadModal, savedListEl, loadCloseBtn;
+  var productDetailsModal, productDetailsOpenBtn, productDetailsCloseBtn;
+  var designsPanel, designCategorySelect, designSearchInput, designTagsEl, designGridEl;
 
   let canvas;
   let currentProduct = 'hoodie';
@@ -105,6 +107,19 @@
   var viewUndoStacks = {};
   var viewRedoStacks = {};
   var VIEW_KEYS = ['front', 'back', 'right', 'left'];
+
+  var STICKER_TAGS = [
+    'Football', 'Cool', 'Star', 'Christmas', 'Dog', 'Love', 'Heart', 'Money',
+    'Rose', 'Flower', 'Fire', 'Skull', 'Music', 'Sport', 'Circle', 'Flags'
+  ];
+
+  var STICKERS = [
+    { id: 'rose1', name: 'Red rose', category: 'rose', price: 2, image: 'https://placehold.co/200x200/fee2e2/7f1d1d?text=Rose+1' },
+    { id: 'rose2', name: 'Dripping rose', category: 'rose', price: 2, image: 'https://placehold.co/200x200/fecaca/7f1d1d?text=Rose+2' },
+    { id: 'sport1', name: 'Football club', category: 'sport', price: 2, image: 'https://placehold.co/200x200/dbeafe/1d4ed8?text=Sport' },
+    { id: 'music1', name: 'Music note', category: 'music', price: 2, image: 'https://placehold.co/200x200/e0f2fe/0369a1?text=Music' },
+    { id: 'star1', name: 'Star badge', category: 'all', price: 2, image: 'https://placehold.co/200x200/fef9c3/a16207?text=Star' }
+  ];
 
   function getStageDimensions() {
     const p = PRODUCTS[currentProduct];
@@ -374,6 +389,71 @@
       saveState();
     }
     updateUndoRedoButtons();
+  }
+
+  function addStickerFromUrl(url) {
+    if (!canvas || !url) return;
+    var dim = getStageDimensions();
+    fabric.Image.fromURL(url, function (img) {
+      if (!img) return;
+      var scale = Math.min(140 / img.width, 140 / img.height, 1);
+      img.set({
+        left: dim.width / 2,
+        top: dim.height / 2,
+        scaleX: scale,
+        scaleY: scale,
+        originX: 'center',
+        originY: 'center'
+      });
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.renderAll();
+      saveState();
+    }, { crossOrigin: 'anonymous' });
+  }
+
+  function renderStickerTags() {
+    if (!designTagsEl) return;
+    designTagsEl.innerHTML = '';
+    STICKER_TAGS.forEach(function (tag) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'design-tag';
+      btn.textContent = tag;
+      btn.addEventListener('click', function () {
+        if (designSearchInput) designSearchInput.value = tag;
+        renderStickerGrid();
+      });
+      designTagsEl.appendChild(btn);
+    });
+  }
+
+  function renderStickerGrid() {
+    if (!designGridEl) return;
+    var category = designCategorySelect ? designCategorySelect.value : 'all';
+    var term = designSearchInput ? designSearchInput.value.trim().toLowerCase() : '';
+    designGridEl.innerHTML = '';
+    STICKERS.filter(function (s) {
+      var matchCat = category === 'all' || s.category === category;
+      var matchTerm = !term || s.name.toLowerCase().indexOf(term) !== -1;
+      return matchCat && matchTerm;
+    }).forEach(function (s) {
+      var tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'design-tile';
+      var thumb = document.createElement('div');
+      thumb.className = 'design-tile-thumb';
+      thumb.style.backgroundImage = 'url(' + s.image + ')';
+      var name = document.createElement('div');
+      name.className = 'design-tile-name';
+      name.textContent = s.name;
+      tile.appendChild(thumb);
+      tile.appendChild(name);
+      tile.addEventListener('click', function () {
+        addStickerFromUrl(s.image);
+      });
+      designGridEl.appendChild(tile);
+    });
   }
 
   function updateUndoRedoButtons() {
@@ -699,6 +779,14 @@
     loadModal = document.getElementById('load-modal');
     savedListEl = document.getElementById('saved-list');
     loadCloseBtn = document.getElementById('load-close');
+    designsPanel = document.getElementById('designs-panel');
+    designCategorySelect = document.getElementById('design-category-select');
+    designSearchInput = document.getElementById('design-search');
+    designTagsEl = document.getElementById('design-tags');
+    designGridEl = document.getElementById('design-grid');
+    productDetailsModal = document.getElementById('product-details-modal');
+    productDetailsOpenBtn = document.getElementById('product-details-open');
+    productDetailsCloseBtn = document.getElementById('product-details-close');
 
     if (!productImage || !uploadInput || !textInput || !saveModal || !saveConfirm || !savedListEl) {
       console.error('Required DOM elements missing for designer');
@@ -707,6 +795,11 @@
 
     document.querySelectorAll('.tool-btn[data-tool="text"]').forEach(function (btn) {
       btn.addEventListener('click', openTextModal);
+    });
+    document.querySelectorAll('.tool-btn[data-tool="designs"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (designsPanel) designsPanel.classList.remove('hidden');
+      });
     });
     document.querySelectorAll('.tool-btn[data-tool="upload"]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -782,6 +875,9 @@
         if (this.dataset.tool === 'text' || this.dataset.tool === 'upload') return;
         document.querySelectorAll('.tool-btn').forEach(function (b) { b.classList.remove('active'); });
         this.classList.add('active');
+        if (designsPanel && this.dataset.tool !== 'designs') {
+          designsPanel.classList.add('hidden');
+        }
       });
     });
 
@@ -794,6 +890,29 @@
       saveDesignToList(name);
     });
     loadCloseBtn.addEventListener('click', function () { loadModal.classList.add('hidden'); });
+
+    if (productDetailsOpenBtn && productDetailsModal && productDetailsCloseBtn) {
+      productDetailsOpenBtn.addEventListener('click', function () {
+        productDetailsModal.classList.remove('hidden');
+      });
+      productDetailsCloseBtn.addEventListener('click', function () {
+        productDetailsModal.classList.add('hidden');
+      });
+      productDetailsModal.addEventListener('click', function (e) {
+        if (e.target === productDetailsModal) productDetailsModal.classList.add('hidden');
+      });
+    }
+
+    if (designTagsEl && designGridEl) {
+      renderStickerTags();
+      renderStickerGrid();
+    }
+    if (designCategorySelect) {
+      designCategorySelect.addEventListener('change', renderStickerGrid);
+    }
+    if (designSearchInput) {
+      designSearchInput.addEventListener('input', renderStickerGrid);
+    }
 
     initCanvas();
     setProduct('hoodie');

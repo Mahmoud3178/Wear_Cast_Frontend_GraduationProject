@@ -1,0 +1,145 @@
+.wc-page-cart {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+.wc-cart-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+}
+
+.wc-cart-main h1 {
+  font-size: 24px;
+  margin-bottom: 24px;
+}
+
+.wc-cart-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr);
+  gap: 24px;
+}
+
+.wc-cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.item-thumb {
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  background: #e5e7eb;
+}
+
+.item-info h2 {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.meta {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.price {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.size-rows {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.size-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.row-qty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.row-qty button,
+.item-qty button {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+.item-qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wc-cart-summary {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  padding: 18px 20px 20px;
+  align-self: flex-start;
+}
+
+.wc-cart-summary h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.wc-cart-summary dl {
+  font-size: 14px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.row.total {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.negative {
+  color: #dc2626;
+}
+
+.wc-btn-primary {
+  margin-top: 16px;
+  width: 100%;
+  border-radius: 999px;
+  border: none;
+  padding: 12px 16px;
+  background: #2563eb;
+  color: #f9fafb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wc-btn-primary:hover {
+  background: #1d4ed8;
+}
+
