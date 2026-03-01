@@ -1,0 +1,21 @@
+table th {
+  white-space: nowrap;
+}
+
+table td {
+  vertical-align: middle;
+}
+
+.badge {
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 16px;
+  }
+
+  h4 {
+    font-size: 18px;
+  }
+}

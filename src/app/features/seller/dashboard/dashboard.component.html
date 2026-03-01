@@ -7,10 +7,18 @@
       <p class="text-muted">Here is your daily store performance overview.</p>
     </div>
 
-    <div>
+<div class="d-flex align-items-center gap-2">
 
-      <button class="btn btn-primary">+ Add Product</button>
-    </div>
+<a [routerLink]="['../saller-notifications']" class="btn btn-light position-relative">
+  <i class="bi bi-bell-fill fs-5"></i>
+</a>
+
+  <!-- زرار اضافة منتج -->
+  <button class="btn btn-primary">
+    + Add Product
+  </button>
+
+</div>
   </div>
 
   <!-- Stats -->
@@ -96,7 +104,7 @@
           </thead>
 
           <tbody>
-            <tr *ngFor="let order of orders">
+            <tr   *ngFor="let order of paginatedProducts">
               <td>{{order.id}}</td>
               <td>{{order.customer}}</td>
               <td>{{order.amount}}</td>
@@ -116,6 +124,50 @@
 
         </table>
       </div>
+<!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center p-3 border-top">
+      <small class="text-muted">
+     Showing
+{{ (currentPage - 1) * itemsPerPage + 1 }}
+to
+{{ (currentPage - 1) * itemsPerPage + paginatedProducts.length }}
+of
+{{ orders.length }}
+results
+      </small>
+
+<div class="btn-group">
+
+  <!-- Previous -->
+  <button
+    class="btn btn-outline-secondary btn-sm"
+    (click)="prevPage()"
+    [disabled]="currentPage === 1">
+    Previous
+  </button>
+
+  <!-- Page Numbers -->
+  <button
+    *ngFor="let page of pages"
+    class="btn btn-sm"
+    [ngClass]="{
+      'btn-primary': currentPage === page,
+      'btn-outline-secondary': currentPage !== page
+    }"
+    (click)="goToPage(page)">
+    {{ page }}
+  </button>
+
+  <!-- Next -->
+  <button
+    class="btn btn-outline-secondary btn-sm"
+    (click)="nextPage()"
+    [disabled]="currentPage === totalPages">
+    Next
+  </button>
+
+</div>
+    </div>
 
     </div>
   </div>

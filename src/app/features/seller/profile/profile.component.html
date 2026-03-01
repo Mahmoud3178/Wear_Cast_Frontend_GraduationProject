@@ -1,1 +1,168 @@
-<p>profile works!</p>
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold">Seller Profile</h3>
+      <p class="text-muted mb-0">
+        Manage your seller details and showcase your products.
+      </p>
+    </div>
+
+    <button class="btn btn-dark px-4">Save Changes</button>
+  </div>
+
+  <div class="alert alert-warning small">
+    All profile edits are subject to Admin review and approval before being reflected publicly.
+  </div>
+
+  <div class="row g-4">
+
+    <!-- LEFT SIDE -->
+    <div class="col-lg-8">
+
+      <!-- Basic Info -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">Basic Information</h6>
+
+          <div class="row g-3 align-items-center">
+
+   <!-- Logo -->
+<div class="col-md-3 text-center">
+
+  <div class="profile-avatar mx-auto mb-2 position-relative">
+
+    <!-- صورة اللوجو -->
+    <img
+      *ngIf="logoPreview; else defaultIcon"
+      [src]="logoPreview"
+      class="rounded-circle w-100 h-100 object-fit-cover"
+      alt="Seller Logo">
+
+    <!-- لو مفيش صورة -->
+    <ng-template #defaultIcon>
+      <i class="bi bi-person-fill fs-2 text-white"></i>
+    </ng-template>
+
+  </div>
+
+  <!-- زرار اختيار صورة -->
+  <label class="small text-primary text-decoration-none cursor-pointer">
+    Change Logo
+    <input
+      type="file"
+      hidden
+      accept="image/*"
+      (change)="onLogoChange($event)">
+  </label>
+
+</div>
+            <!-- Info -->
+            <div class="col-md-9">
+              <div class="row g-3">
+
+                <div class="col-md-6">
+                  <label class="form-label small">Seller Name</label>
+                  <input type="text" class="form-control"
+                         [(ngModel)]="seller.name" disabled="">
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small">Registration Number</label>
+                  <input type="text" class="form-control"
+                         [(ngModel)]="seller.registration" disabled="">
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label small">Description</label>
+                  <textarea class="form-control" rows="3"
+                            [(ngModel)]="seller.description"></textarea>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Location & Contact -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">Location & Contact</h6>
+
+          <div class="row g-3">
+
+            <div class="col-12">
+              <label class="form-label small">Street Address</label>
+              <input type="text" class="form-control"
+                     [(ngModel)]="seller.address">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small">City</label>
+              <input type="text" class="form-control"
+                     [(ngModel)]="seller.city">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small">Zip Code</label>
+              <input type="text" class="form-control"
+                     [(ngModel)]="seller.zip">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small">Phone Number</label>
+              <input type="text" class="form-control"
+                     [(ngModel)]="seller.phone">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small">Email Address</label>
+              <input type="email" class="form-control"
+                     [(ngModel)]="seller.email">
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="col-lg-4">
+
+      <!-- Security -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">Security</h6>
+
+          <div class="mb-3">
+            <label class="form-label small">Current Password</label>
+            <input type="password" class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">New Password</label>
+            <input type="password" class="form-control"
+                   placeholder="Min. 8 characters">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Confirm New Password</label>
+            <input type="password" class="form-control"
+                   placeholder="Repeat password">
+          </div>
+
+          <button class="btn btn-outline-dark w-100">
+            Update Security
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

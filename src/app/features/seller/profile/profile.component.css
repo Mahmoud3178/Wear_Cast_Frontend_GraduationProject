@@ -1,0 +1,17 @@
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  border-radius: 12px;
+}
+
+input, textarea {
+  border-radius: 8px !important;
+}

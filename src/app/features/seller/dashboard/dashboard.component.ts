@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, NgModule } from '@angular/core';
 import { NgModel } from '@angular/forms';
+import { RouterLink } from "@angular/router";
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -49,6 +50,39 @@ products = [
     { id: '#ORD-1001', customer: 'John Doe', amount: '$120', status: 'Delivered' },
     { id: '#ORD-1002', customer: 'Sarah Ali', amount: '$75', status: 'Processing' },
     { id: '#ORD-1003', customer: 'Ahmed Hassan', amount: '$210', status: 'Pending' },
-    { id: '#ORD-1004', customer: 'Mona Samy', amount: '$95', status: 'Delivered' }
+    { id: '#ORD-1004', customer: 'Mona Samy', amount: '$95', status: 'Delivered' },
+        { id: '#ORD-1007', customer: 'Mona Samy', amount: '$95', status: 'Delivered' }
+,    { id: '#ORD-1008', customer: 'Mona Samy', amount: '$95', status: 'Delivered' }
+,    { id: '#ORD-1009', customer: 'Mona Samy', amount: '$95', status: 'Delivered' }
+
   ];
+
+  currentPage = 1;
+itemsPerPage = 5;
+get paginatedProducts() {
+  const start = (this.currentPage - 1) * this.itemsPerPage;
+  const end = start + this.itemsPerPage;
+  return this.orders.slice(start, end);
+}
+get pages(): number[] {
+  return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+}
+goToPage(page: number) {
+  this.currentPage = page;
+}
+get totalPages() {
+  return Math.ceil(this.orders.length / this.itemsPerPage);
+}
+nextPage() {
+  if (this.currentPage < this.totalPages) {
+    this.currentPage++;
+  }
+}
+
+prevPage() {
+  if (this.currentPage > 1) {
+    this.currentPage--;
+  }
+}
+
 }
