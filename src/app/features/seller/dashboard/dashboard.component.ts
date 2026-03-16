@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, NgModule } from '@angular/core';
+import { AfterViewInit, Component, NgModule } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { RouterLink } from "@angular/router";
-
+import Chart from 'chart.js/auto';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -10,7 +10,7 @@ import { RouterLink } from "@angular/router";
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent {
+export class DashboardComponent implements AfterViewInit {
 stats = [
     { title: 'Total Revenue', value: '$12,450', change: '+12%', positive: true },
     { title: 'Total Orders', value: '342', change: '+5%', positive: true },
@@ -84,5 +84,28 @@ prevPage() {
     this.currentPage--;
   }
 }
+
+  ngAfterViewInit() {
+
+    const ctx = document.getElementById('revenueChart') as HTMLCanvasElement;
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [
+          {
+            label: 'Revenue',
+            data: [1200, 1900, 3000, 2500, 3200, 4100],
+            borderWidth: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true
+      }
+    });
+
+  }
 
 }

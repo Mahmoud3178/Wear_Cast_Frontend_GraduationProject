@@ -1,51 +1,130 @@
 <div class="container-fluid">
   <div class="row">
 
-    <!-- Sidebar -->
-    <div class="col-md-2 bg-white shadow-sm vh-100 p-3">
-      <h5 class="mb-4">Seller Panel</h5>
+    <!-- 🔹 Mobile Top Bar -->
+    <div class="d-md-none d-flex justify-content-between align-items-center p-3 shadow-sm bg-white">
+
+      <!-- Hamburger Button -->
+      <button class="btn btn-outline-dark"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#mobileSidebar">
+        <i class="bi bi-list fs-4"></i>
+      </button>
+
+      <h6 class="mb-0 fw-bold">Seller Panel</h6>
+    </div>
+
+
+    <!-- 🔹 Desktop Sidebar -->
+    <div class="col-md-2 bg-white shadow-sm vh-100 p-3 d-none d-md-block position-fixed">
+      <h5 class="mb-4 fw-bold">Seller Panel</h5>
 
       <ul class="nav flex-column">
         <li class="nav-item mb-2">
-          <a routerLink="dashboard" class="nav-link d-flex align-items-center">
+          <a routerLink="dashboard" routerLinkActive="active"
+             class="nav-link d-flex align-items-center">
             <i class="bi bi-speedometer2 me-2"></i> Dashboard
           </a>
         </li>
+
         <li class="nav-item mb-2">
-          <a routerLink="profile" class="nav-link d-flex align-items-center">
+          <a routerLink="profile" routerLinkActive="active"
+             class="nav-link d-flex align-items-center">
             <i class="bi bi-person-circle me-2"></i> Profile
           </a>
         </li>
+
         <li class="nav-item mb-2">
-          <a routerLink="products" class="nav-link d-flex align-items-center">
+          <a routerLink="products" routerLinkActive="active"
+             class="nav-link d-flex align-items-center">
             <i class="bi bi-box-seam me-2"></i> Products
           </a>
         </li>
+
         <li class="nav-item mb-2">
-          <a routerLink="add-product" class="nav-link d-flex align-items-center">
-            <i class="bi bi-plus-square me-2"></i> Add Product
-          </a>
-        </li>
-        <li class="nav-item mb-2">
-          <a routerLink="orders" class="nav-link d-flex align-items-center">
+          <a routerLink="orders" routerLinkActive="active"
+             class="nav-link d-flex align-items-center">
             <i class="bi bi-bag-check me-2"></i> Orders
           </a>
         </li>
-        <li class="nav-item mb-2">
-          <a routerLink="inventory" class="nav-link d-flex align-items-center">
-            <i class="bi bi-boxes me-2"></i> Inventory
-          </a>
-        </li>
-        <li class="nav-item mb-2">
-          <a routerLink="analytics" class="nav-link d-flex align-items-center">
-            <i class="bi bi-bar-chart-line me-2"></i> Analytics
-          </a>
-        </li>
+                    <li class="nav-item mb-2">
+            <a routerLink="inventory"
+               routerLinkActive="active"
+               class="nav-link d-flex align-items-center"
+               data-bs-dismiss="offcanvas">
+              <i class="bi bi-bag-check me-2"></i> Inventory
+            </a>
+          </li>
       </ul>
     </div>
 
-    <!-- Content -->
-    <div class="col-md-10 bg-light p-4">
+
+    <!-- 🔹 Mobile Offcanvas Sidebar -->
+    <div class="offcanvas offcanvas-start d-md-none"
+         tabindex="-1"
+         id="mobileSidebar">
+
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title fw-bold">Seller Panel</h5>
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="offcanvas">
+        </button>
+      </div>
+
+      <div class="offcanvas-body">
+        <ul class="nav flex-column">
+          <li class="nav-item mb-2">
+            <a routerLink="dashboard"
+               routerLinkActive="active"
+               class="nav-link d-flex align-items-center"
+               data-bs-dismiss="offcanvas">
+              <i class="bi bi-speedometer2 me-2"></i> Dashboard
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a routerLink="profile"
+               routerLinkActive="active"
+               class="nav-link d-flex align-items-center"
+               data-bs-dismiss="offcanvas">
+              <i class="bi bi-person-circle me-2"></i> Profile
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a routerLink="products"
+               routerLinkActive="active"
+               class="nav-link d-flex align-items-center"
+               data-bs-dismiss="offcanvas">
+              <i class="bi bi-box-seam me-2"></i> Products
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a routerLink="orders"
+               routerLinkActive="active"
+               class="nav-link d-flex align-items-center"
+               data-bs-dismiss="offcanvas">
+              <i class="bi bi-bag-check me-2"></i> Orders
+            </a>
+          </li>
+                    <li class="nav-item mb-2">
+            <a routerLink="orders"
+               routerLinkActive="active"
+               class="nav-link d-flex align-items-center"
+               data-bs-dismiss="offcanvas">
+              <i class="bi bi-bag-check me-2"></i> Inventory
+            </a>
+          </li>
+
+        </ul>
+      </div>
+    </div>
+
+
+    <!-- 🔹 Content -->
+    <div class="col-md-10 offset-md-2 bg-light p-4">
       <router-outlet></router-outlet>
     </div>
 
