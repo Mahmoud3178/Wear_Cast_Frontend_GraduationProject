@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { LoginComponent } from './features/auth/login/login.component';
 
 export const routes: Routes = [
 
@@ -14,6 +15,10 @@ export const routes: Routes = [
     import('./features/customer/customer.routes')
       .then(m => m.CUSTOMER_ROUTES)
 },
+  {
+    path: 'login',
+    component: LoginComponent
+  },
   {
     path: '',
     redirectTo: 'customer',

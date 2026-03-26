@@ -1,0 +1,122 @@
+<div class="container mt-5">
+  <div class="card shadow p-4">
+
+    <h3 class="text-center mb-4">Seller Register</h3>
+
+    <form (ngSubmit)="register()">
+
+      <!-- 🔵 Manager Info -->
+      <h5 class="mb-3">Manager Information</h5>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label>First Name</label>
+          <input type="text" class="form-control" [(ngModel)]="form.sellerManagerFirstName" name="sellerManagerFirstName" required>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>Last Name</label>
+          <input type="text" class="form-control" [(ngModel)]="form.sellerManagerLastName" name="sellerManagerLastName" required>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label>Email</label>
+        <input type="email" class="form-control" [(ngModel)]="form.sellerManagerEmail" name="sellerManagerEmail" required>
+      </div>
+
+      <div class="mb-3">
+        <label>Phone Number</label>
+        <input type="text" class="form-control" [(ngModel)]="form.sellerManagerPhoneNumber" name="sellerManagerPhoneNumber">
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label>Password</label>
+          <input type="password" class="form-control" [(ngModel)]="form.sellerManagerPassword" name="sellerManagerPassword" required>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>Confirm Password</label>
+          <input type="password" class="form-control" [(ngModel)]="form.sellerManagerConfirmPassword" name="sellerManagerConfirmPassword" required>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- 🟢 Seller Info -->
+      <h5 class="mb-3">Seller Information</h5>
+
+      <div class="mb-3">
+        <label>Seller Name</label>
+        <input type="text" class="form-control" [(ngModel)]="form.sellerName" name="sellerName" required>
+      </div>
+
+      <div class="mb-3">
+        <label>Seller Email</label>
+        <input type="email" class="form-control" [(ngModel)]="form.sellerEmail" name="sellerEmail">
+      </div>
+
+      <div class="mb-3">
+        <label>Seller Phone</label>
+        <input type="text" class="form-control" [(ngModel)]="form.sellerPhoneNumber" name="sellerPhoneNumber">
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label>Commercial Register No.</label>
+          <input type="text" class="form-control" [(ngModel)]="form.sellerCommercialRegisterNumber" name="sellerCommercialRegisterNumber">
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>Tax ID</label>
+          <input type="text" class="form-control" [(ngModel)]="form.sellerTaxIdNumber" name="sellerTaxIdNumber">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label>Description</label>
+        <textarea class="form-control" [(ngModel)]="form.sellerDescription" name="sellerDescription"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label>Seller Logo</label>
+        <input type="file" class="form-control" (change)="onFileChange($event)">
+      </div>
+
+      <hr>
+
+      <!-- 🟡 Address -->
+      <h5 class="mb-3">Address</h5>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label>State</label>
+          <input type="text" class="form-control" [(ngModel)]="form.sellerState" name="sellerState">
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label>City</label>
+          <input type="text" class="form-control" [(ngModel)]="form.sellerCity" name="sellerCity">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8 mb-3">
+          <label>Street</label>
+          <input type="text" class="form-control" [(ngModel)]="form.sellerStreet" name="sellerStreet">
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <label>Building No.</label>
+          <input type="text" class="form-control" [(ngModel)]="form.sellerBuildingNumber" name="sellerBuildingNumber">
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button class="btn btn-success w-100">Register Seller</button>
+
+    </form>
+
+  </div>
+</div>

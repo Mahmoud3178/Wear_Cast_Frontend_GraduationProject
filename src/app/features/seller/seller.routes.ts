@@ -31,7 +31,18 @@ export const SELLER_ROUTES: Routes = [
     import('./order-details/order-details.component')
       .then(m => m.OrderDetailsComponent)
     },
-
+{
+  path: 'add-product/:id',
+  loadComponent: () =>
+    import('./add-product/add-product.component')
+      .then(m => m.AddProductComponent)
+},
+{
+  path: 'edit-product/:id',
+  loadComponent: () =>
+    import('./edit-product/edit-product.component')
+      .then(m => m.EditProductComponent)
+},
       {
       path: 'inventory',
         loadComponent: () =>
@@ -52,7 +63,12 @@ export const SELLER_ROUTES: Routes = [
           import('./saller-notifications/saller-notifications.component')
             .then(m => m.SallerNotificationsComponent)
       },
-
+      {
+        path: 'register',
+        loadComponent: () =>
+          import('./register-seller/register-seller.component')
+            .then(m => m.RegisterSellerComponent)
+      },
       {
         path: '',
         redirectTo: 'dashboard',

@@ -9,5 +9,10 @@ import { RouterLink, RouterOutlet } from '@angular/router';
   styleUrl: './seller-layout.component.css'
 })
 export class SellerLayoutComponent {
-
+router: any;
+logout() {
+  // مسح التوكن أو بيانات المستخدم
+  localStorage.clear();
+  this.router.navigate(['/login']);
+}
 }

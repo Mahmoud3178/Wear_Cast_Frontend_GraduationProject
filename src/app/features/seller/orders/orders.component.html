@@ -71,7 +71,7 @@
           <tr>
             <th>Order ID</th>
             <th>Customer</th>
-            <th>Product</th>
+           <th>Items</th>
             <th>Date</th>
             <th>Amount</th>
             <th>Status</th>
@@ -96,29 +96,12 @@
               <small class="text-muted">{{ order.email }}</small>
             </td>
 
-            <!-- Product -->
-            <td>
-              <div class="d-flex align-items-center gap-2">
-                <img
-                  [src]="order.product.image"
-                  width="40"
-                  height="40"
-                  class="rounded"
-                  alt="product"
-                />
-                <div>
-                  <div class="fw-semibold">
-                    {{ order.product.name }}
-                  </div>
-                  <small class="text-muted">
-                    Qty: {{ order.product.qty }} •
-                    Size: {{ order.product.size }} •
-                    {{ order.product.color }}
-                  </small>
-                </div>
-              </div>
-            </td>
-
+<!-- Product -->
+<td class="fw-semibold">
+  <span class="badge bg-secondary-subtle text-secondary">
+    {{ order.items.length }} Items
+  </span>
+</td>
             <!-- Date -->
             <td>{{ order.date }}</td>
 

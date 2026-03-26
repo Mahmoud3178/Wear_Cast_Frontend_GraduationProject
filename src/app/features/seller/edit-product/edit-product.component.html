@@ -1,0 +1,179 @@
+<div class="container mt-4">
+
+  <!-- 🔹 Title -->
+  <h3 class="fw-bold mb-4">Edit Product</h3>
+
+  <!-- 🔹 Step Navigation -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#step1">
+        Product Info
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#step2">
+        Colors & Images
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- ===================== -->
+    <!-- 🔹 STEP 1 -->
+    <!-- ===================== -->
+    <div class="tab-pane fade show active" id="step1">
+
+      <div class="card p-4 shadow-sm">
+
+        <!-- Product Name -->
+        <div class="mb-3">
+          <label class="form-label">Product Name</label>
+          <input type="text" class="form-control" value="T-Shirt Oversize">
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" rows="3">Cool cotton t-shirt</textarea>
+        </div>
+
+        <!-- Price -->
+        <div class="mb-3">
+          <label class="form-label">Price</label>
+          <input type="number" class="form-control" value="250">
+        </div>
+
+        <!-- Target Audience -->
+        <div class="mb-3">
+          <label class="form-label">Target Audience</label>
+          <select class="form-select">
+            <option>Men</option>
+            <option selected>Women</option>
+            <option>Kids</option>
+          </select>
+        </div>
+
+        <!-- Category -->
+        <div class="mb-3">
+          <label class="form-label">Category</label>
+          <select class="form-select">
+            <option>T-Shirts</option>
+            <option selected>Hoodies</option>
+            <option>Jeans</option>
+          </select>
+        </div>
+
+        <!-- Sizes Table -->
+        <label class="form-label fw-bold mt-3">Size Details</label>
+        <div class="table-responsive">
+          <table class="table table-bordered text-center align-middle">
+            <thead>
+              <tr>
+                <th>Size</th>
+                <th>A</th>
+                <th>B</th>
+                <th>C</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>S</td>
+                <td><input class="form-control" value="50"></td>
+                <td><input class="form-control" value="40"></td>
+                <td><input class="form-control" value="60"></td>
+              </tr>
+              <tr>
+                <td>M</td>
+                <td><input class="form-control" value="55"></td>
+                <td><input class="form-control" value="45"></td>
+                <td><input class="form-control" value="65"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Next -->
+        <div class="text-end">
+          <button class="btn btn-primary mt-3"
+                  data-bs-toggle="tab"
+                  data-bs-target="#step2">
+            Next
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===================== -->
+    <!-- 🔹 STEP 2 -->
+    <!-- ===================== -->
+    <div class="tab-pane fade" id="step2">
+
+      <div class="card p-4 shadow-sm">
+
+        <!-- Color Name -->
+        <div class="mb-3">
+          <label class="form-label">Color Name</label>
+          <input type="text" class="form-control" value="Red">
+        </div>
+
+        <!-- Color Code -->
+        <div class="mb-3">
+          <label class="form-label">Color Code</label>
+          <input type="color" class="form-control form-control-color" value="#ff0000">
+        </div>
+
+        <!-- Quantity per Size -->
+        <label class="form-label fw-bold">Quantity per Size</label>
+        <div class="row">
+          <div class="col-md-2">
+            <label>S</label>
+            <input type="number" class="form-control" value="10">
+          </div>
+          <div class="col-md-2">
+            <label>M</label>
+            <input type="number" class="form-control" value="15">
+          </div>
+        </div>
+
+        <!-- Main Image -->
+        <div class="mt-4">
+          <label class="form-label">Main Image</label>
+          <input type="file" class="form-control">
+
+          <!-- Preview -->
+          <img src="https://via.placeholder.com/150"
+               class="mt-2 rounded"
+               width="120">
+        </div>
+
+        <!-- Additional Images -->
+        <div class="mt-4">
+          <label class="form-label">Additional Images</label>
+          <input type="file" class="form-control" multiple>
+
+          <div class="d-flex gap-2 mt-2">
+            <img src="https://via.placeholder.com/100" width="80">
+            <img src="https://via.placeholder.com/100" width="80">
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-secondary"
+                  data-bs-toggle="tab"
+                  data-bs-target="#step1">
+            Back
+          </button>
+
+          <button class="btn btn-success">
+            Save Changes
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

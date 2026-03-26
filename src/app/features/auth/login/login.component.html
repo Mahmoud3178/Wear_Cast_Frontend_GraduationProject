@@ -1,1 +1,61 @@
-<p>login works!</p>
+<div class="vh-100 d-flex justify-content-center align-items-center bg-light">
+
+  <div class="card shadow-lg p-4" style="width: 350px; border-radius: 15px;">
+
+    <!-- 🔹 Title -->
+    <div class="text-center mb-4">
+      <h3 class="fw-bold">Welcome Back 👋</h3>
+      <p class="text-muted">Login to your account</p>
+    </div>
+
+    <!-- 🔹 Form -->
+    <form (ngSubmit)="login()">
+
+      <!-- Email -->
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email"
+               class="form-control"
+               placeholder="Enter your email"
+               [(ngModel)]="form.email"
+               name="email"
+               required>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password"
+               class="form-control"
+               placeholder="Enter your password"
+               [(ngModel)]="form.password"
+               name="password"
+               required>
+      </div>
+
+      <!-- Login Button -->
+      <button class="btn btn-dark w-100 mb-3">
+        Login
+      </button>
+
+    </form>
+
+    <!-- 🔹 Register Links -->
+    <div class="text-center">
+
+      <small>
+        Don't have an account?
+        <a routerLink="/register-customer" class="text-decoration-none">
+          Customer
+        </a>
+        |
+        <a routerLink="/register-seller" class="text-decoration-none">
+          Seller
+        </a>
+      </small>
+
+    </div>
+
+  </div>
+
+</div>

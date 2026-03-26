@@ -52,6 +52,12 @@ export const CUSTOMER_ROUTES: Routes = [
           import('./category/category.component')
             .then(m => m.CategoryComponent)
       },
+            {
+        path: 'register',
+        loadComponent: () =>
+          import('./register-customer/register-customer.component')
+            .then(m => m.RegisterCustomerComponent)
+      },
       {
         path: '',
         redirectTo: 'home',
