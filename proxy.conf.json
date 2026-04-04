@@ -1,0 +1,8 @@
+{
+  "/api": {
+    "target": "https://wear-cast.runasp.net",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "warn"
+  }
+}

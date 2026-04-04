@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-register-seller',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './register-seller.component.html'
 })
 export class RegisterSellerComponent {
@@ -45,9 +45,15 @@ export class RegisterSellerComponent {
       return;
     }
 
-    this.auth.registerSeller(this.form).subscribe(res => {
-      alert('Seller Registered Successfully');
-      this.router.navigate(['/login']);
+    this.auth.registerSeller(this.form).subscribe({
+      next: () => {
+        void this.router.navigate(['/confirm-email/seller'], {
+          queryParams: {
+            email: this.form.sellerManagerEmail.trim()
+          }
+        });
+      },
+      error: (e: Error) => alert(e.message || 'Registration failed')
     });
   }
 }

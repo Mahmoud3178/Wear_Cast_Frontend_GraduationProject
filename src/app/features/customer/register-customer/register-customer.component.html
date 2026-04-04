@@ -1,81 +1,84 @@
-<div class="container mt-5">
-  <div class="card shadow p-4">
-    <h3 class="text-center mb-4">Customer Register</h3>
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light py-5 px-3">
+  <div class="card shadow-lg border-0 w-100" style="max-width: 640px; border-radius: 16px;">
+    <div class="card-body p-4 p-md-5">
+      <h3 class="text-center fw-bold mb-2">Create account</h3>
+      <p class="text-center text-muted small mb-4">Join as a customer</p>
 
-    <form (ngSubmit)="register()">
-
-      <!-- Name -->
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label>First Name</label>
-          <input type="text" class="form-control" [(ngModel)]="form.firstName" name="firstName" required>
-        </div>
-
-        <div class="col-md-6 mb-3">
-          <label>Last Name</label>
-          <input type="text" class="form-control" [(ngModel)]="form.lastName" name="lastName" required>
-        </div>
+      <div *ngIf="errorMessage" class="alert alert-danger py-2 small mb-3" role="alert">
+        {{ errorMessage }}
       </div>
-
-      <!-- Email -->
-      <div class="mb-3">
-        <label>Email</label>
-        <input type="email" class="form-control" [(ngModel)]="form.email" name="email" required>
-      </div>
-
-      <!-- Phone -->
-      <div class="mb-3">
-        <label>Phone Number</label>
-        <input type="text" class="form-control" [(ngModel)]="form.phoneNumber" name="phoneNumber">
-      </div>
-
-      <!-- Password -->
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label>Password</label>
-          <input type="password" class="form-control" [(ngModel)]="form.password" name="password" required>
+      <form (ngSubmit)="register()">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">First name</label>
+            <input type="text" class="form-control" [(ngModel)]="form.firstName" name="firstName" required autocomplete="given-name">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Last name</label>
+            <input type="text" class="form-control" [(ngModel)]="form.lastName" name="lastName" required autocomplete="family-name">
+          </div>
         </div>
 
-        <div class="col-md-6 mb-3">
-          <label>Confirm Password</label>
-          <input type="password" class="form-control" [(ngModel)]="form.confirmPassword" name="confirmPassword" required>
-        </div>
-      </div>
-
-      <!-- Image -->
-      <div class="mb-3">
-        <label>Profile Image</label>
-        <input type="file" class="form-control" (change)="onFileChange($event)">
-      </div>
-
-      <!-- Address -->
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label>State</label>
-          <input type="text" class="form-control" [(ngModel)]="form.state" name="state">
+        <div class="mt-3">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" [(ngModel)]="form.email" name="email" required autocomplete="email">
         </div>
 
-        <div class="col-md-6 mb-3">
-          <label>City</label>
-          <input type="text" class="form-control" [(ngModel)]="form.city" name="city">
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-md-8 mb-3">
-          <label>Street</label>
-          <input type="text" class="form-control" [(ngModel)]="form.street" name="street">
+        <div class="mt-3">
+          <label class="form-label">Phone number</label>
+          <input type="tel" class="form-control" [(ngModel)]="form.phoneNumber" name="phoneNumber" required autocomplete="tel" placeholder="e.g. 01012345678">
+          <div class="form-text">Use a valid Egyptian mobile format (e.g. 01XXXXXXXXX).</div>
         </div>
 
-        <div class="col-md-4 mb-3">
-          <label>Building No.</label>
-          <input type="text" class="form-control" [(ngModel)]="form.buildingNumber" name="buildingNumber">
+        <div class="row g-3 mt-0">
+          <div class="col-md-6">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" [(ngModel)]="form.password" name="password" required autocomplete="new-password">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Confirm password</label>
+            <input type="password" class="form-control" [(ngModel)]="form.confirmPassword" name="confirmPassword" required autocomplete="new-password">
+          </div>
         </div>
-      </div>
 
-      <!-- Submit -->
-      <button class="btn btn-primary w-100">Register</button>
+        <div class="mt-3">
+          <label class="form-label">Profile image <span class="text-muted fw-normal">(optional)</span></label>
+          <input type="file" class="form-control" accept="image/*" (change)="onFileChange($event)">
+        </div>
 
-    </form>
+        <div class="row g-3 mt-2">
+          <div class="col-md-6">
+            <label class="form-label">State / Governorate</label>
+            <input type="text" class="form-control" [(ngModel)]="form.state" name="state" autocomplete="address-level1">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" [(ngModel)]="form.city" name="city" autocomplete="address-level2">
+          </div>
+        </div>
+
+        <div class="row g-3 mt-0">
+          <div class="col-md-8">
+            <label class="form-label">Street</label>
+            <input type="text" class="form-control" [(ngModel)]="form.street" name="street" autocomplete="street-address">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Building no.</label>
+            <input type="text" class="form-control" [(ngModel)]="form.buildingNumber" name="buildingNumber">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-dark w-100 mt-4 py-2" [disabled]="submitting">
+          {{ submitting ? 'Creating account…' : 'Register' }}
+        </button>
+      </form>
+
+      <p class="text-center text-muted small mt-4 mb-0">
+        Already have an account?
+        <a routerLink="/login" class="text-decoration-none fw-semibold">Sign in</a>
+        ·
+        <a routerLink="/confirm-email/customer" class="text-decoration-none fw-semibold">Have a code?</a>
+      </p>
+    </div>
   </div>
 </div>

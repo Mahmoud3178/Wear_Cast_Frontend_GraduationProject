@@ -1,0 +1,65 @@
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light py-5 px-3">
+  <div class="card shadow-lg border-0 w-100" style="max-width: 420px; border-radius: 16px;">
+    <div class="card-body p-4 p-md-5">
+      <h3 class="text-center fw-bold mb-2">Verify seller email</h3>
+      <p class="text-center text-muted small mb-4">
+        Use the <strong>seller manager</strong> email from your application and the code from WearCast.
+      </p>
+
+      <div *ngIf="errorMessage" class="alert alert-danger py-2 small" role="alert">
+        {{ errorMessage }}
+      </div>
+      <div *ngIf="successMessage" class="alert alert-success py-2 small" role="alert">
+        {{ successMessage }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Seller manager email</label>
+        <input
+          type="email"
+          class="form-control"
+          [(ngModel)]="email"
+          name="email"
+          placeholder="manager@yourbusiness.com"
+          autocomplete="email">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Verification code</label>
+        <input
+          type="text"
+          class="form-control form-control-lg text-center font-monospace"
+          style="letter-spacing: 0.35em;"
+          [ngModel]="code"
+          (ngModelChange)="onCodeInput($event)"
+          name="code"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="000000"
+          maxlength="8">
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-dark w-100 py-2 mb-2"
+        [disabled]="submitting"
+        (click)="confirm()">
+        {{ submitting ? 'Verifying…' : 'Confirm email' }}
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline-secondary w-100 btn-sm mb-3"
+        [disabled]="resendSubmitting || !email"
+        (click)="resend()">
+        {{ resendSubmitting ? 'Sending…' : 'Resend code' }}
+      </button>
+
+      <p class="text-center small text-muted mb-0">
+        <a routerLink="/login" class="text-decoration-none">Sign in</a>
+        ·
+        <a routerLink="/seller/register" class="text-decoration-none">Seller application</a>
+      </p>
+    </div>
+  </div>
+</div>

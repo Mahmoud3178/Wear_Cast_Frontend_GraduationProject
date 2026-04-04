@@ -11,6 +11,33 @@
     <!-- 🔹 Form -->
     <form (ngSubmit)="login()">
 
+      <div *ngIf="errorMessage" class="alert alert-danger py-2 small" role="alert">
+        {{ errorMessage }}
+      </div>
+
+      <div *ngIf="emailNotConfirmed" class="alert alert-light border py-2 small mb-3" role="status">
+        <p class="small text-muted mb-2">
+          Confirm your email with the code WearCast sent you, then try signing in again.
+        </p>
+        <a
+          class="btn btn-primary btn-sm w-100 mb-2"
+          [routerLink]="['/confirm-email/customer']"
+          [queryParams]="form.email ? { email: form.email } : {}">
+          Enter confirmation code
+        </a>
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm w-100"
+          [disabled]="resendSubmitting || !form.email"
+          (click)="resendConfirmation()">
+          {{ resendSubmitting ? 'Sending…' : 'Resend email' }}
+        </button>
+      </div>
+
+      <div *ngIf="resendInfoMessage" class="alert alert-info py-2 small mb-0" role="status">
+        {{ resendInfoMessage }}
+      </div>
+
       <!-- Email -->
       <div class="mb-3">
         <label class="form-label">Email</label>
@@ -34,8 +61,8 @@
       </div>
 
       <!-- Login Button -->
-      <button class="btn btn-dark w-100 mb-3">
-        Login
+      <button type="submit" class="btn btn-dark w-100 mb-3" [disabled]="submitting">
+        {{ submitting ? 'Signing in…' : 'Login' }}
       </button>
 
     </form>
@@ -45,14 +72,27 @@
 
       <small>
         Don't have an account?
-        <a routerLink="/register-customer" class="text-decoration-none">
+        <a routerLink="/customer/register" class="text-decoration-none">
           Customer
         </a>
         |
-        <a routerLink="/register-seller" class="text-decoration-none">
+        <a routerLink="/seller/register" class="text-decoration-none">
           Seller
         </a>
       </small>
+
+      <p class="text-center small mt-3 mb-0 text-muted">
+        <a
+          [routerLink]="['/confirm-email/customer']"
+          [queryParams]="form.email ? { email: form.email } : {}"
+          class="text-decoration-none">
+          Enter customer email code
+        </a>
+        <span class="mx-1">·</span>
+        <a routerLink="/confirm-email/seller" class="text-decoration-none">
+          Enter seller email code
+        </a>
+      </p>
 
     </div>
 

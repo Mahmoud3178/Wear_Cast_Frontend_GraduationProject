@@ -1,16 +1,19 @@
 import { Component } from '@angular/core';
+import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../../core/services/auth.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import {
+  AuthService,
+  pendingCustomerUserIdStorageKey
+} from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-register-customer',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NgIf, RouterLink],
   templateUrl: './register-customer.component.html'
 })
 export class RegisterCustomerComponent {
-
   form = {
     email: '',
     password: '',
@@ -25,21 +28,51 @@ export class RegisterCustomerComponent {
     buildingNumber: ''
   };
 
-  constructor(private auth: AuthService, private router: Router) {}
+  errorMessage = '';
+  submitting = false;
 
-  onFileChange(event: any) {
-    this.form.profileImage = event.target.files[0];
+  constructor(
+    private readonly auth: AuthService,
+    private readonly router: Router
+  ) {}
+
+  onFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    this.form.profileImage = file ?? null;
   }
 
-  register() {
+  register(): void {
+    this.errorMessage = '';
+
     if (this.form.password !== this.form.confirmPassword) {
-      alert('Passwords do not match');
+      this.errorMessage = 'Passwords do not match.';
       return;
     }
 
-    this.auth.registerCustomer(this.form).subscribe(res => {
-      alert('Registered Successfully');
-      this.router.navigate(['/login']);
+    this.submitting = true;
+    this.auth.registerCustomer(this.form).subscribe({
+      next: res => {
+        this.submitting = false;
+        this.auth.saveCustomerProfileFromRegister(this.form);
+        const email = this.form.email.trim();
+        if (res.userId && email) {
+          sessionStorage.setItem(
+            pendingCustomerUserIdStorageKey(email),
+            res.userId
+          );
+        }
+        void this.router.navigate(['/confirm-email/customer'], {
+          queryParams: {
+            email,
+            userId: res.userId ?? ''
+          }
+        });
+      },
+      error: (e: Error) => {
+        this.submitting = false;
+        this.errorMessage = e.message || 'Registration failed.';
+      }
     });
   }
 }

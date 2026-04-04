@@ -4,9 +4,19 @@
   <section class="profile-layout">
     <aside class="profile-sidebar">
       <div class="profile-user">
-        <div class="avatar-circle">S</div>
-        <h2>Sarah Mitchell</h2>
-        <p>sarah.mitchell&#64;email.com</p>
+        <ng-container *ngIf="profile as p; else guestSidebar">
+          <div class="avatar-circle">{{ avatarLetter }}</div>
+          <h2>{{ displayName }}</h2>
+          <p>{{ p.email || '—' }}</p>
+        </ng-container>
+        <ng-template #guestSidebar>
+          <div class="avatar-circle">?</div>
+          <h2>Your profile</h2>
+          <p class="small mb-0">
+            <a routerLink="/login" class="text-decoration-none">Sign in</a>
+            to load your account details.
+          </p>
+        </ng-template>
       </div>
 
       <nav class="profile-nav" aria-label="Account navigation">
@@ -25,20 +35,28 @@
           <h1>Personal Information</h1>
           <button class="primary-btn">Edit</button>
         </header>
-        <div class="card-body info-grid">
+        <div class="card-body info-grid" *ngIf="profile as p; else guestInfo">
           <div>
             <label>Full Name</label>
-            <p>Sarah Mitchell</p>
+            <p>{{ (p.firstName + ' ' + p.lastName).trim() || '—' }}</p>
           </div>
           <div>
             <label>Email Address</label>
-            <p>sarah.mitchell&#64;email.com</p>
+            <p>{{ p.email || '—' }}</p>
           </div>
           <div>
             <label>Phone Number</label>
-            <p>+1 (555) 123‑4567</p>
+            <p>{{ p.phoneNumber || '—' }}</p>
           </div>
         </div>
+        <ng-template #guestInfo>
+          <div class="card-body">
+            <p class="text-muted mb-2">No saved profile yet.</p>
+            <p class="small mb-0">
+              Register or sign in—your name, email, and phone from registration appear here.
+            </p>
+          </div>
+        </ng-template>
       </div>
 
       <div *ngIf="activeTab === 'addresses'" class="card">
@@ -47,16 +65,22 @@
           <button class="primary-btn">Add New Address</button>
         </header>
         <div class="card-body address-grid">
-          <article class="address-card">
-            <h2>Sarah Mitchell</h2>
-            <p>+1 (555) 123‑4567</p>
-            <p>123 Oak Street, Apt 4B<br>San Francisco, CA 94102</p>
+          <article class="address-card" *ngIf="profile as p">
+            <h2>{{ displayName }}</h2>
+            <p *ngIf="p.phoneNumber">{{ p.phoneNumber }}</p>
+            <p *ngIf="hasAddress">
+              <ng-container *ngIf="p.street || p.buildingNumber">
+                {{ p.street }}<ng-container *ngIf="p.street && p.buildingNumber">, </ng-container>{{ p.buildingNumber }}<br>
+              </ng-container>
+              <ng-container *ngIf="p.city || p.state">
+                {{ p.city }}<ng-container *ngIf="p.city && p.state">, </ng-container>{{ p.state }}
+              </ng-container>
+            </p>
+            <p *ngIf="!hasAddress" class="text-muted small">No address saved from registration yet.</p>
             <span class="badge">Default</span>
           </article>
-          <article class="address-card">
-            <h2>Sarah Mitchell</h2>
-            <p>+1 (555) 123‑4567</p>
-            <p>456 Pine Avenue<br>Berkeley, CA 94704</p>
+          <article class="address-card text-muted small" *ngIf="!profile">
+            Sign in to see your saved address from registration.
           </article>
         </div>
       </div>
