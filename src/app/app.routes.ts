@@ -39,6 +39,25 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'factory/login',
+    loadComponent: () =>
+      import('./features/factory/factory-login/factory-login.component').then(
+        m => m.FactoryLoginComponent
+      )
+  },
+  {
+    path: 'factory/register',
+    loadComponent: () =>
+      import('./features/factory/factory-register/factory-register.component').then(
+        m => m.FactoryRegisterComponent
+      )
+  },
+  {
+    path: 'factory',
+    loadChildren: () =>
+      import('./features/factory/factory.routes').then(m => m.FACTORY_ROUTES)
+  },
+  {
     path: '',
     redirectTo: 'customer',
     pathMatch: 'full'

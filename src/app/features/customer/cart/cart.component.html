@@ -2,77 +2,120 @@
 
 <main class="wc-page-cart">
   <section class="wc-cart-main">
-    <h1>Your cart</h1>
+    <header class="wc-cart-header">
+      <div>
+        <h1>Your cart</h1>
+        <p class="wc-cart-subtitle">Review items, update quantities, then checkout.</p>
+      </div>
+      <a class="wc-cart-continue" routerLink="/customer/home">← Continue shopping</a>
+    </header>
 
-    <div class="wc-cart-layout">
+    <!-- Loading State -->
+    <div class="wc-cart-loading" *ngIf="loading()">
+      <div class="wc-spinner"></div>
+      <p>Loading your cart…</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="wc-cart-error" *ngIf="!loading() && error()">
+      <p>⚠️ {{ error() }}</p>
+      <button type="button" class="wc-btn-retry" (click)="ngOnInit()">Retry</button>
+    </div>
+
+    <!-- Empty State -->
+    <div class="wc-cart-empty" *ngIf="!loading() && !error() && items().length === 0">
+      <div class="wc-empty-icon" aria-hidden="true">🛒</div>
+      <h2>Your cart is empty</h2>
+      <p>Looks like you haven't added anything yet.</p>
+      <a routerLink="/customer/home" class="wc-btn-primary wc-btn-empty-cta">Start shopping</a>
+    </div>
+
+    <!-- Main Cart Layout -->
+    <div class="wc-cart-layout" *ngIf="!loading() && !error() && items().length > 0">
       <div class="wc-cart-items">
-        <article class="cart-item" *ngFor="let i of [1,2,3]">
-          <div class="item-thumb"></div>
+        <article class="cart-item" *ngFor="let item of items()">
+          <!-- Thumbnail -->
+          <div class="item-thumb" [class.item-thumb--design]="item.type === 'design'">
+            <img
+              *ngIf="item.imageUrl"
+              [src]="item.imageUrl"
+              [alt]="item.name"
+              class="item-thumb-img"
+            />
+          </div>
+
+          <!-- Info -->
           <div class="item-info">
-            <h2>Gradient Graphic T‑shirt</h2>
-            <p class="meta">Size: Large · Color: White</p>
-            <p class="price">$145</p>
-            <div class="size-rows">
-              <div class="size-row">
-                <span>S</span>
-                <div class="row-qty">
-                  <button>-</button>
-                  <span>0</span>
-                  <button>+</button>
-                </div>
+            <div class="item-top">
+              <div>
+                <h2>{{ item.name }}</h2>
+                <p class="meta">{{ item.meta }}</p>
+                <span class="item-type-badge" [class.item-type-badge--design]="item.type === 'design'">
+                  {{ item.type === 'design' ? '✏️ Custom Design' : '🏷️ Fixed Product' }}
+                </span>
               </div>
-              <div class="size-row">
-                <span>M</span>
-                <div class="row-qty">
-                  <button>-</button>
-                  <span>1</span>
-                  <button>+</button>
-                </div>
-              </div>
-              <div class="size-row">
-                <span>L</span>
-                <div class="row-qty">
-                  <button>-</button>
-                  <span>0</span>
-                  <button>+</button>
-                </div>
-              </div>
+              <button
+                type="button"
+                class="item-remove"
+                aria-label="Remove item"
+                (click)="removeItem(item)"
+              >Remove</button>
+            </div>
+
+            <div class="item-pricing">
+              <p class="price">{{ item.price | currency:'EGP':'symbol':'1.0-0' }}</p>
+              <p class="unit">per item</p>
             </div>
           </div>
-          <div class="item-qty">
-            <button>-</button>
-            <span>1</span>
-            <button>+</button>
+
+          <!-- Quantity -->
+          <div class="item-qty" aria-label="Quantity">
+            <button
+              type="button"
+              aria-label="Decrease quantity"
+              (click)="decreaseQty(item)"
+            >−</button>
+            <span class="qty-value">{{ item.quantity }}</span>
+            <button
+              type="button"
+              aria-label="Increase quantity"
+              (click)="increaseQty(item)"
+            >+</button>
           </div>
         </article>
       </div>
 
+      <!-- Order Summary -->
       <aside class="wc-cart-summary">
         <h2>Order summary</h2>
         <dl>
           <div class="row">
-            <dt>Subtotal</dt>
-            <dd>$1515</dd>
+            <dt>Subtotal ({{ items().length }} items)</dt>
+            <dd>{{ subtotal() | currency:'EGP':'symbol':'1.0-0' }}</dd>
           </div>
           <div class="row">
-            <dt>Discount</dt>
-            <dd class="negative">- $303</dd>
+            <dt>Discount (20%)</dt>
+            <dd class="negative">− {{ discount() | currency:'EGP':'symbol':'1.0-0' }}</dd>
           </div>
           <div class="row">
             <dt>Delivery fee</dt>
-            <dd>$15</dd>
+            <dd>{{ DELIVERY_FEE | currency:'EGP':'symbol':'1.0-0' }}</dd>
           </div>
           <div class="row total">
             <dt>Total</dt>
-            <dd>$1227</dd>
+            <dd>{{ total() | currency:'EGP':'symbol':'1.0-0' }}</dd>
           </div>
         </dl>
 
-        <button type="button" class="wc-btn-primary" routerLink="/customer/checkout">Go to checkout</button>
+        <div class="wc-summary-actions">
+          <button type="button" class="wc-btn-primary" routerLink="/customer/checkout">
+            Go to checkout →
+          </button>
+          <p class="wc-summary-note">Taxes and shipping calculated at checkout.</p>
+        </div>
       </aside>
     </div>
   </section>
 
   <app-customer-footer></app-customer-footer>
 </main>
-

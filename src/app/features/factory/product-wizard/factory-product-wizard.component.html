@@ -1,0 +1,177 @@
+<div class="container py-4 pb-5">
+  <a routerLink="/factory/products" class="small text-decoration-none d-inline-flex align-items-center gap-1 text-secondary mb-3">
+    <i class="bi bi-arrow-left"></i> Products
+  </a>
+  <h1 class="wc-factory-page-title h3 fw-bold mb-2">
+    {{ isEditMode ? 'Edit designed product' : 'New designed product' }}
+  </h1>
+  <p class="text-muted small mb-4 wc-wizard-lead" *ngIf="!isEditMode">
+    Creates a <strong>designed</strong> product template: factory sets base photos for front / back / right / left per color, and size measurements (a, b, c).
+    Customers use these in the design studio.
+  </p>
+  <p class="text-muted small mb-4 wc-wizard-lead" *ngIf="isEditMode">
+    Base product fields are read-only here. Add more <strong>colors</strong>, upload <strong>photos</strong> per color, and add <strong>sizes</strong> using the sections below.
+  </p>
+
+  <div *ngIf="error" class="alert alert-danger py-2 small">{{ error }}</div>
+  <div *ngIf="message" class="alert alert-success py-2 small">{{ message }}</div>
+
+  <section class="card wc-factory-card border-0 mb-4">
+    <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+      <span class="badge rounded-pill bg-dark">1</span> Base product
+    </div>
+    <div class="card-body row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Name</label>
+        <input class="form-control" [(ngModel)]="createForm.name" name="pname" required placeholder="e.g. Summer tee" [readonly]="isEditMode">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Category</label>
+        <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat" [disabled]="isEditMode">
+          <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">
+            {{ c.name ?? c.Name ?? 'Category' }}
+          </option>
+        </select>
+        <div class="form-text">Loaded from the server. New categories are added by an admin.</div>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Target audience</label>
+        <div class="d-flex flex-wrap gap-3 wc-audience-check">
+          <div *ngFor="let o of targetAudienceOptions" class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              [id]="'aud-' + o.value"
+              [checked]="isAudienceSelected(o.value)"
+              (change)="toggleAudience(o.value)"
+              [disabled]="isEditMode"
+            />
+            <label class="form-check-label" [for]="'aud-' + o.value">{{ o.label }}</label>
+          </div>
+        </div>
+        <div class="form-text">At least one required (API does not accept audience code 0).</div>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" rows="2" [(ngModel)]="createForm.description" name="pdesc" placeholder="Short description for the catalog" [readonly]="isEditMode"></textarea>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Price</label>
+        <input type="number" class="form-control" [(ngModel)]="createForm.price" name="price" step="0.01" min="0" [readonly]="isEditMode">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Canvas width (px)</label>
+        <input type="number" class="form-control" [(ngModel)]="createForm.canvasWidth" name="cw" min="1" [readonly]="isEditMode">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Canvas height (px)</label>
+        <input type="number" class="form-control" [(ngModel)]="createForm.canvasHeight" name="ch" min="1" [readonly]="isEditMode">
+      </div>
+      <div class="col-12 pt-1">
+        <button
+          *ngIf="!isEditMode"
+          type="button"
+          class="btn btn-dark px-4"
+          [disabled]="busy"
+          (click)="createProduct()"
+        >
+          <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          Create product
+        </button>
+        <span *ngIf="productId != null" class="ms-2 small text-muted">Product id: <code>{{ productId }}</code></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card wc-factory-card border-0 mb-4">
+    <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+      <span class="badge rounded-pill bg-secondary">2</span> Color (repeat for more colors)
+    </div>
+    <div class="card-body row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Color name</label>
+        <input class="form-control" [(ngModel)]="colorForm.name" name="cname">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Hex</label>
+        <input class="form-control" [(ngModel)]="colorForm.hexCode" name="hex" placeholder="#000000">
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button type="button" class="btn btn-primary" [disabled]="busy || productId == null" (click)="addColor()">
+          Add color
+        </button>
+      </div>
+      <p *ngIf="colorId != null" class="small text-muted mb-0">Current color id: <code>{{ colorId }}</code></p>
+    </div>
+  </section>
+
+  <section class="card wc-factory-card border-0 mb-4">
+    <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+      <span class="badge rounded-pill bg-secondary">3</span> Base photos (this color)
+    </div>
+    <div class="card-body row g-3">
+      <div class="col-6 col-md-3">
+        <label class="form-label small">Front</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickFile('front', $event)">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small">Back</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickFile('back', $event)">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small">Right</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickFile('right', $event)">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small">Left</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickFile('left', $event)">
+      </div>
+      <div class="col-12">
+        <button type="button" class="btn btn-primary" [disabled]="busy || colorId == null" (click)="uploadViews()">
+          Upload selected images
+        </button>
+        <p class="small text-muted mb-0 mt-2">Upload all four sides for a complete set, or any subset to add or replace views.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card wc-factory-card border-0 mb-4">
+    <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+      <span class="badge rounded-pill bg-secondary">4</span> Sizes (API <code>Size</code> as string + a/b/c)
+    </div>
+    <div class="card-body row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Size</label>
+        <select class="form-select" [(ngModel)]="sizeForm.size" name="sz">
+          <option *ngFor="let s of sizeOptions" [ngValue]="s.value">
+            {{ s.label }} — {{ s.value }}
+          </option>
+        </select>
+        <div class="form-text">Sent as enum string (e.g. <code>_M</code>), not numeric values.</div>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">A</label>
+        <input type="number" class="form-control" [(ngModel)]="sizeForm.a" name="a" step="0.01">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">B</label>
+        <input type="number" class="form-control" [(ngModel)]="sizeForm.b" name="b" step="0.01">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">C</label>
+        <input type="number" class="form-control" [(ngModel)]="sizeForm.c" name="c" step="0.01">
+      </div>
+      <div class="col-md-4">
+        <button type="button" class="btn btn-outline-dark" [disabled]="busy || productId == null" (click)="addSize()">
+          Add size row
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <p class="small text-muted">
+    After upload, open the customer <a routerLink="/customer/design" class="text-decoration-none">design</a> page (signed in) or use a share link from <a routerLink="/factory/products" class="text-decoration-none">Products</a>.
+  </p>
+</div>

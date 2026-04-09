@@ -1,0 +1,47 @@
+<div class="container py-5">
+  <div class="wc-factory-hero p-4 p-md-5 mb-4">
+    <h1 class="wc-factory-page-title h3 fw-bold mb-2">Factory dashboard</h1>
+    <p class="text-muted mb-3 mb-md-4">
+      Manage designed products (templates for the customer design studio): base photos per view, colors, and size measurements.
+    </p>
+    <p *ngIf="factoryId != null" class="small text-muted mb-0">
+      Factory ID: <code class="user-select-all">{{ factoryId }}</code>
+    </p>
+    <p *ngIf="factoryId == null" class="alert alert-warning py-2 small mb-0">
+      No factory id on this account. Ask the API team to include <code>factoryId</code> in login or JWT so product creation can run.
+    </p>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <a routerLink="/factory/products/new" class="card wc-factory-dash-tile h-100 text-decoration-none text-body">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-start gap-3">
+            <span class="rounded-circle bg-dark text-white d-inline-flex align-items-center justify-content-center" style="width:2.5rem;height:2.5rem;">
+              <i class="bi bi-plus-lg"></i>
+            </span>
+            <div>
+              <h2 class="h5 fw-semibold mb-1">Create product</h2>
+              <p class="small text-muted mb-0">Set canvas size, price, audiences, then add colors, four view images, and sizes.</p>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-6">
+      <a routerLink="/factory/products" class="card wc-factory-dash-tile h-100 text-decoration-none text-body">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-start gap-3">
+            <span class="rounded-circle bg-secondary bg-opacity-10 text-dark d-inline-flex align-items-center justify-content-center" style="width:2.5rem;height:2.5rem;">
+              <i class="bi bi-grid-3x3-gap"></i>
+            </span>
+            <div>
+              <h2 class="h5 fw-semibold mb-1">Designed products</h2>
+              <p class="small text-muted mb-0">Product IDs for the design studio and share links for customers.</p>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>

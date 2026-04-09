@@ -1,0 +1,48 @@
+import { Routes } from '@angular/router';
+import { factoryRoleGuard } from '../../core/guards/factory-role.guard';
+
+export const FACTORY_ROUTES: Routes = [
+  {
+    path: '',
+    loadComponent: () =>
+      import('./layout/factory-layout/factory-layout.component').then(
+        m => m.FactoryLayoutComponent
+      ),
+    canActivate: [factoryRoleGuard],
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'dashboard'
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./dashboard/factory-dashboard.component').then(
+            m => m.FactoryDashboardComponent
+          )
+      },
+      {
+        path: 'products',
+        loadComponent: () =>
+          import('./products/factory-products.component').then(
+            m => m.FactoryProductsComponent
+          )
+      },
+      {
+        path: 'products/new',
+        loadComponent: () =>
+          import('./product-wizard/factory-product-wizard.component').then(
+            m => m.FactoryProductWizardComponent
+          )
+      },
+      {
+        path: 'products/:productId/edit',
+        loadComponent: () =>
+          import('./product-wizard/factory-product-wizard.component').then(
+            m => m.FactoryProductWizardComponent
+          )
+      }
+    ]
+  }
+];

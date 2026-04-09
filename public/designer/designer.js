@@ -1,8 +1,13 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'wearcast_designs';
+  const LEGACY_DESIGNS_KEY = 'wearcast_designs';
   const COLORS = ['purple', 'pink', 'lightpink', 'lightgray', 'black', 'darkgray', 'white', 'darkblue'];
+
+  function getDesignsStorageKey() {
+    var k = typeof window !== 'undefined' ? window.__WEARCAST_DESIGNS_STORAGE_KEY__ : '';
+    return typeof k === 'string' && k.length ? k : LEGACY_DESIGNS_KEY;
+  }
 
   // Product images: use files in assets/ (e.g. hoodie-front.png or hoodie-front.jpg)
   var ASSETS = {
@@ -21,6 +26,61 @@
     cap: { front: 'assets/cap-front.webp', back: 'assets/cap-back.webp', right: 'assets/cap-right.webp', left: 'assets/cap-left.webp' }
   };
 
+  /** Default copy for built-in templates when opening Product details */
+  var STATIC_PRODUCT_DETAILS = {
+    hoodie: {
+      title: "Women's Hoodie",
+      description: 'This plush pullover is perfect for the gym, errands or kicking around the house. The midweight fabric makes for a versatile under, over or solo layer. A staple in casual comfort, this classic style is a must-own.',
+      bullets: [
+        '50% cotton / 50% polyester · Fabric weight: 8 oz (midweight)',
+        'Soft, plush inside with adjustable drawstring hood',
+        'Ribbed cuffs and waist for a secure fit',
+        'Item runs big – ordering a size down is recommended',
+        'Imported; printed in the U.S.A. with sustainably sourced cotton'
+      ],
+      sizeSub: 'Available sizes: S, M, L, XL, 2XL · Fit: Loose fit',
+      sizeRows: [
+        { label: 'S', a: 26.5, b: 20, c: 24.49 },
+        { label: 'M', a: 27.44, b: 21.5, c: 24.72 },
+        { label: 'L', a: 27.95, b: 22.99, c: 25 },
+        { label: 'XL', a: 30.43, b: 25.47, c: 25.24 },
+        { label: '2XL', a: 30.94, b: 27.99, c: 25.47 }
+      ],
+      showPill: true,
+      showRating: true
+    },
+    tshirt: {
+      title: 'Unisex T-Shirt',
+      description: 'A comfortable everyday tee made for custom prints. Check the size table and compare with a shirt you already own.',
+      bullets: [
+        'Soft fabric · Machine washable',
+        'Crew neck · Unisex fit',
+        'Optimized for digital direct printing'
+      ],
+      sizeSub: 'Available sizes: S, M, L, XL, 2XL · Use measurements below (inches)',
+      sizeRows: [
+        { label: 'S', a: 26.5, b: 20, c: 24.49 },
+        { label: 'M', a: 27.44, b: 21.5, c: 24.72 },
+        { label: 'L', a: 27.95, b: 22.99, c: 25 },
+        { label: 'XL', a: 30.43, b: 25.47, c: 25.24 },
+        { label: '2XL', a: 30.94, b: 27.99, c: 25.47 }
+      ],
+      showPill: false,
+      showRating: true
+    },
+    cap: {
+      title: 'Cap',
+      description: 'Classic cap profile for embroidery and print. One size with adjustable closure.',
+      bullets: ['Structured panels', 'Adjustable strap', 'Designed for front-panel decoration'],
+      sizeSub: 'One size · Dimensions vary by style',
+      sizeRows: [
+        { label: 'OSFA', a: 22, b: 7.5, c: 10 }
+      ],
+      showPill: false,
+      showRating: true
+    }
+  };
+
   function placeholder(base, color, view, product) {
     var c = {
       black: '1a1a1a', white: 'f5f5f5', purple: '6b21a8', pink: 'ec4899',
@@ -36,68 +96,19 @@
     return views[view] || views.front;
   }
 
-  var PRODUCTS = {
-    hoodie: {
-      title: "Women's Hoodie",
-      width: 400,
-      height: 480,
-      images: function () {
-        var o = {};
-        COLORS.forEach(function (color) {
-          o[color] = {
-            front: getProductImageUrl('hoodie', 'front'),
-            back: getProductImageUrl('hoodie', 'back'),
-            right: getProductImageUrl('hoodie', 'right'),
-            left: getProductImageUrl('hoodie', 'left')
-          };
-        });
-        return o;
-      }
-    },
-    tshirt: {
-      title: "Unisex T-Shirt",
-      width: 400,
-      height: 480,
-      images: function () {
-        var o = {};
-        COLORS.forEach(function (color) {
-          o[color] = {
-            front: getProductImageUrl('tshirt', 'front'),
-            back: getProductImageUrl('tshirt', 'back'),
-            right: getProductImageUrl('tshirt', 'right'),
-            left: getProductImageUrl('tshirt', 'left')
-          };
-        });
-        return o;
-      }
-    },
-    cap: {
-      title: "Cap",
-      width: 400,
-      height: 400,
-      images: function () {
-        var o = {};
-        COLORS.forEach(function (color) {
-          o[color] = {
-            front: getProductImageUrl('cap', 'front'),
-            back: getProductImageUrl('cap', 'back'),
-            right: getProductImageUrl('cap', 'right'),
-            left: getProductImageUrl('cap', 'left')
-          };
-        });
-        return o;
-      }
-    }
-  };
+  // Dynamic catalog products only (loaded from Angular bootstrap).
+  var PRODUCTS = {};
 
-  var productImage, productStage, productTitleEl, uploadInput, textModal, textInput, textCancel, textAdd;
+  var productImage, productStage, productTitleEl, productPriceEl, uploadInput, textModal, textInput, textCancel, textAdd;
   var colorNameEl, colorSwatches, textOptionsPanel, textFontSelect, textColorInput, textColorHex, textBendSlider, textBendValue;
   var saveModal, saveNameInput, saveCancel, saveConfirm, loadModal, savedListEl, loadCloseBtn;
   var productDetailsModal, productDetailsOpenBtn, productDetailsCloseBtn;
+  var productsModal, productsModalClose;
+  var sizeQtyModal, sizeQtyRowsEl, sizeQtyModalClose, sizeQtyModalCancel, sizeQtyModalConfirm;
   var designsPanel, designCategorySelect, designSearchInput, designTagsEl, designGridEl;
 
   let canvas;
-  let currentProduct = 'hoodie';
+  let currentProduct = '';
   let currentColor = 'black';
   let currentView = 'front';
   let undoStack = [];
@@ -122,12 +133,130 @@
   ];
 
   function getStageDimensions() {
-    const p = PRODUCTS[currentProduct];
-    return { width: p.width, height: p.height };
+    var p = PRODUCTS[currentProduct];
+    if (!p) return { width: 400, height: 480 };
+    return { width: p.width || 400, height: p.height || 480 };
+  }
+
+  function formatPrice(n) {
+    if (typeof n !== 'number' || !isFinite(n)) return '';
+    try {
+      return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n);
+    } catch (e) {
+      return '$' + n.toFixed(2);
+    }
+  }
+
+  function syncColorNameLabel() {
+    var p = PRODUCTS[currentProduct];
+    var cat = p && p.wearcastCatalog;
+    var label = currentColor;
+    if (cat && cat.colorLabelBySlug && cat.colorLabelBySlug[currentColor]) {
+      label = cat.colorLabelBySlug[currentColor];
+    }
+    if (colorNameEl) colorNameEl.textContent = label;
+  }
+
+  function syncProductChrome() {
+    var p = PRODUCTS[currentProduct];
+    if (!p) {
+      if (productTitleEl) productTitleEl.textContent = '';
+      if (productPriceEl) {
+        productPriceEl.textContent = '';
+        productPriceEl.hidden = true;
+      }
+      return;
+    }
+    if (productTitleEl) productTitleEl.textContent = p.title || '';
+    if (productPriceEl) {
+      if (typeof p.price === 'number' && isFinite(p.price)) {
+        productPriceEl.textContent = formatPrice(p.price);
+        productPriceEl.hidden = false;
+      } else {
+        productPriceEl.textContent = '';
+        productPriceEl.hidden = true;
+      }
+    }
+    syncColorNameLabel();
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function sizeRowsToHtml(rows) {
+    return rows.map(function (r) {
+      return '<tr><td>' + escHtml(r.label) + '</td><td>' + escHtml(String(r.a)) + '</td><td>' +
+        escHtml(String(r.b)) + '</td><td>' + escHtml(String(r.c)) + '</td></tr>';
+    }).join('');
+  }
+
+  function setPdCategoryImage(url, altText) {
+    var imgEl = document.getElementById('pd-category-image');
+    if (!imgEl) return;
+    if (url) {
+      imgEl.src = url;
+      imgEl.alt = altText || 'Category';
+      imgEl.hidden = false;
+    } else {
+      imgEl.removeAttribute('src');
+      imgEl.alt = '';
+      imgEl.hidden = true;
+    }
+  }
+
+  function populateProductDetailsModal() {
+    var p = PRODUCTS[currentProduct];
+    var titleEl = document.getElementById('pd-title');
+    var descEl = document.getElementById('pd-description');
+    var bulletsEl = document.getElementById('pd-bullets');
+    var pillEl = document.getElementById('pd-pill');
+    var ratingEl = document.getElementById('pd-rating');
+    var subEl = document.getElementById('pd-size-sub');
+    var tbodyEl = document.getElementById('pd-size-tbody');
+    var isCatalog = p && p.wearcastCatalog;
+    if (isCatalog) {
+      if (titleEl) titleEl.textContent = p.title || '';
+      if (descEl) descEl.textContent = p.description || 'No description provided.';
+      if (bulletsEl) {
+        bulletsEl.innerHTML = '';
+        bulletsEl.style.display = 'none';
+      }
+      if (pillEl) pillEl.style.display = 'none';
+      if (ratingEl) ratingEl.style.display = 'none';
+      if (p.sizes && p.sizes.length && tbodyEl) {
+        tbodyEl.innerHTML = sizeRowsToHtml(p.sizes);
+        var labels = p.sizes.map(function (s) { return s.label; }).join(', ');
+        if (subEl) subEl.textContent = 'Available sizes: ' + labels + ' · Measurements in inches.';
+      } else {
+        if (tbodyEl) tbodyEl.innerHTML = '';
+        if (subEl) subEl.textContent = 'No size chart has been added for this product yet.';
+      }
+      setPdCategoryImage(p.categoryImageUrl || '', p.categoryName || p.title || 'Category');
+      return;
+    }
+    var st = STATIC_PRODUCT_DETAILS[currentProduct] || STATIC_PRODUCT_DETAILS.hoodie;
+    if (titleEl) titleEl.textContent = st.title;
+    if (descEl) descEl.textContent = st.description;
+    if (bulletsEl) {
+      bulletsEl.style.display = '';
+      bulletsEl.innerHTML = st.bullets.map(function (b) { return '<li>' + escHtml(b) + '</li>'; }).join('');
+    }
+    if (pillEl) pillEl.style.display = st.showPill ? '' : 'none';
+    if (ratingEl) ratingEl.style.display = st.showRating ? '' : 'none';
+    if (subEl) subEl.textContent = st.sizeSub;
+    if (tbodyEl) tbodyEl.innerHTML = sizeRowsToHtml(st.sizeRows);
+    setPdCategoryImage('', '');
   }
 
   function getProductImages() {
-    const imgs = PRODUCTS[currentProduct].images;
+    var prod = PRODUCTS[currentProduct];
+    if (!prod || !prod.images) return {};
+    const imgs = prod.images;
     return typeof imgs === 'function' ? imgs() : imgs;
   }
 
@@ -584,8 +713,18 @@
 
   function getSavedDesigns() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
+      var key = getDesignsStorageKey();
+      var raw = localStorage.getItem(key);
+      if (raw) {
+        return JSON.parse(raw);
+      }
+      if (key === 'wearcast_designs:guest' || key === LEGACY_DESIGNS_KEY) {
+        var legacy = localStorage.getItem(LEGACY_DESIGNS_KEY);
+        if (legacy) {
+          return JSON.parse(legacy);
+        }
+      }
+      return [];
     } catch (e) {
       return [];
     }
@@ -593,11 +732,26 @@
 
   function setProductImage() {
     var imgs = getProductImages();
-    if (imgs && imgs[currentColor]) {
-      var src = imgs[currentColor][currentView];
-      if (src) {
-        productImage.src = src;
+    if (!productImage) return;
+    if (!(imgs && imgs[currentColor])) {
+      productImage.removeAttribute('src');
+      return;
+    }
+    var row = imgs[currentColor];
+    var src = row[currentView];
+    if (!src) {
+      var i;
+      for (i = 0; i < VIEW_KEYS.length; i++) {
+        if (row[VIEW_KEYS[i]]) {
+          src = row[VIEW_KEYS[i]];
+          break;
+        }
       }
+    }
+    if (src) {
+      productImage.src = src;
+    } else {
+      productImage.removeAttribute('src');
     }
   }
 
@@ -606,13 +760,29 @@
     saveCurrentViewToStore();
     currentProduct = productKey;
     var p = PRODUCTS[currentProduct];
-    productTitleEl.textContent = p.title;
+    syncProductChrome();
     document.querySelectorAll('.product-card').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-product') === currentProduct);
     });
     resizeStageAndCanvas();
     loadViewFromStore(currentView);
-    setProductImage();
+
+    // Guaranteed redraw of colors and photo
+    rebuildColorSwatchesForProduct(productKey);
+    var imgsP = typeof p.images === 'function' ? p.images() : (p.images || {});
+    var ck = Object.keys(imgsP).find(function (c) {
+      var r = imgsP[c];
+      return r && (r.front || r.back || r.right || r.left);
+    });
+
+    // Fallback to the first color slug if no images were matched
+    ck = ck || Object.keys(imgsP)[0];
+
+    if (ck) {
+      setColor(ck);
+    } else {
+      setProductImage(); // Update at least to clear old photo
+    }
   }
 
   function setView(viewKey) {
@@ -627,9 +797,11 @@
   }
 
   function setColor(colorKey) {
-    if (COLORS.indexOf(colorKey) === -1) return;
+    var imgs = getProductImages();
+    var hasSlot = imgs && imgs[colorKey];
+    if (!hasSlot && COLORS.indexOf(colorKey) === -1) return;
     currentColor = colorKey;
-    if (colorNameEl) colorNameEl.textContent = colorKey;
+    syncColorNameLabel();
     document.querySelectorAll('.color-swatch').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-color') === currentColor);
     });
@@ -637,7 +809,12 @@
   }
 
   function setDesignState(state) {
-    currentProduct = state.productType || 'hoodie';
+    var firstKey = Object.keys(PRODUCTS)[0] || '';
+    currentProduct = state.productType || firstKey;
+    if (!PRODUCTS[currentProduct]) {
+      currentProduct = firstKey;
+    }
+    if (!currentProduct) return;
     currentColor = state.productColor || 'black';
     currentView = state.view || 'front';
     if (state.viewDesigns) {
@@ -646,7 +823,7 @@
       viewDesigns[currentProduct] = { front: state.canvasJson, back: null, right: null, left: null };
     }
     var p = PRODUCTS[currentProduct];
-    productTitleEl.textContent = p.title;
+    syncProductChrome();
     document.querySelectorAll('.product-card').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-product') === currentProduct);
     });
@@ -663,7 +840,63 @@
     updateUndoRedoButtons();
   }
 
-  function saveDesignToList(name) {
+  function firstCatalogImageUrl(imgs) {
+    var cols = Object.keys(imgs);
+    for (var i = 0; i < cols.length; i++) {
+      var row = imgs[cols[i]];
+      if (!row || typeof row !== 'object') continue;
+      for (var j = 0; j < VIEW_KEYS.length; j++) {
+        var url = row[VIEW_KEYS[j]];
+        if (url) return url;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Factory catalog templates: POST design to API when logged in.
+   * Built-in templates (hoodie/tshirt/cap): localStorage only.
+   */
+  function saveDesign(name) {
+    saveCurrentViewToStore();
+    var p = PRODUCTS[currentProduct];
+    var cat = p && p.wearcastCatalog;
+    var fn = window.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
+    var vd = viewDesigns[currentProduct];
+    if (cat && typeof fn === 'function') {
+      var colorId = cat.colorIdsBySlug && cat.colorIdsBySlug[currentColor];
+      if (!colorId) {
+        alert('Could not match this color to the catalog. Pick another swatch or reload the design page.');
+        return;
+      }
+      if (saveConfirm) saveConfirm.disabled = true;
+      fn({
+        productId: cat.designedProductId,
+        productColorId: colorId,
+        viewDesignsJson: JSON.stringify(vd || {})
+      }).then(function () {
+        if (saveModal) saveModal.classList.add('hidden');
+        saveDesignToList(name, {
+          silent: true,
+          skipModalClose: true,
+          savedToAccount: true
+        });
+        alert('Design saved to your WearCast account. It is listed under My saved designs on this device.');
+      }).catch(function (err) {
+        var msg = (err && err.message) ? err.message : String(err);
+        if (window.confirm('Could not save to the server (' + msg + '). Save on this device only?')) {
+          saveDesignToList(name);
+        }
+      }).finally(function () {
+        if (saveConfirm) saveConfirm.disabled = false;
+      });
+      return;
+    }
+    saveDesignToList(name);
+  }
+
+  function saveDesignToList(name, opts) {
+    opts = opts || {};
     var list = getSavedDesigns();
     var id = 'id_' + Date.now();
     var state = getDesignState(false);
@@ -671,13 +904,16 @@
       id: id,
       name: name || 'Untitled design',
       createdAt: new Date().toISOString(),
-      state: state
+      state: state,
+      savedToAccount: !!opts.savedToAccount
     };
     try {
       list.push(item);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-      saveModal.classList.add('hidden');
-      alert('Design saved! Open "My saved designs" to see it.');
+      localStorage.setItem(getDesignsStorageKey(), JSON.stringify(list));
+      if (!opts.skipModalClose && saveModal) saveModal.classList.add('hidden');
+      if (!opts.silent) {
+        alert('Design saved! Open "My saved designs" to see it.');
+      }
     } catch (err) {
       if (err && err.name === 'QuotaExceededError') {
         list.pop();
@@ -685,12 +921,14 @@
         item.state = state;
         list.push(item);
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-          saveModal.classList.add('hidden');
-          alert('Design saved with reduced image quality (to fit storage). Open "My saved designs" to see it.');
+          localStorage.setItem(getDesignsStorageKey(), JSON.stringify(list));
+          if (!opts.skipModalClose && saveModal) saveModal.classList.add('hidden');
+          if (!opts.silent) {
+            alert('Design saved with reduced image quality (to fit storage). Open "My saved designs" to see it.');
+          }
         } catch (err2) {
           list.pop();
-          saveModal.classList.remove('hidden');
+          if (saveModal) saveModal.classList.remove('hidden');
           alert('Storage is full. Delete some saved designs from "My saved designs", or remove uploaded images from this design, then try again.');
         }
       } else {
@@ -712,7 +950,7 @@
   function deleteDesignById(id, e) {
     e.stopPropagation();
     const list = getSavedDesigns().filter(function (d) { return d.id !== id; });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    localStorage.setItem(getDesignsStorageKey(), JSON.stringify(list));
     renderSavedList();
   }
 
@@ -755,10 +993,324 @@
     loadModal.classList.remove('hidden');
   }
 
+  /**
+   * Maps a size label to the same integer the cart API expects (see CartComponent.sizeToEnum):
+   * XS=0, S=1, M=2, L=3, XL=4, XXL=5. Not the factory product wizard enum (10 values).
+   */
+  function sizeLabelToEnumIndex(label) {
+    var t = String(label || '')
+      .trim()
+      .toUpperCase()
+      .replace(/^_+/, '')
+      .replace(/\s+/g, '');
+    var map = {
+      '2XS': 0,
+      XXS: 0,
+      XS: 0,
+      S: 1,
+      M: 2,
+      L: 3,
+      XL: 4,
+      '2XL': 5,
+      XXL: 5,
+      '3XL': 5,
+      '4XL': 5,
+      '5XL': 5,
+      OSFA: 2,
+      OS: 2,
+      'ONE-SIZE': 2,
+      ONESIZE: 2
+    };
+    return Object.prototype.hasOwnProperty.call(map, t) ? map[t] : -1;
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function getSizesForCurrentProduct() {
+    var p = PRODUCTS[currentProduct];
+    if (p && p.sizes && p.sizes.length) {
+      return p.sizes;
+    }
+    if (STATIC_PRODUCT_DETAILS[currentProduct] && STATIC_PRODUCT_DETAILS[currentProduct].sizeRows) {
+      return STATIC_PRODUCT_DETAILS[currentProduct].sizeRows;
+    }
+    return [];
+  }
+
+  function closeSizeQtyModal() {
+    if (sizeQtyModal) sizeQtyModal.classList.add('hidden');
+  }
+
+  function openSizeQtyModal() {
+    if (!sizeQtyModal || !sizeQtyRowsEl) return;
+    var rows = getSizesForCurrentProduct();
+    if (!rows.length) {
+      alert('No sizes are available for this product yet.');
+      return;
+    }
+    sizeQtyRowsEl.innerHTML = '';
+    rows.forEach(function (row) {
+      var label = row.label != null ? String(row.label) : '';
+      var div = document.createElement('div');
+      div.className = 'size-qty-row';
+      var stepper = document.createElement('div');
+      stepper.className = 'size-qty-stepper';
+      stepper.setAttribute('data-size-label', label);
+      var minus = document.createElement('button');
+      minus.type = 'button';
+      minus.className = 'size-qty-minus';
+      minus.setAttribute('aria-label', 'Decrease');
+      minus.textContent = '−';
+      var inp = document.createElement('input');
+      inp.type = 'number';
+      inp.className = 'size-qty-input';
+      inp.min = '0';
+      inp.max = '99';
+      inp.value = '0';
+      var plus = document.createElement('button');
+      plus.type = 'button';
+      plus.className = 'size-qty-plus';
+      plus.setAttribute('aria-label', 'Increase');
+      plus.textContent = '+';
+      minus.addEventListener('click', function () {
+        var v = Math.max(0, (parseInt(inp.value, 10) || 0) - 1);
+        inp.value = String(v);
+      });
+      plus.addEventListener('click', function () {
+        var v = Math.min(99, (parseInt(inp.value, 10) || 0) + 1);
+        inp.value = String(v);
+      });
+      inp.addEventListener('change', function () {
+        var v = parseInt(inp.value, 10);
+        if (!Number.isFinite(v) || v < 0) v = 0;
+        if (v > 99) v = 99;
+        inp.value = String(v);
+      });
+      stepper.appendChild(minus);
+      stepper.appendChild(inp);
+      stepper.appendChild(plus);
+      var lab = document.createElement('span');
+      lab.className = 'size-qty-label';
+      lab.innerHTML = escapeHtml(label);
+      div.appendChild(lab);
+      div.appendChild(stepper);
+      sizeQtyRowsEl.appendChild(div);
+    });
+    sizeQtyModal.classList.remove('hidden');
+  }
+
+  function confirmSizeQtyAddToCart() {
+    var fnSave = window.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
+    var fnCart = window.__WEARCAST_ADD_DESIGNED_TO_CART__;
+    if (typeof fnSave !== 'function' || typeof fnCart !== 'function') {
+      alert('Please sign in as a customer to add your design to the cart.');
+      closeSizeQtyModal();
+      return;
+    }
+    var p = PRODUCTS[currentProduct];
+    var cat = p && p.wearcastCatalog;
+    if (!cat) {
+      alert(
+        'Add to cart works for factory catalog products. Open Products, pick a designed template, then try again.'
+      );
+      closeSizeQtyModal();
+      return;
+    }
+    var colorId = cat.colorIdsBySlug && cat.colorIdsBySlug[currentColor];
+    if (!colorId) {
+      alert('Could not match this color to the catalog. Try another swatch.');
+      return;
+    }
+    if (!sizeQtyRowsEl) return;
+    var steppers = sizeQtyRowsEl.querySelectorAll('.size-qty-stepper');
+    var lines = [];
+    steppers.forEach(function (el) {
+      var label = el.getAttribute('data-size-label') || '';
+      var inp = el.querySelector('.size-qty-input');
+      var qty = parseInt(inp && inp.value, 10) || 0;
+      if (qty < 1) return;
+      var sz = sizeLabelToEnumIndex(label);
+      if (sz < 0) {
+        console.warn('WearCast: unknown size label for cart enum', label);
+        return;
+      }
+      lines.push({ size: sz, quantity: qty });
+    });
+    if (!lines.length) {
+      alert('Choose at least one size with a quantity greater than zero.');
+      return;
+    }
+    saveCurrentViewToStore();
+    var vd = viewDesigns[currentProduct];
+    if (sizeQtyModalConfirm) sizeQtyModalConfirm.disabled = true;
+    fnSave({
+      productId: cat.designedProductId,
+      productColorId: colorId,
+      viewDesignsJson: JSON.stringify(vd || {})
+    })
+      .then(function (designId) {
+        if (designId == null || designId === undefined) {
+          throw new Error(
+            'The server did not return a design id after saving. Your API may omit `data.id` on POST /api/customers/me/designs — check the backend response.'
+          );
+        }
+        var id = typeof designId === 'number' ? designId : parseInt(designId, 10);
+        if (!Number.isFinite(id)) {
+          throw new Error('Invalid design id from server.');
+        }
+        var cartPayload = lines.map(function (L) {
+          return { designId: id, size: L.size, quantity: L.quantity };
+        });
+        return fnCart(cartPayload);
+      })
+      .then(function () {
+        closeSizeQtyModal();
+        alert('Added to cart. Open the cart to review your items.');
+      })
+      .catch(function (err) {
+        var msg = err && err.message ? err.message : String(err);
+        alert('Could not add to cart: ' + msg);
+      })
+      .finally(function () {
+        if (sizeQtyModalConfirm) sizeQtyModalConfirm.disabled = false;
+      });
+  }
+
+  function applyDesignerBootstrap() {
+    var boot = window.__WEARCAST_DESIGNER_BOOTSTRAP__;
+    // Always reset product registry so stale entries from previous runs/routes cannot leak.
+    Object.keys(PRODUCTS).forEach(function (k) {
+      delete PRODUCTS[k];
+    });
+    if (!boot || !boot.products) {
+      window.__WEARCAST_DESIGNER_BOOTSTRAP__ = null;
+      return;
+    }
+    Object.keys(boot.products).forEach(function (k) {
+      PRODUCTS[k] = boot.products[k];
+    });
+    if (boot.colors && boot.colors.length) {
+      boot.colors.forEach(function (c) {
+        if (COLORS.indexOf(c) === -1) COLORS.push(c);
+      });
+    }
+    window.__WEARCAST_DESIGNER_BOOTSTRAP__ = null;
+  }
+
+  function hasFactoryCatalogProducts() {
+    return Object.keys(PRODUCTS).some(function (k) {
+      return k.length > 0 && k.charAt(0) === 'p';
+    });
+  }
+
+  function hashStringToColor(s) {
+    var h = 0;
+    for (var i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h);
+    var col = (h & 0x00ffffff).toString(16).toUpperCase();
+    return '#' + '00000'.substring(0, 6 - col.length) + col;
+  }
+
+  function getProductListMount() {
+    return document.getElementById('product-modal-list') || document.getElementById('product-list');
+  }
+
+  function closeProductsModal() {
+    if (productsModal) productsModal.classList.add('hidden');
+  }
+
+  function openProductsModal() {
+    rebuildProductListFromProducts();
+    if (productsModal) productsModal.classList.remove('hidden');
+  }
+
+  function rebuildProductListFromProducts() {
+    var pl = getProductListMount();
+    if (!pl) return;
+    pl.innerHTML = '';
+    Object.keys(PRODUCTS).forEach(function (key) {
+      var pr = PRODUCTS[key];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'product-card';
+      btn.setAttribute('data-product', key);
+      var img = document.createElement('img');
+      var imgs = typeof pr.images === 'function' ? pr.images() : {};
+      var firstCol = null;
+      Object.keys(imgs).some(function (c) {
+        var r = imgs[c];
+        if (r && (r.front || r.back || r.right || r.left)) {
+          firstCol = c;
+          return true;
+        }
+        return false;
+      });
+      var src = firstCatalogImageUrl(imgs) || (firstCol && imgs[firstCol] ? imgs[firstCol].front : null) || 'assets/hoodie-front.jpg';
+      img.src = src;
+      img.alt = pr.title || key;
+      var span = document.createElement('span');
+      span.textContent = pr.title || key;
+      btn.appendChild(img);
+      btn.appendChild(span);
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        try {
+          setProduct(key);
+        } catch (err) {
+          console.error('WearCast setProduct failed:', err);
+        } finally {
+          closeProductsModal();
+        }
+      });
+      pl.appendChild(btn);
+    });
+  }
+
+  function rebuildColorSwatchesForProduct(productKey) {
+    if (!colorSwatches || !PRODUCTS[productKey]) return;
+    var p = PRODUCTS[productKey];
+    var imgs = typeof p.images === 'function' ? p.images() : (p.images || {});
+    var colorKeys = Object.keys(imgs).filter(function (c) {
+      var r = imgs[c];
+      return r && (r.front || r.back || r.right || r.left);
+    });
+
+    if (colorKeys.length === 0) {
+      colorKeys = Object.keys(imgs);
+    }
+    if (colorKeys.length === 0) return;
+
+    colorSwatches.innerHTML = '';
+    var cat = p.wearcastCatalog;
+    var hexMap = cat && cat.colorHexBySlug ? cat.colorHexBySlug : null;
+    colorKeys.forEach(function (colorKey, idx) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'color-swatch' + (idx === 0 ? ' active' : '');
+      btn.setAttribute('data-color', colorKey);
+      var hex = hexMap && hexMap[colorKey] ? hexMap[colorKey] : hashStringToColor(colorKey);
+      btn.style.background = hex;
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        setColor(colorKey);
+      });
+      colorSwatches.appendChild(btn);
+    });
+  }
+
   function run() {
+    applyDesignerBootstrap();
+    // Reset volatile state each run to avoid cross-navigation leftovers.
+    currentProduct = '';
+    currentColor = 'black';
+    currentView = 'front';
     productImage = document.getElementById('product-image');
     productStage = document.getElementById('product-stage');
     productTitleEl = document.getElementById('product-title');
+    productPriceEl = document.getElementById('product-price');
     uploadInput = document.getElementById('upload-input');
     textModal = document.getElementById('text-modal');
     textInput = document.getElementById('text-input');
@@ -787,6 +1339,13 @@
     productDetailsModal = document.getElementById('product-details-modal');
     productDetailsOpenBtn = document.getElementById('product-details-open');
     productDetailsCloseBtn = document.getElementById('product-details-close');
+    productsModal = document.getElementById('products-modal');
+    productsModalClose = document.getElementById('products-modal-close');
+    sizeQtyModal = document.getElementById('size-qty-modal');
+    sizeQtyRowsEl = document.getElementById('size-qty-rows');
+    sizeQtyModalClose = document.getElementById('size-qty-modal-close');
+    sizeQtyModalCancel = document.getElementById('size-qty-modal-cancel');
+    sizeQtyModalConfirm = document.getElementById('size-qty-modal-confirm');
 
     if (!productImage || !uploadInput || !textInput || !saveModal || !saveConfirm || !savedListEl) {
       console.error('Required DOM elements missing for designer');
@@ -799,6 +1358,11 @@
     document.querySelectorAll('.tool-btn[data-tool="designs"]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         if (designsPanel) designsPanel.classList.remove('hidden');
+      });
+    });
+    document.querySelectorAll('.tool-btn[data-tool="products"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        openProductsModal();
       });
     });
     document.querySelectorAll('.tool-btn[data-tool="upload"]').forEach(function (btn) {
@@ -887,12 +1451,13 @@
     saveCancel.addEventListener('click', function () { saveModal.classList.add('hidden'); });
     saveConfirm.addEventListener('click', function () {
       var name = saveNameInput.value.trim() || 'Untitled design';
-      saveDesignToList(name);
+      saveDesign(name);
     });
     loadCloseBtn.addEventListener('click', function () { loadModal.classList.add('hidden'); });
 
     if (productDetailsOpenBtn && productDetailsModal && productDetailsCloseBtn) {
       productDetailsOpenBtn.addEventListener('click', function () {
+        populateProductDetailsModal();
         productDetailsModal.classList.remove('hidden');
       });
       productDetailsCloseBtn.addEventListener('click', function () {
@@ -900,6 +1465,33 @@
       });
       productDetailsModal.addEventListener('click', function (e) {
         if (e.target === productDetailsModal) productDetailsModal.classList.add('hidden');
+      });
+    }
+
+    if (productsModalClose) {
+      productsModalClose.addEventListener('click', closeProductsModal);
+    }
+    if (productsModal) {
+      productsModal.addEventListener('click', function (e) {
+        if (e.target === productsModal) closeProductsModal();
+      });
+    }
+
+    document.querySelectorAll('.cta-btn').forEach(function (btn) {
+      btn.addEventListener('click', openSizeQtyModal);
+    });
+    if (sizeQtyModalClose) {
+      sizeQtyModalClose.addEventListener('click', closeSizeQtyModal);
+    }
+    if (sizeQtyModalCancel) {
+      sizeQtyModalCancel.addEventListener('click', closeSizeQtyModal);
+    }
+    if (sizeQtyModalConfirm) {
+      sizeQtyModalConfirm.addEventListener('click', confirmSizeQtyAddToCart);
+    }
+    if (sizeQtyModal) {
+      sizeQtyModal.addEventListener('click', function (e) {
+        if (e.target === sizeQtyModal) closeSizeQtyModal();
       });
     }
 
@@ -914,9 +1506,26 @@
       designSearchInput.addEventListener('input', renderStickerGrid);
     }
 
+    rebuildProductListFromProducts();
+
     initCanvas();
-    setProduct('hoodie');
-    setColor('black');
+    var firstProductKey = Object.keys(PRODUCTS)[0] || '';
+    if (!firstProductKey) {
+      if (productTitleEl) {
+        productTitleEl.textContent = 'No factory products yet';
+      }
+      return;
+    }
+    setProduct(firstProductKey);
+    if (hasFactoryCatalogProducts()) {
+      rebuildColorSwatchesForProduct(firstProductKey);
+    }
+    var imgs0 = PRODUCTS[firstProductKey] && PRODUCTS[firstProductKey].images ? PRODUCTS[firstProductKey].images() : {};
+    var firstColorKey = Object.keys(imgs0).find(function (c) {
+      var r = imgs0[c];
+      return r && (r.front || r.back || r.right || r.left);
+    }) || COLORS[0] || 'black';
+    setColor(firstColorKey);
     setView('front');
   }
 

@@ -9,6 +9,7 @@ const ROLE_CLAIM =
   'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 
 const CUSTOMER_PROFILE_KEY = 'wearcast:customerProfile';
+export const FACTORY_ID_STORAGE_KEY = 'wearcast:factoryId';
 
 /** Registration + JWT merge for profile until a GET /me API exists. */
 export interface CustomerProfileSnapshot {
@@ -26,6 +27,8 @@ export interface AuthSession {
   token: string;
   refreshToken: string;
   role: string;
+  /** Present for factory manager accounts when the API returns it. */
+  factoryId?: number;
 }
 
 interface ApiEnvelope<T = unknown> {
@@ -246,7 +249,55 @@ export class AuthService {
     localStorage.setItem('token', res.token);
     localStorage.setItem('refreshToken', res.refreshToken);
     localStorage.setItem('role', res.role);
+    const fid =
+      res.factoryId ?? this.extractFactoryIdFromSession(res.token);
+    if (fid != null) {
+      localStorage.setItem(FACTORY_ID_STORAGE_KEY, String(fid));
+    } else {
+      localStorage.removeItem(FACTORY_ID_STORAGE_KEY);
+    }
     this.syncCustomerProfileFromCurrentToken();
+  }
+
+  getFactoryId(): number | null {
+    const raw = localStorage.getItem(FACTORY_ID_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  private extractFactoryIdFromSession(token: string): number | null {
+    const fromJwt = this.pickFactoryIdFromPayload(this.decodeJwtPayload(token));
+    if (fromJwt != null) {
+      return fromJwt;
+    }
+    return null;
+  }
+
+  private pickFactoryIdFromPayload(
+    payload: Record<string, unknown> | null
+  ): number | null {
+    if (!payload) {
+      return null;
+    }
+    const keys = [
+      'factoryId',
+      'FactoryId',
+      'factory_id',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/factoryid'
+    ];
+    for (const k of keys) {
+      const v = payload[k];
+      if (typeof v === 'number' && Number.isFinite(v)) {
+        return v;
+      }
+      if (typeof v === 'string' && /^\d+$/.test(v)) {
+        return parseInt(v, 10);
+      }
+    }
+    return null;
   }
 
   /** Call after customer registration (before email confirm). */
@@ -302,6 +353,47 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
+  /**
+   * Stable scope for browser-only saved designs so each customer account has its own list.
+   * Uses JWT subject / nameidentifier when present, otherwise email from token or profile.
+   */
+  getCustomerLocalDesignsScope(): string {
+    const token = this.getToken();
+    if (!token) {
+      return 'guest';
+    }
+    const payload = this.decodeJwtPayload(token);
+    if (payload) {
+      const idKeys = [
+        'sub',
+        'nameid',
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
+        'userId',
+        'UserId',
+        'uid',
+        'Uid'
+      ];
+      for (const k of idKeys) {
+        const v = payload[k];
+        if (typeof v === 'string' && v.trim()) {
+          return 'u:' + v.trim();
+        }
+        if (typeof v === 'number' && Number.isFinite(v)) {
+          return 'u:' + String(v);
+        }
+      }
+      const email = this.pickEmailFromPayload(payload);
+      if (email) {
+        return 'e:' + email.trim().toLowerCase();
+      }
+    }
+    const prof = this.getCustomerProfile();
+    if (prof?.email?.trim()) {
+      return 'e:' + prof.email.trim().toLowerCase();
+    }
+    return 'guest';
+  }
+
   isLoggedIn(): boolean {
     return !!localStorage.getItem('token');
   }
@@ -311,7 +403,17 @@ export class AuthService {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('role');
     localStorage.removeItem(CUSTOMER_PROFILE_KEY);
+    localStorage.removeItem(FACTORY_ID_STORAGE_KEY);
     void this.router.navigate(['/login']);
+  }
+
+  /** Factory portal sign-out → factory login screen. */
+  logoutFactory(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('role');
+    localStorage.removeItem(FACTORY_ID_STORAGE_KEY);
+    void this.router.navigate(['/factory/login']);
   }
 
   private readCustomerProfileRaw(): CustomerProfileSnapshot | null {
@@ -425,10 +527,18 @@ export class AuthService {
     if (!role) {
       role = this.roleFromJwt(token) ?? undefined;
     }
+    let factoryId: number | undefined;
+    const rawFid = data['factoryId'] ?? data['FactoryId'];
+    if (typeof rawFid === 'number' && Number.isFinite(rawFid)) {
+      factoryId = rawFid;
+    } else if (typeof rawFid === 'string' && /^\d+$/.test(rawFid)) {
+      factoryId = parseInt(rawFid, 10);
+    }
     return {
       token,
       refreshToken,
-      role: this.normalizeRole(role ?? 'CUSTOMER')
+      role: this.normalizeRole(role ?? 'CUSTOMER'),
+      factoryId
     };
   }
 
@@ -479,6 +589,9 @@ export class AuthService {
     const u = r.toUpperCase();
     if (u.includes('ADMIN')) {
       return 'ADMIN';
+    }
+    if (u.includes('FACTORY')) {
+      return 'FACTORY';
     }
     if (u.includes('SELLER')) {
       return 'SELLER';

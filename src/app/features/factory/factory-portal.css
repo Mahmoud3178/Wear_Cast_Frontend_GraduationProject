@@ -1,0 +1,96 @@
+/* Shared look for /factory/* — loaded globally (see angular.json). */
+.wc-factory-shell {
+  --wc-factory-header-bg: linear-gradient(135deg, #0b1220 0%, #1e293b 55%, #0f172a 100%);
+  --wc-factory-accent: #38bdf8;
+  --wc-factory-accent-dim: rgba(56, 189, 248, 0.15);
+  --wc-factory-border: rgba(148, 163, 184, 0.25);
+}
+
+.wc-factory-header {
+  background: var(--wc-factory-header-bg);
+  border-bottom: 1px solid var(--wc-factory-border) !important;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.35);
+}
+
+.wc-factory-brand {
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+}
+
+.wc-factory-brand small {
+  color: #94a3b8;
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+.wc-factory-header .nav-pill {
+  color: #e2e8f0;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.wc-factory-header .nav-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.wc-factory-header .nav-pill.active {
+  background: var(--wc-factory-accent-dim);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #f0f9ff;
+}
+
+.wc-factory-main {
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  min-height: calc(100vh - 72px);
+}
+
+.wc-factory-card {
+  border-radius: 14px !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06) !important;
+  overflow: hidden;
+}
+
+.wc-factory-card .card-header {
+  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  font-size: 0.95rem;
+}
+
+.wc-factory-page-title {
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.wc-factory-hero {
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.07);
+}
+
+.wc-factory-dash-tile {
+  border-radius: 14px !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.wc-factory-dash-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.1) !important;
+}
+
+.wc-factory-auth-panel {
+  border-radius: 18px !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12) !important;
+}
+
+.wc-factory-auth-bg {
+  background: linear-gradient(160deg, #0f172a 0%, #1e293b 45%, #334155 100%);
+}
+
+.wc-factory-auth-bg .wc-factory-auth-panel {
+  background: #fff;
+}

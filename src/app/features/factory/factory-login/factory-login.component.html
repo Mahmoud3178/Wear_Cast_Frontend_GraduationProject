@@ -1,0 +1,32 @@
+<div class="wc-factory-auth-bg min-vh-100 d-flex align-items-center justify-content-center px-3 py-4">
+  <div class="card wc-factory-auth-panel border-0 w-100" style="max-width: 400px;">
+    <div class="card-body p-4 p-md-5">
+      <h1 class="h4 fw-bold text-center mb-1">Factory sign in</h1>
+      <p class="text-center text-muted small mb-4">WearCast production portal</p>
+
+      <div *ngIf="errorMessage" class="alert alert-danger py-2 small" role="alert">
+        {{ errorMessage }}
+      </div>
+
+      <form (ngSubmit)="login()">
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input class="form-control" type="email" name="email" [(ngModel)]="form.email" required autocomplete="username">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <input class="form-control" type="password" name="password" [(ngModel)]="form.password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-dark w-100" [disabled]="submitting">
+          {{ submitting ? 'Signing in…' : 'Sign in' }}
+        </button>
+      </form>
+
+      <p class="text-center small text-muted mt-4 mb-0">
+        <a routerLink="/login" class="text-decoration-none">Customer / seller login</a>
+        ·
+        <a routerLink="/factory/register" class="text-decoration-none">Create factory</a>
+      </p>
+    </div>
+  </div>
+</div>

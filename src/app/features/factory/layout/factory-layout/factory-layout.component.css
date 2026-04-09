@@ -1,0 +1,7 @@
+/* Nav pills: base layout; colors from factory-portal.css (.wc-factory-header .nav-pill) */
+.factory-header .nav-pill {
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.875rem;
+}

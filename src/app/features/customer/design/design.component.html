@@ -40,23 +40,6 @@
         <span class="tool-label">Redo</span>
       </button>
     </nav>
-    <div id="product-picker" class="product-picker">
-      <p class="picker-title">Choose product</p>
-      <div class="product-list" id="product-list">
-        <button type="button" class="product-card" data-product="hoodie">
-          <img src="assets/hoodie-front.jpg" alt="Hoodie">
-          <span>Hoodie</span>
-        </button>
-        <button type="button" class="product-card" data-product="tshirt">
-          <img src="assets/tshirt-front.webp" alt="T-Shirt">
-          <span>T-Shirt</span>
-        </button>
-        <button type="button" class="product-card" data-product="cap">
-          <img src="assets/cap-front.jpg" alt="Cap">
-          <span>Cap</span>
-        </button>
-      </div>
-    </div>
   </aside>
 
   <!-- Center - canvas area -->
@@ -98,8 +81,7 @@
   <aside class="sidebar right">
       <div class="product-info">
       <h2 class="product-title" id="product-title">Women's Hoodie</h2>
-      <p class="delivery">Delivery time: Mar 09 - 18</p>
-      <p class="rating">&#9733;&#9733;&#9733;&#9733;&#9733; (302)</p>
+      <p class="product-price" id="product-price" hidden></p>
       <button type="button" id="product-details-open" class="details-link">See product details &gt;</button>
       <p class="print-method">Print method: <strong>Digital Direct</strong></p>
 
@@ -143,15 +125,25 @@
         </label>
       </div>
 
-      <details class="arrange-section">
-        <summary>Arrange designs &gt;</summary>
-        <p class="arrange-hint">Select an element on the product to move, resize or rotate it.</p>
+      <div class="selected-element-actions">
         <button type="button" class="btn delete-btn hidden" id="delete-selected-btn">Remove selected</button>
-      </details>
+      </div>
 
       <button type="button" class="cta-btn">Choose size &amp; quantity</button>
     </div>
   </aside>
+</div>
+
+<!-- Choose product (factory + default templates) -->
+<div id="products-modal" class="modal hidden">
+  <div class="modal-content modal-wide products-modal-content">
+    <div class="products-modal-header">
+      <h3>Choose a product</h3>
+      <button type="button" id="products-modal-close" class="details-close-btn" aria-label="Close">✕</button>
+    </div>
+    <p class="products-modal-lead">Pick a base template. Items from your factory catalog load here when you are signed in.</p>
+    <div class="product-list product-modal-list" id="product-modal-list"></div>
+  </div>
 </div>
 
 <!-- Text prompt modal -->
@@ -196,14 +188,14 @@
       <h3>Product details</h3>
       <button type="button" id="product-details-close" class="details-close-btn">✕</button>
     </div>
-    <h4 class="pd-title">Women's Hoodie</h4>
-    <p class="pd-pill">Sustainable</p>
-    <p class="pd-rating">★★★★★ <span>(300)</span></p>
-    <p class="pd-copy">
+    <h4 class="pd-title" id="pd-title">Women's Hoodie</h4>
+    <p class="pd-pill" id="pd-pill">Sustainable</p>
+    <p class="pd-rating" id="pd-rating">★★★★★ <span>(300)</span></p>
+    <p class="pd-copy" id="pd-description">
       This plush pullover is perfect for the gym, errands or kicking around the house. The midweight fabric
       makes for a versatile under, over or solo layer. A staple in casual comfort, this classic style is a must-own.
     </p>
-    <ul class="pd-list">
+    <ul class="pd-list" id="pd-bullets">
       <li>50% cotton / 50% polyester · Fabric weight: 8 oz (midweight)</li>
       <li>Soft, plush inside with adjustable drawstring hood</li>
       <li>Ribbed cuffs and waist for a secure fit</li>
@@ -215,29 +207,52 @@
       <div class="pd-size-header">
         <div>
           <h4>Size table</h4>
-          <p class="pd-size-sub">Available sizes: S, M, L, XL, 2XL · Fit: Loose fit</p>
+          <p class="pd-size-sub" id="pd-size-sub">Available sizes: S, M, L, XL, 2XL · Fit: Loose fit</p>
         </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Size</th>
-            <th>A (in)</th>
-            <th>B (in)</th>
-            <th>C (in)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>S</td><td>26.50</td><td>20.00</td><td>24.49</td></tr>
-          <tr><td>M</td><td>27.44</td><td>21.50</td><td>24.72</td></tr>
-          <tr><td>L</td><td>27.95</td><td>22.99</td><td>25.00</td></tr>
-          <tr><td>XL</td><td>30.43</td><td>25.47</td><td>25.24</td></tr>
-          <tr><td>2XL</td><td>30.94</td><td>27.99</td><td>25.47</td></tr>
-        </tbody>
-      </table>
+      <div class="pd-size-layout">
+        <div class="pd-category-visual">
+          <img id="pd-category-image" class="pd-category-image" alt="" width="200" height="200" hidden>
+        </div>
+        <div class="pd-size-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Size</th>
+                <th>A (in)</th>
+                <th>B (in)</th>
+                <th>C (in)</th>
+              </tr>
+            </thead>
+            <tbody id="pd-size-tbody">
+              <tr><td>S</td><td>26.50</td><td>20.00</td><td>24.49</td></tr>
+              <tr><td>M</td><td>27.44</td><td>21.50</td><td>24.72</td></tr>
+              <tr><td>L</td><td>27.95</td><td>22.99</td><td>25.00</td></tr>
+              <tr><td>XL</td><td>30.43</td><td>25.47</td><td>25.24</td></tr>
+              <tr><td>2XL</td><td>30.94</td><td>27.99</td><td>25.47</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
       <p class="pd-size-note">
         Find the right size: compare these measurements with a similar garment you already own.
       </p>
+    </div>
+  </div>
+</div>
+
+<!-- Select size & quantity (add designed product to cart) -->
+<div id="size-qty-modal" class="modal hidden">
+  <div class="modal-content size-qty-modal-content">
+    <div class="size-qty-modal-header">
+      <h3>Select size</h3>
+      <button type="button" id="size-qty-modal-close" class="details-close-btn" aria-label="Close">✕</button>
+    </div>
+    <p class="size-qty-lead">Set quantity per size, then add to cart. Your current design is saved first.</p>
+    <div id="size-qty-rows" class="size-qty-rows"></div>
+    <div class="modal-actions size-qty-actions">
+      <button type="button" class="btn secondary" id="size-qty-modal-cancel">Cancel</button>
+      <button type="button" class="btn primary" id="size-qty-modal-confirm">Add to cart</button>
     </div>
   </div>
 </div>

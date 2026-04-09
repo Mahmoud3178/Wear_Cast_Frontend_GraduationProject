@@ -1,0 +1,207 @@
+<div class="wc-factory-auth-bg min-vh-100 d-flex align-items-center justify-content-center px-3 py-5">
+  <div class="card wc-factory-auth-panel border-0 w-100" style="max-width: 720px;">
+    <div class="card-body p-4 p-md-5">
+      <h1 class="h4 fw-bold mb-1 text-center">Create factory</h1>
+      <p class="text-muted small text-center mb-4">
+        One-time setup for your WearCast factory and its first manager.
+      </p>
+
+      <div
+        *ngIf="errorMessage"
+        class="alert alert-danger py-2 small"
+        role="alert"
+      >
+        {{ errorMessage }}
+      </div>
+      <div
+        *ngIf="successMessage"
+        class="alert alert-success py-2 small"
+        role="alert"
+      >
+        {{ successMessage }}
+      </div>
+
+      <form (ngSubmit)="register()">
+        <h2 class="h6 fw-semibold mt-2 mb-2">Manager</h2>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">First name</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.managerFirstName"
+              name="mFirst"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Last name</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.managerLastName"
+              name="mLast"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Phone</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.managerPhoneNumber"
+              name="mPhone"
+              required
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="form.managerEmail"
+              name="mEmail"
+              required
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Password</label>
+            <input
+              type="password"
+              class="form-control"
+              [(ngModel)]="form.managerPassword"
+              name="mPass"
+              required
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Confirm</label>
+            <input
+              type="password"
+              class="form-control"
+              [(ngModel)]="form.managerConfirmPassword"
+              name="mPass2"
+              required
+            />
+          </div>
+        </div>
+
+        <h2 class="h6 fw-semibold mt-4 mb-2">Factory</h2>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Factory name</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.factoryName"
+              name="fName"
+              required
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Factory email</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="form.factoryEmail"
+              name="fEmail"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Phone</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.factoryPhoneNumber"
+              name="fPhone"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Commercial register #</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.factoryCommercialRegisterNumber"
+              name="fCR"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Tax ID #</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.factoryTaxIdNumber"
+              name="fTax"
+              required
+            />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Description</label>
+            <textarea
+              class="form-control"
+              rows="2"
+              [(ngModel)]="form.factoryDescription"
+              name="fDesc"
+              minlength="20"
+              required
+            ></textarea>
+            <div class="form-text">Min 20 characters (backend validation).</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Logo</label>
+            <input
+              type="file"
+              class="form-control"
+              accept="image/*"
+              (change)="onLogoChange($event)"
+              required
+            />
+          </div>
+          <div class="col-md-6"></div>
+          <div class="col-md-3">
+            <label class="form-label">State</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.factoryState"
+              name="fState"
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">City</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.factoryCity"
+              name="fCity"
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Street</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.factoryStreet"
+              name="fStreet"
+            />
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Building</label>
+            <input
+              class="form-control"
+              [(ngModel)]="form.factoryBuildingNumber"
+              name="fBuilding"
+            />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-dark w-100 mt-4"
+          [disabled]="submitting"
+        >
+          {{ submitting ? 'Creating factory…' : 'Create factory' }}
+        </button>
+      </form>
+
+      <p class="text-center small text-muted mt-3 mb-0">
+        Already have a factory?
+        <a routerLink="/factory/login" class="text-decoration-none">Sign in</a>
+      </p>
+    </div>
+  </div>
+</div>
+

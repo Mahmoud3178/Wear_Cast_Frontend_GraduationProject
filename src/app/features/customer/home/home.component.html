@@ -1,48 +1,125 @@
-<app-customer-nav></app-customer-nav>
+<!-- First visit: full-screen landing video -->
+<ng-container *ngIf="showLanding">
+  <div class="wc-landing" role="dialog" aria-label="Welcome">
+    <video
+      #landingVideo
+      class="wc-landing__video"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto"
+      (loadeddata)="playLandingVideo()"
+    >
+      <source src="/assets/landing.mp4" type="video/mp4" />
+    </video>
+    <div class="wc-landing__overlay">
+      <button type="button" class="wc-landing__cta" (click)="enterHome()">
+        Continue to home
+      </button>
+    </div>
+  </div>
+</ng-container>
 
-<main class="wc-page">
-  <section class="wc-hero">
-    <div class="wc-hero-text">
-      <p class="wc-eyebrow">New season, new looks</p>
-      <h1>Find clothes that match your style.</h1>
-      <p class="wc-subtitle">
-        Discover hundreds of carefully curated pieces, from everyday basics to standout fits.
+<ng-container *ngIf="!showLanding">
+  <app-customer-nav></app-customer-nav>
+
+  <main class="wc-page">
+    <section class="wc-products-hero" aria-labelledby="wc-products-hero-title">
+      <h1 id="wc-products-hero-title" class="wc-products-hero__title">customizable products</h1>
+      <p class="wc-products-hero__subtitle">
+        Sell t-shirts, hoodies, tote bags, stickers, and more using personal designs.
       </p>
-      <div class="wc-hero-actions">
-        <button type="button" class="wc-btn wc-btn-primary">Shop now</button>
-        <a routerLink="/customer/design" class="wc-btn wc-btn-ghost">Create your own</a>
+
+      <div class="wc-products-hero__row">
+        <a
+          *ngFor="let item of productShowcase"
+          [routerLink]="item.link"
+          class="wc-showcase-card"
+        >
+          <div class="wc-showcase-card__blob" [ngClass]="item.blobClasses">
+            <img [src]="item.image" [alt]="item.label" class="wc-showcase-card__img" />
+          </div>
+          <span class="wc-showcase-card__label">{{ item.label }} →</span>
+        </a>
       </div>
-    </div>
-    <div class="wc-hero-image"></div>
-  </section>
 
-  <section class="wc-section">
-    <div class="wc-section-header">
-      <h2>New arrivals</h2>
-      <button type="button" class="wc-link-btn">View all</button>
-    </div>
-    <div class="wc-grid">
-      <article class="wc-card" *ngFor="let i of [1,2,3,4,5]" routerLink="/customer/product">
-        <div class="wc-card-image"></div>
-        <h3>Graphic Tee</h3>
-        <p class="wc-card-meta">Unisex · Cotton</p>
-        <p class="wc-card-price">$145</p>
-      </article>
-    </div>
-  </section>
+      <a routerLink="/customer/category" class="wc-products-hero__browse">Browse products &amp; prices</a>
+    </section>
 
-  <section class="wc-section">
-    <div class="wc-section-header">
-      <h2>Browse by style</h2>
-    </div>
-    <div class="wc-style-grid">
-      <a routerLink="/customer/category" class="wc-style-card wc-style-card--casual">Casual</a>
-      <a routerLink="/customer/category" class="wc-style-card wc-style-card--formal">Formal</a>
-      <a routerLink="/customer/category" class="wc-style-card wc-style-card--party">Party</a>
-      <a routerLink="/customer/category" class="wc-style-card wc-style-card--gym">Gym</a>
-    </div>
-  </section>
+    <section class="wc-parallax">
+      <div class="wc-parallax-header">
+        <h2>From idea to outfit</h2>
+        <p>Hover each card for a 3D tilt + glow.</p>
+      </div>
 
-  <app-customer-footer></app-customer-footer>
-</main>
+      <div class="wc-parallax-row">
+        <article
+          class="wc-parallax-card"
+          *ngFor="let card of parallaxCards"
+          (mousemove)="onParallaxMove($event)"
+          (mouseleave)="onParallaxLeave($event)"
+        >
+          <div class="wc-parallax-glow" aria-hidden="true"></div>
+          <img class="wc-parallax-img" [src]="card.imageUrl" [alt]="card.title" />
+        </article>
+      </div>
+    </section>
 
+    <section class="wc-section">
+      <div class="wc-section-header">
+        <h2>New arrivals</h2>
+        <button type="button" class="wc-link-btn">View all</button>
+      </div>
+      <div class="wc-grid">
+        <article class="wc-card" *ngFor="let i of [1,2,3,4,5]" routerLink="/customer/product">
+          <div class="wc-card-image"></div>
+          <h3>Graphic Tee</h3>
+          <p class="wc-card-meta">Unisex · Cotton</p>
+          <p class="wc-card-price">$145</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="wc-section">
+      <div class="wc-section-header">
+        <h2>Browse by style</h2>
+      </div>
+      <div class="wc-style-grid">
+        <a routerLink="/customer/category" class="wc-style-card wc-style-card--casual">Casual</a>
+        <a routerLink="/customer/category" class="wc-style-card wc-style-card--formal">Formal</a>
+        <a routerLink="/customer/category" class="wc-style-card wc-style-card--party">Party</a>
+        <a routerLink="/customer/category" class="wc-style-card wc-style-card--gym">Gym</a>
+      </div>
+    </section>
+
+    <section class="wc-video-promo" aria-label="Create custom apparel">
+      <video
+        #homePromoVideo
+        class="wc-video-promo__media"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        (loadeddata)="playHomePromoVideo()"
+      >
+        <source src="/assets/homepage.mp4" type="video/mp4" />
+      </video>
+      <div class="wc-video-promo__scrim" aria-hidden="true"></div>
+      <div class="wc-video-promo__inner">
+        <div class="wc-video-promo__copy">
+          <h2 class="wc-video-promo__title">Your spring? Zero mainstream energy!</h2>
+          <p class="wc-video-promo__text">
+            Own the season. Own the streets. When everything is moving into fresh vibes and new beginnings,
+            let your style rise above the rest. Create a look that truly represents you and make spring personal
+            with customized apparel and accessories that show off your individuality.
+          </p>
+          <a routerLink="/customer/design" class="wc-video-promo__cta">Create Now</a>
+        </div>
+      </div>
+    </section>
+
+    <app-customer-footer></app-customer-footer>
+  </main>
+</ng-container>
