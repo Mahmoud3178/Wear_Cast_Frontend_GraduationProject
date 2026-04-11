@@ -26,7 +26,12 @@ export class CustomerDesignService {
   /** POST /api/customers/me/designs — persists customer artwork on a designed product color. Returns created design id when the API sends one. */
   saveDesign(body: AddCustomerDesignRequest): Observable<number | null> {
     const url = `${this.base}/api/customers/me/designs`;
-    return this.http.post<unknown>(url, body).pipe(
+    const fd = new FormData();
+    fd.append('ProductId', body.productId.toString());
+    fd.append('ProductColorId', body.productColorId.toString());
+    fd.append('ViewDesignsJson', body.viewDesignsJson);
+
+    return this.http.post<unknown>(url, fd).pipe(
       map(raw => {
         if (raw && typeof raw === 'object' && 'isSuccess' in raw) {
           const res = raw as ApiEnvelope;
