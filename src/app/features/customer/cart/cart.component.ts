@@ -63,28 +63,28 @@ export class CartComponent implements OnInit {
       designs: this.cartService.getDesignItems().pipe(catchError(() => of([])))
     }).subscribe({
       next: ({ fixed, designs }) => {
-        const fixedViews: CartItemView[] = (fixed ?? []).map(f => ({
-          cartItemId: f.cartItemId,
-          name: f.productName,
-          meta: `${f.colorName} · Size: ${f.size}`,
-          imageUrl: f.imageUrl,
-          price: f.price,
-          size: f.size,
-          quantity: f.quantity,
+        const fixedViews: CartItemView[] = (fixed ?? []).map((f: any) => ({
+          cartItemId: f.cartItemId || f.CartItemId,
+          name: f.productName || f.ProductName || f.name || f.Name || 'Fixed Product',
+          meta: `${f.colorName || f.ColorName || ''} · Size: ${f.size || f.Size}`,
+          imageUrl: f.imageUrl || f.ImageUrl || f.image || f.Image || '/assets/placeholder.jpg',
+          price: f.price || f.Price || 0,
+          size: f.size || f.Size,
+          quantity: f.quantity || f.Quantity || 1,
           type: 'fixed',
-          colorId: f.colorId
+          colorId: f.colorId || f.ColorId
         }));
 
-        const designViews: CartItemView[] = (designs ?? []).map(d => ({
-          cartItemId: d.cartItemId,
-          name: d.designName || 'Custom Design',
-          meta: `Custom · Size: ${d.size}`,
-          imageUrl: d.imageUrl,
-          price: d.price,
-          size: d.size,
-          quantity: d.quantity,
+        const designViews: CartItemView[] = (designs ?? []).map((d: any) => ({
+          cartItemId: d.cartItemId || d.CartItemId,
+          name: d.designName || d.DesignName || d.name || d.Name || 'Custom Design',
+          meta: `Custom · Size: ${d.size || d.Size}`,
+          imageUrl: d.imageUrl || d.ImageUrl || d.frontImage || d.FrontImage || d.image || d.Image || '/assets/placeholder.jpg',
+          price: d.price || d.Price || 0,
+          size: d.size || d.Size,
+          quantity: d.quantity || d.Quantity || 1,
           type: 'design',
-          designId: d.designId
+          designId: d.designId || d.DesignId || d.customerDesignId || d.CustomerDesignId
         }));
 
         this.items.set([...fixedViews, ...designViews]);
@@ -147,7 +147,18 @@ export class CartComponent implements OnInit {
 
   /** Maps size string like "S", "M", "L", "XL", "XXL" to the API integer enum */
   private sizeToEnum(size: string): number {
-    const map: Record<string, number> = { 'XS': 0, 'S': 1, 'M': 2, 'L': 3, 'XL': 4, 'XXL': 5 };
-    return map[size.toUpperCase()] ?? 2;
+    const map: Record<string, number> = {
+      '2XS': 11, 'XXS': 11,
+      'XS': 12,
+      'S': 13,
+      'M': 14,
+      'L': 15,
+      'XL': 16,
+      '2XL': 17, 'XXL': 17,
+      '3XL': 18, 'XXXL': 18,
+      '4XL': 19,
+      '5XL': 20
+    };
+    return map[size.toUpperCase()] ?? 14;
   }
 }

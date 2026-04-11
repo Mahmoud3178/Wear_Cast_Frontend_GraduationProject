@@ -62,9 +62,8 @@ export class CustomerDesignComponent implements AfterViewInit {
         try {
           await sendLines(items);
         } catch (err) {
-          // Some backend builds use 1-based Size enum for cart endpoints.
-          const shifted = items.map(x => ({ ...x, size: x.size + 1 }));
-          await sendLines(shifted);
+          console.error('Failed to add to cart:', err);
+          throw err;
         }
       };
     } else {

@@ -25,14 +25,22 @@
         <label class="form-label">Name</label>
         <input class="form-control" [(ngModel)]="createForm.name" name="pname" required placeholder="e.g. Summer tee" [readonly]="isEditMode">
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
         <label class="form-label">Category</label>
         <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat" [disabled]="isEditMode">
           <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">
             {{ c.name ?? c.Name ?? 'Category' }}
           </option>
         </select>
-        <div class="form-text">Loaded from the server. New categories are added by an admin.</div>
+        <div class="form-text">Loaded from the server.</div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Dress style</label>
+        <select class="form-select" [(ngModel)]="createForm.dressStyle" name="dressStyle" [disabled]="isEditMode">
+          <option *ngFor="let style of dressStyleOptions" [ngValue]="style.value">
+            {{ style.label }}
+          </option>
+        </select>
       </div>
 
       <div class="col-12">
@@ -109,30 +117,18 @@
 
   <section class="card wc-factory-card border-0 mb-4">
     <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-      <span class="badge rounded-pill bg-secondary">3</span> Base photos (this color)
+      <span class="badge rounded-pill bg-secondary">3</span> Catalog Photo (this color)
     </div>
     <div class="card-body row g-3">
-      <div class="col-6 col-md-3">
-        <label class="form-label small">Front</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickFile('front', $event)">
+      <div class="col-md-6">
+        <label class="form-label small">Main / Catalog Image</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickMainFile($event)">
       </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label small">Back</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickFile('back', $event)">
-      </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label small">Right</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickFile('right', $event)">
-      </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label small">Left</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickFile('left', $event)">
-      </div>
-      <div class="col-12">
-        <button type="button" class="btn btn-primary" [disabled]="busy || colorId == null" (click)="uploadViews()">
-          Upload selected images
+      <div class="col-12 mt-3">
+        <button type="button" class="btn btn-primary" [disabled]="busy || colorId == null" (click)="uploadMainImage()">
+          Upload catalog image
         </button>
-        <p class="small text-muted mb-0 mt-2">Upload all four sides for a complete set, or any subset to add or replace views.</p>
+        <p class="small text-muted mb-0 mt-2">Upload a single picture for this color to show it in the catalog.</p>
       </div>
     </div>
   </section>

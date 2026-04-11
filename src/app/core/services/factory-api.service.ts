@@ -13,18 +13,27 @@ export const VIEW_SIDE = {
   Left: 4
 } as const;
 
-/**
- * Backend `TargetAudience` enum (integer). Value `0` is rejected by the API.
- * @see CreateDesignedProductRequest in OpenAPI
- */
+/** Target Audience Options */
 export const TARGET_AUDIENCE_OPTIONS: ReadonlyArray<{
   label: string;
   value: number;
 }> = [
   { label: 'Men', value: 1 },
   { label: 'Women', value: 2 },
-  { label: 'Kids', value: 3 },
-  { label: 'Unisex', value: 4 }
+  { label: 'Unisex', value: 3 },
+  { label: 'Kids', value: 4 },
+  { label: 'Babies', value: 8 }
+];
+
+export const DRESS_STYLE_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: number;
+}> = [
+  { label: 'Casual', value: 1 },
+  { label: 'Formal', value: 2 },
+  { label: 'Party', value: 3 },
+  { label: 'Gym', value: 4 },
+  { label: 'Sporty', value: 5 }
 ];
 
 interface ApiEnvelope<T = unknown> {
@@ -81,6 +90,7 @@ export interface CreateDesignedProductPayload {
   name: string;
   description: string;
   targetAudiences: number[];
+  dressStyle: number;
   price: number;
   canvasWidth: number;
   canvasHeight: number;
@@ -247,6 +257,31 @@ export class FactoryApiService {
           throw this.envErr(res);
         }
       }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
+  uploadColorMainImage(
+    productId: number,
+    colorId: number,
+    file: File
+  ): Observable<void> {
+    const url = `${this.base}/api/factories/products/${productId}/colors/${colorId}/main-image`;
+    const fd = new FormData();
+    fd.append('Image', file, file.name);
+    return this.http.put<ApiEnvelope>(url, fd).pipe(
+      map(res => {
+        if (res && res.isSuccess === false) {
+          throw this.envErr(res);
+        }
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
+  getAllFixedProducts(params: any): Observable<any> {
+    const url = `${this.base}/api/FixedProduct/GetAll`;
+    return this.http.get(url, { params }).pipe(
       catchError(e => this.mapErr(e))
     );
   }

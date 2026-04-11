@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import {
   FactoryApiService,
   TARGET_AUDIENCE_OPTIONS,
+  DRESS_STYLE_OPTIONS,
   VIEW_SIDE,
   WEARCAST_SIZE_ENUM_STRINGS,
   type CategoryDto,
@@ -90,6 +91,7 @@ function num(v: unknown): number | null {
 })
 export class FactoryProductWizardComponent implements OnInit {
   readonly targetAudienceOptions = TARGET_AUDIENCE_OPTIONS;
+  readonly dressStyleOptions = DRESS_STYLE_OPTIONS;
   readonly sizeOptions: ReadonlyArray<{ label: string; value: WearcastSizeString }> =
     WEARCAST_SIZE_ENUM_STRINGS.map(v => ({
       value: v,
@@ -108,7 +110,8 @@ export class FactoryProductWizardComponent implements OnInit {
     price: 29.99,
     canvasWidth: 400,
     canvasHeight: 480,
-    categoryId: 1
+    categoryId: 1,
+    dressStyle: 1
   };
 
   productId: number | null = null;
@@ -116,12 +119,7 @@ export class FactoryProductWizardComponent implements OnInit {
   colorForm = { name: 'Black', hexCode: '#1a1a1a' };
   colorId: number | null = null;
 
-  files: Record<'front' | 'back' | 'right' | 'left', File | null> = {
-    front: null,
-    back: null,
-    right: null,
-    left: null
-  };
+  mainImageFile: File | null = null;
 
   /** Matches backend `Size` enum serialized as string (e.g. `_M`). */
   sizeForm = { size: '_M' as WearcastSizeString, a: 26.5, b: 20, c: 24.5 };
@@ -196,10 +194,10 @@ export class FactoryProductWizardComponent implements OnInit {
     return this.selectedAudiences.includes(value);
   }
 
-  pickFile(view: 'front' | 'back' | 'right' | 'left', ev: Event): void {
+  pickMainFile(ev: Event): void {
     const input = ev.target as HTMLInputElement;
     const f = input.files?.[0];
-    this.files[view] = f ?? null;
+    this.mainImageFile = f ?? null;
   }
 
   private loadExistingProduct(id: number): void {
@@ -255,6 +253,10 @@ export class FactoryProductWizardComponent implements OnInit {
     if (cat != null && cat > 0) {
       this.createForm.categoryId = cat;
     }
+    const style = num(merged['dressStyle'] ?? merged['DressStyle']);
+    if (style != null && style > 0) {
+      this.createForm.dressStyle = style;
+    }
     const ta =
       merged['targetAudiences'] ??
       merged['TargetAudiences'] ??
@@ -299,6 +301,7 @@ export class FactoryProductWizardComponent implements OnInit {
       name: this.createForm.name.trim(),
       description: this.createForm.description.trim() || this.createForm.name.trim(),
       targetAudiences: [...this.selectedAudiences].sort((a, b) => a - b),
+      dressStyle: this.createForm.dressStyle,
       price: this.createForm.price,
       canvasWidth: Math.round(this.createForm.canvasWidth),
       canvasHeight: Math.round(this.createForm.canvasHeight),
@@ -354,47 +357,30 @@ export class FactoryProductWizardComponent implements OnInit {
       });
   }
 
-  uploadViews(): void {
+  uploadMainImage(): void {
     this.error = '';
     this.message = '';
-    if (this.colorId == null) {
+    if (this.colorId == null || this.productId == null) {
       this.error = 'Add a color first.';
       return;
     }
-    const c = this.colorId;
-    const pairs: Array<{ file: File; side: number; label: string }> = [];
-    (['front', 'back', 'right', 'left'] as const).forEach((k, i) => {
-      const f = this.files[k];
-      if (f) {
-        pairs.push({
-          file: f,
-          side: [VIEW_SIDE.Front, VIEW_SIDE.Back, VIEW_SIDE.Right, VIEW_SIDE.Left][i],
-          label: k
-        });
-      }
-    });
-    if (pairs.length < 1) {
-      this.error = 'Select at least one image (front, back, right, or left).';
+    if (!this.mainImageFile) {
+      this.error = 'Select an image first.';
       return;
     }
+    
     this.busy = true;
-    forkJoin(
-      pairs.map(p =>
-        this.factory.uploadColorViewImage(c, p.file, p.side)
-      )
-    ).subscribe({
-      next: () => {
-        this.busy = false;
-        this.message =
-          pairs.length === 4
-            ? 'All four view images uploaded. Add sizes below (repeat as needed).'
-            : 'Selected view images uploaded. Add more views or sizes as needed.';
-      },
-      error: (e: Error) => {
-        this.busy = false;
-        this.error = e.message || 'Image upload failed';
-      }
-    });
+    this.factory.uploadColorMainImage(this.productId, this.colorId, this.mainImageFile)
+      .subscribe({
+        next: () => {
+          this.busy = false;
+          this.message = 'Catalog image uploaded successfully. Add sizes below (repeat as needed).';
+        },
+        error: (e: Error) => {
+          this.busy = false;
+          this.error = e.message || 'Image upload failed';
+        }
+      });
   }
 
   categoryValue(c: CategoryDto): number {

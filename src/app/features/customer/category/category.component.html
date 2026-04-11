@@ -5,54 +5,64 @@
     <aside class="wc-filters">
       <h2>Filters</h2>
       <div class="filter-group">
-        <p class="label">Category</p>
+        <p class="label">Target Audience</p>
         <button
-          *ngFor="let c of categories"
+          *ngFor="let aud of targetAudiences"
           class="chip"
-          [class.chip--active]="c === selectedCategory"
-          (click)="setCategory(c)">
-          {{ c }}
+          [class.chip--active]="aud.value === selectedAudience"
+          (click)="selectedAudience = aud.value">
+          {{ aud.label }}
         </button>
       </div>
 
       <div class="filter-group">
-        <p class="label">Price</p>
-        <input
-          type="range"
-          min="50"
-          max="300"
-          [value]="maxPrice"
-          (input)="onPriceChange($any($event.target).value)">
-        <p class="price-label">Up to ${{ maxPrice }}</p>
+        <p class="label">Dress Style</p>
+        <button
+          *ngFor="let style of dressStyles"
+          class="chip"
+          [class.chip--active]="style.value === selectedStyle"
+          (click)="selectedStyle = style.value">
+          {{ style.label }}
+        </button>
       </div>
 
       <div class="filter-group">
-        <p class="label">Size</p>
-        <div class="size-chips">
-          <button
-            *ngFor="let s of sizes"
-            class="chip"
-            [class.chip--active]="s === selectedSize"
-            (click)="setSize(s)">
-            {{ s }}
-          </button>
+        <p class="label">Sort By</p>
+        <select class="form-select mt-2" [(ngModel)]="selectedSort">
+          <option [ngValue]="sort.value" *ngFor="let sort of sortOptions">{{sort.label}}</option>
+        </select>
+      </div>
+
+      <div class="filter-group mt-3">
+        <p class="label">Price Range</p>
+        <div class="d-flex gap-2">
+          <input type="number" class="form-control" placeholder="Min" [(ngModel)]="minPrice" min="0">
+          <input type="number" class="form-control" placeholder="Max" [(ngModel)]="maxPrice" min="0">
         </div>
       </div>
 
-      <button class="wc-btn-primary">Apply filter</button>
+      <button class="wc-btn-primary" (click)="fetchProducts()" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>Apply filter
+      </button>
     </aside>
 
     <section class="wc-category-grid">
       <div class="wc-category-header">
-        <h1>Casual</h1>
-        <p class="meta">Showing {{ filteredProducts.length }} of {{ products.length }} products</p>
+        <h1>Catalog</h1>
+        <p class="meta">Showing {{ products.length }} items</p>
       </div>
 
-      <div class="grid">
-        <article class="wc-card" *ngFor="let p of filteredProducts" routerLink="/customer/product">
-          <div class="image"></div>
+      <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+      <div *ngIf="loading && products.length === 0" class="text-muted text-center py-5">Loading products...</div>
+      <div *ngIf="!loading && products.length === 0 && !error" class="text-muted text-center py-5">No products found matching these filters.</div>
+
+      <div class="grid" *ngIf="products.length > 0">
+        <article class="wc-card" *ngFor="let p of products" routerLink="/customer/product">
+          <div class="image" [style.background-image]="p.imageUrl ? 'url(' + p.imageUrl + ')' : null">
+            <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" loading="lazy" class="h-100 w-100 object-fit-cover opacity-0">
+          </div>
           <h3>{{ p.name }}</h3>
-          <p class="meta">{{ p.category }} · Rating {{ p.rating }}</p>
+          <p class="meta">{{ p.categoryName || 'Catalog' }} · Target: {{ p.targetAudience === 1 ? 'Men' : (p.targetAudience === 2 ? 'Women' : (p.targetAudience === 3 ? 'Unisex' : (p.targetAudience === 8 ? 'Babies' : 'Kids'))) }}</p>
           <p class="price">${{ p.price }}</p>
         </article>
       </div>

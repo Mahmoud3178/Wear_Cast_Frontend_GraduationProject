@@ -1004,22 +1004,22 @@
       .replace(/^_+/, '')
       .replace(/\s+/g, '');
     var map = {
-      '2XS': 0,
-      XXS: 0,
-      XS: 0,
-      S: 1,
-      M: 2,
-      L: 3,
-      XL: 4,
-      '2XL': 5,
-      XXL: 5,
-      '3XL': 5,
-      '4XL': 5,
-      '5XL': 5,
-      OSFA: 2,
-      OS: 2,
-      'ONE-SIZE': 2,
-      ONESIZE: 2
+      '2XS': 11,
+      XXS: 11,
+      XS: 12,
+      S: 13,
+      M: 14,
+      L: 15,
+      XL: 16,
+      '2XL': 17,
+      XXL: 17,
+      '3XL': 18,
+      '4XL': 19,
+      '5XL': 20,
+      OSFA: 14,
+      OS: 14,
+      'ONE-SIZE': 14,
+      ONESIZE: 14
     };
     return Object.prototype.hasOwnProperty.call(map, t) ? map[t] : -1;
   }
