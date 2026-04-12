@@ -141,8 +141,97 @@
       <h3>Choose a product</h3>
       <button type="button" id="products-modal-close" class="details-close-btn" aria-label="Close">✕</button>
     </div>
-    <p class="products-modal-lead">Pick a base template. Items from your factory catalog load here when you are signed in.</p>
+    
+    <!-- ANGULAR SEARCH BAR -->
+    <div class="wc-filters d-flex gap-2 mb-4 flex-wrap align-items-end mt-3" style="font-family: 'Inter', sans-serif;">
+      <div class="flex-grow-1" style="min-width: 200px">
+        <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="Search templates..." [(ngModel)]="searchParams.SearchTerm" (keyup.enter)="searchCatalog()">
+      </div>
+      <div>
+        <select class="form-select bg-dark text-white border-secondary" [(ngModel)]="searchParams.TargetAudience" (change)="searchCatalog()">
+          <option [ngValue]="null">Any Audience</option>
+          <option [ngValue]="1">Men</option>
+          <option [ngValue]="2">Women</option>
+          <option [ngValue]="4">Kids</option>
+          <option [ngValue]="3">Unisex</option>
+          <option [ngValue]="8">Babies</option>
+        </select>
+      </div>
+      <div>
+        <select class="form-select bg-dark text-white border-secondary" [(ngModel)]="searchParams.DressStyle" (change)="searchCatalog()">
+          <option [ngValue]="null">Any Style</option>
+          <option [ngValue]="1">Casual</option>
+          <option [ngValue]="2">Formal</option>
+          <option [ngValue]="3">Party</option>
+          <option [ngValue]="4">Gym</option>
+          <option [ngValue]="5">Sporty</option>
+        </select>
+      </div>
+        <button class="btn btn-primary px-4" (click)="searchCatalog()" [disabled]="loadingProducts">
+          <span *ngIf="loadingProducts" class="spinner-border spinner-border-sm me-1"></span>Search
+        </button>
+    </div>
+    <div *ngIf="catalogSearchResults.length === 0 && !loadingProducts" class="text-center text-muted mb-4 py-4">No templates found for this criteria.</div>
+
+
+    <style>
+      .angular-product-modal-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 16px;
+        max-height: 50vh;
+        overflow-y: auto;
+        padding: 4px;
+      }
+      .angular-product-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+      }
+      .angular-product-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+      }
+      .angular-product-card img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 8px;
+      }
+      .angular-product-card .no-img {
+        width: 100%;
+        height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,0.08);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        color: rgba(255,255,255,0.3);
+        font-size: 0.8rem;
+      }
+    </style>
+
+    <!-- Native designer product list (has real images + working switch) -->
     <div class="product-list product-modal-list" id="product-modal-list"></div>
+
+    <!-- Angular search results (for discovering & loading new products) -->
+    <div *ngIf="catalogSearchResults.length > 0" class="mt-3">
+      <h5 class="text-white-50 small text-uppercase mb-2">Search Results</h5>
+      <div class="angular-product-modal-list">
+        <div *ngFor="let p of catalogSearchResults" class="angular-product-card" (click)="selectCatalogProduct(p)">
+          <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name">
+          <div *ngIf="!p.imageUrl" class="no-img">No Image</div>
+          <h4 class="h6 mb-1 text-truncate text-white">{{ p.name }}</h4>
+          <p class="small text-muted mb-0" *ngIf="p.price">${{ p.price }}</p>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 

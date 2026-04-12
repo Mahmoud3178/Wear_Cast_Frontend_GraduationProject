@@ -224,10 +224,15 @@ export class FactoryApiService {
 
   addProductColor(
     productId: number,
-    body: { name: string; hexCode: string }
+    body: { name: string; hexCode: string; image: File }
   ): Observable<{ colorId: number }> {
     const url = `${this.base}/api/factories/products/${productId}/colors`;
-    return this.http.post<ApiEnvelope>(url, body).pipe(
+    const fd = new FormData();
+    fd.append('Name', body.name);
+    fd.append('HexCode', body.hexCode);
+    fd.append('Image', body.image, body.image.name);
+    
+    return this.http.post<ApiEnvelope>(url, fd).pipe(
       map(res => {
         if (!res.isSuccess) {
           throw this.envErr(res);

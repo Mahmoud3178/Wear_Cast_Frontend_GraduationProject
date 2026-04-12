@@ -95,40 +95,58 @@
 
   <section class="card wc-factory-card border-0 mb-4">
     <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-      <span class="badge rounded-pill bg-secondary">2</span> Color (repeat for more colors)
+      <span class="badge rounded-pill bg-secondary">2</span> Color & Catalog Image (repeat for more colors)
     </div>
     <div class="card-body row g-3">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label">Color name</label>
         <input class="form-control" [(ngModel)]="colorForm.name" name="cname">
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label">Hex</label>
         <input class="form-control" [(ngModel)]="colorForm.hexCode" name="hex" placeholder="#000000">
       </div>
-      <div class="col-md-4 d-flex align-items-end">
-        <button type="button" class="btn btn-primary" [disabled]="busy || productId == null" (click)="addColor()">
+      <div class="col-md-4">
+        <label class="form-label small">Main / Catalog Image</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickMainFile($event)">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="button" class="btn btn-primary w-100" [disabled]="busy || productId == null" (click)="addColor()">
           Add color
         </button>
       </div>
-      <p *ngIf="colorId != null" class="small text-muted mb-0">Current color id: <code>{{ colorId }}</code></p>
+      <div class="col-12 mt-2">
+        <p *ngIf="colorId != null" class="small text-muted mb-0">Current color id: <code>{{ colorId }}</code></p>
+      </div>
     </div>
   </section>
 
   <section class="card wc-factory-card border-0 mb-4">
     <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-      <span class="badge rounded-pill bg-secondary">3</span> Catalog Photo (this color)
+      <span class="badge rounded-pill bg-secondary">3</span> View Images (this color)
     </div>
     <div class="card-body row g-3">
-      <div class="col-md-6">
-        <label class="form-label small">Main / Catalog Image</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickMainFile($event)">
+      <div class="col-md-3">
+        <label class="form-label small">Front Side</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'front')">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">Back Side</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'back')">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">Right Side</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'right')">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">Left Side</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'left')">
       </div>
       <div class="col-12 mt-3">
-        <button type="button" class="btn btn-primary" [disabled]="busy || colorId == null" (click)="uploadMainImage()">
-          Upload catalog image
+        <button type="button" class="btn btn-primary" [disabled]="busy || colorId == null" (click)="uploadViewImages()">
+          Upload view images
         </button>
-        <p class="small text-muted mb-0 mt-2">Upload a single picture for this color to show it in the catalog.</p>
+        <p class="small text-muted mb-0 mt-2">Upload up to 4 views showing different sides of the product for this color.</p>
       </div>
     </div>
   </section>

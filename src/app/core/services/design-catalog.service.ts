@@ -212,7 +212,7 @@ export class DesignCatalogService {
     token: string,
     fallbackIds: number[]
   ): Observable<number[]> {
-    const url = `${this.base}/api/catalog/designed-products`;
+    const url = `${this.base}/api/customer/catalog/designed-products`;
     return this.http
       .get<unknown>(url, { headers: { Authorization: `Bearer ${token}` } })
       .pipe(

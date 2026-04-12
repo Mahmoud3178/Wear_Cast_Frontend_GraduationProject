@@ -121,6 +121,11 @@ export class FactoryProductWizardComponent implements OnInit {
 
   mainImageFile: File | null = null;
 
+  frontImageFile: File | null = null;
+  backImageFile: File | null = null;
+  rightImageFile: File | null = null;
+  leftImageFile: File | null = null;
+
   /** Matches backend `Size` enum serialized as string (e.g. `_M`). */
   sizeForm = { size: '_M' as WearcastSizeString, a: 26.5, b: 20, c: 24.5 };
 
@@ -196,8 +201,16 @@ export class FactoryProductWizardComponent implements OnInit {
 
   pickMainFile(ev: Event): void {
     const input = ev.target as HTMLInputElement;
-    const f = input.files?.[0];
-    this.mainImageFile = f ?? null;
+    this.mainImageFile = input.files?.[0] ?? null;
+  }
+
+  pickViewFile(ev: Event, side: 'front' | 'back' | 'right' | 'left'): void {
+    const input = ev.target as HTMLInputElement;
+    const f = input.files?.[0] ?? null;
+    if (side === 'front') this.frontImageFile = f;
+    if (side === 'back') this.backImageFile = f;
+    if (side === 'right') this.rightImageFile = f;
+    if (side === 'left') this.leftImageFile = f;
   }
 
   private loadExistingProduct(id: number): void {
@@ -334,6 +347,11 @@ export class FactoryProductWizardComponent implements OnInit {
       this.error = 'Color name required.';
       return;
     }
+    if (!this.mainImageFile) {
+      this.error = 'Catalog image is required.';
+      return;
+    }
+    
     let hex = this.colorForm.hexCode.trim();
     if (!hex.startsWith('#')) {
       hex = '#' + hex;
@@ -342,13 +360,14 @@ export class FactoryProductWizardComponent implements OnInit {
     this.factory
       .addProductColor(this.productId, {
         name: this.colorForm.name.trim(),
-        hexCode: hex
+        hexCode: hex,
+        image: this.mainImageFile
       })
       .subscribe({
         next: ({ colorId }) => {
           this.busy = false;
           this.colorId = colorId;
-          this.message = `Color created (color id ${colorId}). Upload one or more view images.`;
+          this.message = `Color created (color id ${colorId}). Catalog image uploaded successfully. Upload one or more view images next.`;
         },
         error: (e: Error) => {
           this.busy = false;
@@ -357,30 +376,40 @@ export class FactoryProductWizardComponent implements OnInit {
       });
   }
 
-  uploadMainImage(): void {
+  uploadViewImages(): void {
+    if (this.colorId == null) {
+      this.error = 'Add a color first before uploading view images.';
+      return;
+    }
+
+    const uploads: any[] = [];
+    if (this.frontImageFile) uploads.push(this.factory.uploadColorViewImage(this.colorId, this.frontImageFile, 1));
+    if (this.backImageFile) uploads.push(this.factory.uploadColorViewImage(this.colorId, this.backImageFile, 2));
+    if (this.rightImageFile) uploads.push(this.factory.uploadColorViewImage(this.colorId, this.rightImageFile, 3));
+    if (this.leftImageFile) uploads.push(this.factory.uploadColorViewImage(this.colorId, this.leftImageFile, 4));
+
+    if (uploads.length === 0) {
+      this.error = 'Select at least one view image to upload.';
+      return;
+    }
+
+    this.busy = true;
     this.error = '';
     this.message = '';
-    if (this.colorId == null || this.productId == null) {
-      this.error = 'Add a color first.';
-      return;
-    }
-    if (!this.mainImageFile) {
-      this.error = 'Select an image first.';
-      return;
-    }
-    
-    this.busy = true;
-    this.factory.uploadColorMainImage(this.productId, this.colorId, this.mainImageFile)
-      .subscribe({
+
+    // Wait for all selected uploads to finish
+    import('rxjs').then(({ forkJoin }) => {
+      forkJoin(uploads).subscribe({
         next: () => {
           this.busy = false;
-          this.message = 'Catalog image uploaded successfully. Add sizes below (repeat as needed).';
+          this.message = 'View images uploaded successfully. Add sizes below (repeat as needed).';
         },
         error: (e: Error) => {
           this.busy = false;
-          this.error = e.message || 'Image upload failed';
+          this.error = e.message || 'View image upload failed.';
         }
       });
+    });
   }
 
   categoryValue(c: CategoryDto): number {

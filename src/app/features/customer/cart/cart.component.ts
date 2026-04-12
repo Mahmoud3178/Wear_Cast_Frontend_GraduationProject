@@ -75,17 +75,21 @@ export class CartComponent implements OnInit {
           colorId: f.colorId || f.ColorId
         }));
 
-        const designViews: CartItemView[] = (designs ?? []).map((d: any) => ({
-          cartItemId: d.cartItemId || d.CartItemId,
-          name: d.designName || d.DesignName || d.name || d.Name || 'Custom Design',
-          meta: `Custom · Size: ${d.size || d.Size}`,
-          imageUrl: d.imageUrl || d.ImageUrl || d.frontImage || d.FrontImage || d.image || d.Image || '/assets/placeholder.jpg',
-          price: d.price || d.Price || 0,
-          size: d.size || d.Size,
-          quantity: d.quantity || d.Quantity || 1,
-          type: 'design',
-          designId: d.designId || d.DesignId || d.customerDesignId || d.CustomerDesignId
-        }));
+        const designViews: CartItemView[] = (designs ?? []).map((d: any) => {
+          const sizeVal = d.size || d.Size;
+          const nameVal = d.designName || d.DesignName || d.name || d.Name || d.productName || d.ProductName;
+          return {
+            cartItemId: d.cartItemId || d.CartItemId,
+            name: nameVal || 'Custom Design',
+            meta: `Custom Design` + (sizeVal ? ` · Size: ${sizeVal}` : ''),
+            imageUrl: d.imageUrl || d.ImageUrl || d.frontImage || d.FrontImage || d.image || d.Image || '/assets/placeholder.jpg',
+            price: d.price || d.Price || 0,
+            size: sizeVal,
+            quantity: d.quantity || d.Quantity || 1,
+            type: 'design',
+            designId: d.designId || d.DesignId || d.customerDesignId || d.CustomerDesignId || d.id || d.Id
+          };
+        });
 
         this.items.set([...fixedViews, ...designViews]);
         this.loading.set(false);

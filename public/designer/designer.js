@@ -1532,6 +1532,10 @@
   // Expose an explicit init function for Angular to call after the component view is ready
   if (typeof window !== 'undefined') {
     window.wearcastDesignerRun = run;
+    window.wearcastSetProduct = setProduct;
+    window.wearcastOpenProductsModal = openProductsModal;
+    window.wearcastCloseProductsModal = closeProductsModal;
+    window.wearcastGetProducts = function () { return PRODUCTS; };
   }
 
 })();

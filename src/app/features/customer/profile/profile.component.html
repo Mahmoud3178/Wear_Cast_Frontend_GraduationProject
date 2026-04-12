@@ -5,7 +5,8 @@
     <aside class="profile-sidebar">
       <div class="profile-user">
         <ng-container *ngIf="profile as p; else guestSidebar">
-          <div class="avatar-circle">{{ avatarLetter }}</div>
+          <img *ngIf="profileImageUrl" [src]="profileImageUrl" class="avatar-circle border-0 object-fit-cover" alt="Profile Image">
+          <div *ngIf="!profileImageUrl" class="avatar-circle">{{ avatarLetter }}</div>
           <h2>{{ displayName }}</h2>
           <p>{{ p.email || '—' }}</p>
         </ng-container>
@@ -22,39 +23,50 @@
       <nav class="profile-nav" aria-label="Account navigation">
         <button [class.active]="activeTab === 'info'" (click)="setTab('info')">Personal Information</button>
         <button [class.active]="activeTab === 'addresses'" (click)="setTab('addresses')">Addresses</button>
-        <button [class.active]="activeTab === 'payments'" (click)="setTab('payments')">Payment Methods</button>
         <button [class.active]="activeTab === 'orders'" (click)="setTab('orders')">Orders</button>
-        <button [class.active]="activeTab === 'notifications'" (click)="setTab('notifications')">Notifications</button>
         <button [class.active]="activeTab === 'security'" (click)="setTab('security')">Security Settings</button>
       </nav>
     </aside>
 
     <section class="profile-content">
+      <!-- Global Message Display -->
+      <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+      <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
       <div *ngIf="activeTab === 'info'" class="card">
         <header class="card-header">
           <h1>Personal Information</h1>
-          <button class="primary-btn">Edit</button>
+          <button *ngIf="!editModeInfo" class="primary-btn" (click)="editModeInfo = true">Edit</button>
+          <button *ngIf="editModeInfo" class="primary-btn" (click)="saveInfo()" [disabled]="loading">Save</button>
         </header>
-        <div class="card-body info-grid" *ngIf="profile as p; else guestInfo">
+        <div class="card-body info-grid" *ngIf="!editModeInfo; else editInfo">
           <div>
-            <label>Full Name</label>
-            <p>{{ (p.firstName + ' ' + p.lastName).trim() || '—' }}</p>
+            <label>First Name</label>
+            <p>{{ infoForm.firstName || '—' }}</p>
           </div>
           <div>
-            <label>Email Address</label>
-            <p>{{ p.email || '—' }}</p>
+            <label>Last Name</label>
+            <p>{{ infoForm.lastName || '—' }}</p>
           </div>
           <div>
             <label>Phone Number</label>
-            <p>{{ p.phoneNumber || '—' }}</p>
+            <p>{{ infoForm.phoneNumber || '—' }}</p>
           </div>
         </div>
-        <ng-template #guestInfo>
-          <div class="card-body">
-            <p class="text-muted mb-2">No saved profile yet.</p>
-            <p class="small mb-0">
-              Register or sign in—your name, email, and phone from registration appear here.
-            </p>
+        <ng-template #editInfo>
+          <div class="card-body info-grid">
+            <div>
+              <label>First Name</label>
+              <input class="form-control" [(ngModel)]="infoForm.firstName" />
+            </div>
+            <div>
+              <label>Last Name</label>
+              <input class="form-control" [(ngModel)]="infoForm.lastName" />
+            </div>
+            <div>
+              <label>Phone Number</label>
+              <input class="form-control" [(ngModel)]="infoForm.phoneNumber" />
+            </div>
           </div>
         </ng-template>
       </div>
@@ -62,52 +74,52 @@
       <div *ngIf="activeTab === 'addresses'" class="card">
         <header class="card-header">
           <h1>My Addresses</h1>
-          <button class="primary-btn">Add New Address</button>
+          <button *ngIf="!editModeAddress" class="primary-btn" (click)="editModeAddress = true">Edit Address</button>
+          <button *ngIf="editModeAddress" class="primary-btn" (click)="saveInfo()" [disabled]="loading">Save</button>
         </header>
-        <div class="card-body address-grid">
-          <article class="address-card" *ngIf="profile as p">
+        <div class="card-body address-grid" *ngIf="!editModeAddress; else editAddress">
+          <article class="address-card">
             <h2>{{ displayName }}</h2>
-            <p *ngIf="p.phoneNumber">{{ p.phoneNumber }}</p>
+            <p *ngIf="infoForm.phoneNumber">{{ infoForm.phoneNumber }}</p>
             <p *ngIf="hasAddress">
-              <ng-container *ngIf="p.street || p.buildingNumber">
-                {{ p.street }}<ng-container *ngIf="p.street && p.buildingNumber">, </ng-container>{{ p.buildingNumber }}<br>
+              <ng-container *ngIf="addressForm.street || addressForm.buildingNumber">
+                {{ addressForm.street }}<ng-container *ngIf="addressForm.street && addressForm.buildingNumber">, </ng-container>{{ addressForm.buildingNumber }}<br>
               </ng-container>
-              <ng-container *ngIf="p.city || p.state">
-                {{ p.city }}<ng-container *ngIf="p.city && p.state">, </ng-container>{{ p.state }}
+              <ng-container *ngIf="addressForm.city || addressForm.state || addressForm.country">
+                {{ addressForm.city }}<ng-container *ngIf="addressForm.city && addressForm.state">, </ng-container>{{ addressForm.state }}<ng-container *ngIf="(addressForm.city || addressForm.state) && addressForm.country">, </ng-container>{{ addressForm.country }}
               </ng-container>
             </p>
-            <p *ngIf="!hasAddress" class="text-muted small">No address saved from registration yet.</p>
-            <span class="badge">Default</span>
-          </article>
-          <article class="address-card text-muted small" *ngIf="!profile">
-            Sign in to see your saved address from registration.
+            <p *ngIf="!hasAddress" class="text-muted small">No address saved yet.</p>
+            <span class="badge" *ngIf="hasAddress">Default</span>
           </article>
         </div>
+        <ng-template #editAddress>
+          <div class="card-body security-form">
+            <div class="field">
+              <label>Country</label>
+              <input class="form-control" [(ngModel)]="addressForm.country" />
+            </div>
+            <div class="field">
+              <label>State / Province</label>
+              <input class="form-control" [(ngModel)]="addressForm.state" />
+            </div>
+            <div class="field">
+              <label>City</label>
+              <input class="form-control" [(ngModel)]="addressForm.city" />
+            </div>
+            <div class="field">
+              <label>Street</label>
+              <input class="form-control" [(ngModel)]="addressForm.street" />
+            </div>
+            <div class="field">
+              <label>Building Number</label>
+              <input class="form-control" [(ngModel)]="addressForm.buildingNumber" />
+            </div>
+          </div>
+        </ng-template>
       </div>
 
-      <div *ngIf="activeTab === 'payments'" class="card">
-        <header class="card-header">
-          <h1>Payment Methods</h1>
-          <button class="primary-btn">Add New Card</button>
-        </header>
-        <div class="card-body">
-          <div class="alert">Your card details are securely tokenized. We do not store card numbers.</div>
-          <div class="payment-card">
-            <div>
-              <p class="title">Visa <span class="badge">Default</span></p>
-              <p>•••• •••• •••• 4532</p>
-              <p>Expires 12/25</p>
-            </div>
-          </div>
-          <div class="payment-card">
-            <div>
-              <p class="title">Mastercard</p>
-              <p>•••• •••• •••• 5412</p>
-              <p>Expires 09/26</p>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       <div *ngIf="activeTab === 'orders'" class="card">
         <header class="card-header">
@@ -129,47 +141,31 @@
         </div>
       </div>
 
-      <div *ngIf="activeTab === 'notifications'" class="card">
-        <header class="card-header">
-          <h1>Notifications</h1>
-        </header>
-        <div class="card-body notifications-list">
-          <div class="notification-item">
-            <p class="title">Order Delivered</p>
-            <p>Your order #ORD‑2024‑001234 has been delivered successfully.</p>
-            <span class="time">2 hours ago</span>
-          </div>
-          <div class="notification-item">
-            <p class="title">Order Shipped</p>
-            <p>Your order #ORD‑2024‑001189 is on its way.</p>
-            <span class="time">5 hours ago</span>
-          </div>
-        </div>
-      </div>
-
       <div *ngIf="activeTab === 'security'" class="card">
         <header class="card-header">
           <h1>Security Settings</h1>
         </header>
-        <div class="card-body security-form">
+        <div class="card-body security-form" (keyup.enter)="updatePassword()">
           <div class="field">
             <label>Current Password *</label>
-            <input type="password" />
+            <input type="password" class="form-control" [(ngModel)]="passwordForm.currentPassword" />
           </div>
           <div class="field">
             <label>New Password *</label>
-            <input type="password" />
+            <input type="password" class="form-control" [(ngModel)]="passwordForm.newPassword" />
           </div>
           <div class="field">
             <label>Confirm New Password *</label>
-            <input type="password" />
+            <input type="password" class="form-control" [(ngModel)]="passwordForm.confirmNewPassword" />
           </div>
           <ul class="requirements">
             <li>At least 8 characters long</li>
             <li>Mix of uppercase and lowercase letters recommended</li>
             <li>Include numbers and special characters for stronger security</li>
           </ul>
-          <button class="primary-btn large">Save new password</button>
+          <button class="primary-btn large" (click)="updatePassword()" [disabled]="loading">
+            <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>Save new password
+          </button>
         </div>
       </div>
     </section>

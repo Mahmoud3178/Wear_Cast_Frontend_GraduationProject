@@ -4,5 +4,11 @@
     "secure": true,
     "changeOrigin": true,
     "logLevel": "warn"
+  },
+  "/me": {
+    "target": "https://wear-cast.runasp.net",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "warn"
   }
 }
