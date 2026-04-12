@@ -1,1 +1,66 @@
-<p>dashboard works!</p>
+<div class="container-fluid">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold">Dashboard</h2>
+      <p class="text-muted">Here is your daily store performance overview.</p>
+    </div>
+<div class="d-flex align-items-center gap-3">
+
+  <!-- Notification -->
+  <button class="btn btn-light">
+    <i class="bi bi-bell"></i>
+  </button>
+
+  <!-- Profile Image -->
+  <img
+    src="https://i.pravatar.cc/40"
+    class="rounded-circle shadow-sm"
+    style="width:40px; height:40px; cursor:pointer;"
+  >
+
+</div>
+
+</div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-2" *ngFor="let stat of stats">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="text-muted">{{stat.title}}</h6>
+          <h4 class="fw-bold">{{stat.value}}</h4>
+
+          <span
+            *ngIf="stat.change"
+            [class.text-success]="stat.positive"
+            [class.text-danger]="!stat.positive">
+            {{stat.change}}
+          </span>
+
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="row g-4">
+
+  <!-- Line Chart -->
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm p-3">
+      <h6 class="mb-3">Orders Summary</h6>
+      <canvas id="lineChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Bar Chart -->
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm p-3">
+      <h6 class="mb-3">New Registrations</h6>
+      <canvas id="barChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+  </div>

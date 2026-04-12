@@ -1,0 +1,12 @@
+table tr:hover {
+  background-color: #f8f9fa;
+  transition: 0.2s;
+}
+
+.card {
+  border-radius: 12px;
+}
+
+.offcanvas {
+  width: 400px !important;
+}

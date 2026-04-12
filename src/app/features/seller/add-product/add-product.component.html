@@ -2,49 +2,51 @@
 
   <h3 class="mb-4">Add Product</h3>
 
-  <!-- 🔹 STEP 1 -->
+  <!-- STEP 1 -->
   <div *ngIf="currentStep === 1">
-
-    <!-- Name -->
     <div class="mb-3">
       <label class="form-label">Product Name</label>
-      <input type="text" class="form-control">
+      <input type="text" class="form-control" [(ngModel)]="name">
     </div>
 
-    <!-- Description -->
     <div class="mb-3">
       <label class="form-label">Description</label>
-      <textarea class="form-control"></textarea>
+      <textarea class="form-control" [(ngModel)]="description"></textarea>
     </div>
 
-    <!-- Target -->
     <div class="mb-3">
       <label class="form-label">Target Audience</label>
-      <select class="form-select">
-        <option value="0">Men</option>
-        <option value="1">Women</option>
-        <option value="2">Kids</option>
+      <select class="form-select" [(ngModel)]="targetAudience">
+        <option [value]="1">Men</option>
+        <option [value]="2">Women</option>
+        <option [value]="3">Kids</option>
       </select>
     </div>
 
-    <!-- Price -->
     <div class="mb-3">
       <label class="form-label">Price</label>
-      <input type="number" class="form-control">
+      <input type="number" class="form-control" [(ngModel)]="price">
     </div>
 
-    <!-- Category -->
     <div class="mb-3">
       <label class="form-label">Category</label>
-      <select class="form-select">
-        <option>T-Shirt</option>
-        <option>Jeans</option>
+      <select class="form-select" [(ngModel)]="categoryId">
+        <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
       </select>
     </div>
 
-    <!-- Sizes -->
+    <div class="mb-3">
+      <label class="form-label">Dress Style</label>
+      <select class="form-select" [(ngModel)]="dressStyle">
+        <option [value]="1">Casual</option>
+        <option [value]="2">Formal</option>
+        <option [value]="3">Sport</option>
+      </select>
+    </div>
+
+    <!-- Sizes Table -->
     <table class="table table-bordered text-center mt-3">
-      <thead class="table-light">
+      <thead>
         <tr>
           <th>Size</th>
           <th>A</th>
@@ -53,76 +55,46 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let size of sizes">
-          <td>{{ size.name }}</td>
-          <td><input type="number" class="form-control"></td>
-          <td><input type="number" class="form-control"></td>
-          <td><input type="number" class="form-control"></td>
+        <tr *ngFor="let s of sizes; let i = index">
+          <td>{{ s.name }}</td>
+          <td><input type="number" class="form-control" [(ngModel)]="sizes[i].a"></td>
+          <td><input type="number" class="form-control" [(ngModel)]="sizes[i].b"></td>
+          <td><input type="number" class="form-control" [(ngModel)]="sizes[i].c"></td>
         </tr>
       </tbody>
     </table>
 
-    <button class="btn btn-primary w-100 mt-3"
-            (click)="nextStep()">
-      Next ➜
-    </button>
-
+    <button class="btn btn-primary w-100 mt-3" (click)="createProduct()">Next ➜</button>
   </div>
 
-  <!-- 🔹 STEP 2 -->
+  <!-- STEP 2 -->
   <div *ngIf="currentStep === 2">
-
-    <!-- Color Name -->
     <div class="mb-3">
       <label class="form-label">Color Name</label>
-      <input type="text" class="form-control">
+      <input type="text" class="form-control" [(ngModel)]="colorName">
     </div>
 
-    <!-- Color Code -->
     <div class="mb-3">
       <label class="form-label">Color Code</label>
-      <input type="color" class="form-control form-control-color">
+      <input type="color" class="form-control form-control-color" [(ngModel)]="colorCode">
     </div>
 
-    <!-- Quantity Table -->
-    <table class="table table-bordered text-center mt-3">
-      <thead class="table-light">
-        <tr>
-          <th>Size</th>
-          <th>Qty</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let size of sizes">
-          <td>{{ size.name }}</td>
-          <td><input type="number" class="form-control"></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Main Image -->
     <div class="mb-3">
       <label class="form-label">Main Image</label>
-      <input type="file" class="form-control">
+      <input type="file" class="form-control" (change)="onMainImage($event)">
     </div>
 
-    <!-- Additional Images -->
     <div class="mb-3">
       <label class="form-label">Additional Images</label>
-      <input type="file" class="form-control" multiple>
+      <input type="file" class="form-control" multiple (change)="onAdditionalImages($event)">
     </div>
 
     <div class="d-flex gap-2 mt-3">
-      <button class="btn btn-secondary w-50"
-              (click)="prevStep()">
-        ⬅ Back
-      </button>
-
-      <button class="btn btn-success w-50">
-        Save Product
-      </button>
+      <button class="btn btn-secondary w-50" (click)="prevStep()">⬅ Back</button>
+      <button class="btn btn-success w-50" (click)="saveProduct()">Save Product</button>
     </div>
-
   </div>
-
+  <div *ngIf="successMessage" class="alert alert-success mt-3 text-center">
+  {{ successMessage }}
+</div>
 </div>

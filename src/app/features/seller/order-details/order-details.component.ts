@@ -1,119 +1,73 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-
-interface OrderItem {
-
-  productName: string;
-  productImage: string;
-  sku: string;
-  price: number;
-  qty: number;
-  total: number;
-
-}
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { SallerOrderService } from '../../../core/services/saller-order.service';
 
 @Component({
   selector: 'app-order-details',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './order-details.component.html',
-  styleUrl: './order-details.component.css'
 })
+export class OrderDetailsComponent implements OnInit {
 
-export class OrderDetailsComponent {
-
-  order = {
-
-    id: 'ORD-7829',
-
-    status: 'Order Placed',
-
-    placedAt: 'Oct 24, 2023 at 10:43 AM',
-
-    steps: [
-
-      'Order Placed',
-      'Confirmed',
-      'Processing',
-      'Shipped',
-      'Delivered'
-
-    ],
-
-    currentStep: 0
-
-  };
-
-  customer = {
-
-    name: 'Sarah Jenkins',
-
-    avatar: 'https://i.pravatar.cc/80?img=5',
-
-    email: 'sarah.j@example.com',
-
-    phone: '+1 (555) 123-4567',
-
-    orders: 12,
-
-    spent: '$3.2k'
-
-  };
-
-  shippingAddress = `123 Market St,
-San Francisco, CA 94103,
-United States`;
-
-  billingAddress = `456 Oak Ave,
-San Francisco, CA 94102,
-United States`;
-
-  note = 'Customer requested expedited shipping if possible.';
-
-  items: OrderItem[] = [];
-
-  subtotal = 260;
-
-  discount = 26;
-
+  orderId!: number;
+  order: any = {};
+  items: any[] = [];
+  subtotal = 0;
   shipping = 15;
+  tax = 0;
+  total = 0;
 
-  tax = 20.8;
-
-  total = 269.8;
+  constructor(
+    private route: ActivatedRoute,
+    private orderService: SallerOrderService
+  ) {}
 
   ngOnInit(): void {
+    this.orderId = Number(this.route.snapshot.paramMap.get('id'));
+    this.loadOrderDetails();
+  }
 
-    this.items = [
+  loadOrderDetails() {
+    this.orderService.getOrderItems(this.orderId).subscribe((res: any) => {
+      this.order = {
+        id: res.id,
+        status: res.status,
+        placedAt: res.createdOn,
+        recipientName: res.recipientName,
+        items: res.items || [],
+        totalAmount: res.totalAmount
+      };
 
-      {
-        productName: 'Nike Air Zoom Pegasus',
-        productImage: 'https://via.placeholder.com/48',
-        sku: 'NK-ZOOM-001',
-        price: 120,
-        qty: 1,
-        total: 120
-      },
+      this.items = res.items.map((item: any) => ({
+        productName: item.productName,
+        productImage: item.imageUrl,
+        price: item.unitPrice,
+        qty: item.quantity,
+        total: item.totalPrice
+      }));
 
-      {
-        productName: 'Adidas Ultraboost',
-        productImage: 'https://via.placeholder.com/48',
-        sku: 'AD-ULTRA-002',
-        price: 140,
-        qty: 1,
-        total: 140
-      }
+      this.calculateTotals();
+    });
+  }
 
-    ];
-
+  calculateTotals() {
+    this.subtotal = this.items.reduce((sum, i) => sum + i.total, 0);
+    this.tax = this.subtotal * 0.14;
+    this.total = this.subtotal + this.shipping + this.tax;
   }
 
   confirmOrder() {
-
-    this.order.status = 'Confirmed';
-
-    this.order.currentStep = 1;
-
+    // ال API يريد "Ready" وليس رقم
+    this.orderService.updateOrderStatus(this.orderId, { newStatus: "Ready" })
+      .subscribe({
+        next: () => {
+          this.order.status = 'Ready';
+        },
+        error: err => {
+          console.error('Error updating order status:', err);
+        }
+      });
   }
-
 }

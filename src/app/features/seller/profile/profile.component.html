@@ -9,7 +9,10 @@
       </p>
     </div>
 
-    <button class="btn btn-dark px-4">Save Changes</button>
+    <!-- ✅ ربط الزرار -->
+    <button class="btn btn-dark px-4" (click)="saveChanges()">
+      Save Changes
+    </button>
   </div>
 
   <div class="alert alert-warning small">
@@ -28,36 +31,37 @@
 
           <div class="row g-3 align-items-center">
 
-   <!-- Logo -->
-<div class="col-md-3 text-center">
+            <!-- Logo -->
+            <div class="col-md-3 text-center">
 
-  <div class="profile-avatar mx-auto mb-2 position-relative">
+              <div class="profile-avatar mx-auto mb-2 position-relative">
 
-    <!-- صورة اللوجو -->
-    <img
-      *ngIf="logoPreview; else defaultIcon"
-      [src]="logoPreview"
-      class="rounded-circle w-100 h-100 object-fit-cover"
-      alt="Seller Logo">
+                <!-- صورة اللوجو -->
+                <img
+                  *ngIf="logoPreview; else defaultIcon"
+                  [src]="logoPreview"
+                  class="rounded-circle w-100 h-100 object-fit-cover"
+                  alt="Seller Logo">
 
-    <!-- لو مفيش صورة -->
-    <ng-template #defaultIcon>
-      <i class="bi bi-person-fill fs-2 text-white"></i>
-    </ng-template>
+                <!-- لو مفيش صورة -->
+                <ng-template #defaultIcon>
+                  <i class="bi bi-person-fill fs-2 text-white"></i>
+                </ng-template>
 
-  </div>
+              </div>
 
-  <!-- زرار اختيار صورة -->
-  <label class="small text-primary text-decoration-none cursor-pointer">
-    Change Logo
-    <input
-      type="file"
-      hidden
-      accept="image/*"
-      (change)="onLogoChange($event)">
-  </label>
+              <!-- زرار اختيار صورة -->
+              <label class="small text-primary text-decoration-none cursor-pointer">
+                Change Logo
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  (change)="onLogoChange($event)">
+              </label>
 
-</div>
+            </div>
+
             <!-- Info -->
             <div class="col-md-9">
               <div class="row g-3">
@@ -65,13 +69,13 @@
                 <div class="col-md-6">
                   <label class="form-label small">Seller Name</label>
                   <input type="text" class="form-control"
-                         [(ngModel)]="seller.name" disabled="">
+                         [(ngModel)]="seller.name" disabled>
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label small">Registration Number</label>
                   <input type="text" class="form-control"
-                         [(ngModel)]="seller.registration" disabled="">
+                         [(ngModel)]="seller.registration" disabled>
                 </div>
 
                 <div class="col-12">
@@ -123,7 +127,33 @@
               <input type="email" class="form-control"
                      [(ngModel)]="seller.email">
             </div>
+<!-- Tax ID -->
+<div class="col-md-6">
+  <label class="form-label small">Tax ID Number</label>
+  <input type="text" class="form-control"
+         [(ngModel)]="seller.taxIdNumber">
+</div>
 
+<!-- Commercial Register -->
+<div class="col-md-6">
+  <label class="form-label small">Commercial Register</label>
+  <input type="text" class="form-control"
+         [(ngModel)]="seller.commercialRegisterNumber">
+</div>
+
+<!-- State -->
+<div class="col-md-6">
+  <label class="form-label small">State</label>
+  <input type="text" class="form-control"
+         [(ngModel)]="seller.state">
+</div>
+
+<!-- Building Number -->
+<div class="col-md-6">
+  <label class="form-label small">Building Number</label>
+  <input type="text" class="form-control"
+         [(ngModel)]="seller.buildingNumber">
+</div>
           </div>
         </div>
       </div>
@@ -140,22 +170,27 @@
 
           <div class="mb-3">
             <label class="form-label small">Current Password</label>
-            <input type="password" class="form-control">
+            <input type="password" class="form-control"
+                   [(ngModel)]="currentPassword">
           </div>
 
           <div class="mb-3">
             <label class="form-label small">New Password</label>
             <input type="password" class="form-control"
+                   [(ngModel)]="newPassword"
                    placeholder="Min. 8 characters">
           </div>
 
           <div class="mb-3">
             <label class="form-label small">Confirm New Password</label>
             <input type="password" class="form-control"
+                   [(ngModel)]="ConfirmNewPassword"
                    placeholder="Repeat password">
           </div>
 
-          <button class="btn btn-outline-dark w-100">
+          <!-- لسه مش مربوط بـ API -->
+          <button class="btn btn-outline-dark w-100"
+                  (click)="updatePassword()">
             Update Security
           </button>
 

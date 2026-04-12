@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, NgModule } from '@angular/core';
+import { AfterViewInit, Component, OnInit  } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { RouterLink } from "@angular/router";
 import Chart from 'chart.js/auto';
+import { SallerOrderService } from '../../../core/services/saller-order.service';
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -10,14 +12,19 @@ import Chart from 'chart.js/auto';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent implements AfterViewInit {
-stats = [
-    { title: 'Total Revenue', value: '$12,450', change: '+12%', positive: true },
-    { title: 'Total Orders', value: '342', change: '+5%', positive: true },
-    { title: 'Total Listed', value: '150', change: '', positive: true },
-    { title: 'Approved Products', value: '145', change: '', positive: true },
-    { title: 'Pending Approval', value: '5', change: '', positive: false }
+export class DashboardComponent implements AfterViewInit, OnInit {
+  constructor(private orderService: SallerOrderService) {}
+
+    searchText: string = '';
+ // 🔥 Stats هتتحدث من API
+  stats = [
+    { title: 'Total Revenue', value: '$0', change: '', positive: true },
+    { title: 'Total Orders', value: 0, change: '', positive: true },
+    { title: 'Pending Orders', value: 0, change: '', positive: false },
+    { title: 'Delivered Orders', value: 0, change: '', positive: true },
+    { title: 'Shipped Orders', value: 0, change: '', positive: true }
   ];
+
 
 products = [
   {
@@ -46,24 +53,56 @@ products = [
   }
 ];
 
-  orders = [
-    { id: '#ORD-1001', customer: 'John Doe', amount: '$120', status: 'Delivered' },
-    { id: '#ORD-1002', customer: 'Sarah Ali', amount: '$75', status: 'Processing' },
-    { id: '#ORD-1003', customer: 'Ahmed Hassan', amount: '$210', status: 'Pending' },
-    { id: '#ORD-1004', customer: 'Mona Samy', amount: '$95', status: 'Delivered' },
-        { id: '#ORD-1007', customer: 'Mona Samy', amount: '$95', status: 'Delivered' }
-,    { id: '#ORD-1008', customer: 'Mona Samy', amount: '$95', status: 'Delivered' }
-,    { id: '#ORD-1009', customer: 'Mona Samy', amount: '$95', status: 'Delivered' }
+  // 🔥 Orders من API
+  orders: any[] = [];
+    ngOnInit(): void {
+    this.loadOrders();
+  }
+loadOrders() {
+  this.orderService.getSellerOrders(this.currentPage, this.itemsPerPage)
+    .subscribe((res: any) => {
 
-  ];
+      this.orders = res.items || [];
 
-  currentPage = 1;
-itemsPerPage = 5;
+      this.calculateStats();
+       this.updateStats();
+    });
+}
+calculateStats() {
+
+  const totalOrders = this.orders.length;
+
+  const pending = this.orders.filter(o => o.status === 'Pending').length;
+  const delivered = this.orders.filter(o => o.status === 'Delivered').length;
+  const shipped = this.orders.filter(o => o.status === 'Shipped').length;
+
+  const revenue = this.orders.reduce(
+    (sum, o) => sum + (o.totalAmount || 0),
+    0
+  );
+
+  this.stats[1].value = totalOrders;
+  this.stats[2].value = pending;
+  this.stats[3].value = delivered;
+  this.stats[4].value = shipped;
+  this.stats[0].value = `$${revenue}`;
+}
+  get filteredOrders() {
+    const text = (this.searchText || '').toLowerCase();
+
+    return this.orders.filter(o =>
+      o.id?.toString().includes(text) ||
+      (o.customerName || o.recipientName || '').toLowerCase().includes(text)
+    );
+  }
 get paginatedProducts() {
   const start = (this.currentPage - 1) * this.itemsPerPage;
   const end = start + this.itemsPerPage;
-  return this.orders.slice(start, end);
+  return this.filteredOrders.slice(start, end);
 }
+  currentPage = 1;
+itemsPerPage = 5;
+
 get pages(): number[] {
   return Array.from({ length: this.totalPages }, (_, i) => i + 1);
 }
@@ -71,7 +110,7 @@ goToPage(page: number) {
   this.currentPage = page;
 }
 get totalPages() {
-  return Math.ceil(this.orders.length / this.itemsPerPage);
+  return Math.ceil(this.filteredOrders.length / this.itemsPerPage);
 }
 nextPage() {
   if (this.currentPage < this.totalPages) {
@@ -85,6 +124,38 @@ prevPage() {
   }
 }
 
+updateStats() {
+
+  const totalOrders = this.orders.length;
+
+  const pending = this.orders.filter(o => o.status === 'Pending').length;
+
+  const delivered = this.orders.filter(o => o.status === 'Delivered').length;
+
+  const shipped = this.orders.filter(o => o.status === 'Shipped').length;
+
+  const revenue = this.orders.reduce(
+    (sum, o) => sum + (o.totalAmount || 0),
+    0
+  );
+
+  this.stats = [
+    { title: 'Total Revenue', value: `$${revenue}`, change: '', positive: true },
+    { title: 'Total Orders', value: totalOrders, change: '', positive: true },
+    { title: 'Pending Orders', value: pending, change: '', positive: false },
+    { title: 'Delivered Orders', value: delivered, change: '', positive: true },
+    { title: 'Shipped Orders', value: shipped, change: '', positive: true }
+  ];
+}
+getStatusText(status: number) {
+  switch(status) {
+    case 0: return 'Pending';
+    case 1: return 'Confirmed';
+    case 2: return 'Shipped';
+    case 3: return 'Delivered';
+    default: return 'Unknown';
+  }
+}
   ngAfterViewInit() {
 
     const ctx = document.getElementById('revenueChart') as HTMLCanvasElement;

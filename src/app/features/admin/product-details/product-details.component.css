@@ -1,0 +1,30 @@
+/* Overlay */
+.reviews-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.3);
+  z-index: 999;
+}
+
+/* Panel */
+.reviews-panel {
+  position: fixed;
+  top: 0;
+  right: -400px; /* مخفي */
+  width: 400px;
+  height: 100%;
+  background: #fff;
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+  transition: 0.3s ease;
+  box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+}
+
+/* لما يفتح */
+.reviews-panel.open {
+  right: 0;
+}

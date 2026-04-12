@@ -105,24 +105,31 @@
             </tr>
           </thead>
 
-          <tbody>
-            <tr   *ngFor="let order of paginatedProducts">
-              <td>{{order.id}}</td>
-              <td>{{order.customer}}</td>
-              <td>{{order.amount}}</td>
-              <td>
-                <span
-                  class="badge"
-                  [ngClass]="{
-                    'bg-success': order.status === 'Delivered',
-                    'bg-warning text-dark': order.status === 'Processing',
-                    'bg-secondary': order.status === 'Pending'
-                  }">
-                  {{order.status}}
-                </span>
-              </td>
-            </tr>
-          </tbody>
+<tbody>
+  <tr *ngFor="let order of paginatedProducts">
+
+    <td>#{{ order.id }}</td>
+
+<td>
+  {{ order.recipientName || order.customerName || 'N/A' }}
+</td>
+    <td>
+      ${{ order.totalAmount || order.amount }}
+    </td>
+
+<td>
+  <span class="badge text-danger"
+    [ngClass]="{
+      'bg-success': order.status === 'Delivered',
+      'bg-warning text-dark': order.status === 'Pending',
+      'bg-primary': order.status === 'Shipped'
+    }">
+    {{ order.status }}
+  </span>
+</td>
+
+  </tr>
+</tbody>
 
         </table>
       </div>

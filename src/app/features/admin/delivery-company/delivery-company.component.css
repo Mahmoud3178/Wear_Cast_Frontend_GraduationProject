@@ -1,0 +1,11 @@
+.card {
+  border-radius: 12px;
+}
+
+h3, h4, h5 {
+  letter-spacing: 0.3px;
+}
+
+.border-end {
+  border-right: 1px solid #eee !important;
+}

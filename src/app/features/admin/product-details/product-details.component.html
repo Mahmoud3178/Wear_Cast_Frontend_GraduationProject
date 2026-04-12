@@ -1,0 +1,172 @@
+<div class="container-fluid p-4" *ngIf="product">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold">{{ product.name }}</h3>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary" (click)="toggleReviews()">
+  Show Reviews
+</button>
+<!-- Reviews Sidebar -->
+<div class="reviews-overlay" *ngIf="showReviews" (click)="toggleReviews()"></div>
+
+<div class="reviews-panel" [class.open]="showReviews">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Product Reviews</h5>
+    <button class="btn-close" (click)="toggleReviews()"></button>
+  </div>
+
+  <!-- Reviews List -->
+  <div class="review" *ngFor="let r of reviews">
+
+    <div class="d-flex justify-content-between">
+      <strong>{{ r.name }}</strong>
+      <small class="text-muted">{{ r.date }}</small>
+    </div>
+
+    <div class="text-warning mb-1">
+      ⭐⭐⭐⭐⭐
+    </div>
+
+    <p class="text-muted small mb-2">
+      {{ r.comment }}
+    </p>
+
+    <div class="small text-primary">
+      Reply • Report
+    </div>
+
+    <hr>
+  </div>
+
+</div>
+      <button class="btn btn-outline-danger">Unpublish</button>
+      <button class="btn btn-primary">Edit Product</button>
+    </div>
+  </div>
+
+  <div class="row">
+
+    <!-- Left -->
+    <div class="col-md-4">
+
+      <div class="card p-3 shadow-sm">
+        <img [src]="product.image" class="img-fluid rounded mb-3">
+
+        <div class="d-flex gap-2">
+          <img src="https://via.placeholder.com/50" class="rounded">
+          <img src="https://via.placeholder.com/50" class="rounded">
+          <img src="https://via.placeholder.com/50" class="rounded">
+        </div>
+      </div>
+
+      <div class="card mt-3 p-3 shadow-sm">
+        <h6 class="fw-bold">Sold By</h6>
+        <p class="mb-0">{{ product.store }}</p>
+      </div>
+
+    </div>
+
+    <!-- Right -->
+    <div class="col-md-8">
+
+      <!-- Description -->
+      <div class="card p-3 shadow-sm mb-3">
+        <h6 class="fw-bold">Product Description</h6>
+        <p class="text-muted">{{ product.description }}</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="row mb-3">
+
+        <div class="col-md-4">
+          <div class="card p-3 text-center shadow-sm">
+            <small>Selling Price</small>
+            <h5>${{ product.price }}</h5>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card p-3 text-center shadow-sm">
+            <small>Profit</small>
+            <h5>{{ product.profit }}%</h5>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card p-3 text-center shadow-sm">
+            <small>Stock</small>
+            <h5>{{ product.stock }}</h5>
+          </div>
+        </div>
+
+      </div>
+
+<div class="card p-3 shadow-sm">
+  <h6 class="fw-bold mb-3">Product Variants</h6>
+
+  <table class="table align-middle">
+
+    <thead>
+      <tr>
+        <th>Variant</th>
+        <th>Color</th>
+        <th>Size</th>
+        <th>Stock</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let v of product.variants">
+
+        <!-- 🔹 Variant (Image + Name) -->
+        <td class="d-flex align-items-center gap-2">
+          <img
+            [src]="v.image || 'https://via.placeholder.com/40'"
+            class="rounded"
+            width="40"
+            height="40"
+          >
+
+          <div>
+            <div class="fw-semibold">
+              {{ product.name }}
+            </div>
+            <small class="text-muted">
+              {{ v.size }} / {{ v.color }}
+            </small>
+          </div>
+        </td>
+
+        <!-- 🔹 Color -->
+        <td>
+          <span
+            class="color-circle"
+            [style.background]="v.color">
+          </span>
+          <span class="ms-2">{{ v.color }}</span>
+        </td>
+
+        <!-- 🔹 Size -->
+        <td>{{ v.size }}</td>
+
+        <!-- 🔹 Stock -->
+        <td>
+          <span class="badge bg-success">
+            {{ v.stock }}
+          </span>
+        </td>
+
+      </tr>
+    </tbody>
+
+  </table>
+</div>
+
+    </div>
+
+  </div>
+</div>
