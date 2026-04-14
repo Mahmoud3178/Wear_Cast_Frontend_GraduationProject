@@ -1,0 +1,11 @@
+.upload-box {
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  padding: 40px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.upload-box:hover {
+  background-color: #f8f9fa;
+}

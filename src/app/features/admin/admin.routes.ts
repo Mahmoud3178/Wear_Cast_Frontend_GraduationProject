@@ -77,6 +77,37 @@ export const ADMIN_ROUTES: Routes = [
     import('./templets/templets.component')
       .then(m => m.TempletsComponent)
 },
+{
+  path: 'logos',
+  loadComponent: () =>
+    import('./logos/logos.component')
+      .then(m => m.LogosComponent)
+},
+{
+  path: 'add-logos',
+  loadComponent: () =>
+    import('./add-logos/add-logos.component')
+      .then(m => m.AddLogosComponent)
+},
+
+{
+  path: 'admins',
+  loadComponent: () =>
+    import('./admins/admins.component')
+      .then(m => m.AdminsComponent)
+},
+{
+  path: 'admins/add',
+  loadComponent: () =>
+    import('./add-admin/add-admin.component')
+      .then(m => m.AddAdminComponent)
+},
+{
+  path: 'admins/:id',
+  loadComponent: () =>
+    import('./admin-details/admin-details.component')
+      .then(m => m.AdminDetailsComponent)
+},
       {
         path: '',
         redirectTo: 'dashboard',

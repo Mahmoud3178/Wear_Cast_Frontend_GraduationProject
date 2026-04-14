@@ -1,1 +1,56 @@
-<p>admins works!</p>
+<div class="container-fluid p-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold">Admins List</h3>
+      <p class="text-muted">Manage platform administrators</p>
+    </div>
+
+    <button class="btn btn-primary" (click)="goToAdd()">
+      + Add New Admin
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let admin of admins"
+              (click)="goToDetails(admin.id)"
+              style="cursor:pointer">
+
+            <td>{{admin.name}}</td>
+            <td>{{admin.email}}</td>
+            <td>
+              <span class="badge bg-info text-dark">
+                {{admin.role}}
+              </span>
+            </td>
+
+            <td>
+              <button class="btn btn-sm btn-outline-primary">
+                Show Details
+              </button>
+            </td>
+
+          </tr>
+        </tbody>
+
+      </table>
+
+    </div>
+  </div>
+
+</div>

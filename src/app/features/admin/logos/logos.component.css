@@ -1,0 +1,16 @@
+.logo-card {
+  border-radius: 12px;
+  transition: 0.2s;
+}
+
+.logo-card:hover {
+  transform: translateY(-5px);
+}
+
+.logo-placeholder {
+  width: 60px;
+  height: 60px;
+  background: #e9ecef;
+  border-radius: 10px;
+  margin: auto;
+}

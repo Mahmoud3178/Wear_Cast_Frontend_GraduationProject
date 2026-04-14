@@ -59,7 +59,7 @@ changePassword(data: any) {
   const token = localStorage.getItem('token') || '';
 
   return this.http.put(
-    'https://wear-cast.runasp.net/me/change-password',
+    '/me/change-password', // ✅ مهم تستخدم proxy
     data,
     {
       headers: {
