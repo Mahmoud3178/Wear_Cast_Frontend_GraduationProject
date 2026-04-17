@@ -123,23 +123,40 @@
 
       <div *ngIf="activeTab === 'orders'" class="card">
         <header class="card-header">
-          <h1>My Orders</h1>
+          <h1>My Designs & Orders</h1>
         </header>
         <div class="card-body orders-list">
-          <article class="order-row">
-            <div>
-              <p class="order-id">ORD‑2024‑001234</p>
-              <p class="order-date">Nov 28, 2024</p>
-              <p class="badge success">Delivered</p>
+
+          <!-- Loading -->
+          <div *ngIf="ordersLoading" class="text-center py-4">
+            <span class="spinner-border spinner-border-sm me-2"></span> Loading…
+          </div>
+
+          <!-- Empty -->
+          <div *ngIf="!ordersLoading && orders.length === 0" class="text-center py-5 text-muted">
+            <p style="font-size:2rem">🎨</p>
+            <p>No designs yet. <a routerLink="/customer/design" class="text-decoration-none">Create your first design!</a></p>
+          </div>
+
+          <!-- Order/design rows -->
+          <article *ngFor="let order of orders" class="order-row">
+            <div class="order-row-main">
+              <img *ngIf="order.items.length > 0 && order.items[0].imageUrl" [src]="order.items[0].imageUrl" class="order-thumb" [alt]="order.items[0].name">
+              <div *ngIf="order.items.length === 0 || !order.items[0].imageUrl" class="order-thumb order-thumb--empty"></div>
+              <div>
+                <p class="order-id">{{ order.items.length > 0 ? order.items[0].name : ('Design #' + order.orderId) }}</p>
+                <p class="order-date" *ngIf="order.createdAt">{{ order.createdAt | date:'mediumDate' }}</p>
+                <span class="badge" [ngClass]="getOrderBadgeClass(order.status)">{{ order.statusLabel }}</span>
+              </div>
             </div>
             <div class="order-meta">
-              <p>$149.99</p>
-              <p>2 items</p>
+              <p>EGP {{ order.total | number:'1.0-0' }}</p>
             </div>
-            <button class="primary-btn">View Details</button>
           </article>
+
         </div>
       </div>
+
 
       <div *ngIf="activeTab === 'security'" class="card">
         <header class="card-header">

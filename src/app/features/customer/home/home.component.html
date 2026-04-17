@@ -47,37 +47,36 @@
       <a routerLink="/customer/category" class="wc-products-hero__browse">Browse products &amp; prices</a>
     </section>
 
-    <section class="wc-parallax">
-      <div class="wc-parallax-header">
-        <h2>From idea to outfit</h2>
-        <p>Hover each card for a 3D tilt + glow.</p>
-      </div>
-
-      <div class="wc-parallax-row">
-        <article
-          class="wc-parallax-card"
-          *ngFor="let card of parallaxCards"
-          (mousemove)="onParallaxMove($event)"
-          (mouseleave)="onParallaxLeave($event)"
-        >
-          <div class="wc-parallax-glow" aria-hidden="true"></div>
-          <img class="wc-parallax-img" [src]="card.imageUrl" [alt]="card.title" />
-        </article>
-      </div>
-    </section>
-
     <section class="wc-section">
       <div class="wc-section-header">
         <h2>New arrivals</h2>
-        <button type="button" class="wc-link-btn">View all</button>
+        <a routerLink="/customer/category" class="wc-link-btn">View all →</a>
       </div>
       <div class="wc-grid">
-        <article class="wc-card" *ngFor="let i of [1,2,3,4,5]" routerLink="/customer/product">
-          <div class="wc-card-image"></div>
-          <h3>Graphic Tee</h3>
-          <p class="wc-card-meta">Unisex · Cotton</p>
-          <p class="wc-card-price">$145</p>
-        </article>
+        <!-- Loading skeletons -->
+        <ng-container *ngIf="newArrivalsLoading">
+          <div class="wc-card wc-card--skeleton" *ngFor="let i of [1,2,3,4,5]">
+            <div class="wc-card-image wc-skeleton-pulse"></div>
+            <div class="wc-skeleton-line wc-skeleton-pulse" style="width:70%;height:14px;border-radius:6px"></div>
+            <div class="wc-skeleton-line wc-skeleton-pulse" style="width:40%;height:12px;border-radius:6px"></div>
+            <div class="wc-skeleton-line wc-skeleton-pulse" style="width:30%;height:14px;border-radius:6px"></div>
+          </div>
+        </ng-container>
+        <!-- Real products -->
+        <ng-container *ngIf="!newArrivalsLoading">
+          <article class="wc-card" *ngFor="let p of newArrivals" [routerLink]="['/customer/category']">
+            <div class="wc-card-image">
+              <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" class="wc-card-img">
+            </div>
+            <h3>{{ p.name }}</h3>
+            <p class="wc-card-meta">{{ p.category || 'Apparel' }}</p>
+            <p class="wc-card-price">EGP {{ p.price | number:'1.0-0' }}</p>
+          </article>
+          <!-- Placeholder if no products -->
+          <div *ngIf="newArrivals.length === 0" class="wc-no-products">
+            No products yet.
+          </div>
+        </ng-container>
       </div>
     </section>
 
@@ -86,10 +85,16 @@
         <h2>Browse by style</h2>
       </div>
       <div class="wc-style-grid">
-        <a routerLink="/customer/category" class="wc-style-card wc-style-card--casual">Casual</a>
-        <a routerLink="/customer/category" class="wc-style-card wc-style-card--formal">Formal</a>
-        <a routerLink="/customer/category" class="wc-style-card wc-style-card--party">Party</a>
-        <a routerLink="/customer/category" class="wc-style-card wc-style-card--gym">Gym</a>
+        <a
+          *ngFor="let s of styleCards"
+          routerLink="/customer/category"
+          class="wc-style-card"
+          [ngClass]="s.cls"
+        >
+          <span class="wc-style-icon">{{ s.icon }}</span>
+          <span class="wc-style-label">{{ s.label }}</span>
+          <span class="wc-style-desc">{{ s.desc }}</span>
+        </a>
       </div>
     </section>
 

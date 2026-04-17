@@ -217,19 +217,14 @@
       }
     </style>
 
-    <!-- Native designer product list (has real images + working switch) -->
-    <div class="product-list product-modal-list" id="product-modal-list"></div>
 
-    <!-- Angular search results (for discovering & loading new products) -->
-    <div *ngIf="catalogSearchResults.length > 0" class="mt-3">
-      <h5 class="text-white-50 small text-uppercase mb-2">Search Results</h5>
-      <div class="angular-product-modal-list">
-        <div *ngFor="let p of catalogSearchResults" class="angular-product-card" (click)="selectCatalogProduct(p)">
-          <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name">
-          <div *ngIf="!p.imageUrl" class="no-img">No Image</div>
-          <h4 class="h6 mb-1 text-truncate text-white">{{ p.name }}</h4>
-          <p class="small text-muted mb-0" *ngIf="p.price">${{ p.price }}</p>
-        </div>
+    <!-- Product grid: Angular search results with designer-powered switching -->
+    <div *ngIf="catalogSearchResults.length > 0" class="angular-product-modal-list">
+      <div *ngFor="let p of catalogSearchResults" class="angular-product-card" (click)="selectCatalogProduct(p)">
+        <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name">
+        <div *ngIf="!p.imageUrl" class="no-img">No Image</div>
+        <h4 class="h6 mb-1 text-truncate text-white">{{ p.name }}</h4>
+        <p class="small text-muted mb-0" *ngIf="p.price">${{ p.price }}</p>
       </div>
     </div>
   </div>

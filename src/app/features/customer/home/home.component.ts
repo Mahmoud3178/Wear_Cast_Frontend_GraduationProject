@@ -7,10 +7,22 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { catchError, map } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
+import { environment } from '../../../../environments/environment';
 
 const LANDING_SEEN_KEY = 'wearcast:landingSeen';
+
+export interface NewArrivalProduct {
+  id: number;
+  name: string;
+  imageUrl: string | null;
+  price: number;
+  category?: string;
+}
 
 @Component({
   selector: 'app-customer-home',
@@ -25,6 +37,9 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
   /** Full-screen intro video on first visit only */
   showLanding = false;
+
+  newArrivals: NewArrivalProduct[] = [];
+  newArrivalsLoading = true;
 
   readonly productShowcase: ReadonlyArray<{
     label: string;
@@ -85,10 +100,22 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
   ] as const;
 
+  readonly styleCards = [
+    { label: 'Casual',  icon: '👕', desc: 'Everyday comfort', cls: 'wc-style-card--casual',  dressStyle: 0 },
+    { label: 'Formal',  icon: '👔', desc: 'Clean & professional', cls: 'wc-style-card--formal',  dressStyle: 1 },
+    { label: 'Party',   icon: '🎉', desc: 'Stand out & shine', cls: 'wc-style-card--party',   dressStyle: 2 },
+    { label: 'Gym',     icon: '🏋️', desc: 'Performance wear', cls: 'wc-style-card--gym',     dressStyle: 3 },
+    { label: 'Street',  icon: '🛹', desc: 'Urban & bold', cls: 'wc-style-card--street',  dressStyle: 4 },
+    { label: 'Vintage', icon: '🧥', desc: 'Timeless classics', cls: 'wc-style-card--vintage', dressStyle: 5 },
+  ];
+
+  constructor(private readonly http: HttpClient) {}
+
   ngOnInit(): void {
     if (typeof localStorage !== 'undefined') {
       this.showLanding = !localStorage.getItem(LANDING_SEEN_KEY);
     }
+    this.loadNewArrivals();
   }
 
   ngAfterViewInit(): void {
@@ -97,6 +124,32 @@ export class HomeComponent implements OnInit, AfterViewInit {
     } else {
       queueMicrotask(() => this.playHomePromoVideo());
     }
+  }
+
+  private loadNewArrivals(): void {
+    this.http.get<any>(`${environment.apiUrl}/api/FixedProduct/GetAll`, {
+      params: { PageSize: 5, PageIndex: 1 }
+    }).pipe(
+      map(res => {
+        let rows: any = res?.data ?? res;
+        if (rows && typeof rows === 'object' && !Array.isArray(rows)) {
+          rows = rows.items ?? rows.data ?? rows.products ?? rows;
+        }
+        if (!Array.isArray(rows)) return [];
+        return rows.slice(0, 5).map((p: any) => ({
+          id: p.id || p.Id,
+          name: p.name || p.Name || p.productName || 'Product',
+          imageUrl: p.imageUrl || p.ImageUrl || p.mainImageUrl || p.MainImageUrl ||
+                    (p.colors?.[0]?.mainImageUrl) || (p.colors?.[0]?.imageUrl) || null,
+          price: p.price || p.Price || p.basePrice || 0,
+          category: p.categoryName || p.CategoryName || ''
+        } as NewArrivalProduct));
+      }),
+      catchError(() => of([]))
+    ).subscribe(products => {
+      this.newArrivals = products;
+      this.newArrivalsLoading = false;
+    });
   }
 
   playLandingVideo(): void {
@@ -141,8 +194,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
     const dx = (px - 0.5) * 2;
     const dy = (py - 0.5) * 2;
 
-    const rotateY = dx * 10;
-    const rotateX = -dy * 10;
+    const rotateY = dx * 18;
+    const rotateX = -dy * 18;
 
     el.style.setProperty('--rx', `${rotateX}deg`);
     el.style.setProperty('--ry', `${rotateY}deg`);
@@ -157,5 +210,25 @@ export class HomeComponent implements OnInit, AfterViewInit {
     el.style.setProperty('--ry', `0deg`);
     el.style.setProperty('--mx', `50%`);
     el.style.setProperty('--my', `35%`);
+  }
+
+  onParallaxClick(event: MouseEvent) {
+    const el = event.currentTarget as HTMLElement | null;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const px = (event.clientX - rect.left) / rect.width;
+    const py = (event.clientY - rect.top) / rect.height;
+    const dx = (px - 0.5) * 2;
+    const dy = (py - 0.5) * 2;
+    el.style.setProperty('--rx', `${-dy * 25}deg`);
+    el.style.setProperty('--ry', `${dx * 25}deg`);
+    el.style.setProperty('--scale', `0.97`);
+  }
+
+  onParallaxRelease(event: MouseEvent) {
+    const el = event.currentTarget as HTMLElement | null;
+    if (!el) return;
+    el.style.setProperty('--scale', `1`);
+    this.onParallaxMove(event);
   }
 }

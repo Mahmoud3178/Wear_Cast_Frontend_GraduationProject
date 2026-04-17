@@ -222,3 +222,78 @@
   color: #6b7280;
 }
 
+
+/* ---- Orders Tab ---- */
+.orders-list { display: flex; flex-direction: column; gap: 12px; }
+
+.order-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fafafa;
+}
+
+.order-id { font-weight: 700; font-size: 14px; margin: 0 0 2px; }
+.order-date { font-size: 12px; color: #9ca3af; margin: 0 0 6px; }
+.order-meta p { font-weight: 600; font-size: 14px; margin: 0; }
+
+/* Badge variants */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.badge-success { background: #d1fae5; color: #065f46; }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.badge-info    { background: #dbeafe; color: #1e40af; }
+.badge-primary { background: #ede9fe; color: #6d28d9; }
+.badge-danger  { background: #fee2e2; color: #991b1b; }
+.badge-secondary { background: #f3f4f6; color: #6b7280; }
+
+/* Expanded items */
+.order-items-expand {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.order-item-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.order-item-img, .order-item-thumb-placeholder {
+  width: 44px; height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.order-item-name { font-size: 13px; font-weight: 600; margin: 0; }
+.order-item-meta { font-size: 12px; color: #9ca3af; margin: 2px 0 0; }
+.order-item-price { font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+/* ---- Design/Order row with thumbnail ---- */
+.order-row-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.order-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.order-thumb--empty {
+  background: #e5e7eb;
+}

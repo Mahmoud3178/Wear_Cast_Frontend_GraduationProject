@@ -11,6 +11,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { CustomerProfileService, UpdateCustomerRequest, ChangePasswordRequest } from '../../../core/services/customer-profile.service';
 
+import { OrderService, Order } from '../../../core/services/order.service';
+
 type ProfileTab = 'info' | 'addresses' | 'orders' | 'security';
 
 @Component({
@@ -41,6 +43,11 @@ export class ProfileComponent implements OnInit {
   editModeInfo = false;
   editModeAddress = false;
 
+  // Orders
+  orders: (Order & { itemsLoading?: boolean })[] = [];
+  ordersLoading = false;
+  expandedOrderId: number | null = null;
+
   infoForm = {
     firstName: '',
     lastName: '',
@@ -63,7 +70,8 @@ export class ProfileComponent implements OnInit {
 
   constructor(
     private readonly auth: AuthService,
-    private readonly profileService: CustomerProfileService
+    private readonly profileService: CustomerProfileService,
+    private readonly orderService: OrderService
   ) {}
 
   ngOnInit(): void {
@@ -147,6 +155,44 @@ export class ProfileComponent implements OnInit {
 
   setTab(tab: ProfileTab): void {
     this.activeTab = tab;
+    if (tab === 'orders' && this.orders.length === 0 && !this.ordersLoading) {
+      this.loadOrders();
+    }
+  }
+
+  loadOrders(): void {
+    this.ordersLoading = true;
+    this.orderService.getMyOrders().subscribe({
+      next: (orders) => {
+        this.orders = orders;
+        this.ordersLoading = false;
+      },
+      error: () => {
+        this.ordersLoading = false;
+      }
+    });
+  }
+
+  toggleOrderDetails(order: Order & { itemsLoading?: boolean }): void {
+    if (this.expandedOrderId === order.orderId) {
+      this.expandedOrderId = null;
+      return;
+    }
+    this.expandedOrderId = order.orderId;
+    // Items are already loaded in our mock from customer designs
+  }
+
+  getOrderBadgeClass(status: number): string {
+    const map: Record<number, string> = {
+      0: 'badge-warning',
+      1: 'badge-info',
+      2: 'badge-info',
+      3: 'badge-primary',
+      4: 'badge-success',
+      5: 'badge-danger',
+      6: 'badge-secondary'
+    };
+    return map[status] ?? 'badge-secondary';
   }
 
   get displayName(): string {

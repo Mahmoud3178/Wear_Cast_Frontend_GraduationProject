@@ -1,123 +1,148 @@
 <app-customer-nav></app-customer-nav>
 
-<main class="checkout-page">
-  <section class="checkout-layout">
-    <div class="checkout-main">
-      <h1>Checkout</h1>
-      <p class="subtitle">Complete your purchase</p>
+<main class="co-page">
+  <!-- Loading -->
+  <div *ngIf="loading()" class="co-loading">
+    <div class="co-spinner"></div>
+    <p>Loading your cart…</p>
+  </div>
 
-      <section class="card">
-        <h2>Shipping Information</h2>
-        <div class="form-grid">
-          <div class="field">
-            <label>First Name</label>
-            <input type="text" />
+  <!-- Success -->
+  <div *ngIf="successMessage()" class="co-success-screen">
+    <div class="co-success-icon">✓</div>
+    <h2>Order Placed!</h2>
+    <p>{{ successMessage() }}</p>
+    <p class="co-success-sub">Redirecting you to your orders…</p>
+  </div>
+
+  <section *ngIf="!loading() && !successMessage()" class="co-layout">
+
+    <!-- LEFT: Shipping + Payment -->
+    <div class="co-main">
+
+      <!-- Error -->
+      <div *ngIf="errorMessage()" class="co-alert co-alert--error">
+        {{ errorMessage() }}
+      </div>
+
+      <!-- Shipping Information -->
+      <div class="co-card">
+        <h2 class="co-card__title">
+          <span class="co-step">1</span> Shipping Information
+        </h2>
+        <div class="co-grid">
+          <div class="co-field co-field--full">
+            <label>Recipient Name *</label>
+            <input type="text" [(ngModel)]="shippingForm.recipientName" placeholder="Full name">
           </div>
-          <div class="field">
-            <label>Last Name</label>
-            <input type="text" />
+          <div class="co-field">
+            <label>Phone Number *</label>
+            <input type="tel" [(ngModel)]="shippingForm.phoneNumber" placeholder="+20 1xx xxx xxxx">
           </div>
-          <div class="field full">
-            <label>Email</label>
-            <input type="email" />
+          <div class="co-field">
+            <label>Additional Phone</label>
+            <input type="tel" [(ngModel)]="shippingForm.additionalPhoneNumber" placeholder="Optional">
           </div>
-          <div class="field full">
-            <label>Phone Number</label>
-            <input type="tel" />
+          <div class="co-field">
+            <label>State *</label>
+            <input type="text" [(ngModel)]="shippingForm.state" placeholder="e.g. Cairo">
           </div>
-          <div class="field full">
-            <label>Street Address</label>
-            <input type="text" />
+          <div class="co-field">
+            <label>City *</label>
+            <input type="text" [(ngModel)]="shippingForm.city" placeholder="e.g. Nasr City">
           </div>
-          <div class="field">
-            <label>City</label>
-            <input type="text" />
+          <div class="co-field">
+            <label>Street *</label>
+            <input type="text" [(ngModel)]="shippingForm.street" placeholder="Street name">
           </div>
-          <div class="field">
-            <label>State</label>
-            <input type="text" />
-          </div>
-          <div class="field">
-            <label>ZIP Code</label>
-            <input type="text" />
+          <div class="co-field">
+            <label>Building Number *</label>
+            <input type="text" [(ngModel)]="shippingForm.buildingNumber" placeholder="e.g. 12A">
           </div>
         </div>
-      </section>
+      </div>
 
-      <section class="card">
-        <h2>Payment Information</h2>
-        <div class="payment-methods">
-          <button class="method selected">Credit/Debit Card</button>
-          <button class="method">Cash on Delivery</button>
-        </div>
-        <div class="form-grid">
-          <div class="field full">
-            <label>Card Number</label>
-            <input type="text" placeholder="1234 5678 9012 3456" />
-          </div>
-          <div class="field full">
-            <label>Cardholder Name</label>
-            <input type="text" placeholder="John Doe" />
-          </div>
-          <div class="field">
-            <label>Expiry Date</label>
-            <input type="text" placeholder="MM/YY" />
-          </div>
-          <div class="field">
-            <label>CVV</label>
-            <input type="text" placeholder="123" />
+      <!-- Payment -->
+      <div class="co-card">
+        <h2 class="co-card__title">
+          <span class="co-step">2</span> Payment
+        </h2>
+
+        <div class="co-stripe-wrap">
+          <label class="co-stripe-label">Card Details</label>
+          <div id="stripe-card-element" class="co-stripe-element"></div>
+          <div *ngIf="!stripeLoaded" class="co-stripe-placeholder">
+            <div class="co-spinner co-spinner--sm"></div>
+            <span>Loading payment form…</span>
           </div>
         </div>
-        <p class="secure-note">Your payment information is secure and encrypted.</p>
 
-        <button class="place-order-btn">Place Order</button>
-      </section>
+        <div class="co-secure-badge">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4.5 8-10V5l-8-3-8 3v7c0 5.5 8 10 8 10z"/></svg>
+          Secured by Stripe · 256-bit SSL encryption
+        </div>
+
+        <button
+          class="co-place-btn"
+          [disabled]="submitting() || !isFormValid()"
+          (click)="placeOrder()"
+        >
+          <span *ngIf="submitting()" class="co-spinner co-spinner--sm co-spinner--white"></span>
+          <span *ngIf="!submitting()">Place Order · EGP {{ total() | number:'1.0-0' }}</span>
+          <span *ngIf="submitting()">Processing…</span>
+        </button>
+      </div>
     </div>
 
-    <aside class="checkout-summary card">
-      <h2>Order Summary</h2>
-      <div class="line-item">
-        <div class="thumb"></div>
-        <div class="info">
-          <p class="name">Classic Cotton T‑shirt</p>
-          <p class="meta">Size: M · White</p>
-        </div>
-        <p class="price">$29.99</p>
-      </div>
-      <div class="line-item">
-        <div class="thumb"></div>
-        <div class="info">
-          <p class="name">Slim Fit Denim Jeans</p>
-          <p class="meta">Size: 32 · Dark Blue</p>
-        </div>
-        <p class="price">$79.99</p>
-      </div>
-      <div class="line-item">
-        <div class="thumb"></div>
-        <div class="info">
-          <p class="name">Comfortable Hoodie</p>
-          <p class="meta">Size: L · Black</p>
-        </div>
-        <p class="price">$59.99</p>
-      </div>
+    <!-- RIGHT: Order Summary -->
+    <aside class="co-summary">
+      <div class="co-card co-card--sticky">
+        <h2 class="co-card__title">Order Summary</h2>
 
-      <dl class="summary-totals">
-        <div class="row">
-          <dt>Subtotal</dt>
-          <dd>$199.96</dd>
+        <div *ngIf="cartItems().length === 0" class="co-empty">
+          Your cart is empty. <a routerLink="/customer/category">Shop now</a>
         </div>
-        <div class="row">
-          <dt>Shipping</dt>
-          <dd>$10.00</dd>
+
+        <div class="co-items">
+          <div *ngFor="let item of cartItems()" class="co-item">
+            <div class="co-item__thumb">
+              <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name">
+              <div *ngIf="!item.imageUrl" class="co-item__thumb-placeholder"></div>
+              <span class="co-item__qty">{{ item.quantity }}</span>
+            </div>
+            <div class="co-item__info">
+              <p class="co-item__name">{{ item.name }}</p>
+              <p class="co-item__meta">{{ item.meta }}</p>
+            </div>
+            <p class="co-item__price">EGP {{ (item.price * item.quantity) | number:'1.0-0' }}</p>
+          </div>
         </div>
-        <div class="row total">
-          <dt>Total</dt>
-          <dd>$209.96</dd>
-        </div>
-      </dl>
+
+        <div class="co-divider"></div>
+
+        <dl class="co-totals">
+          <div class="co-totals__row">
+            <dt>Subtotal</dt>
+            <dd>EGP {{ subtotal() | number:'1.0-0' }}</dd>
+          </div>
+          <div class="co-totals__row co-totals__row--discount">
+            <dt>Discount (20%)</dt>
+            <dd>− EGP {{ discount() | number:'1.0-0' }}</dd>
+          </div>
+          <div class="co-totals__row">
+            <dt>Delivery</dt>
+            <dd>EGP {{ DELIVERY_FEE }}</dd>
+          </div>
+          <div class="co-divider"></div>
+          <div class="co-totals__row co-totals__row--total">
+            <dt>Total</dt>
+            <dd>EGP {{ total() | number:'1.0-0' }}</dd>
+          </div>
+        </dl>
+      </div>
     </aside>
-  </section>
 
-  <app-customer-footer></app-customer-footer>
+  </section>
 </main>
 
+<app-customer-footer></app-customer-footer>
