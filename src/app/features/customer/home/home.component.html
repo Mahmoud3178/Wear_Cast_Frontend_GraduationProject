@@ -47,6 +47,22 @@
       <a routerLink="/customer/category" class="wc-products-hero__browse">Browse products &amp; prices</a>
     </section>
 
+    <section class="wc-parallax">
+      <div class="wc-parallax-row">
+        <article
+          class="wc-parallax-card"
+          *ngFor="let card of parallaxCards"
+          (mousemove)="onParallaxMove($event)"
+          (mouseleave)="onParallaxLeave($event)"
+          (mousedown)="onParallaxClick($event)"
+          (mouseup)="onParallaxRelease($event)"
+        >
+          <div class="wc-parallax-glow" aria-hidden="true"></div>
+          <img class="wc-parallax-img" [src]="card.imageUrl" [alt]="card.title" />
+        </article>
+      </div>
+    </section>
+
     <section class="wc-section">
       <div class="wc-section-header">
         <h2>New arrivals</h2>

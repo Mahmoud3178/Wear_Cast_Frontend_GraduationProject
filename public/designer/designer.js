@@ -227,7 +227,7 @@
         bulletsEl.style.display = 'none';
       }
       if (pillEl) pillEl.style.display = 'none';
-      if (ratingEl) ratingEl.style.display = 'none';
+      
       if (p.sizes && p.sizes.length && tbodyEl) {
         tbodyEl.innerHTML = sizeRowsToHtml(p.sizes);
         var labels = p.sizes.map(function (s) { return s.label; }).join(', ');
@@ -760,6 +760,9 @@
     saveCurrentViewToStore();
     currentProduct = productKey;
     var p = PRODUCTS[currentProduct];
+    if (typeof window.wearcastOnProductChanged === 'function' && p && p.wearcastCatalog) {
+      window.wearcastOnProductChanged(p.wearcastCatalog.designedProductId);
+    }
     syncProductChrome();
     document.querySelectorAll('.product-card').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-product') === currentProduct);
@@ -1147,26 +1150,27 @@
     saveCurrentViewToStore();
     var vd = viewDesigns[currentProduct];
     if (sizeQtyModalConfirm) sizeQtyModalConfirm.disabled = true;
-    fnSave({
-      productId: cat.designedProductId,
-      productColorId: colorId,
-      viewDesignsJson: JSON.stringify(vd || {})
-    })
-      .then(function (designId) {
+
+    // Save a unique design for EACH size to avoid backend cart item overwriting,
+    // then add each one individually to the cart.
+    var promises = lines.map(function(L) {
+      return fnSave({
+        productId: cat.designedProductId,
+        productColorId: colorId,
+        viewDesignsJson: JSON.stringify(vd || {})
+      }).then(function (designId) {
         if (designId == null || designId === undefined) {
-          throw new Error(
-            'The server did not return a design id after saving. Your API may omit `data.id` on POST /api/customers/me/designs — check the backend response.'
-          );
+          throw new Error('The server did not return a design id.');
         }
         var id = typeof designId === 'number' ? designId : parseInt(designId, 10);
         if (!Number.isFinite(id)) {
           throw new Error('Invalid design id from server.');
         }
-        var cartPayload = lines.map(function (L) {
-          return { designId: id, size: L.size, quantity: L.quantity };
-        });
-        return fnCart(cartPayload);
-      })
+        return fnCart([{ designId: id, size: L.size, quantity: L.quantity }]);
+      });
+    });
+
+    Promise.all(promises)
       .then(function () {
         closeSizeQtyModal();
         alert('Added to cart. Open the cart to review your items.');
@@ -1238,7 +1242,7 @@
       btn.className = 'product-card';
       btn.setAttribute('data-product', key);
       var img = document.createElement('img');
-      var imgs = typeof pr.images === 'function' ? pr.images() : {};
+      var imgs = typeof pr.images === 'function' ? pr.images() : (pr.images || {});
       var firstCol = null;
       Object.keys(imgs).some(function (c) {
         var r = imgs[c];

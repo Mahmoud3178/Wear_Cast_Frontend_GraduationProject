@@ -13,6 +13,11 @@ import {
   CartService,
   type AddOrUpdateDesignedToCartRequest
 } from '../../../core/services/cart.service';
+import {
+  DesignReviewService,
+  type DesignReview,
+  type CreateReviewRequest
+} from '../../../core/services/design-review.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { FormsModule } from '@angular/forms';
@@ -36,16 +41,32 @@ export class CustomerDesignComponent implements AfterViewInit {
     PageIndex: 1,
     PageSize: 50
   };
+
+  // Reviews
+  selectedProductId: number | null = null;
+  reviews: DesignReview[] = [];
+  myReview: DesignReview | null = null;
+  reviewsLoading = false;
+  newReviewRating = 5;
+  newReviewComment = '';
+  reviewSubmitting = false;
+  reviewError: string | null = null;
+  reviewSuccess: string | null = null;
+  showReviewForm = false;
+  isAuthenticated = false;
+
   constructor(
     private readonly catalog: DesignCatalogService,
     private readonly auth: AuthService,
     private readonly route: ActivatedRoute,
     private readonly customerDesign: CustomerDesignService,
     private readonly cartService: CartService,
+    private readonly reviewService: DesignReviewService,
     private readonly http: HttpClient
   ) {}
 
   ngAfterViewInit(): void {
+    this.isAuthenticated = !!this.auth.getToken();
     const w = window as Window & {
       __WEARCAST_SAVE_CUSTOMER_DESIGN__?: (
         body: AddCustomerDesignRequest
@@ -54,6 +75,7 @@ export class CustomerDesignComponent implements AfterViewInit {
         items: AddOrUpdateDesignedToCartRequest[]
       ) => Promise<void>;
       __WEARCAST_DESIGNS_STORAGE_KEY__?: string;
+      wearcastOnProductChanged?: (baseProductId: number) => void;
     };
     w.__WEARCAST_DESIGNS_STORAGE_KEY__ =
       'wearcast_designs:' + this.auth.getCustomerLocalDesignsScope();
@@ -84,6 +106,12 @@ export class CustomerDesignComponent implements AfterViewInit {
       delete w.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
       delete w.__WEARCAST_ADD_DESIGNED_TO_CART__;
     }
+
+    // Connect product switching in designer to Angular reviews
+    w.wearcastOnProductChanged = (baseProductId: number) => {
+      this.selectedProductId = baseProductId;
+      this.loadReviews(baseProductId);
+    };
 
     const token = this.auth.getToken();
     const extraIds = this.parseDesignedProductIds(
@@ -118,7 +146,7 @@ export class CustomerDesignComponent implements AfterViewInit {
     this.loadingProducts = true;
     const url = `${environment.apiUrl}/api/customer/catalog/designed-products`;
     const params: any = { ...this.searchParams };
-    
+
     // Clean nulls
     Object.keys(params).forEach(k => {
       if (params[k] === null || params[k] === '') {
@@ -162,10 +190,12 @@ export class CustomerDesignComponent implements AfterViewInit {
     const id = item?.id;
     if (!id) return;
 
+    this.selectedProductId = id;
+    this.loadReviews(id);
+
     const w = window as any;
     const productKey = `p${id}`;
 
-    // If this product is already loaded in the designer, switch to it directly (no reload)
     if (typeof w.wearcastGetProducts === 'function') {
       const products = w.wearcastGetProducts();
       if (products && products[productKey]) {
@@ -179,8 +209,102 @@ export class CustomerDesignComponent implements AfterViewInit {
       }
     }
 
-    // Product not loaded yet — reload with this ID in the query params
     window.location.href = `/customer/design?designedProductIds=${id}`;
+  }
+
+  loadReviews(productId: number): void {
+    this.reviewsLoading = true;
+    this.reviews = [];
+    this.myReview = null;
+
+    this.reviewService.getReviews(productId).subscribe(r => {
+      this.reviews = r;
+      this.reviewsLoading = false;
+      this.updateSidePanelRating();
+    });
+
+    if (this.isAuthenticated) {
+      this.reviewService.getMyReview(productId).subscribe(r => {
+        this.myReview = r;
+        if (r) { this.showReviewForm = false; }
+      });
+    }
+  }
+
+  submitReview(): void {
+    if (!this.selectedProductId || !this.newReviewComment.trim()) return;
+    this.reviewSubmitting = true;
+    this.reviewError = null;
+    const body: CreateReviewRequest = {
+      rating: this.newReviewRating,
+      comment: this.newReviewComment.trim()
+    };
+    this.reviewService.submitReview(this.selectedProductId, body).subscribe({
+      next: () => {
+        this.reviewSubmitting = false;
+        this.reviewSuccess = this.myReview ? 'Review updated successfully!' : 'Review submitted successfully!';
+        this.showReviewForm = false;
+        this.newReviewComment = '';
+        this.newReviewRating = 5;
+        this.loadReviews(this.selectedProductId!);
+        setTimeout(() => this.reviewSuccess = null, 3000);
+      },
+      error: (e: any) => {
+        this.reviewSubmitting = false;
+        this.reviewError = e?.error?.message || e?.error?.detail || 'Failed to submit review.';
+      }
+    });
+  }
+
+  editReview(): void {
+    if (!this.myReview) return;
+    // Pre-fill the form with existing review data
+    this.newReviewRating = this.myReview.rating || 5;
+    this.newReviewComment = this.myReview.comment || '';
+    this.showReviewForm = true;
+  }
+
+  deleteReview(): void {
+    if (!this.myReview) return;
+    this.reviewService.deleteReview(this.myReview.reviewId).subscribe({
+      next: () => {
+        this.myReview = null;
+        this.newReviewRating = 5;
+        this.newReviewComment = '';
+        this.showReviewForm = false;
+        if (this.selectedProductId) this.loadReviews(this.selectedProductId);
+      },
+      error: () => {}
+    });
+  }
+
+  updateSidePanelRating(): void {
+    const el = document.getElementById('pd-rating');
+    if (!el) return;
+    const count = this.reviews.length;
+    const avg = count > 0
+      ? this.reviews.reduce((sum, r) => sum + r.rating, 0) / count
+      : 5; // Default to 5 if no reviews
+
+    // Create the stars string (e.g. 4 => ★★★★☆)
+    const rounded = Math.round(avg);
+    const stars = Array(rounded).fill('★').join('') + Array(5 - rounded).fill('☆').join('');
+
+    el.innerHTML = `${stars} <span>(${count})</span>`;
+    // Make sure the element is visible
+    el.style.display = '';
+  }
+
+  starArray(n: number): number[] {
+    return Array.from({ length: 5 }, (_, i) => i < n ? 1 : 0);
+  }
+
+  scrollToReviews(event: Event): void {
+    event.preventDefault();
+    const section = document.querySelector('.reviews-section');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 
   /**

@@ -7,9 +7,7 @@ import { catchError } from 'rxjs/operators';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
 import { CheckoutService, ShippingInfoDto } from '../../../core/services/checkout.service';
-import { CartService, CartFixedItem, CartDesignItem } from '../../../core/services/cart.service';
-
-declare const Stripe: any;
+import { CartService } from '../../../core/services/cart.service';
 
 @Component({
   selector: 'app-checkout',
@@ -26,14 +24,13 @@ export class CheckoutComponent implements OnInit {
 
   cartItems = signal<any[]>([]);
 
-  readonly DELIVERY_FEE = 15;
-  readonly DISCOUNT_RATE = 0.20;
-
   subtotal = computed(() =>
     this.cartItems().reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0)
   );
-  discount = computed(() => this.subtotal() * this.DISCOUNT_RATE);
-  total = computed(() => this.subtotal() - this.discount() + this.DELIVERY_FEE);
+  total = computed(() => this.subtotal());
+  totalQuantity = computed(() =>
+    this.cartItems().reduce((sum, i) => sum + (i.quantity || 1), 0)
+  );
 
   shippingForm: ShippingInfoDto = {
     recipientName: '',
@@ -45,10 +42,6 @@ export class CheckoutComponent implements OnInit {
     buildingNumber: ''
   };
 
-  stripeLoaded = false;
-  stripeCard: any = null;
-  stripe: any = null;
-
   constructor(
     private readonly checkoutService: CheckoutService,
     private readonly cartService: CartService,
@@ -56,11 +49,6 @@ export class CheckoutComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadData();
-    this.loadStripe();
-  }
-
-  private loadData(): void {
     this.loading.set(true);
     forkJoin({
       shippingInfo: this.checkoutService.getShippingInfo().pipe(catchError(() => of(null))),
@@ -70,61 +58,65 @@ export class CheckoutComponent implements OnInit {
       if (shippingInfo) {
         this.shippingForm = { ...this.shippingForm, ...shippingInfo };
       }
+
+      // API size enum: 13=S, 14=M, 15=L, 16=XL, 17=2XL, 18=3XL, 19=4XL, 20=5XL
+      // Also support 0-4 mapping for backward compatibility
+      const sizeMap: Record<number, string> = {
+        0: 'S', 1: 'M', 2: 'L', 3: 'XL', 4: '2XL',
+        13: 'S', 14: 'M', 15: 'L', 16: 'XL', 17: '2XL',
+        18: '3XL', 19: '4XL', 20: '5XL'
+      };
+
+      const mapSize = (s: any) => {
+        if (s == null || s === '') return null;
+        // Handle string sizes like "_L", "_XL", "_2XL" -> "L", "XL", "2XL"
+        if (typeof s === 'string') {
+          const clean = s.replace(/^_/, ''); // Remove leading underscore
+          if (clean) return clean;
+        }
+        const num = parseInt(s, 10);
+        if (!isNaN(num) && sizeMap[num]) return sizeMap[num];
+        return s;
+      };
+
       const allItems = [
-        ...(fixed ?? []).map((f: any) => ({
-          name: f.productName || f.ProductName || f.name || f.Name || 'Product',
-          imageUrl: f.imageUrl || f.ImageUrl || f.image || f.Image || null,
-          price: f.price || f.Price || 0,
-          quantity: f.quantity || f.Quantity || 1,
-          size: f.size || f.Size,
-          meta: [(f.colorName || f.ColorName), (f.size || f.Size) ? 'Size: '+(f.size||f.Size) : null].filter(Boolean).join(' · ')
-        })),
-        ...(designs ?? []).map((d: any) => ({
-          name: d.designName || d.DesignName || d.productName || d.ProductName || d.name || d.Name || 'Custom Design',
-          imageUrl: d.imageUrl || d.ImageUrl || d.frontImage || d.FrontImage || d.image || d.Image || null,
-          price: d.price || d.Price || 0,
-          quantity: d.quantity || d.Quantity || 1,
-          size: d.size || d.Size,
-          meta: 'Custom Design' + ((d.size || d.Size) ? ` · Size: ${d.size || d.Size}` : '')
-        }))
+        ...(fixed ?? []).map((f: any) => {
+          const sVal = mapSize(f.size ?? f.Size);
+          const rawQty = f.quantity ?? f.Quantity ?? f.qty ?? f.Qty ?? 1;
+          return {
+            name: f.productName || f.ProductName || f.name || f.Name || 'Product',
+            imageUrl: f.imageUrl || f.ImageUrl || f.image || f.Image || '/assets/placeholder.jpg',
+            price: f.price || f.Price || 0,
+            quantity: rawQty,
+            size: sVal,
+            meta: [(f.colorName || f.ColorName), sVal ? 'Size: ' + sVal : null].filter(Boolean).join(' · ')
+          };
+        }),
+        ...(designs ?? []).map((d: any) => {
+          // API returns sizes array with nested size and quantityInCart
+          const sizesArray = d.sizes ?? d.Sizes ?? [];
+          const sizeEntry = Array.isArray(sizesArray) && sizesArray.length > 0 ? sizesArray[0] : null;
+          const sizeFromArray = sizeEntry?.size ?? sizeEntry?.Size;
+          const qtyFromArray = sizeEntry?.quantityInCart ?? sizeEntry?.QuantityInCart;
+
+          const rawSize = sizeFromArray ?? d.size ?? d.Size ?? d.itemSize ?? d.ItemSize ?? d.productSize ?? d.ProductSize ?? d.designSize ?? d.DesignSize;
+          const sVal = mapSize(rawSize);
+          const nameVal = d.designName || d.DesignName || d.name || d.Name || d.productName || d.ProductName;
+          const rawQty = qtyFromArray ?? d.quantity ?? d.Quantity ?? d.cartItemQuantity ?? d.CartItemQuantity ?? 1;
+
+          return {
+            name: nameVal || 'Custom Design',
+            imageUrl: d.imageUrl || d.ImageUrl || d.frontImage || d.FrontImage || d.image || d.Image || '/assets/placeholder.jpg',
+            price: d.price || d.Price || 0,
+            quantity: rawQty,
+            size: sVal,
+            meta: 'Custom Design' + (sVal ? ` · Size: ${sVal}` : '')
+          };
+        })
       ];
       this.cartItems.set(allItems);
       this.loading.set(false);
     });
-  }
-
-  private loadStripe(): void {
-    if (typeof (window as any).Stripe !== 'undefined') {
-      this.initStripe();
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://js.stripe.com/v3/';
-    script.onload = () => this.initStripe();
-    document.head.appendChild(script);
-  }
-
-  private initStripe(): void {
-    this.stripe = Stripe('pk_test_51TNDcF3skyvwJKjn6byWhP8jUPRSOKPrbvB5KesI9VIF5pbYGKjk9qFl1fK3zvmNmGZQOkbqa03AUNdQYc1McSRQ00lsaRmcJG');
-    const elements = this.stripe.elements();
-    this.stripeCard = elements.create('card', {
-      style: {
-        base: {
-          fontSize: '15px',
-          color: '#111827',
-          fontFamily: 'Inter, system-ui, sans-serif',
-          '::placeholder': { color: '#9ca3af' }
-        }
-      }
-    });
-    // Mount after a tick to allow view to render
-    setTimeout(() => {
-      const mount = document.getElementById('stripe-card-element');
-      if (mount) {
-        this.stripeCard.mount('#stripe-card-element');
-        this.stripeLoaded = true;
-      }
-    }, 300);
   }
 
   isFormValid(): boolean {
@@ -134,7 +126,7 @@ export class CheckoutComponent implements OnInit {
               f.street?.trim() && f.buildingNumber?.trim());
   }
 
-  async placeOrder(): Promise<void> {
+  placeOrder(): void {
     if (!this.isFormValid()) {
       this.errorMessage.set('Please fill in all required shipping fields.');
       return;
@@ -142,40 +134,30 @@ export class CheckoutComponent implements OnInit {
     this.submitting.set(true);
     this.errorMessage.set(null);
 
-    try {
-      // 1. Create checkout session on backend
-      const checkoutRes = await this.checkoutService.createCheckoutSession({
-        shippingInfo: this.shippingForm
-      }).toPromise();
+    this.checkoutService.createCheckoutSession({
+      shippingInfo: this.shippingForm
+    }).subscribe({
+      next: (res: any) => {
+        const checkoutUrl =
+          res?.checkoutUrl || res?.CheckoutUrl ||
+          res?.sessionUrl || res?.SessionUrl ||
+          res?.url || res?.Url;
 
-      // 2. If we got a Stripe clientSecret, confirm payment
-      const clientSecret = checkoutRes?.clientSecret || checkoutRes?.['ClientSecret'];
-      if (clientSecret && this.stripe && this.stripeCard) {
-        const result = await this.stripe.confirmCardPayment(clientSecret, {
-          payment_method: { card: this.stripeCard }
-        });
-        if (result.error) {
-          this.errorMessage.set(result.error.message || 'Payment failed. Please try again.');
+        if (checkoutUrl) {
+          // Redirect to Stripe-hosted checkout page
+          window.location.href = checkoutUrl;
+        } else {
+          // No URL returned — treat as success
+          this.successMessage.set('Order placed successfully! 🎉');
           this.submitting.set(false);
-          return;
+          setTimeout(() => this.router.navigate(['/customer/profile'], { queryParams: { tab: 'orders' } }), 2000);
         }
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message || err?.error?.detail || err?.message || 'Checkout failed. Please try again.';
+        this.errorMessage.set(msg);
+        this.submitting.set(false);
       }
-
-      // 3. If backend returns a redirect URL (Stripe Checkout Session), navigate there
-      const redirectUrl = checkoutRes?.sessionUrl || checkoutRes?.url || checkoutRes?.['Url'];
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
-        return;
-      }
-
-      // 4. Success
-      this.successMessage.set('Order placed successfully! 🎉');
-      this.submitting.set(false);
-      setTimeout(() => this.router.navigate(['/customer/profile'], { queryParams: { tab: 'orders' } }), 2000);
-
-    } catch (err: any) {
-      this.errorMessage.set(err?.message || 'Checkout failed. Please try again.');
-      this.submitting.set(false);
-    }
+    });
   }
 }

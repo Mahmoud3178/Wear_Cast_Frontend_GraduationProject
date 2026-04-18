@@ -42,6 +42,20 @@ export const FACTORY_ROUTES: Routes = [
           import('./product-wizard/factory-product-wizard.component').then(
             m => m.FactoryProductWizardComponent
           )
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./profile/factory-profile.component').then(
+            m => m.FactoryProfileComponent
+          )
+      },
+      {
+        path: 'managers',
+        loadComponent: () =>
+          import('./managers/factory-managers.component').then(
+            m => m.FactoryManagersComponent
+          )
       }
     ]
   }

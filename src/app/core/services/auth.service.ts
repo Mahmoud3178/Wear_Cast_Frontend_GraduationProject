@@ -167,6 +167,40 @@ export class AuthService {
     );
   }
 
+  /**
+   * Factory manager: POST /api/auth/confirm-email — body { userId, code }.
+   * Uses generic auth endpoint (factory managers are users too).
+   */
+  confirmFactoryManagerEmail(userId: string, code: string): Observable<void> {
+    const url = `${this.apiUrl}/api/auth/confirm-email`;
+    return this.http
+      .post<ApiEnvelope>(url, {
+        userId: userId.trim(),
+        code: code.trim()
+      })
+      .pipe(
+        map(body => {
+          if (!body.isSuccess) {
+            throw this.apiFailure(body);
+          }
+        }),
+        catchError(err => this.handleHttpError(err))
+      );
+  }
+
+  /** Resend factory manager confirmation using generic endpoint. */
+  resendFactoryManagerConfirmationEmail(email: string): Observable<void> {
+    const url = `${this.apiUrl}/api/auth/resend-confirmation-email`;
+    return this.http.post<ApiEnvelope>(url, { email: email.trim() }).pipe(
+      map(body => {
+        if (!body.isSuccess) {
+          throw this.apiFailure(body);
+        }
+      }),
+      catchError(err => this.handleHttpError(err))
+    );
+  }
+
   registerCustomer(data: CustomerRegisterForm): Observable<RegisterCustomerResult> {
     const fd = new FormData();
     fd.append('Email', data.email);
@@ -351,6 +385,18 @@ export class AuthService {
 
   getToken(): string | null {
     return localStorage.getItem('token');
+  }
+
+  /** Get user roles from stored role or JWT token */
+  getUserRoles(): string[] {
+    const storedRole = localStorage.getItem('role');
+    if (storedRole) {
+      return [storedRole.toLowerCase()];
+    }
+    const token = this.getToken();
+    if (!token) return [];
+    const role = this.roleFromJwt(token);
+    return role ? [role.toLowerCase()] : [];
   }
 
   /**

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
 
 /** Matches typical API `ViewSide` enum order used by WearCast. */
 export const VIEW_SIDE = {
@@ -104,11 +105,39 @@ export interface CreateDesignedProductPayload {
   }>;
 }
 
+export interface FactoryProfile {
+  factoryId?: number;
+  name: string;
+  email: string;
+  phoneNumber?: string;
+  address?: string;
+  imageUrl?: string;
+  commercialRegisterNumber?: string;
+  taxIdNumber?: string;
+  description?: string;
+  state?: string;
+  city?: string;
+  street?: string;
+  buildingNumber?: string;
+  isVerified?: boolean;
+}
+
+export interface FactoryManager {
+  id: number;
+  name: string;
+  email: string;
+  phoneNumber?: string;
+  isActive: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FactoryApiService {
   private readonly base = environment.apiUrl;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly auth: AuthService
+  ) {}
 
   getCategories(): Observable<CategoryDto[]> {
     const url = `${this.base}/api/Category/GetAllCategories`;
@@ -180,26 +209,26 @@ export class FactoryApiService {
     );
   }
 
-  getDesignedProducts(): Observable<{ id: number; name: string }[]> {
-    const url = `${this.base}/api/factories/products`;
-    return this.http.get<any>(url).pipe(
-      map(body => {
-        let list: any[] = [];
-        if (Array.isArray(body)) {
-          list = body;
-        } else if (body && typeof body === 'object' && Array.isArray(body.data)) {
-          list = body.data;
-        } else if (body && typeof body === 'object' && Array.isArray(body.Data)) {
-          list = body.Data;
-        }
-        return list.map(item => {
+  getDesignedProducts(): Observable<{ id: number; name: string; price: number; categoryName: string; mainImageUrl: string | null }[]> {
+    // Use factory catalog endpoint to get all products for this factory
+    const url = `${this.base}/api/factories/catalog/designed-products`;
+    return this.http.get<ApiEnvelope | unknown>(url).pipe(
+      map(res => {
+        const payload = this.unwrapPayload<any>(res);
+        // Handle paginated response: data.items array
+        const list = payload?.items ?? payload ?? [];
+        if (!Array.isArray(list)) return [];
+        return list.map((item: any) => {
           const o = item || {};
-          const id = o.id ?? o.Id ?? o.productId ?? o.ProductId ?? 0;
+          const id = o.id ?? o.Id ?? o.designedProductId ?? o.DesignedProductId ?? o.productId ?? o.ProductId ?? 0;
           const name = o.name ?? o.Name ?? o.productName ?? o.ProductName ?? o.title ?? o.Title ?? `Designed product #${id}`;
-          return { id, name };
+          const price = o.price ?? o.Price ?? 0;
+          const categoryName = o.categoryName ?? o.CategoryName ?? '';
+          const mainImageUrl = o.mainImageUrl ?? o.MainImageUrl ?? null;
+          return { id, name, price, categoryName, mainImageUrl };
         });
       }),
-      catchError(e => this.mapErr(e))
+      catchError(() => of([]))
     );
   }
 
@@ -231,7 +260,7 @@ export class FactoryApiService {
     fd.append('Name', body.name);
     fd.append('HexCode', body.hexCode);
     fd.append('Image', body.image, body.image.name);
-    
+
     return this.http.post<ApiEnvelope>(url, fd).pipe(
       map(res => {
         if (!res.isSuccess) {
@@ -288,6 +317,90 @@ export class FactoryApiService {
     const url = `${this.base}/api/FixedProduct/GetAll`;
     return this.http.get(url, { params }).pipe(
       catchError(e => this.mapErr(e))
+    );
+  }
+
+  /** POST /api/factory-managers — create a new factory manager account. */
+  createFactoryManager(body: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    password: string;
+    confirmPassword: string;
+    providedFactoryId?: number;
+  }): Observable<{ message: string; userId?: string }> {
+    const url = `${this.base}/api/factory-managers`;
+    return this.http.post<ApiEnvelope>(url, body).pipe(
+      map(res => {
+        if (!res.isSuccess) {
+          throw this.envErr(res);
+        }
+        // Extract userManagerId from response (for email confirmation)
+        const payload = (res.data ?? {}) as Record<string, unknown>;
+        const userId = (payload['userManagerId'] ?? payload['UserManagerId'] ?? '').toString();
+        return { message: 'Factory manager created successfully', userId: userId || undefined };
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
+  /** GET /api/factories/profile — get factory profile */
+  getFactoryProfile(): Observable<FactoryProfile> {
+    const url = `${this.base}/api/factories/profile`;
+    return this.http.get<ApiEnvelope<FactoryProfile> | FactoryProfile>(url).pipe(
+      map(res => {
+        const payload = this.unwrapPayload<FactoryProfile>(res);
+        if (!payload) {
+          throw new Error('Failed to load factory profile');
+        }
+        return payload;
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
+  /** PUT /api/factories/profile — update factory profile */
+  updateFactoryProfile(body: Partial<FactoryProfile>): Observable<void> {
+    const url = `${this.base}/api/factories/profile`;
+    return this.http.put<ApiEnvelope>(url, body).pipe(
+      map(res => {
+        if (res && typeof res === 'object' && 'isSuccess' in res && !res.isSuccess) {
+          throw this.envErr(res);
+        }
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
+  /** PUT /api/factories/profile-image — update factory profile image */
+  updateFactoryProfileImage(file: File): Observable<void> {
+    const url = `${this.base}/api/factories/profile-image`;
+    const formData = new FormData();
+    formData.append('NewLogo', file);
+    const factoryId = this.auth.getFactoryId();
+    if (factoryId) {
+      formData.append('ProvidedFactoryId', factoryId.toString());
+    }
+    return this.http.put<ApiEnvelope>(url, formData).pipe(
+      map(res => {
+        if (res && typeof res === 'object' && 'isSuccess' in res && !res.isSuccess) {
+          throw this.envErr(res);
+        }
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
+  /** GET /api/factory-managers — list factory managers */
+  getFactoryManagers(): Observable<FactoryManager[]> {
+    const url = `${this.base}/api/factory-managers`;
+    return this.http.get<ApiEnvelope<FactoryManager[]> | FactoryManager[]>(url).pipe(
+      map(res => {
+        const list = this.unwrapPayload<FactoryManager[]>(res);
+        return list ?? [];
+      }),
+      catchError(() => of([]))
     );
   }
 
@@ -415,5 +528,23 @@ export class FactoryApiService {
     return throwError(() =>
       err instanceof Error ? err : new Error(String(err))
     );
+  }
+
+  /** Unwrap payload from envelope or return raw if already unwrapped */
+  private unwrapPayload<T>(res: ApiEnvelope<T> | T | null | unknown): T | null {
+    if (!res || typeof res !== 'object') {
+      return null;
+    }
+    const o = res as Record<string, unknown>;
+    // If it's an envelope, unwrap data/Data
+    if ('isSuccess' in o) {
+      if (o['isSuccess'] === false) {
+        return null;
+      }
+      const inner = o['data'] ?? o['Data'];
+      return inner as T ?? null;
+    }
+    // Otherwise assume it's already the payload
+    return res as T;
   }
 }

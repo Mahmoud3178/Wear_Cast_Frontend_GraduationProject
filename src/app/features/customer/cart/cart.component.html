@@ -50,9 +50,12 @@
               <div>
                 <h2>{{ item.name }}</h2>
                 <p class="meta">{{ item.meta }}</p>
-                <span class="item-type-badge" [class.item-type-badge--design]="item.type === 'design'">
-                  {{ item.type === 'design' ? '✏️ Custom Design' : '🏷️ Fixed Product' }}
-                </span>
+                <div class="item-badges">
+                  <span class="item-type-badge" [class.item-type-badge--design]="item.type === 'design'">
+                    {{ item.type === 'design' ? '✏️ Custom Design' : '🏷️ Fixed Product' }}
+                  </span>
+                  <span *ngIf="item.size" class="item-size-badge">Size: {{ item.size }}</span>
+                </div>
               </div>
               <button
                 type="button"
@@ -90,16 +93,8 @@
         <h2>Order summary</h2>
         <dl>
           <div class="row">
-            <dt>Subtotal ({{ items().length }} items)</dt>
+            <dt>Subtotal ({{ totalQuantity() }} item{{ totalQuantity() !== 1 ? 's' : '' }})</dt>
             <dd>{{ subtotal() | currency:'EGP':'symbol':'1.0-0' }}</dd>
-          </div>
-          <div class="row">
-            <dt>Discount (20%)</dt>
-            <dd class="negative">− {{ discount() | currency:'EGP':'symbol':'1.0-0' }}</dd>
-          </div>
-          <div class="row">
-            <dt>Delivery fee</dt>
-            <dd>{{ DELIVERY_FEE | currency:'EGP':'symbol':'1.0-0' }}</dd>
           </div>
           <div class="row total">
             <dt>Total</dt>

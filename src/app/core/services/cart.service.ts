@@ -22,12 +22,20 @@ export interface CartFixedItem {
 
 export interface CartDesignItem {
   cartItemId: number;
-  designId: number;
-  designName: string;
-  imageUrl: string;
+  customerDesignedId?: number;
+  designId?: number;
+  designName?: string;
+  productName?: string;
+  imageUrl?: string;
+  image?: string;
   price: number;
-  size: string;
-  quantity: number;
+  size?: string;
+  quantity?: number;
+  // API returns sizes array with nested size and quantityInCart
+  sizes?: Array<{
+    size: string;
+    quantityInCart: number;
+  }>;
 }
 
 // ────────────────────────────────────────────────────────

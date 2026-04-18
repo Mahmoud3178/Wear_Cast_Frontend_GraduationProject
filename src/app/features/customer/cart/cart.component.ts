@@ -39,14 +39,13 @@ export class CartComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
-  readonly DELIVERY_FEE = 15;
-  readonly DISCOUNT_RATE = 0.20;
-
   subtotal = computed(() =>
-    this.items().reduce((s, i) => s + i.price * i.quantity, 0)
+    this.items().reduce((s, i) => s + i.price * (i.quantity ?? 1), 0)
   );
-  discount = computed(() => this.subtotal() * this.DISCOUNT_RATE);
-  total = computed(() => this.subtotal() - this.discount() + this.DELIVERY_FEE);
+  total = computed(() => this.subtotal());
+  totalQuantity = computed(() =>
+    this.items().reduce((sum, i) => sum + (i.quantity ?? 1), 0)
+  );
 
   constructor(private readonly cartService: CartService) {}
 
@@ -63,29 +62,64 @@ export class CartComponent implements OnInit {
       designs: this.cartService.getDesignItems().pipe(catchError(() => of([])))
     }).subscribe({
       next: ({ fixed, designs }) => {
-        const fixedViews: CartItemView[] = (fixed ?? []).map((f: any) => ({
-          cartItemId: f.cartItemId || f.CartItemId,
-          name: f.productName || f.ProductName || f.name || f.Name || 'Fixed Product',
-          meta: `${f.colorName || f.ColorName || ''} · Size: ${f.size || f.Size}`,
-          imageUrl: f.imageUrl || f.ImageUrl || f.image || f.Image || '/assets/placeholder.jpg',
-          price: f.price || f.Price || 0,
-          size: f.size || f.Size,
-          quantity: f.quantity || f.Quantity || 1,
-          type: 'fixed',
-          colorId: f.colorId || f.ColorId
-        }));
+        // API size enum: 13=S, 14=M, 15=L, 16=XL, 17=2XL, 18=3XL, 19=4XL, 20=5XL
+        // Also support 0-4 mapping for backward compatibility
+        const sizeMap: Record<number, string> = {
+          0: 'S', 1: 'M', 2: 'L', 3: 'XL', 4: '2XL',
+          13: 'S', 14: 'M', 15: 'L', 16: 'XL', 17: '2XL',
+          18: '3XL', 19: '4XL', 20: '5XL'
+        };
+
+        const mapSize = (s: any) => {
+          if (s == null || s === '') return null;
+          // Handle string sizes like "_L", "_XL", "_2XL" -> "L", "XL", "2XL"
+          if (typeof s === 'string') {
+            const clean = s.replace(/^_/, ''); // Remove leading underscore
+            if (clean) return clean;
+          }
+          const num = parseInt(s, 10);
+          if (!isNaN(num) && sizeMap[num]) return sizeMap[num];
+          return s; // fallback
+        };
+
+        const fixedViews: CartItemView[] = (fixed ?? []).map((f: any) => {
+          const sVal = mapSize(f.size ?? f.Size);
+          const colorName = f.colorName || f.ColorName || '';
+          const rawQty = f.quantity ?? f.Quantity ?? f.qty ?? f.Qty ?? 1;
+          const metaParts = [colorName, sVal ? `Size: ${sVal}` : ''].filter(Boolean);
+          return {
+            cartItemId: f.cartItemId || f.CartItemId,
+            name: f.productName || f.ProductName || f.name || f.Name || 'Fixed Product',
+            meta: metaParts.join(' · ') || 'Fixed Product',
+            imageUrl: f.imageUrl || f.ImageUrl || f.image || f.Image || '/assets/placeholder.jpg',
+            price: f.price || f.Price || 0,
+            size: sVal,
+            quantity: f.quantity ?? f.Quantity ?? f.qty ?? f.Qty ?? 1,
+            type: 'fixed',
+            colorId: f.colorId || f.ColorId
+          };
+        });
 
         const designViews: CartItemView[] = (designs ?? []).map((d: any) => {
-          const sizeVal = d.size || d.Size;
+          // API returns sizes array with nested size and quantityInCart
+          const sizesArray = d.sizes ?? d.Sizes ?? [];
+          const sizeEntry = Array.isArray(sizesArray) && sizesArray.length > 0 ? sizesArray[0] : null;
+          const sizeFromArray = sizeEntry?.size ?? sizeEntry?.Size;
+          const qtyFromArray = sizeEntry?.quantityInCart ?? sizeEntry?.QuantityInCart;
+
+          const rawSize = sizeFromArray ?? d.size ?? d.Size ?? d.itemSize ?? d.ItemSize ?? d.productSize ?? d.ProductSize ?? d.designSize ?? d.DesignSize;
+          const sVal = mapSize(rawSize);
           const nameVal = d.designName || d.DesignName || d.name || d.Name || d.productName || d.ProductName;
+          const rawQty = qtyFromArray ?? d.quantity ?? d.Quantity ?? d.qty ?? d.Qty ?? d.cartItemQuantity ?? d.CartItemQuantity ?? 1;
+          const metaParts = [sVal ? `Size: ${sVal}` : ''].filter(Boolean);
           return {
             cartItemId: d.cartItemId || d.CartItemId,
             name: nameVal || 'Custom Design',
-            meta: `Custom Design` + (sizeVal ? ` · Size: ${sizeVal}` : ''),
+            meta: metaParts.join(' · '),
             imageUrl: d.imageUrl || d.ImageUrl || d.frontImage || d.FrontImage || d.image || d.Image || '/assets/placeholder.jpg',
             price: d.price || d.Price || 0,
-            size: sizeVal,
-            quantity: d.quantity || d.Quantity || 1,
+            size: sVal,
+            quantity: rawQty,
             type: 'design',
             designId: d.designId || d.DesignId || d.customerDesignId || d.CustomerDesignId || d.id || d.Id
           };

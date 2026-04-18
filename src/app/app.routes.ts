@@ -39,6 +39,13 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'confirm-email/factory-manager',
+    loadComponent: () =>
+      import('./features/auth/confirm-factory-manager-email/confirm-factory-manager-email.component').then(
+        m => m.ConfirmFactoryManagerEmailComponent
+      )
+  },
+  {
     path: 'factory/login',
     loadComponent: () =>
       import('./features/factory/factory-login/factory-login.component').then(

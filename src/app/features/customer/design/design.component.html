@@ -82,6 +82,10 @@
       <div class="product-info">
       <h2 class="product-title" id="product-title">Women's Hoodie</h2>
       <p class="product-price" id="product-price" hidden></p>
+      <!-- Ratings string -->
+      <a href="#reviews-section" style="text-decoration: none" (click)="scrollToReviews($event)">
+        <div id="pd-rating" class="pd-rating" style="display:none;"></div>
+      </a>
       <button type="button" id="product-details-open" class="details-link">See product details &gt;</button>
       <p class="print-method">Print method: <strong>Digital Direct</strong></p>
 
@@ -141,9 +145,9 @@
       <h3>Choose a product</h3>
       <button type="button" id="products-modal-close" class="details-close-btn" aria-label="Close">✕</button>
     </div>
-    
+
     <!-- ANGULAR SEARCH BAR -->
-    <div class="wc-filters d-flex gap-2 mb-4 flex-wrap align-items-end mt-3" style="font-family: 'Inter', sans-serif;">
+    <div class="wc-filters d-flex gap-2 mb-4 flex-wrap align-items-center mt-3" style="font-family: 'Inter', sans-serif;">
       <div class="flex-grow-1" style="min-width: 200px">
         <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="Search templates..." [(ngModel)]="searchParams.SearchTerm" (keyup.enter)="searchCatalog()">
       </div>
@@ -167,11 +171,11 @@
           <option [ngValue]="5">Sporty</option>
         </select>
       </div>
-        <button class="btn btn-primary px-4" (click)="searchCatalog()" [disabled]="loadingProducts">
-          <span *ngIf="loadingProducts" class="spinner-border spinner-border-sm me-1"></span>Search
-        </button>
+      <button class="btn btn-primary px-4" (click)="searchCatalog()" [disabled]="loadingProducts" style="height: 38px;">
+        <span *ngIf="loadingProducts" class="spinner-border spinner-border-sm me-1"></span>Search
+      </button>
     </div>
-    <div *ngIf="catalogSearchResults.length === 0 && !loadingProducts" class="text-center text-muted mb-4 py-4">No templates found for this criteria.</div>
+    <div *ngIf="catalogSearchResults.length === 0 && !loadingProducts" class="text-center text-white-50 mb-4 py-4" style="color: rgba(255,255,255,0.7) !important;">No templates found for this criteria.</div>
 
 
     <style>
@@ -184,8 +188,8 @@
         padding: 4px;
       }
       .angular-product-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 12px;
         padding: 12px;
         text-align: center;
@@ -193,7 +197,7 @@
         transition: transform 0.2s, background 0.2s;
       }
       .angular-product-card:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.15);
         transform: translateY(-2px);
       }
       .angular-product-card img {
@@ -209,11 +213,20 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.12);
         border-radius: 8px;
         margin-bottom: 8px;
-        color: rgba(255,255,255,0.3);
-        font-size: 0.8rem;
+        color: rgba(255,255,255,0.7);
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      .angular-product-card h4 {
+        color: #ffffff !important;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .angular-product-card p {
+        color: rgba(255,255,255,0.8) !important;
       }
     </style>
 
@@ -340,5 +353,107 @@
     </div>
   </div>
 </div>
+
+<!-- ===== REVIEWS SECTION ===== -->
+<section *ngIf="selectedProductId" class="reviews-section">
+  <div class="reviews-container">
+    <div class="reviews-header">
+      <h2 class="reviews-title">Customer Reviews</h2>
+      <div class="reviews-meta" *ngIf="reviews.length > 0">
+        {{ reviews.length }} review{{ reviews.length !== 1 ? 's' : '' }}
+      </div>
+    </div>
+
+    <!-- Alert messages -->
+    <div *ngIf="reviewSuccess" class="review-alert review-alert--success">{{ reviewSuccess }}</div>
+    <div *ngIf="reviewError" class="review-alert review-alert--error">{{ reviewError }}</div>
+
+    <!-- My review -->
+    <div *ngIf="myReview" class="my-review-card">
+      <div class="review-card-header">
+        <div class="review-avatar">{{ myReview.reviewerName.charAt(0).toUpperCase() }}</div>
+        <div>
+          <p class="review-name">{{ myReview.reviewerName }} <span class="review-own-badge">Your review</span></p>
+          <div class="review-stars">
+            <span *ngFor="let s of starArray(myReview.rating)" [class.star-filled]="s === 1">★</span>
+          </div>
+        </div>
+        <div class="review-actions">
+          <button class="review-edit-btn" (click)="editReview()" title="Edit review">✎</button>
+          <button class="review-delete-btn" (click)="deleteReview()" title="Delete review">✕</button>
+        </div>
+      </div>
+      <p class="review-comment">{{ myReview.comment }}</p>
+    </div>
+
+    <!-- Write/Edit review form -->
+    <div *ngIf="isAuthenticated && (!myReview || showReviewForm)" class="review-form-wrap">
+      <button *ngIf="!showReviewForm && !myReview" class="review-write-btn" (click)="showReviewForm = true">
+        ✏️ Write a review
+      </button>
+      <div *ngIf="showReviewForm" class="review-form">
+        <h3>{{ myReview ? 'Edit Your Review' : 'Write a Review' }}</h3>
+        <div class="review-rating-pick">
+          <label>Rating:</label>
+          <div class="star-picker">
+            <button
+              *ngFor="let i of [1,2,3,4,5]"
+              type="button"
+              class="star-pick-btn"
+              [class.active]="i <= newReviewRating"
+              (click)="newReviewRating = i"
+            >★</button>
+          </div>
+        </div>
+        <textarea
+          class="review-textarea"
+          [(ngModel)]="newReviewComment"
+          placeholder="Share your experience with this product..."
+          rows="4"
+        ></textarea>
+        <div class="review-form-actions">
+          <button class="review-cancel-btn" (click)="showReviewForm = false">Cancel</button>
+          <button
+            class="review-submit-btn"
+            [disabled]="reviewSubmitting || !newReviewComment.trim()"
+            (click)="submitReview()"
+          >
+            <span *ngIf="reviewSubmitting">Submitting…</span>
+            <span *ngIf="!reviewSubmitting">Submit Review</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <p *ngIf="!isAuthenticated" class="review-login-hint">
+      <a href="/login">Sign in</a> to leave a review.
+    </p>
+
+    <!-- Loading -->
+    <div *ngIf="reviewsLoading" class="reviews-loading">
+      <div class="reviews-spinner"></div>
+    </div>
+
+    <!-- Review list -->
+    <div class="reviews-list" *ngIf="!reviewsLoading">
+      <div *ngIf="reviews.length === 0" class="reviews-empty">
+        No reviews yet. Be the first to review this product!
+      </div>
+      <div *ngFor="let r of reviews" class="review-card">
+        <div class="review-card-header">
+          <div class="review-avatar">{{ r.reviewerName.charAt(0).toUpperCase() }}</div>
+          <div>
+            <p class="review-name">{{ r.reviewerName }}</p>
+            <div class="review-stars">
+              <span *ngFor="let s of starArray(r.rating)" [class.star-filled]="s === 1">★</span>
+            </div>
+          </div>
+          <span class="review-date" *ngIf="r.createdAt">{{ r.createdAt | date:'mediumDate' }}</span>
+        </div>
+        <p class="review-comment">{{ r.comment }}</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <app-customer-footer></app-customer-footer>

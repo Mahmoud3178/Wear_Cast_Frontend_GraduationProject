@@ -10,6 +10,8 @@
           <a routerLink="/factory/dashboard" routerLinkActive="active" class="nav-pill">Dashboard</a>
           <a routerLink="/factory/products" routerLinkActive="active" class="nav-pill">Products</a>
           <a routerLink="/factory/products/new" routerLinkActive="active" class="nav-pill">New product</a>
+          <a routerLink="/factory/profile" routerLinkActive="active" class="nav-pill">Profile</a>
+          <a *ngIf="isFactory" routerLink="/factory/managers" routerLinkActive="active" class="nav-pill">Managers</a>
         </nav>
       </div>
       <button type="button" class="btn btn-sm text-white border border-light border-opacity-25" (click)="logout()">

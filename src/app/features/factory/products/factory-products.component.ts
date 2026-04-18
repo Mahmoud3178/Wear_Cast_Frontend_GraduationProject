@@ -32,8 +32,9 @@ function pickProductName(dto: Record<string, unknown>, id: number): string {
   templateUrl: './factory-products.component.html'
 })
 export class FactoryProductsComponent implements OnInit {
-  items: { id: number; name: string }[] = [];
+  items: { id: number; name: string; price: number; categoryName: string; mainImageUrl: string | null }[] = [];
   loading = false;
+  loadError = '';
   deletingId: number | null = null;
   deleteError = '';
 
@@ -49,19 +50,23 @@ export class FactoryProductsComponent implements OnInit {
 
   refreshList(): void {
     this.deleteError = '';
+    this.loadError = '';
     this.loading = true;
     this.factory.getDesignedProducts().subscribe({
       next: (rows) => {
+        console.log('Factory products loaded:', rows);
         this.items = rows;
         this.loading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load factory products:', err);
+        this.loadError = err?.message || 'Failed to load products from server.';
         this.loading = false;
       }
     });
   }
 
-  deleteProduct(item: { id: number; name: string }): void {
+  deleteProduct(item: { id: number; name: string; price: number; categoryName: string; mainImageUrl: string | null }): void {
     if (
       !confirm(
         `Delete "${item.name}" from the server? This cannot be undone.`
