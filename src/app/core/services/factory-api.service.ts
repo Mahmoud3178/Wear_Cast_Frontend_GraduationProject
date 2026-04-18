@@ -320,6 +320,58 @@ export class FactoryApiService {
     );
   }
 
+  /** GET /api/factories/products/{productId}/colors — get all colors for a product. */
+  getProductColors(productId: number): Observable<{ colorId: number; name: string; hexCode: string; imageUrl: string | null }[]> {
+    const url = `${this.base}/api/factories/products/${productId}/colors`;
+    console.log('Fetching colors from:', url);
+    return this.http.get<ApiEnvelope | any>(url).pipe(
+      map(res => {
+        console.log('Colors API response:', res);
+        const list = this.unwrapPayload<any[]>(res) ?? [];
+        console.log('Extracted colors list:', list);
+        const mapped = list.map(c => ({
+          colorId: c.id ?? c.colorId ?? c.Id ?? c.ColorId ?? 0,
+          name: c.name ?? c.Name ?? '',
+          hexCode: c.hexCode ?? c.HexCode ?? '',
+          imageUrl: c.imageUrl ?? c.ImageUrl ?? c.image ?? c.Image ?? null
+        }));
+        console.log('Mapped colors:', mapped);
+        return mapped;
+      }),
+      catchError(err => {
+        console.error('Failed to load colors:', err);
+        return of([]);
+      })
+    );
+  }
+
+  /** PUT /api/factories/products/{productId} — update product including default color. */
+  updateDesignedProduct(
+    productId: number,
+    body: {
+      name?: string;
+      description?: string;
+      price?: number;
+      targetAudiences?: string[];
+      dressStyle?: number;
+      canvasWidth?: number;
+      canvasHeight?: number;
+      categoryId?: number;
+      defaultColorId?: number | null;
+    }
+  ): Observable<{ message: string }> {
+    const url = `${this.base}/api/factories/products/${productId}`;
+    return this.http.put<ApiEnvelope>(url, body).pipe(
+      map(res => {
+        if (!res.isSuccess) {
+          throw this.envErr(res);
+        }
+        return { message: 'Product updated successfully' };
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
   /** POST /api/factory-managers — create a new factory manager account. */
   createFactoryManager(body: {
     email: string;

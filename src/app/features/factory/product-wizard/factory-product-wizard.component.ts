@@ -119,6 +119,10 @@ export class FactoryProductWizardComponent implements OnInit {
   colorForm = { name: 'Black', hexCode: '#1a1a1a' };
   colorId: number | null = null;
 
+  /** Product colors loaded in edit mode for default color selection. */
+  productColors: { colorId: number; name: string; hexCode: string; imageUrl: string | null }[] = [];
+  selectedDefaultColorId: number | null = null;
+
   mainImageFile: File | null = null;
 
   frontImageFile: File | null = null;
@@ -230,13 +234,101 @@ export class FactoryProductWizardComponent implements OnInit {
         this.colorId = null;
         this.catalog.registerDesignedProductId(id);
         this.applyProductDto(dto);
+        // Extract colors from product DTO (fallback since GET /colors returns 405)
+        this.extractColorsFromDto(dto);
+        // Try to load colors from API (will fail with 405 until backend adds GET endpoint)
+        this.loadProductColors(id);
         this.message =
           'Product loaded. You can add more colors, upload photos per color, and add sizes below. Base fields are read-only.';
       },
     });
   }
 
+  /** Extract colors from product DTO since GET /colors endpoint doesn't exist yet. */
+  private extractColorsFromDto(dto: Record<string, unknown>): void {
+    const colors = dto['colors'] ?? dto['Colors'] ?? dto['productColors'] ?? dto['ProductColors'];
+    if (Array.isArray(colors) && colors.length > 0) {
+      this.productColors = colors.map((c: any) => ({
+        colorId: c.id ?? c.colorId ?? c.Id ?? c.ColorId ?? 0,
+        name: c.name ?? c.Name ?? '',
+        hexCode: c.hexCode ?? c.HexCode ?? '',
+        imageUrl: c.imageUrl ?? c.ImageUrl ?? c.mainImageUrl ?? c.MainImageUrl ?? null
+      }));
+      console.log('Extracted colors from DTO:', this.productColors);
+    }
+  }
+
+  private loadProductColors(productId: number): void {
+    console.log('Loading product colors for productId:', productId);
+    this.factory.getProductColors(productId).subscribe({
+      next: colors => {
+        console.log('Loaded colors from API:', colors);
+        if (colors.length > 0) {
+          this.productColors = colors;
+        }
+        if (this.productColors.length === 0) {
+          this.message = 'No colors found for this product. Add colors first before setting a default.';
+        }
+      },
+      error: (err) => {
+        console.error('GET /colors not supported (405). Backend needs to add this endpoint.', err);
+        // Colors already extracted from DTO above, so don't clear them
+      }
+    });
+  }
+
+  /** Save the selected default color for the product. */
+  saveDefaultColor(): void {
+    if (this.productId == null) {
+      this.error = 'No product loaded.';
+      return;
+    }
+    this.error = '';
+    this.message = '';
+    this.busy = true;
+    // API requires all fields, not just defaultColorId
+    const payload = {
+      name: this.createForm.name,
+      description: this.createForm.description,
+      price: this.createForm.price,
+      targetAudiences: this.selectedAudiences.map(a => this.audienceNumToString(a)),
+      dressStyle: this.createForm.dressStyle,
+      canvasWidth: this.createForm.canvasWidth,
+      canvasHeight: this.createForm.canvasHeight,
+      categoryId: this.createForm.categoryId,
+      defaultColorId: this.selectedDefaultColorId
+    };
+    console.log('Saving default color with payload:', payload);
+    this.factory.updateDesignedProduct(this.productId, payload).subscribe({
+      next: () => {
+        this.busy = false;
+        this.message = 'Default color saved successfully.';
+      },
+      error: (e: any) => {
+        this.busy = false;
+        console.error('Save default color error:', e);
+        console.error('Error status:', e.status);
+        console.error('Error message:', e.message);
+        console.error('Error error:', e.error);
+        this.error = e.message || 'Failed to save default color.';
+      }
+    });
+  }
+
+  /** Convert audience number to string for API */
+  private audienceNumToString(num: number): string {
+    const map: Record<number, string> = {
+      1: 'Men',
+      2: 'Women',
+      3: 'Unisex',
+      4: 'Kids',
+      8: 'Babies'
+    };
+    return map[num] ?? 'Unisex';
+  }
+
   private applyProductDto(dto: Record<string, unknown>): void {
+    console.log('Applying product DTO:', dto);
     const merged = mergeNestedProductShape(dto);
     this.createForm.name =
       pickStr(merged, [
@@ -245,7 +337,7 @@ export class FactoryProductWizardComponent implements OnInit {
         'productName',
         'ProductName',
         'title',
-        'Title'
+        'Title',
       ]) || this.createForm.name;
     this.createForm.description =
       pickStr(merged, ['description', 'Description']) ||
@@ -275,19 +367,39 @@ export class FactoryProductWizardComponent implements OnInit {
       merged['TargetAudiences'] ??
       merged['targetAudience'] ??
       merged['TargetAudience'];
+    console.log('Raw targetAudiences from API:', ta);
     if (Array.isArray(ta) && ta.length) {
       const nums = ta
-        .map(x => (typeof x === 'number' ? x : num(x)))
+        .map(x => this.mapTargetAudienceToNumber(x))
         .filter((n): n is number => n != null && n > 0);
+      console.log('Mapped target audience numbers:', nums);
       if (nums.length) {
         this.selectedAudiences = [...new Set(nums)].sort((a, b) => a - b);
       }
     } else {
-      const one = num(ta);
+      const one = this.mapTargetAudienceToNumber(ta);
       if (one != null && one > 0) {
         this.selectedAudiences = [one];
       }
     }
+  }
+
+  /** Map string target audience (e.g., "Unisex") to number value */
+  private mapTargetAudienceToNumber(value: unknown): number | null {
+    if (typeof value === 'number') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const strToNum: Record<string, number> = {
+        'Men': 1, 'men': 1, 'MEN': 1,
+        'Women': 2, 'women': 2, 'WOMEN': 2,
+        'Unisex': 3, 'unisex': 3, 'UNISEX': 3,
+        'Kids': 4, 'kids': 4, 'KIDS': 4,
+        'Babies': 8, 'babies': 8, 'BABIES': 8,
+      };
+      return strToNum[value] ?? null;
+    }
+    return null;
   }
 
   createProduct(): void {
@@ -351,7 +463,7 @@ export class FactoryProductWizardComponent implements OnInit {
       this.error = 'Catalog image is required.';
       return;
     }
-    
+
     let hex = this.colorForm.hexCode.trim();
     if (!hex.startsWith('#')) {
       hex = '#' + hex;

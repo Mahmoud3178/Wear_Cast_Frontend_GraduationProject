@@ -93,6 +93,40 @@
     </div>
   </section>
 
+  <!-- Default Color Selection - Only in Edit Mode -->
+  <section class="card wc-factory-card border-0 mb-4" *ngIf="isEditMode">
+    <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+      <span class="badge rounded-pill bg-primary">*</span> Default Color
+    </div>
+    <div class="card-body row g-3 align-items-end">
+      <div class="col-md-8">
+        <label class="form-label">Select Default Color</label>
+        <select class="form-select" [(ngModel)]="selectedDefaultColorId" name="defaultColor" [disabled]="productColors.length === 0">
+          <option [ngValue]="null">-- No default color --</option>
+          <option *ngFor="let color of productColors" [ngValue]="color.colorId">
+            {{ color.name }} (ID: {{ color.colorId }})
+          </option>
+        </select>
+        <div class="form-text" *ngIf="productColors.length > 0">This color will be shown by default in the catalog.</div>
+        <div class="alert alert-warning mt-2 mb-0" *ngIf="productColors.length === 0">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Backend API Issue:</strong> GET /colors endpoint not available. Colors should be embedded in product details or backend needs to add GET endpoint.
+        </div>
+      </div>
+      <div class="col-md-4">
+        <button
+          type="button"
+          class="btn btn-primary w-100"
+          [disabled]="busy || productColors.length === 0"
+          (click)="saveDefaultColor()"
+        >
+          <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          Save Default Color
+        </button>
+      </div>
+    </div>
+  </section>
+
   <section class="card wc-factory-card border-0 mb-4">
     <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
       <span class="badge rounded-pill bg-secondary">2</span> Color & Catalog Image (repeat for more colors)
