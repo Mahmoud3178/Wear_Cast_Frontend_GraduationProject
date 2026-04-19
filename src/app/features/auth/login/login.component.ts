@@ -49,8 +49,8 @@ export class LoginComponent implements OnInit {
         } else if (res.role === 'FACTORY') {
           void this.router.navigate(['/factory']);
         } else if (res.role === 'SELLER') {
-          void this.router.navigate(['/seller']);
-        } else {
+  void this.router.navigate(['/seller/dashboard']);
+} else {
           void this.router.navigate(['/customer']);
         }
       },

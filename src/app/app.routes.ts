@@ -8,12 +8,19 @@ export const routes: Routes = [
   loadChildren: () =>
     import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES)
 },
-{
-  path: 'seller',
-  loadChildren: () =>
-    import('./features/seller/seller.routes')
-      .then(m => m.SELLER_ROUTES)
-},
+  {
+    path: 'seller',
+    redirectTo: 'login',
+    pathMatch: 'full'
+  },
+
+  // ✅ باقي seller routes
+  {
+    path: 'seller',
+    loadChildren: () =>
+      import('./features/seller/seller.routes')
+        .then(m => m.SELLER_ROUTES)
+  },
 {
   path: 'customer',
   loadChildren: () =>

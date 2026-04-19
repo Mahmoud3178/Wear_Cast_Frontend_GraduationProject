@@ -12,24 +12,31 @@ export class SallerOrderService {
   constructor(private http: HttpClient) {}
 
   // 🔹 Get Seller Orders
-  getSellerOrders(pageNumber = 1, pageSize = 10, statusFilter?: number) {
-    let params = new HttpParams()
-      .set('pageNumber', pageNumber)
-      .set('pageSize', pageSize);
+getSellerOrders(pageNumber = 1, pageSize = 10, statusFilter?: number) {
 
-    if (statusFilter !== undefined) {
-      params = params.set('statusFilter', statusFilter);
-    }
+  const sellerId = localStorage.getItem('sellerId'); // أو من التوكن
 
-    const token = localStorage.getItem('token') || '';
+  let params = new HttpParams()
+    .set('pageNumber', pageNumber)
+    .set('pageSize', pageSize);
 
-    return this.http.get(`${this.baseUrl}/seller`, {
-      params,
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
-    });
+  if (sellerId) {
+    params = params.set('sellerId', sellerId);
   }
+
+  if (statusFilter !== undefined) {
+    params = params.set('statusFilter', statusFilter);
+  }
+
+  const token = localStorage.getItem('token') || '';
+
+  return this.http.get(`${this.baseUrl}/GetAllByID`, {
+    params,
+    headers: new HttpHeaders({
+      Authorization: `Bearer ${token}`
+    })
+  });
+}
 
   // 🔹 Get Order Items
   getOrderItems(orderId: number) {

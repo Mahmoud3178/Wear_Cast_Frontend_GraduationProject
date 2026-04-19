@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-seller-layout',
@@ -9,10 +9,11 @@ import { RouterLink, RouterOutlet } from '@angular/router';
   styleUrl: './seller-layout.component.css'
 })
 export class SellerLayoutComponent {
-router: any;
+    constructor(private router: Router) {}
+
 logout() {
-  // مسح التوكن أو بيانات المستخدم
-  localStorage.clear();
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
   this.router.navigate(['/login']);
 }
 }
