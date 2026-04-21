@@ -1,225 +1,496 @@
 <div class="container py-4 pb-5">
+
   <a routerLink="/factory/products" class="small text-decoration-none d-inline-flex align-items-center gap-1 text-secondary mb-3">
-    <i class="bi bi-arrow-left"></i> Products
+    ← Products
   </a>
+
   <h1 class="wc-factory-page-title h3 fw-bold mb-2">
     {{ isEditMode ? 'Edit designed product' : 'New designed product' }}
   </h1>
   <p class="text-muted small mb-4 wc-wizard-lead" *ngIf="!isEditMode">
-    Creates a <strong>designed</strong> product template: factory sets base photos for front / back / right / left per color, and size measurements (a, b, c).
+    Creates a <strong>designed</strong> product template: factory sets base photos for
+    front / back / right / left per color, and size measurements (a, b, c).
     Customers use these in the design studio.
   </p>
   <p class="text-muted small mb-4 wc-wizard-lead" *ngIf="isEditMode">
-    Base product fields are read-only here. Add more <strong>colors</strong>, upload <strong>photos</strong> per color, and add <strong>sizes</strong> using the sections below.
+    Edit product details, manage colors, and add sizes below.
   </p>
 
+  <!-- Alerts -->
   <div *ngIf="error" class="alert alert-danger py-2 small">{{ error }}</div>
   <div *ngIf="message" class="alert alert-success py-2 small">{{ message }}</div>
 
-  <section class="card wc-factory-card border-0 mb-4">
-    <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-      <span class="badge rounded-pill bg-dark">1</span> Base product
-    </div>
-    <div class="card-body row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Name</label>
-        <input class="form-control" [(ngModel)]="createForm.name" name="pname" required placeholder="e.g. Summer tee" [readonly]="isEditMode">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Category</label>
-        <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat" [disabled]="isEditMode">
-          <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">
-            {{ c.name ?? c.Name ?? 'Category' }}
-          </option>
-        </select>
-        <div class="form-text">Loaded from the server.</div>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Dress style</label>
-        <select class="form-select" [(ngModel)]="createForm.dressStyle" name="dressStyle" [disabled]="isEditMode">
-          <option *ngFor="let style of dressStyleOptions" [ngValue]="style.value">
-            {{ style.label }}
-          </option>
-        </select>
-      </div>
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       CREATE MODE – Step-based wizard
+  ═══════════════════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="!isEditMode">
 
-      <div class="col-12">
-        <label class="form-label">Target audience</label>
-        <div class="d-flex flex-wrap gap-3 wc-audience-check">
-          <div *ngFor="let o of targetAudienceOptions" class="form-check">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              [id]="'aud-' + o.value"
-              [checked]="isAudienceSelected(o.value)"
-              (change)="toggleAudience(o.value)"
-              [disabled]="isEditMode"
-            />
-            <label class="form-check-label" [for]="'aud-' + o.value">{{ o.label }}</label>
+    <!-- ── Step progress indicator ── -->
+    <div class="wc-step-bar mb-4">
+      <div class="wc-step" [class.wc-step--done]="currentStep !== 'base'" [class.wc-step--active]="currentStep === 'base'">
+        <div class="wc-step__circle">1</div>
+        <span class="wc-step__label">Base product</span>
+      </div>
+      <div class="wc-step__line"></div>
+      <div class="wc-step" [class.wc-step--done]="currentStep === 'photos' || currentStep === 'sizes'" [class.wc-step--active]="currentStep === 'color'">
+        <div class="wc-step__circle">2</div>
+        <span class="wc-step__label">Add color</span>
+      </div>
+      <div class="wc-step__line"></div>
+      <div class="wc-step" [class.wc-step--done]="currentStep === 'sizes'" [class.wc-step--active]="currentStep === 'photos'">
+        <div class="wc-step__circle">3</div>
+        <span class="wc-step__label">Upload photos</span>
+      </div>
+      <div class="wc-step__line"></div>
+      <div class="wc-step" [class.wc-step--active]="currentStep === 'sizes'">
+        <div class="wc-step__circle">4</div>
+        <span class="wc-step__label">Sizes</span>
+      </div>
+    </div>
+
+    <!-- ── STEP 1: Base product ── -->
+    <section class="card wc-factory-card border-0 mb-4" *ngIf="currentStep === 'base'">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+        <span class="badge rounded-pill bg-dark">1</span> Base product
+      </div>
+      <div class="card-body row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Name</label>
+          <input class="form-control" [(ngModel)]="createForm.name" name="pname" required placeholder="e.g. Summer tee">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Category</label>
+          <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat">
+            <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">
+              {{ c.name ?? c.Name ?? 'Category' }}
+            </option>
+          </select>
+          <div class="form-text">Loaded from the server.</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Dress style</label>
+          <select class="form-select" [(ngModel)]="createForm.dressStyle" name="dressStyle">
+            <option *ngFor="let style of dressStyleOptions" [ngValue]="style.value">{{ style.label }}</option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Target audience</label>
+          <div class="d-flex flex-wrap gap-3 wc-audience-check">
+            <div *ngFor="let o of targetAudienceOptions" class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                [id]="'aud-' + o.value"
+                [checked]="isAudienceSelected(o.value)"
+                (change)="toggleAudience(o.value)"
+              />
+              <label class="form-check-label" [for]="'aud-' + o.value">{{ o.label }}</label>
+            </div>
+          </div>
+          <div class="form-text">At least one required (API does not accept audience code 0).</div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="createForm.description" name="pdesc" placeholder="Short description for the catalog"></textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Price</label>
+          <input type="number" class="form-control" [(ngModel)]="createForm.price" name="price" step="0.01" min="0">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Canvas width (px)</label>
+          <input type="number" class="form-control" [(ngModel)]="createForm.canvasWidth" name="cw" min="1">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Canvas height (px)</label>
+          <input type="number" class="form-control" [(ngModel)]="createForm.canvasHeight" name="ch" min="1">
+        </div>
+        <div class="col-12 pt-1">
+          <button type="button" class="btn btn-dark px-4" [disabled]="busy" (click)="createProduct()">
+            <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Create product &amp; continue →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── STEP 2: Add color ── -->
+    <section class="card wc-factory-card border-0 mb-4" *ngIf="currentStep === 'color'">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+        <span class="badge rounded-pill bg-dark">2</span>
+        Add color
+        <span class="ms-auto small text-muted fw-normal">Product id: <code>{{ productId }}</code></span>
+      </div>
+      <div class="card-body row g-3">
+        <!-- Colors added so far -->
+        <div class="col-12" *ngIf="savedColors.length > 0">
+          <p class="small fw-semibold mb-2">Colors added so far:</p>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <span *ngFor="let c of savedColors" class="badge d-flex align-items-center gap-1 py-2 px-3"
+              [style.background]="c.hexCode" [style.color]="'#fff'" style="text-shadow:0 1px 2px rgba(0,0,0,.6)">
+              <span class="wc-color-dot me-1" [style.background]="c.hexCode" style="border:1.5px solid rgba(255,255,255,.5)"></span>
+              {{ c.name }}
+            </span>
           </div>
         </div>
-        <div class="form-text">At least one required (API does not accept audience code 0).</div>
-      </div>
 
-      <div class="col-12">
-        <label class="form-label">Description</label>
-        <textarea class="form-control" rows="2" [(ngModel)]="createForm.description" name="pdesc" placeholder="Short description for the catalog" [readonly]="isEditMode"></textarea>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Price</label>
-        <input type="number" class="form-control" [(ngModel)]="createForm.price" name="price" step="0.01" min="0" [readonly]="isEditMode">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Canvas width (px)</label>
-        <input type="number" class="form-control" [(ngModel)]="createForm.canvasWidth" name="cw" min="1" [readonly]="isEditMode">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Canvas height (px)</label>
-        <input type="number" class="form-control" [(ngModel)]="createForm.canvasHeight" name="ch" min="1" [readonly]="isEditMode">
-      </div>
-      <div class="col-12 pt-1">
-        <button
-          *ngIf="!isEditMode"
-          type="button"
-          class="btn btn-dark px-4"
-          [disabled]="busy"
-          (click)="createProduct()"
-        >
-          <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
-          Create product
-        </button>
-        <span *ngIf="productId != null" class="ms-2 small text-muted">Product id: <code>{{ productId }}</code></span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Default Color Selection - Only in Edit Mode -->
-  <section class="card wc-factory-card border-0 mb-4" *ngIf="isEditMode">
-    <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-      <span class="badge rounded-pill bg-primary">*</span> Default Color
-    </div>
-    <div class="card-body row g-3 align-items-end">
-      <div class="col-md-8">
-        <label class="form-label">Select Default Color</label>
-        <select class="form-select" [(ngModel)]="selectedDefaultColorId" name="defaultColor" [disabled]="productColors.length === 0">
-          <option [ngValue]="null">-- No default color --</option>
-          <option *ngFor="let color of productColors" [ngValue]="color.colorId">
-            {{ color.name }} (ID: {{ color.colorId }})
-          </option>
-        </select>
-        <div class="form-text" *ngIf="productColors.length > 0">This color will be shown by default in the catalog.</div>
-        <div class="alert alert-warning mt-2 mb-0" *ngIf="productColors.length === 0">
-          <i class="bi bi-exclamation-triangle me-2"></i>
-          <strong>Backend API Issue:</strong> GET /colors endpoint not available. Colors should be embedded in product details or backend needs to add GET endpoint.
+        <div class="col-md-3">
+          <label class="form-label">Color name</label>
+          <input class="form-control" [(ngModel)]="colorForm.name" name="cname" placeholder="e.g. Midnight Black">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Hex code</label>
+          <div class="input-group">
+            <input type="color" class="form-control form-control-color" [(ngModel)]="colorForm.hexCode" name="hexPicker" style="max-width:48px">
+            <input class="form-control" [(ngModel)]="colorForm.hexCode" name="hex" placeholder="#000000">
+          </div>
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Catalog / Main image <span class="text-danger">*</span></label>
+          <input type="file" class="form-control" accept="image/*" (change)="pickMainFile($event)">
+          <div class="form-text">This is the thumbnail shown in the product listing.</div>
+        </div>
+        <div class="col-12">
+          <button type="button" class="btn btn-dark" [disabled]="busy" (click)="addColor()">
+            <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Add color &amp; upload photos →
+          </button>
         </div>
       </div>
-      <div class="col-md-4">
-        <button
-          type="button"
-          class="btn btn-primary w-100"
-          [disabled]="busy || productColors.length === 0"
-          (click)="saveDefaultColor()"
-        >
-          <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
-          Save Default Color
-        </button>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="card wc-factory-card border-0 mb-4">
-    <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-      <span class="badge rounded-pill bg-secondary">2</span> Color & Catalog Image (repeat for more colors)
-    </div>
-    <div class="card-body row g-3">
-      <div class="col-md-3">
-        <label class="form-label">Color name</label>
-        <input class="form-control" [(ngModel)]="colorForm.name" name="cname">
+    <!-- ── STEP 3: Upload view photos ── -->
+    <section class="card wc-factory-card border-0 mb-4" *ngIf="currentStep === 'photos'">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+        <span class="badge rounded-pill bg-dark">3</span>
+        Upload view photos for this color
+        <span class="ms-auto small text-muted fw-normal">Color id: <code>{{ currentColorId }}</code></span>
       </div>
-      <div class="col-md-3">
-        <label class="form-label">Hex</label>
-        <input class="form-control" [(ngModel)]="colorForm.hexCode" name="hex" placeholder="#000000">
+      <div class="card-body">
+        <p class="small text-muted mb-3">
+          Upload photos showing different sides of the product in this color. The design studio uses these as backgrounds for customer designs.
+          At least one photo is recommended.
+        </p>
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <label class="form-label small fw-semibold">Front view</label>
+            <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'front')">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-semibold">Back view</label>
+            <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'back')">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-semibold">Right view</label>
+            <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'right')">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-semibold">Left view</label>
+            <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'left')">
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-dark" [disabled]="busy" (click)="uploadViewImages()">
+            <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Upload photos &amp; continue →
+          </button>
+          <button type="button" class="btn btn-outline-secondary" [disabled]="busy" (click)="skipPhotos()">
+            Skip for now
+          </button>
+        </div>
       </div>
-      <div class="col-md-4">
-        <label class="form-label small">Main / Catalog Image</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickMainFile($event)">
-      </div>
-      <div class="col-md-2 d-flex align-items-end">
-        <button type="button" class="btn btn-primary w-100" [disabled]="busy || productId == null" (click)="addColor()">
-          Add color
-        </button>
-      </div>
-      <div class="col-12 mt-2">
-        <p *ngIf="colorId != null" class="small text-muted mb-0">Current color id: <code>{{ colorId }}</code></p>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="card wc-factory-card border-0 mb-4">
-    <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-      <span class="badge rounded-pill bg-secondary">3</span> View Images (this color)
-    </div>
-    <div class="card-body row g-3">
-      <div class="col-md-3">
-        <label class="form-label small">Front Side</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'front')">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label small">Back Side</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'back')">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label small">Right Side</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'right')">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label small">Left Side</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'left')">
-      </div>
-      <div class="col-12 mt-3">
-        <button type="button" class="btn btn-primary" [disabled]="busy || colorId == null" (click)="uploadViewImages()">
-          Upload view images
-        </button>
-        <p class="small text-muted mb-0 mt-2">Upload up to 4 views showing different sides of the product for this color.</p>
-      </div>
-    </div>
-  </section>
+    <!-- ── STEP 4: Sizes + summary ── -->
+    <ng-container *ngIf="currentStep === 'sizes'">
+      <!-- Colors summary -->
+      <section class="card wc-factory-card border-0 mb-4">
+        <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+          <span class="badge rounded-pill bg-success">✓</span>
+          Colors added
+          <button type="button" class="btn btn-outline-dark btn-sm ms-auto" (click)="addAnotherColor()">+ Add another color</button>
+        </div>
+        <div class="card-body">
+          <div *ngIf="savedColors.length === 0" class="text-muted small">No colors added yet.</div>
+          <div class="d-flex flex-wrap gap-3">
+            <div *ngFor="let c of savedColors" class="wc-color-pill d-flex align-items-center gap-2">
+              <span class="wc-color-swatch" [style.background]="c.hexCode"></span>
+              <span class="fw-medium">{{ c.name }}</span>
+              <small class="text-muted">{{ c.hexCode }}</small>
+            </div>
+          </div>
+        </div>
+      </section>
 
-  <section class="card wc-factory-card border-0 mb-4">
-    <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-      <span class="badge rounded-pill bg-secondary">4</span> Sizes (API <code>Size</code> as string + a/b/c)
-    </div>
-    <div class="card-body row g-3 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label">Size</label>
-        <select class="form-select" [(ngModel)]="sizeForm.size" name="sz">
-          <option *ngFor="let s of sizeOptions" [ngValue]="s.value">
-            {{ s.label }} — {{ s.value }}
-          </option>
-        </select>
-        <div class="form-text">Sent as enum string (e.g. <code>_M</code>), not numeric values.</div>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">A</label>
-        <input type="number" class="form-control" [(ngModel)]="sizeForm.a" name="a" step="0.01">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">B</label>
-        <input type="number" class="form-control" [(ngModel)]="sizeForm.b" name="b" step="0.01">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">C</label>
-        <input type="number" class="form-control" [(ngModel)]="sizeForm.c" name="c" step="0.01">
-      </div>
-      <div class="col-md-4">
-        <button type="button" class="btn btn-outline-dark" [disabled]="busy || productId == null" (click)="addSize()">
-          Add size row
-        </button>
-      </div>
-    </div>
-  </section>
+      <!-- Sizes -->
+      <section class="card wc-factory-card border-0 mb-4">
+        <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+          <span class="badge rounded-pill bg-secondary">4</span> Sizes (Size string + a/b/c measurements)
+        </div>
+        <div class="card-body row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">Size</label>
+            <select class="form-select" [(ngModel)]="sizeForm.size" name="sz">
+              <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">A (cm)</label>
+            <input type="number" class="form-control" [(ngModel)]="sizeForm.a" name="a" step="0.01">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">B (cm)</label>
+            <input type="number" class="form-control" [(ngModel)]="sizeForm.b" name="b" step="0.01">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">C (cm)</label>
+            <input type="number" class="form-control" [(ngModel)]="sizeForm.c" name="c" step="0.01">
+          </div>
+          <div class="col-md-3">
+            <button type="button" class="btn btn-outline-dark w-100" [disabled]="busy" (click)="addSize()">
+              <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              Add size
+            </button>
+          </div>
+        </div>
+        <div class="card-footer bg-white border-top-0 pt-0">
+          <a routerLink="/factory/products" class="btn btn-dark px-5">
+            ✓ Finish &amp; go to products
+          </a>
+        </div>
+      </section>
+    </ng-container>
 
-  <p class="small text-muted">
-    After upload, open the customer <a routerLink="/customer/design" class="text-decoration-none">design</a> page (signed in) or use a share link from <a routerLink="/factory/products" class="text-decoration-none">Products</a>.
-  </p>
+  </ng-container>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       EDIT MODE – Full product editing
+  ═══════════════════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="isEditMode">
+
+    <!-- ── 1. Product details (fully editable) ── -->
+    <section class="card wc-factory-card border-0 mb-4">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+        <span class="badge rounded-pill bg-dark">1</span> Product details
+        <span class="ms-auto small text-muted fw-normal">id: <code>{{ productId }}</code></span>
+      </div>
+      <div class="card-body row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Name</label>
+          <input class="form-control" [(ngModel)]="createForm.name" name="pname" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Category</label>
+          <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat">
+            <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">{{ c.name ?? c.Name ?? 'Category' }}</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Dress style</label>
+          <select class="form-select" [(ngModel)]="createForm.dressStyle" name="dressStyle">
+            <option *ngFor="let style of dressStyleOptions" [ngValue]="style.value">{{ style.label }}</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Target audience</label>
+          <div class="d-flex flex-wrap gap-3 wc-audience-check">
+            <div *ngFor="let o of targetAudienceOptions" class="form-check">
+              <input class="form-check-input" type="checkbox" [id]="'edit-aud-' + o.value"
+                [checked]="isAudienceSelected(o.value)" (change)="toggleAudience(o.value)"/>
+              <label class="form-check-label" [for]="'edit-aud-' + o.value">{{ o.label }}</label>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="createForm.description" name="pdesc"></textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Price</label>
+          <input type="number" class="form-control" [(ngModel)]="createForm.price" name="price" step="0.01" min="0">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Canvas width (px)</label>
+          <input type="number" class="form-control" [(ngModel)]="createForm.canvasWidth" name="cw" min="1">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Canvas height (px)</label>
+          <input type="number" class="form-control" [(ngModel)]="createForm.canvasHeight" name="ch" min="1">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Default color</label>
+          <select class="form-select" [(ngModel)]="selectedDefaultColorId" name="defaultColor">
+            <option [ngValue]="null">— No default —</option>
+            <option *ngFor="let color of savedColors" [ngValue]="color.colorId">
+              {{ color.name }} (id {{ color.colorId }})
+            </option>
+          </select>
+        </div>
+        <div class="col-12 pt-1">
+          <button type="button" class="btn btn-dark px-4" [disabled]="busy" (click)="saveProductDetails()">
+            <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Save changes
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 2. Existing colors ── -->
+    <section class="card wc-factory-card border-0 mb-4">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+        <span class="badge rounded-pill bg-dark">2</span> Colors ({{ savedColors.length }})
+      </div>
+      <div class="card-body">
+        <div *ngIf="savedColors.length === 0" class="text-muted small mb-3">No colors on this product yet. Add one below.</div>
+
+        <!-- Color cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6 col-lg-4" *ngFor="let color of savedColors">
+            <div class="card h-100 border" [class.border-primary]="editingColorId === color.colorId">
+              <div class="card-body">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="wc-color-swatch flex-shrink-0" [style.background]="color.hexCode"></span>
+                  <div class="flex-grow-1">
+                    <div class="fw-semibold">{{ color.name }}</div>
+                    <small class="text-muted">{{ color.hexCode }} · id {{ color.colorId }}</small>
+                  </div>
+                </div>
+                <img *ngIf="color.imageUrl" [src]="color.imageUrl" [alt]="color.name" class="img-thumbnail mb-2" style="max-height:80px; object-fit:cover">
+
+                <!-- Inline edit form -->
+                <ng-container *ngIf="editingColorId === color.colorId">
+                  <hr class="my-2">
+                  <div class="alert alert-warning py-2 small mb-2">
+                    <strong>Note:</strong> You can only upload photos for <em>sides that have no photo yet</em>.
+                    The API does not currently support replacing existing photos. To replace a photo, delete this color and re-add it.
+                  </div>
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <label class="form-label small">New main image</label>
+                      <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickEditColorMainFile($event)">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small">Front view</label>
+                      <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickEditColorViewFile($event, 'front')">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small">Back view</label>
+                      <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickEditColorViewFile($event, 'back')">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small">Right view</label>
+                      <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickEditColorViewFile($event, 'right')">
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label small">Left view</label>
+                      <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickEditColorViewFile($event, 'left')">
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2 mt-2">
+                    <button type="button" class="btn btn-primary btn-sm" [disabled]="busy" (click)="saveEditColorPhotos()">
+                      <span *ngIf="busy" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                      Upload photos
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelEditColor()">Cancel</button>
+                  </div>
+                </ng-container>
+
+                <!-- Card actions -->
+                <div class="d-flex gap-2 mt-3" *ngIf="editingColorId !== color.colorId">
+                  <button type="button" class="btn btn-outline-dark btn-sm flex-grow-1" (click)="startEditColor(color)">
+                    ✎ Edit photos
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy" (click)="deleteColor(color)">
+                    🗑
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add new color form -->
+        <div class="border rounded p-3 bg-light">
+          <p class="fw-semibold small mb-3">+ Add new color</p>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label small">Color name</label>
+              <input class="form-control form-control-sm" [(ngModel)]="colorForm.name" name="ecname" placeholder="e.g. Ocean Blue">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Hex code</label>
+              <div class="input-group input-group-sm">
+                <input type="color" class="form-control form-control-color" [(ngModel)]="colorForm.hexCode" name="echexPicker" style="max-width:38px">
+                <input class="form-control" [(ngModel)]="colorForm.hexCode" name="echex" placeholder="#000000">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">Catalog image <span class="text-danger">*</span></label>
+              <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickMainFile($event)">
+            </div>
+          </div>
+          <div class="row g-3 mt-0">
+            <div class="col-md-3">
+              <label class="form-label small">Front view (optional)</label>
+              <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'front')">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Back view (optional)</label>
+              <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'back')">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Right view (optional)</label>
+              <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'right')">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Left view (optional)</label>
+              <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'left')">
+            </div>
+          </div>
+          <button type="button" class="btn btn-dark btn-sm mt-3" [disabled]="busy" (click)="addColorInEditMode()">
+            <span *ngIf="busy" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            Add color
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 3. Sizes ── -->
+    <section class="card wc-factory-card border-0 mb-4">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+        <span class="badge rounded-pill bg-dark">3</span> Add size
+      </div>
+      <div class="card-body row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label">Size</label>
+          <select class="form-select" [(ngModel)]="sizeForm.size" name="esz">
+            <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">A (cm)</label>
+          <input type="number" class="form-control" [(ngModel)]="sizeForm.a" name="ea" step="0.01">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">B (cm)</label>
+          <input type="number" class="form-control" [(ngModel)]="sizeForm.b" name="eb" step="0.01">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">C (cm)</label>
+          <input type="number" class="form-control" [(ngModel)]="sizeForm.c" name="ec" step="0.01">
+        </div>
+        <div class="col-md-3">
+          <button type="button" class="btn btn-outline-dark w-100" [disabled]="busy || productId == null" (click)="addSize()">
+            <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Add size row
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </ng-container>
+
 </div>

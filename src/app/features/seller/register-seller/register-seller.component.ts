@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router, RouterLink } from '@angular/router';
@@ -6,10 +7,12 @@ import { Router, RouterLink } from '@angular/router';
 @Component({
   selector: 'app-register-seller',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, NgIf],
   templateUrl: './register-seller.component.html'
 })
 export class RegisterSellerComponent {
+  showPassword = false;
+  showConfirmPassword = false;
 
   form = {
     sellerManagerEmail: '',

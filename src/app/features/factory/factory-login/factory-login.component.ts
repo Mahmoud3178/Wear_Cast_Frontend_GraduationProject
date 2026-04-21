@@ -14,6 +14,7 @@ export class FactoryLoginComponent {
   form = { email: '', password: '' };
   errorMessage = '';
   submitting = false;
+  showPassword = false;
 
   constructor(
     private readonly auth: AuthService,

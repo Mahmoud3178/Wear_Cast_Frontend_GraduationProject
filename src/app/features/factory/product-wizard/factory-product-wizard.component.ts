@@ -17,9 +17,7 @@ import {
 import { DesignCatalogService } from '../../../core/services/design-catalog.service';
 
 function resolveCategoryId(c: CategoryDto | undefined): number {
-  if (!c) {
-    return 0;
-  }
+  if (!c) return 0;
   const v = c.id ?? c.Id;
   return typeof v === 'number' ? v : 0;
 }
@@ -34,28 +32,14 @@ function sortCategories(rows: CategoryDto[]): CategoryDto[] {
   );
 }
 
-function mergeNestedProductShape(
-  dto: Record<string, unknown>
-): Record<string, unknown> {
+function mergeNestedProductShape(dto: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = { ...dto };
-  const nestKeys = [
-    'designedProduct',
-    'DesignedProduct',
-    'factoryProduct',
-    'FactoryProduct',
-    'product',
-    'Product',
-    'details',
-    'Details'
-  ];
+  const nestKeys = ['designedProduct','DesignedProduct','factoryProduct','FactoryProduct','product','Product','details','Details'];
   for (const k of nestKeys) {
     const v = dto[k];
     if (v && typeof v === 'object' && !Array.isArray(v)) {
-      const sub = v as Record<string, unknown>;
-      for (const [sk, sv] of Object.entries(sub)) {
-        if (out[sk] === undefined) {
-          out[sk] = sv;
-        }
+      for (const [sk, sv] of Object.entries(v as Record<string, unknown>)) {
+        if (out[sk] === undefined) out[sk] = sv;
       }
     }
   }
@@ -65,22 +49,26 @@ function mergeNestedProductShape(
 function pickStr(obj: Record<string, unknown>, keys: string[]): string {
   for (const k of keys) {
     const v = obj[k];
-    if (typeof v === 'string' && v.trim()) {
-      return v.trim();
-    }
+    if (typeof v === 'string' && v.trim()) return v.trim();
   }
   return '';
 }
 
 function num(v: unknown): number | null {
-  if (typeof v === 'number' && Number.isFinite(v)) {
-    return v;
-  }
-  if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v)) {
-    return parseFloat(v);
-  }
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v)) return parseFloat(v);
   return null;
 }
+
+export interface SavedColor {
+  colorId: number;
+  name: string;
+  hexCode: string;
+  imageUrl: string | null;
+}
+
+/** Wizard step for create mode */
+export type WizardStep = 'base' | 'color' | 'photos' | 'sizes';
 
 @Component({
   selector: 'app-factory-product-wizard',
@@ -93,15 +81,11 @@ export class FactoryProductWizardComponent implements OnInit {
   readonly targetAudienceOptions = TARGET_AUDIENCE_OPTIONS;
   readonly dressStyleOptions = DRESS_STYLE_OPTIONS;
   readonly sizeOptions: ReadonlyArray<{ label: string; value: WearcastSizeString }> =
-    WEARCAST_SIZE_ENUM_STRINGS.map(v => ({
-      value: v,
-      label: v.replace(/^_/, '')
-    }));
+    WEARCAST_SIZE_ENUM_STRINGS.map(v => ({ value: v, label: v.replace(/^_/, '') }));
 
   factoryId: number | null;
   categories: CategoryDto[] = [];
 
-  /** Backend rejects `0`; pick at least one non-zero audience. */
   selectedAudiences: number[] = [4];
 
   createForm = {
@@ -116,33 +100,45 @@ export class FactoryProductWizardComponent implements OnInit {
 
   productId: number | null = null;
 
+  // ── Color step ─────────────────────────────────────────────────────────────
   colorForm = { name: 'Black', hexCode: '#1a1a1a' };
-  colorId: number | null = null;
-
-  /** Product colors loaded in edit mode for default color selection. */
-  productColors: { colorId: number; name: string; hexCode: string; imageUrl: string | null }[] = [];
-  selectedDefaultColorId: number | null = null;
-
+  currentColorId: number | null = null;
   mainImageFile: File | null = null;
 
+  // View images
   frontImageFile: File | null = null;
   backImageFile: File | null = null;
   rightImageFile: File | null = null;
   leftImageFile: File | null = null;
 
-  /** Matches backend `Size` enum serialized as string (e.g. `_M`). */
+  // ── Saved colors (create + edit) ────────────────────────────────────────────
+  savedColors: SavedColor[] = [];
+  selectedDefaultColorId: number | null = null;
+
+  // ── Sizes ───────────────────────────────────────────────────────────────────
   sizeForm = { size: '_M' as WearcastSizeString, a: 26.5, b: 20, c: 24.5 };
 
+  // ── State ───────────────────────────────────────────────────────────────────
   busy = false;
   message = '';
   error = '';
 
+  /** Current step in create wizard */
+  currentStep: WizardStep = 'base';
+
   /** Set from route `products/:productId/edit` */
   editProductId: number | null = null;
 
-  get isEditMode(): boolean {
-    return this.editProductId != null;
-  }
+  // ── Edit mode: color being edited ──────────────────────────────────────────
+  editingColorId: number | null = null;
+  editColorForm = { name: '', hexCode: '' };
+  editColorMainFile: File | null = null;
+  editColorFrontFile: File | null = null;
+  editColorBackFile: File | null = null;
+  editColorRightFile: File | null = null;
+  editColorLeftFile: File | null = null;
+
+  get isEditMode(): boolean { return this.editProductId != null; }
 
   constructor(
     private readonly auth: AuthService,
@@ -165,34 +161,25 @@ export class FactoryProductWizardComponent implements OnInit {
     }
   }
 
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
   loadCategories(): void {
     this.factory.getCategories().subscribe({
       next: rows => {
         this.categories = sortCategories(rows);
         const ids = this.categories.map(c => resolveCategoryId(c)).filter(id => id > 0);
-        const current = this.createForm.categoryId;
-        const stillValid = ids.includes(current);
-        if (!stillValid && ids.length) {
+        if (!ids.includes(this.createForm.categoryId) && ids.length) {
           this.createForm.categoryId = ids[0];
-        } else if (!stillValid && !ids.length) {
-          this.createForm.categoryId = 1;
         }
       },
-      error: () => {
-        this.error = 'Could not load categories.';
-      }
+      error: () => { this.error = 'Could not load categories.'; }
     });
   }
 
   toggleAudience(value: number): void {
-    if (this.isEditMode) {
-      return;
-    }
     const i = this.selectedAudiences.indexOf(value);
     if (i >= 0) {
-      if (this.selectedAudiences.length <= 1) {
-        return;
-      }
+      if (this.selectedAudiences.length <= 1) return;
       this.selectedAudiences.splice(i, 1);
     } else {
       this.selectedAudiences.push(value);
@@ -217,210 +204,29 @@ export class FactoryProductWizardComponent implements OnInit {
     if (side === 'left') this.leftImageFile = f;
   }
 
-  private loadExistingProduct(id: number): void {
-    this.error = '';
-    this.message = '';
-    this.busy = true;
-    const token = this.auth.getToken();
-    this.catalog.fetchDesignedProductDto(id, token).subscribe({
-      next: dto => {
-        this.busy = false;
-        if (!dto) {
-          this.error =
-            'Could not load this product from the catalog. Stay signed in and ensure this product is published.';
-          return;
-        }
-        this.productId = id;
-        this.colorId = null;
-        this.catalog.registerDesignedProductId(id);
-        this.applyProductDto(dto);
-        // Extract colors from product DTO (fallback since GET /colors returns 405)
-        this.extractColorsFromDto(dto);
-        // Try to load colors from API (will fail with 405 until backend adds GET endpoint)
-        this.loadProductColors(id);
-        this.message =
-          'Product loaded. You can add more colors, upload photos per color, and add sizes below. Base fields are read-only.';
-      },
-    });
+  pickEditColorMainFile(ev: Event): void {
+    this.editColorMainFile = (ev.target as HTMLInputElement).files?.[0] ?? null;
   }
 
-  /** Extract colors from product DTO since GET /colors endpoint doesn't exist yet. */
-  private extractColorsFromDto(dto: Record<string, unknown>): void {
-    const colors = dto['colors'] ?? dto['Colors'] ?? dto['productColors'] ?? dto['ProductColors'];
-    if (Array.isArray(colors) && colors.length > 0) {
-      this.productColors = colors.map((c: any) => ({
-        colorId: c.id ?? c.colorId ?? c.Id ?? c.ColorId ?? 0,
-        name: c.name ?? c.Name ?? '',
-        hexCode: c.hexCode ?? c.HexCode ?? '',
-        imageUrl: c.imageUrl ?? c.ImageUrl ?? c.mainImageUrl ?? c.MainImageUrl ?? null
-      }));
-      console.log('Extracted colors from DTO:', this.productColors);
-    }
+  pickEditColorViewFile(ev: Event, side: 'front' | 'back' | 'right' | 'left'): void {
+    const f = (ev.target as HTMLInputElement).files?.[0] ?? null;
+    if (side === 'front') this.editColorFrontFile = f;
+    if (side === 'back') this.editColorBackFile = f;
+    if (side === 'right') this.editColorRightFile = f;
+    if (side === 'left') this.editColorLeftFile = f;
   }
 
-  private loadProductColors(productId: number): void {
-    console.log('Loading product colors for productId:', productId);
-    this.factory.getProductColors(productId).subscribe({
-      next: colors => {
-        console.log('Loaded colors from API:', colors);
-        if (colors.length > 0) {
-          this.productColors = colors;
-        }
-        if (this.productColors.length === 0) {
-          this.message = 'No colors found for this product. Add colors first before setting a default.';
-        }
-      },
-      error: (err) => {
-        console.error('GET /colors not supported (405). Backend needs to add this endpoint.', err);
-        // Colors already extracted from DTO above, so don't clear them
-      }
-    });
-  }
+  categoryValue(c: CategoryDto): number { return resolveCategoryId(c); }
 
-  /** Save the selected default color for the product. */
-  saveDefaultColor(): void {
-    if (this.productId == null) {
-      this.error = 'No product loaded.';
-      return;
-    }
-    this.error = '';
-    this.message = '';
-    this.busy = true;
-    // API requires all fields, not just defaultColorId
-    const payload = {
-      name: this.createForm.name,
-      description: this.createForm.description,
-      price: this.createForm.price,
-      targetAudiences: this.selectedAudiences.map(a => this.audienceNumToString(a)),
-      dressStyle: this.createForm.dressStyle,
-      canvasWidth: this.createForm.canvasWidth,
-      canvasHeight: this.createForm.canvasHeight,
-      categoryId: this.createForm.categoryId,
-      defaultColorId: this.selectedDefaultColorId
-    };
-    console.log('Saving default color with payload:', payload);
-    this.factory.updateDesignedProduct(this.productId, payload).subscribe({
-      next: () => {
-        this.busy = false;
-        this.message = 'Default color saved successfully.';
-      },
-      error: (e: any) => {
-        this.busy = false;
-        console.error('Save default color error:', e);
-        console.error('Error status:', e.status);
-        console.error('Error message:', e.message);
-        console.error('Error error:', e.error);
-        this.error = e.message || 'Failed to save default color.';
-      }
-    });
-  }
-
-  /** Convert audience number to string for API */
-  private audienceNumToString(num: number): string {
-    const map: Record<number, string> = {
-      1: 'Men',
-      2: 'Women',
-      3: 'Unisex',
-      4: 'Kids',
-      8: 'Babies'
-    };
-    return map[num] ?? 'Unisex';
-  }
-
-  private applyProductDto(dto: Record<string, unknown>): void {
-    console.log('Applying product DTO:', dto);
-    const merged = mergeNestedProductShape(dto);
-    this.createForm.name =
-      pickStr(merged, [
-        'name',
-        'Name',
-        'productName',
-        'ProductName',
-        'title',
-        'Title',
-      ]) || this.createForm.name;
-    this.createForm.description =
-      pickStr(merged, ['description', 'Description']) ||
-      this.createForm.description;
-    const price = num(merged['price'] ?? merged['Price']);
-    if (price != null) {
-      this.createForm.price = price;
-    }
-    const cw = num(merged['canvasWidth'] ?? merged['CanvasWidth']);
-    const ch = num(merged['canvasHeight'] ?? merged['CanvasHeight']);
-    if (cw != null) {
-      this.createForm.canvasWidth = cw;
-    }
-    if (ch != null) {
-      this.createForm.canvasHeight = ch;
-    }
-    const cat = num(merged['categoryId'] ?? merged['CategoryId']);
-    if (cat != null && cat > 0) {
-      this.createForm.categoryId = cat;
-    }
-    const style = num(merged['dressStyle'] ?? merged['DressStyle']);
-    if (style != null && style > 0) {
-      this.createForm.dressStyle = style;
-    }
-    const ta =
-      merged['targetAudiences'] ??
-      merged['TargetAudiences'] ??
-      merged['targetAudience'] ??
-      merged['TargetAudience'];
-    console.log('Raw targetAudiences from API:', ta);
-    if (Array.isArray(ta) && ta.length) {
-      const nums = ta
-        .map(x => this.mapTargetAudienceToNumber(x))
-        .filter((n): n is number => n != null && n > 0);
-      console.log('Mapped target audience numbers:', nums);
-      if (nums.length) {
-        this.selectedAudiences = [...new Set(nums)].sort((a, b) => a - b);
-      }
-    } else {
-      const one = this.mapTargetAudienceToNumber(ta);
-      if (one != null && one > 0) {
-        this.selectedAudiences = [one];
-      }
-    }
-  }
-
-  /** Map string target audience (e.g., "Unisex") to number value */
-  private mapTargetAudienceToNumber(value: unknown): number | null {
-    if (typeof value === 'number') {
-      return value;
-    }
-    if (typeof value === 'string') {
-      const strToNum: Record<string, number> = {
-        'Men': 1, 'men': 1, 'MEN': 1,
-        'Women': 2, 'women': 2, 'WOMEN': 2,
-        'Unisex': 3, 'unisex': 3, 'UNISEX': 3,
-        'Kids': 4, 'kids': 4, 'KIDS': 4,
-        'Babies': 8, 'babies': 8, 'BABIES': 8,
-      };
-      return strToNum[value] ?? null;
-    }
-    return null;
-  }
+  // ── Create wizard steps ──────────────────────────────────────────────────────
 
   createProduct(): void {
-    if (this.isEditMode) {
-      return;
-    }
     this.error = '';
     this.message = '';
     const fid = this.factoryId;
-    if (fid == null) {
-      this.error = 'Missing factory id. Sign in with a factory manager account that has factoryId.';
-      return;
-    }
-    if (!this.createForm.name.trim()) {
-      this.error = 'Name is required.';
-      return;
-    }
-    if (!this.selectedAudiences.length) {
-      this.error = 'Select at least one target audience.';
-      return;
-    }
+    if (fid == null) { this.error = 'Missing factory id. Sign in with a factory manager account.'; return; }
+    if (!this.createForm.name.trim()) { this.error = 'Name is required.'; return; }
+    if (!this.selectedAudiences.length) { this.error = 'Select at least one target audience.'; return; }
     this.busy = true;
     const payload: CreateDesignedProductPayload = {
       name: this.createForm.name.trim(),
@@ -437,126 +243,317 @@ export class FactoryProductWizardComponent implements OnInit {
       next: ({ productId }) => {
         this.busy = false;
         this.productId = productId;
-        this.colorId = null;
         this.catalog.registerDesignedProductId(productId);
-        this.message = `Product created (id ${productId}). Add a color next.`;
+        this.currentStep = 'color';
+        this.message = `Product created! Now add your first color.`;
       },
-      error: (e: Error) => {
-        this.busy = false;
-        this.error = e.message || 'Create failed';
-      }
+      error: (e: Error) => { this.busy = false; this.error = e.message || 'Create failed'; }
     });
   }
 
   addColor(): void {
     this.error = '';
     this.message = '';
-    if (this.productId == null) {
-      this.error = 'Create a product first.';
-      return;
-    }
-    if (!this.colorForm.name.trim()) {
-      this.error = 'Color name required.';
-      return;
-    }
-    if (!this.mainImageFile) {
-      this.error = 'Catalog image is required.';
-      return;
-    }
-
+    if (this.productId == null) { this.error = 'Create a product first.'; return; }
+    if (!this.colorForm.name.trim()) { this.error = 'Color name required.'; return; }
+    if (!this.mainImageFile) { this.error = 'Catalog image is required for the color.'; return; }
     let hex = this.colorForm.hexCode.trim();
-    if (!hex.startsWith('#')) {
-      hex = '#' + hex;
-    }
+    if (!hex.startsWith('#')) hex = '#' + hex;
     this.busy = true;
-    this.factory
-      .addProductColor(this.productId, {
-        name: this.colorForm.name.trim(),
-        hexCode: hex,
-        image: this.mainImageFile
-      })
-      .subscribe({
-        next: ({ colorId }) => {
-          this.busy = false;
-          this.colorId = colorId;
-          this.message = `Color created (color id ${colorId}). Catalog image uploaded successfully. Upload one or more view images next.`;
-        },
-        error: (e: Error) => {
-          this.busy = false;
-          this.error = e.message || 'Add color failed';
-        }
-      });
-  }
-
-  uploadViewImages(): void {
-    if (this.colorId == null) {
-      this.error = 'Add a color first before uploading view images.';
-      return;
-    }
-
-    const uploads: any[] = [];
-    if (this.frontImageFile) uploads.push(this.factory.uploadColorViewImage(this.colorId, this.frontImageFile, 1));
-    if (this.backImageFile) uploads.push(this.factory.uploadColorViewImage(this.colorId, this.backImageFile, 2));
-    if (this.rightImageFile) uploads.push(this.factory.uploadColorViewImage(this.colorId, this.rightImageFile, 3));
-    if (this.leftImageFile) uploads.push(this.factory.uploadColorViewImage(this.colorId, this.leftImageFile, 4));
-
-    if (uploads.length === 0) {
-      this.error = 'Select at least one view image to upload.';
-      return;
-    }
-
-    this.busy = true;
-    this.error = '';
-    this.message = '';
-
-    // Wait for all selected uploads to finish
-    import('rxjs').then(({ forkJoin }) => {
-      forkJoin(uploads).subscribe({
-        next: () => {
-          this.busy = false;
-          this.message = 'View images uploaded successfully. Add sizes below (repeat as needed).';
-        },
-        error: (e: Error) => {
-          this.busy = false;
-          this.error = e.message || 'View image upload failed.';
-        }
-      });
+    this.factory.addProductColor(this.productId, {
+      name: this.colorForm.name.trim(),
+      hexCode: hex,
+      image: this.mainImageFile
+    }).subscribe({
+      next: ({ colorId }) => {
+        this.busy = false;
+        this.currentColorId = colorId;
+        this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null });
+        this.currentStep = 'photos';
+        this.message = `Color "${this.colorForm.name}" added! Now upload view photos for it.`;
+      },
+      error: (e: Error) => { this.busy = false; this.error = e.message || 'Add color failed'; }
     });
   }
 
-  categoryValue(c: CategoryDto): number {
-    return resolveCategoryId(c);
+  uploadViewImages(): void {
+    if (this.currentColorId == null) { this.error = 'Add a color first.'; return; }
+    const uploads: any[] = [];
+    if (this.frontImageFile) uploads.push(this.factory.uploadColorViewImage(this.currentColorId, this.frontImageFile, 1));
+    if (this.backImageFile) uploads.push(this.factory.uploadColorViewImage(this.currentColorId, this.backImageFile, 2));
+    if (this.rightImageFile) uploads.push(this.factory.uploadColorViewImage(this.currentColorId, this.rightImageFile, 3));
+    if (this.leftImageFile) uploads.push(this.factory.uploadColorViewImage(this.currentColorId, this.leftImageFile, 4));
+    if (uploads.length === 0) { this.error = 'Select at least one view image.'; return; }
+    this.busy = true;
+    this.error = '';
+    this.message = '';
+    forkJoin(uploads).subscribe({
+      next: () => {
+        this.busy = false;
+        this.message = 'Photos uploaded! You can add another color or move on to sizes.';
+        this.currentStep = 'sizes';
+        this._resetColorForms();
+      },
+      error: (e: Error) => { this.busy = false; this.error = e.message || 'Upload failed.'; }
+    });
+  }
+
+  /** Skip view photos and go to the next step */
+  skipPhotos(): void {
+    this.currentStep = 'sizes';
+    this._resetColorForms();
+    this.message = 'Skipped photos. You can add another color or add sizes.';
+  }
+
+  /** From the sizes step, go back to add another color */
+  addAnotherColor(): void {
+    this._resetColorForms();
+    this.currentStep = 'color';
+    this.message = '';
+    this.error = '';
+  }
+
+  private _resetColorForms(): void {
+    this.colorForm = { name: '', hexCode: '#000000' };
+    this.mainImageFile = null;
+    this.frontImageFile = null;
+    this.backImageFile = null;
+    this.rightImageFile = null;
+    this.leftImageFile = null;
+    this.currentColorId = null;
   }
 
   addSize(): void {
     this.error = '';
     this.message = '';
-    if (this.productId == null) {
-      this.error = 'Create a product first.';
-      return;
-    }
+    if (this.productId == null) { this.error = 'Create a product first.'; return; }
     const size = this.sizeForm.size;
-    if (!WEARCAST_SIZE_ENUM_STRINGS.includes(size)) {
-      this.error = 'Select a valid size.';
-      return;
-    }
+    if (!WEARCAST_SIZE_ENUM_STRINGS.includes(size)) { this.error = 'Select a valid size.'; return; }
     this.busy = true;
-    this.factory
-      .addProductSize(this.productId, {
-        size,
-        a: this.sizeForm.a,
-        b: this.sizeForm.b,
-        c: this.sizeForm.c
-      })
-      .subscribe({
-        next: () => {
-          this.busy = false;
-          this.message = `Size ${size} added (a/b/c measurements).`;
-        },
-        error: (e: Error) => {
-          this.busy = false;
-          this.error = e.message || 'Add size failed';
+    this.factory.addProductSize(this.productId, {
+      size, a: this.sizeForm.a, b: this.sizeForm.b, c: this.sizeForm.c
+    }).subscribe({
+      next: () => { this.busy = false; this.message = `Size ${size.replace(/^_/, '')} added.`; },
+      error: (e: Error) => { this.busy = false; this.error = e.message || 'Add size failed'; }
+    });
+  }
+
+  // ── Edit mode ────────────────────────────────────────────────────────────────
+
+  private loadExistingProduct(id: number): void {
+    this.error = '';
+    this.message = '';
+    this.busy = true;
+    const token = this.auth.getToken();
+    this.catalog.fetchDesignedProductDto(id, token).subscribe({
+      next: dto => {
+        this.busy = false;
+        if (!dto) { this.error = 'Could not load product.'; return; }
+        this.productId = id;
+        this.catalog.registerDesignedProductId(id);
+        this.applyProductDto(dto);
+        this.extractColorsFromDto(dto);
+        this.loadProductColors(id);
+      }
+    });
+  }
+
+  private extractColorsFromDto(dto: Record<string, unknown>): void {
+    const colors = dto['colors'] ?? dto['Colors'] ?? dto['productColors'] ?? dto['ProductColors'];
+    if (Array.isArray(colors) && colors.length > 0) {
+      this.savedColors = colors.map((c: any) => ({
+        colorId: c.id ?? c.colorId ?? c.Id ?? c.ColorId ?? 0,
+        name: c.name ?? c.Name ?? '',
+        hexCode: c.hexCode ?? c.HexCode ?? '',
+        imageUrl: c.imageUrl ?? c.ImageUrl ?? c.mainImageUrl ?? c.MainImageUrl ?? null
+      }));
+    }
+  }
+
+  private loadProductColors(productId: number): void {
+    this.factory.getProductColors(productId).subscribe({
+      next: colors => {
+        if (colors.length > 0) this.savedColors = colors;
+      },
+      error: () => { /* already extracted from DTO */ }
+    });
+  }
+
+  /** Save all product fields in edit mode */
+  saveProductDetails(): void {
+    if (this.productId == null) { this.error = 'No product loaded.'; return; }
+    this.error = '';
+    this.message = '';
+    this.busy = true;
+    const payload = {
+      name: this.createForm.name,
+      description: this.createForm.description,
+      price: this.createForm.price,
+      targetAudiences: this.selectedAudiences.map(a => this.audienceNumToString(a)),
+      dressStyle: this.createForm.dressStyle,
+      canvasWidth: this.createForm.canvasWidth,
+      canvasHeight: this.createForm.canvasHeight,
+      categoryId: this.createForm.categoryId,
+      defaultColorId: this.selectedDefaultColorId
+    };
+    this.factory.updateDesignedProduct(this.productId, payload).subscribe({
+      next: () => { this.busy = false; this.message = 'Product details saved successfully!'; },
+      error: (e: any) => { this.busy = false; this.error = e.message || 'Failed to save.'; }
+    });
+  }
+
+  /** Start editing a color's name/hex */
+  startEditColor(color: SavedColor): void {
+    this.editingColorId = color.colorId;
+    this.editColorForm = { name: color.name, hexCode: color.hexCode };
+    this.editColorMainFile = null;
+    this.editColorFrontFile = null;
+    this.editColorBackFile = null;
+    this.editColorRightFile = null;
+    this.editColorLeftFile = null;
+  }
+
+  cancelEditColor(): void {
+    this.editingColorId = null;
+  }
+
+  /** Upload new photos for an existing color in edit mode */
+  saveEditColorPhotos(): void {
+    const cid = this.editingColorId;
+    if (cid == null || this.productId == null) return;
+    this.error = '';
+    this.message = '';
+    const uploads: any[] = [];
+    if (this.editColorFrontFile) uploads.push(this.factory.uploadColorViewImage(cid, this.editColorFrontFile, 1));
+    if (this.editColorBackFile) uploads.push(this.factory.uploadColorViewImage(cid, this.editColorBackFile, 2));
+    if (this.editColorRightFile) uploads.push(this.factory.uploadColorViewImage(cid, this.editColorRightFile, 3));
+    if (this.editColorLeftFile) uploads.push(this.factory.uploadColorViewImage(cid, this.editColorLeftFile, 4));
+    if (this.editColorMainFile) uploads.push(this.factory.uploadColorMainImage(this.productId, cid, this.editColorMainFile));
+    if (uploads.length === 0) { this.error = 'Select at least one image to upload.'; return; }
+    this.busy = true;
+    forkJoin(uploads).subscribe({
+      next: () => { this.busy = false; this.message = 'Photos uploaded successfully!'; this.editingColorId = null; },
+      error: (e: Error) => {
+        this.busy = false;
+        const msg = e.message ?? '';
+        if (/sidealreadyexists|already exists/i.test(msg)) {
+          this.error =
+            '⚠️ One or more of the selected photos could not be uploaded because that view side already has an image. ' +
+            'The current API only supports adding new images, not replacing existing ones. ' +
+            'To replace a photo you must delete this color and re-add it with the correct photos. ' +
+            'Please ask the backend team to add a PUT endpoint to replace individual view images.';
+        } else {
+          this.error = msg || 'Upload failed.';
         }
-      });
+      }
+    });
+  }
+
+  /** Delete a color from the product */
+  deleteColor(color: SavedColor): void {
+    if (this.productId == null) return;
+    if (!confirm(`Delete color "${color.name}"? This cannot be undone.`)) return;
+    this.busy = true;
+    this.error = '';
+    this.message = '';
+    this.factory.deleteProductColor(this.productId, color.colorId).subscribe({
+      next: () => {
+        this.busy = false;
+        this.savedColors = this.savedColors.filter(c => c.colorId !== color.colorId);
+        this.message = `Color "${color.name}" deleted.`;
+        if (this.selectedDefaultColorId === color.colorId) this.selectedDefaultColorId = null;
+        if (this.editingColorId === color.colorId) this.editingColorId = null;
+      },
+      error: (e: Error) => {
+        this.busy = false;
+        this.error = e.message || 'Delete failed.';
+      }
+    });
+  }
+
+  /** Add a new color in edit mode (same as create mode color step) */
+  addColorInEditMode(): void {
+    this.error = '';
+    this.message = '';
+    if (this.productId == null) { this.error = 'No product loaded.'; return; }
+    if (!this.colorForm.name.trim()) { this.error = 'Color name required.'; return; }
+    if (!this.mainImageFile) { this.error = 'Catalog image is required.'; return; }
+    let hex = this.colorForm.hexCode.trim();
+    if (!hex.startsWith('#')) hex = '#' + hex;
+    this.busy = true;
+    this.factory.addProductColor(this.productId, {
+      name: this.colorForm.name.trim(), hexCode: hex, image: this.mainImageFile
+    }).subscribe({
+      next: ({ colorId }) => {
+        // Upload optional view images
+        const uploads: any[] = [];
+        if (this.frontImageFile) uploads.push(this.factory.uploadColorViewImage(colorId, this.frontImageFile, 1));
+        if (this.backImageFile) uploads.push(this.factory.uploadColorViewImage(colorId, this.backImageFile, 2));
+        if (this.rightImageFile) uploads.push(this.factory.uploadColorViewImage(colorId, this.rightImageFile, 3));
+        if (this.leftImageFile) uploads.push(this.factory.uploadColorViewImage(colorId, this.leftImageFile, 4));
+        if (uploads.length === 0) {
+          this.busy = false;
+          this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null });
+          this.message = `Color "${this.colorForm.name}" added!`;
+          this._resetColorForms();
+          return;
+        }
+        forkJoin(uploads).subscribe({
+          next: () => {
+            this.busy = false;
+            this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null });
+            this.message = `Color "${this.colorForm.name}" added with photos!`;
+            this._resetColorForms();
+          },
+          error: (e: Error) => {
+            this.busy = false;
+            this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null });
+            this.message = `Color added (id ${colorId}) but photo upload failed: ${e.message}`;
+            this._resetColorForms();
+          }
+        });
+      },
+      error: (e: Error) => { this.busy = false; this.error = e.message || 'Add color failed'; }
+    });
+  }
+
+  private applyProductDto(dto: Record<string, unknown>): void {
+    const merged = mergeNestedProductShape(dto);
+    this.createForm.name = pickStr(merged, ['name','Name','productName','ProductName','title','Title']) || this.createForm.name;
+    this.createForm.description = pickStr(merged, ['description','Description']) || this.createForm.description;
+    const price = num(merged['price'] ?? merged['Price']);
+    if (price != null) this.createForm.price = price;
+    const cw = num(merged['canvasWidth'] ?? merged['CanvasWidth']);
+    const ch = num(merged['canvasHeight'] ?? merged['CanvasHeight']);
+    if (cw != null) this.createForm.canvasWidth = cw;
+    if (ch != null) this.createForm.canvasHeight = ch;
+    const cat = num(merged['categoryId'] ?? merged['CategoryId']);
+    if (cat != null && cat > 0) this.createForm.categoryId = cat;
+    const style = num(merged['dressStyle'] ?? merged['DressStyle']);
+    if (style != null && style > 0) this.createForm.dressStyle = style;
+    const ta = merged['targetAudiences'] ?? merged['TargetAudiences'] ?? merged['targetAudience'] ?? merged['TargetAudience'];
+    if (Array.isArray(ta) && ta.length) {
+      const nums = ta.map(x => this.mapTargetAudienceToNumber(x)).filter((n): n is number => n != null && n > 0);
+      if (nums.length) this.selectedAudiences = [...new Set(nums)].sort((a, b) => a - b);
+    } else {
+      const one = this.mapTargetAudienceToNumber(ta);
+      if (one != null && one > 0) this.selectedAudiences = [one];
+    }
+    const defColor = num(merged['defaultColorId'] ?? merged['DefaultColorId']);
+    if (defColor != null && defColor > 0) this.selectedDefaultColorId = defColor;
+  }
+
+  private mapTargetAudienceToNumber(value: unknown): number | null {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const map: Record<string, number> = { 'Men':1,'men':1,'Women':2,'women':2,'Unisex':3,'unisex':3,'Kids':4,'kids':4,'Babies':8,'babies':8 };
+      return map[value] ?? null;
+    }
+    return null;
+  }
+
+  private audienceNumToString(n: number): string {
+    const map: Record<number, string> = { 1:'Men', 2:'Women', 3:'Unisex', 4:'Kids', 8:'Babies' };
+    return map[n] ?? 'Unisex';
   }
 }

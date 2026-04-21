@@ -30,6 +30,8 @@ export class RegisterCustomerComponent {
 
   errorMessage = '';
   submitting = false;
+  showPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private readonly auth: AuthService,

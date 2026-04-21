@@ -21,6 +21,7 @@ export class LoginComponent implements OnInit {
   emailNotConfirmed = false;
   resendSubmitting = false;
   resendInfoMessage = '';
+  showPassword = false;
 
   constructor(
     private readonly auth: AuthService,

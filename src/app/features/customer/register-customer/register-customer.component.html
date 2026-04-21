@@ -33,11 +33,23 @@
         <div class="row g-3 mt-0">
           <div class="col-md-6">
             <label class="form-label">Password</label>
-            <input type="password" class="form-control" [(ngModel)]="form.password" name="password" required autocomplete="new-password">
+            <div class="input-group">
+              <input [type]="showPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="form.password" name="password" required autocomplete="new-password">
+              <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
+                <span *ngIf="!showPassword">👁️</span>
+                <span *ngIf="showPassword">🙈</span>
+              </button>
+            </div>
           </div>
           <div class="col-md-6">
             <label class="form-label">Confirm password</label>
-            <input type="password" class="form-control" [(ngModel)]="form.confirmPassword" name="confirmPassword" required autocomplete="new-password">
+            <div class="input-group">
+              <input [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="form.confirmPassword" name="confirmPassword" required autocomplete="new-password">
+              <button type="button" class="btn btn-outline-secondary" (click)="showConfirmPassword = !showConfirmPassword" tabindex="-1" aria-label="Toggle confirm password visibility">
+                <span *ngIf="!showConfirmPassword">👁️</span>
+                <span *ngIf="showConfirmPassword">🙈</span>
+              </button>
+            </div>
           </div>
         </div>
 

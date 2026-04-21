@@ -63,23 +63,35 @@
           </div>
           <div class="col-md-3">
             <label class="form-label">Password</label>
-            <input
-              type="password"
-              class="form-control"
-              [(ngModel)]="form.managerPassword"
-              name="mPass"
-              required
-            />
+            <div class="input-group">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                class="form-control"
+                [(ngModel)]="form.managerPassword"
+                name="mPass"
+                required
+              />
+              <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
+                <span *ngIf="!showPassword">👁️</span>
+                <span *ngIf="showPassword">🙈</span>
+              </button>
+            </div>
           </div>
           <div class="col-md-3">
             <label class="form-label">Confirm</label>
-            <input
-              type="password"
-              class="form-control"
-              [(ngModel)]="form.managerConfirmPassword"
-              name="mPass2"
-              required
-            />
+            <div class="input-group">
+              <input
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                class="form-control"
+                [(ngModel)]="form.managerConfirmPassword"
+                name="mPass2"
+                required
+              />
+              <button type="button" class="btn btn-outline-secondary" (click)="showConfirmPassword = !showConfirmPassword" tabindex="-1" aria-label="Toggle confirm password visibility">
+                <span *ngIf="!showConfirmPassword">👁️</span>
+                <span *ngIf="showConfirmPassword">🙈</span>
+              </button>
+            </div>
           </div>
         </div>
 

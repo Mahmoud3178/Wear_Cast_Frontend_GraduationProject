@@ -15,7 +15,13 @@
         </div>
         <div class="mb-3">
           <label class="form-label">Password</label>
-          <input class="form-control" type="password" name="password" [(ngModel)]="form.password" required autocomplete="current-password">
+          <div class="input-group">
+            <input class="form-control" [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="form.password" required autocomplete="current-password">
+            <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
+              <span *ngIf="!showPassword">👁️</span>
+              <span *ngIf="showPassword">🙈</span>
+            </button>
+          </div>
         </div>
         <button type="submit" class="btn btn-dark w-100" [disabled]="submitting">
           {{ submitting ? 'Signing in…' : 'Sign in' }}

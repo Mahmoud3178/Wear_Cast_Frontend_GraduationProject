@@ -489,6 +489,24 @@ export class FactoryApiService {
     );
   }
 
+  /** DELETE /api/factories/products/{productId}/colors/{colorId} */
+  deleteProductColor(productId: number, colorId: number): Observable<void> {
+    const url = `${this.base}/api/factories/products/${productId}/colors/${colorId}`;
+    return this.http.delete<ApiEnvelope | null>(url).pipe(
+      map(body => {
+        if (
+          body &&
+          typeof body === 'object' &&
+          'isSuccess' in body &&
+          !body.isSuccess
+        ) {
+          throw this.envErr(body);
+        }
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
   private extractProductId(data: unknown): number | null {
     if (typeof data === 'number' && Number.isFinite(data)) {
       return data;

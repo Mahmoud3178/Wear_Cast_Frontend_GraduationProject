@@ -38,6 +38,8 @@ export class FactoryRegisterComponent {
   errorMessage = '';
   successMessage = '';
   submitting = false;
+  showPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private readonly factoryApi: FactoryApiService,

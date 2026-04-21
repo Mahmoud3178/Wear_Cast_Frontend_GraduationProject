@@ -194,8 +194,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
     const dx = (px - 0.5) * 2;
     const dy = (py - 0.5) * 2;
 
-    const rotateY = dx * 18;
-    const rotateX = -dy * 18;
+    const rotateY = -dx * 18;
+    const rotateX = dy * 18;
 
     el.style.setProperty('--rx', `${rotateX}deg`);
     el.style.setProperty('--ry', `${rotateY}deg`);

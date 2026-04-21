@@ -52,12 +52,18 @@
       <!-- Password -->
       <div class="mb-3">
         <label class="form-label">Password</label>
-        <input type="password"
-               class="form-control"
-               placeholder="Enter your password"
-               [(ngModel)]="form.password"
-               name="password"
-               required>
+        <div class="input-group">
+          <input [type]="showPassword ? 'text' : 'password'"
+                 class="form-control"
+                 placeholder="Enter your password"
+                 [(ngModel)]="form.password"
+                 name="password"
+                 required>
+          <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
+            <span *ngIf="!showPassword">👁️</span>
+            <span *ngIf="showPassword">🙈</span>
+          </button>
+        </div>
       </div>
 
       <!-- Login Button -->
