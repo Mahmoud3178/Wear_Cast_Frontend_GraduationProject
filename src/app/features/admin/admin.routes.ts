@@ -8,6 +8,12 @@ export const ADMIN_ROUTES: Routes = [
       import('../auth/login-admin/login-admin.component')
         .then(m => m.LoginAdminComponent)
   },
+   {
+    path: '',
+    redirectTo: 'login',
+    pathMatch: 'full'
+  },
+
   {
     path: '',
     loadComponent: () =>

@@ -44,7 +44,7 @@ export class LoginAdminComponent {
         this.auth.saveUser(res);
 
         // 🔥 روح على admin dashboard
-        this.router.navigate(['/admin']);
+        this.router.navigate(['/admin/dashboard']);
       },
       error: (err) => {
         this.submitting = false;
