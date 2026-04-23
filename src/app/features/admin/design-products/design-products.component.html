@@ -3,8 +3,8 @@
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4 pt-4">
     <div>
-      <h2 class="fw-bold">Products 📦</h2>
-      <p class="text-muted">Manage all products on the platform</p>
+      <h2 class="fw-bold">Designed Products 🎨</h2>
+      <p class="text-muted">Manage all designed products</p>
     </div>
   </div>
 
@@ -14,7 +14,7 @@
       <input
         type="text"
         class="form-control"
-        placeholder="Search by product name..."
+        placeholder="Search designed products..."
         [(ngModel)]="searchTerm"
         (input)="applyFilter()"
       />
@@ -31,39 +31,47 @@
 <th>Product</th>
 <th>Audience</th>
 <th>Price</th>
+<th>Id</th>
           </tr>
         </thead>
 
         <tbody>
-          <tr *ngFor="let product of products"
-              [routerLink]="['/admin/products', product.id]"
-              style="cursor:pointer">
+<tr *ngFor="let product of products"
+    [routerLink]="['/admin/design-products', product.id]"
+    style="cursor:pointer">
 
-            <td class="d-flex align-items-center gap-2">
-              <img
-               [src]="product.mainImageUrl || 'https://via.placeholder.com/300'"
-                class="rounded"
-                width="40"
-                height="40">
+  <!-- Product -->
+  <td class="d-flex align-items-center gap-2">
+    <img
+      [src]="product.mainImageUrl || 'https://via.placeholder.com/300'"
+      class="rounded"
+      width="40"
+      height="40">
 
-              <span class="fw-semibold">
-                {{ product.name }}
-              </span>
-            </td>
+    <span class="fw-semibold">
+      {{ product.name }}
+    </span>
+  </td>
 
-<!-- TARGET AUDIENCE -->
-<td>
-  <span class="badge bg-info text-dark">
-    {{ product.targetAudience || 'N/A' }}
-  </span>
-</td>
+  <!-- 🎯 Audience -->
+  <td>
+    <span class="badge bg-secondary me-1"
+          *ngFor="let t of product.targetAudiences">
+      {{ t }}
+    </span>
+  </td>
 
-<!-- PRICE -->
-<td class="fw-semibold">
-  ${{ product.price }}
-</td>
+  <!-- 💰 Price -->
+  <td class="fw-semibold text-success">
+    ${{ product.price }}
+  </td>
 
-          </tr>
+  <!-- 🆔 ID -->
+  <td class="fw-semibold">
+    {{ product.id }}
+  </td>
+
+</tr>
         </tbody>
 
       </table>
@@ -86,9 +94,11 @@
           <li class="page-item"
               *ngFor="let page of totalPages"
               [class.active]="page === currentPage">
+
             <button class="page-link" (click)="goToPage(page)">
               {{ page }}
             </button>
+
           </li>
 
           <li class="page-item"

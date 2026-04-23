@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AdminService } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-orders',
@@ -9,46 +10,91 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css'
 })
-export class OrdersComponent {
+export class OrdersComponent implements OnInit {
 
-  orders = [
-    {
-      id: '#ORD-12345',
-      customer: 'John Doe',
-      store: 'Main Street Store',
-      amount: 125.50,
-      status: 'Processing',
-      itemsCount: 2,
-      items: [
-        { name: 'T-Shirt', price: 34.99 },
-        { name: 'Jeans', price: 90.51 }
-      ],
-      email: 'john@example.com',
-      phone: '01000000000',
-        shippingAddress: '456 Avenue, Alexandria, Egypt',
-    paymentMethod: 'Visa ending in **** 4242'
-    },
-    {
-      id: '#ORD-12346',
-      customer: 'Jane Smith',
-      store: 'Uptown Boutique',
-      amount: 89.99,
-      status: 'Completed',
-      itemsCount: 2,
-      items: [
-        { name: 'Shirt', price: 34.99 },
-        { name: 'Jeans', price: 55.00 }
-      ],
-      email: 'jane@example.com',
-      phone: '01111111111',
-        shippingAddress: '456 Avenue, Alexandria, Egypt',
-    paymentMethod: 'Visa ending in **** 4242'
-    }
-  ];
-
+  orders: any[] = [];
   selectedOrder: any = null;
+allOrders: any[] = [];
+searchTerm: string = '';
+  selectedStatus: string | null = null;
+
+  constructor(private adminService: AdminService) {}
+
+  ngOnInit() {
+    this.loadOrders();
+  }
+
+setStatus(status: string | null) {
+  this.selectedStatus = status;
+
+  if (!status) {
+    this.orders = [...this.allOrders];
+    return;
+  }
+
+  this.orders = this.allOrders.filter(o => o.status === status);
+}
+applyFilters() {
+  this.orders = this.allOrders.filter(o => {
+
+    const matchStatus =
+      !this.selectedStatus || o.status === this.selectedStatus;
+
+    const matchSearch =
+      !this.searchTerm ||
+      o.id.toString().includes(this.searchTerm) ||
+      o.recipientName?.toLowerCase().includes(this.searchTerm.toLowerCase());
+
+    return matchStatus && matchSearch;
+  });
+}
+onSearch() {
+  this.applyFilters();
+}
+loadOrders() {
+  this.adminService.getAllOrders().subscribe({
+    next: (res: any) => {
+
+      const data = res?.data || res?.items || res || [];
+
+      this.allOrders = data.map((o: any) =>
+        this.adminService.mapOrder(o)
+      );
+   this.applyFilters(); // 🔥 مهم
+      this.orders = [...this.allOrders]; // initial view
+    },
+
+    error: (err) => {
+      console.error(err);
+    }
+  });
+}
 
   openDetails(order: any) {
-    this.selectedOrder = order;
+    this.selectedOrder = { ...order, items: [] };
+
+    this.adminService.getOrderItems(order.id).subscribe({
+      next: (res: any) => {
+        this.selectedOrder.items = res?.data || res?.items || res || [];
+      },
+      error: (err) => {
+        console.error('Error loading items', err);
+      }
+    });
+  }
+
+  updateOrder() {
+    if (!this.selectedOrder) return;
+
+    const statusValue = this.selectedOrder.status;
+
+    this.adminService.updateOrderStatus(this.selectedOrder.id, statusValue)
+      .subscribe({
+        next: () => {
+          console.log('Order updated');
+          this.loadOrders();
+        },
+        error: (err) => console.error(err)
+      });
   }
 }

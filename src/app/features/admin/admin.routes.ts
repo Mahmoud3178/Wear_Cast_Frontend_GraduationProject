@@ -1,6 +1,13 @@
 import { Routes } from '@angular/router';
 
 export const ADMIN_ROUTES: Routes = [
+    // 🔥 LOGIN خارج layout
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('../auth/login-admin/login-admin.component')
+        .then(m => m.LoginAdminComponent)
+  },
   {
     path: '',
     loadComponent: () =>
@@ -46,6 +53,18 @@ export const ADMIN_ROUTES: Routes = [
   loadComponent: () =>
     import('./product-details/product-details.component')
       .then(m => m.ProductDetailsComponent)
+},
+{
+  path: 'design-products',
+  loadComponent: () =>
+    import('./design-products/design-products.component')
+      .then(m => m.DesignProductsComponent)
+},
+{
+  path: 'design-products/:id',
+  loadComponent: () =>
+    import('./design-product-details/design-product-details.component')
+      .then(m => m.DesignProductDetailsComponent)
 },
 {
   path: 'customers',
@@ -112,7 +131,8 @@ export const ADMIN_ROUTES: Routes = [
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'
-      }
+      },
+
 ]
 }
 ];

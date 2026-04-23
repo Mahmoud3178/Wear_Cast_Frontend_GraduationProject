@@ -47,6 +47,12 @@
             <i class="bi bi-bag-check me-2"></i> Products
           </a>
         </li>
+                <li class="nav-item mb-2">
+          <a routerLink="design-products" routerLinkActive="active"
+             class="nav-link d-flex align-items-center">
+            <i class="bi bi-bag-check me-2"></i> Design-Products
+          </a>
+        </li>
                     <li class="nav-item mb-2">
             <a routerLink="orders"
                routerLinkActive="active"
@@ -88,6 +94,9 @@
             </a>
           </li>
       </ul>
+      <button class="btn btn-outline-danger w-100" (click)="logout()">
+  <i class="bi bi-box-arrow-right me-2"></i> Logout
+</button>
        <!-- <div class="mt-auto">
     <button class="btn btn-outline-danger w-100" (click)="logout()">
       <i class="bi bi-box-arrow-right me-2"></i> Logout
@@ -151,6 +160,14 @@
                routerLinkActive="active"
                class="nav-link d-flex align-items-center"
                data-bs-dismiss="offcanvas">
+              <i class="bi bi-bag-check me-2"></i> Design-Products
+            </a>
+          </li>
+                    <li class="nav-item mb-2">
+            <a routerLink="orders"
+               routerLinkActive="active"
+               class="nav-link d-flex align-items-center"
+               data-bs-dismiss="offcanvas">
               <i class="bi bi-bag-check me-2"></i> Orders
             </a>
           </li>
@@ -191,6 +208,11 @@
           </li>
 
         </ul>
+        <div class="mt-3">
+  <button class="btn btn-outline-danger w-100" (click)="logout()">
+    <i class="bi bi-box-arrow-right me-2"></i> Logout
+  </button>
+</div>
             <!-- <div class="mt-3">
       <button class="btn btn-outline-danger w-100" (click)="logout()">
         <i class="bi bi-box-arrow-right me-2"></i> Logout

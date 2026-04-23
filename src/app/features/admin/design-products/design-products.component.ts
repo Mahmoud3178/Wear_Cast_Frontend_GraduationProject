@@ -1,17 +1,17 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AdminService } from '../../../core/services/admin.service';
+import { AdminDesignProductsService } from '../../../core/services/admin-design-products.service';
 
 @Component({
-  selector: 'app-products',
+  selector: 'app-design-products',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
-  templateUrl: './products.component.html',
-  styleUrl: './products.component.css'
+  templateUrl: './design-products.component.html',
+  styleUrl: './design-products.component.css'
 })
-export class ProductsComponent implements OnInit {
+export class DesignProductsComponent implements OnInit {
 
   products: any[] = [];
   searchTerm = '';
@@ -19,33 +19,34 @@ export class ProductsComponent implements OnInit {
   pageSize = 5;
   totalCount = 0;
 
-  constructor(private adminService: AdminService) {}
+  constructor(private service: AdminDesignProductsService) {}
 
   ngOnInit(): void {
     this.loadProducts();
   }
 
   loadProducts() {
-    this.adminService
-      .getAllProducts(this.currentPage, this.pageSize, this.searchTerm)
-      .subscribe({
-        next: (res: any) => {
-          this.products = res.items || res.data || [];
-          this.totalCount = res.count || this.products.length;
-        },
-        error: (err) => {
-          console.error('Error loading products', err);
-        }
-      });
+    this.service.getAllDesignedProducts(
+      this.currentPage,
+      this.pageSize,
+      this.searchTerm
+    ).subscribe({
+      next: (res: any) => {
+
+        const data = res?.data;
+
+        this.products = data?.items || [];
+        this.totalCount = data?.records || 0;
+      },
+      error: (err) => console.error(err)
+    });
   }
 
-  // 🔹 search من السيرفر
   applyFilter() {
     this.currentPage = 1;
     this.loadProducts();
   }
 
-  // 🔹 pagination
   get totalPages(): number[] {
     return Array.from(
       { length: Math.ceil(this.totalCount / this.pageSize) },
