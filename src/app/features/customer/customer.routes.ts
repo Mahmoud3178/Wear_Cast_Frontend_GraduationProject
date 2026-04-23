@@ -29,7 +29,7 @@ export const CUSTOMER_ROUTES: Routes = [
             .then(m => m.CustomerDesignComponent)
       },
       {
-        path: 'product',
+        path: 'product/:id',
         loadComponent: () =>
           import('./product-detail/product-detail.component')
             .then(m => m.ProductDetailComponent)
@@ -51,6 +51,12 @@ export const CUSTOMER_ROUTES: Routes = [
         loadComponent: () =>
           import('./category/category.component')
             .then(m => m.CategoryComponent)
+      },
+      {
+        path: 'favourites',
+        loadComponent: () =>
+          import('./favourites/favourites.component')
+            .then(m => m.FavouritesComponent)
       },
             {
         path: 'register',

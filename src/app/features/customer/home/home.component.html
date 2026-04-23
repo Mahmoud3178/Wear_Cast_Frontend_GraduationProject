@@ -80,7 +80,7 @@
         </ng-container>
         <!-- Real products -->
         <ng-container *ngIf="!newArrivalsLoading">
-          <article class="wc-card" *ngFor="let p of newArrivals" [routerLink]="['/customer/category']">
+          <article class="wc-card" *ngFor="let p of newArrivals" [routerLink]="['/customer/product', p.id]">
             <div class="wc-card-image">
               <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" class="wc-card-img">
             </div>

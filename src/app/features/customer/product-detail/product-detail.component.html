@@ -1,93 +1,207 @@
 <app-customer-nav></app-customer-nav>
 
 <main class="wc-page-detail">
-  <section class="wc-detail-main">
-    <div class="wc-gallery">
-      <div class="wc-gallery-main"></div>
-      <div class="wc-gallery-thumbs">
-        <button class="thumb thumb--active"></button>
-        <button class="thumb"></button>
-        <button class="thumb"></button>
-        <button class="thumb"></button>
-      </div>
-    </div>
 
-    <div class="wc-detail-info">
-      <p class="wc-breadcrumb">Home / Men / T-shirts</p>
-      <h1>One Life Graphic T‑shirt</h1>
-      <p class="wc-price">$260 <span class="wc-price-old">$300</span> <span class="wc-price-badge">-20%</span></p>
-      <p class="wc-rating">4.6 · 1.2k reviews</p>
-      <p class="wc-copy">
-        This graphic T‑shirt is perfect for any occasion. Crafted from a soft and breathable cotton blend.
-      </p>
+  <!-- Loading -->
+  <div *ngIf="loading" class="wc-state-center">
+    <div class="wc-spinner"></div>
+    <p>Loading product…</p>
+  </div>
 
-      <div class="wc-colors">
-        <p class="label">Colors</p>
-        <div class="swatches">
-          <button class="swatch swatch--olive"></button>
-          <button class="swatch swatch--sand"></button>
-          <button class="swatch swatch--navy"></button>
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="wc-state-center">
+    <p class="wc-error-msg">{{ error }}</p>
+    <a routerLink="/customer/category" class="wc-btn-outline">← Back to Products</a>
+  </div>
+
+  <!-- ───────────────── Main content ───────────────── -->
+  <ng-container *ngIf="product && !loading">
+
+    <section class="wc-detail-main">
+
+      <!-- Gallery -->
+      <div class="wc-gallery">
+        <div class="wc-gallery-main">
+          <img *ngIf="mainImage" [src]="mainImage" [alt]="product.name" class="wc-gallery-img">
+          <div *ngIf="!mainImage" class="wc-gallery-placeholder">📷</div>
         </div>
-      </div>
-
-      <div class="wc-sizes">
-        <p class="label">Select size</p>
-        <div class="wc-size-grid">
-          <button *ngFor="let s of ['XS','S','M','L','XL','2XL']" class="size-btn" [class.size-btn--active]="s==='M'">
-            {{ s }}
+        <div class="wc-gallery-thumbs" *ngIf="galleryImages.length > 1">
+          <button *ngFor="let img of galleryImages; let i = index"
+            class="thumb" [class.thumb--active]="galleryIndex === i"
+            (click)="selectGalleryImage(i)">
+            <img [src]="img" [alt]="'View ' + (i + 1)">
           </button>
         </div>
       </div>
 
-      <div class="wc-actions-row">
-        <button type="button" class="wc-btn wc-btn-ai">Try it with AI</button>
-        <button type="button" class="wc-btn wc-btn-primary">Add to cart</button>
+      <!-- Info -->
+      <div class="wc-detail-info">
+        <a routerLink="/customer/category" class="wc-breadcrumb">← Back to Products</a>
+
+        <div class="wc-product-header">
+          <h1>{{ product.name }}</h1>
+          <button class="wc-favourite-btn"
+                  (click)="toggleFavourite()"
+                  [class.active]="isInFavourites"
+                  [disabled]="favouriteLoading"
+                  title="{{ isInFavourites ? 'Remove from favourites' : 'Add to favourites' }}">
+            <span *ngIf="favouriteLoading" class="wc-heart-loader"></span>
+            <span *ngIf="!favouriteLoading">{{ isInFavourites ? '♥' : '♡' }}</span>
+          </button>
+        </div>
+        <p class="wc-price">${{ product.price | number:'1.2-2' }}</p>
+
+        <!-- Favourite messages -->
+        <div *ngIf="favouriteMessage" class="wc-fav-success">{{ favouriteMessage }}</div>
+        <div *ngIf="favouriteError" class="wc-fav-error">{{ favouriteError }}</div>
+
+        <div class="wc-detail-meta">
+          <span *ngIf="product.categoryName" class="wc-tag">{{ product.categoryName }}</span>
+          <span *ngIf="audienceLabel(product.targetAudience)" class="wc-tag">{{ audienceLabel(product.targetAudience) }}</span>
+          <span *ngIf="dressStyleLabel(product.dressStyle)" class="wc-tag">{{ dressStyleLabel(product.dressStyle) }}</span>
+        </div>
+
+        <p class="wc-description" *ngIf="product.description">{{ product.description }}</p>
+        <p class="wc-seller" *ngIf="product.sellerName">Sold by <strong>{{ product.sellerName }}</strong></p>
+
+        <!-- Colors -->
+        <div class="wc-colors" *ngIf="colors.length > 0">
+          <p class="wc-section-label">
+            Color
+            <span class="wc-color-name-label" *ngIf="colorDetail"> — {{ colorDetail.colorName }}</span>
+          </p>
+          <div class="swatches">
+            <button *ngFor="let c of colors" class="swatch"
+              [class.swatch--active]="selectedColorId === c.id"
+              [style.background]="c.colorCode" [title]="c.colorName"
+              (click)="selectColor(c.id)">
+            </button>
+          </div>
+        </div>
+
+        <!-- Size chips preview -->
+        <div class="wc-sizes-preview" *ngIf="colorDetail && colorDetail.sizes.length > 0 && !colorDetailLoading">
+          <p class="wc-section-label">Available Sizes</p>
+          <div class="wc-size-chips">
+            <span *ngFor="let s of colorDetail.sizes"
+              class="wc-size-chip"
+              [class.wc-size-chip--out]="s.quantity === 0">
+              {{ formatSize(s.size) }}
+            </span>
+          </div>
+        </div>
+
+        <div *ngIf="colorDetailLoading" class="wc-loading-hint">
+          <div class="wc-spinner wc-spinner--sm"></div> Loading sizes…
+        </div>
+
+        <!-- Cart feedback -->
+        <div *ngIf="cartMessage" class="wc-cart-success">{{ cartMessage }}</div>
+        <div *ngIf="cartError && !showSizeModal" class="wc-cart-error">{{ cartError }}</div>
+
+        <!-- Action buttons -->
+        <div class="wc-action-buttons">
+          <button class="wc-btn-cart" (click)="openSizeModal()"
+            [disabled]="cartBusy || !colorDetail || colorDetail.sizes.length === 0">
+            🛒 Add to Cart
+          </button>
+          <button class="wc-btn-size-table" (click)="openSizeTableModal()"
+            *ngIf="colorDetail && colorDetail.sizes.length > 0">
+            📏 Size Table
+          </button>
+        </div>
+
       </div>
+    </section>
 
-      <section class="wc-size-table">
-        <h2>Size table</h2>
-        <p class="wc-size-sub">Available sizes: S, M, L, XL, 2XL · Fit: Loose fit</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Size</th>
-              <th>A (in)</th>
-              <th>B (in)</th>
-              <th>C (in)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>S</td><td>26.50</td><td>20.00</td><td>24.49</td></tr>
-            <tr><td>M</td><td>27.44</td><td>21.50</td><td>24.72</td></tr>
-            <tr><td>L</td><td>27.95</td><td>22.99</td><td>25.00</td></tr>
-            <tr><td>XL</td><td>30.43</td><td>25.47</td><td>25.24</td></tr>
-            <tr><td>2XL</td><td>30.94</td><td>27.99</td><td>25.47</td></tr>
-          </tbody>
-        </table>
-        <p class="wc-size-note">
-          Compare these measurements with a similar garment you already own to find the right fit.
-        </p>
-      </section>
-    </div>
-  </section>
-
-  <section class="wc-detail-section">
-    <div class="wc-section-tabs">
-      <button class="tab tab--active">Rating &amp; reviews</button>
-      <button class="tab">Product details</button>
-    </div>
-    <div class="wc-review-grid">
-      <article class="review-card" *ngFor="let i of [1,2,3,4]">
-        <p class="review-name">Samantha D.</p>
-        <p class="review-stars">★★★★★</p>
-        <p class="review-body">
-          Great fit and quality. The fabric feels soft and durable.
-        </p>
-        <p class="review-meta">Posted on August 21, 2023</p>
-      </article>
-    </div>
-  </section>
+  </ng-container>
 
   <app-customer-footer></app-customer-footer>
 </main>
 
+<!-- ══════════════════════ Size Table Modal ══════════════════════ -->
+<div class="wc-modal-backdrop" *ngIf="showSizeTableModal" (click)="closeSizeTableModal()"></div>
+<div class="wc-size-table-modal-popup" *ngIf="showSizeTableModal" role="dialog" aria-labelledby="size-table-modal-title">
+  <div class="wc-modal-header">
+    <h3 id="size-table-modal-title">Size Table</h3>
+    <button class="wc-modal-close" (click)="closeSizeTableModal()">×</button>
+  </div>
+  <div class="wc-modal-body" *ngIf="product">
+    <p *ngIf="product.description" class="wc-size-description">{{ product.description }}</p>
+    <p class="wc-size-hint">Compare these measurements with a similar garment you already own.</p>
+
+    <div class="wc-size-table-wrapper" *ngIf="colorDetail && colorDetail.sizes.length > 0">
+      <table class="wc-size-table-detailed">
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>In Stock</th>
+            <th *ngIf="product.sizeDetails && product.sizeDetails.length > 0">A (Length)</th>
+            <th *ngIf="product.sizeDetails && product.sizeDetails.length > 0">B (Chest)</th>
+            <th *ngIf="product.sizeDetails && product.sizeDetails.length > 0">C (Sleeve)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of colorDetail.sizes">
+            <td class="size-cell">{{ formatSize(s.size) }}</td>
+            <td [class.out-of-stock]="s.quantity === 0">
+              {{ s.quantity > 0 ? s.quantity + ' available' : 'Out of stock' }}
+            </td>
+            <ng-container *ngIf="product.sizeDetails && product.sizeDetails.length > 0">
+              <ng-container *ngIf="getSizeDetail(s.size) as detail; else emptyDetails">
+                <td>{{ detail.a }}</td>
+                <td>{{ detail.b }}</td>
+                <td>{{ detail.c }}</td>
+              </ng-container>
+              <ng-template #emptyDetails>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+              </ng-template>
+            </ng-container>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="wc-modal-footer">
+    <button class="wc-btn-primary" (click)="closeSizeTableModal()">Close</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ Size / Cart Modal ══════════════════════ -->
+<div class="wc-modal-backdrop" *ngIf="showSizeModal" (click)="closeSizeModal()"></div>
+<div class="wc-size-modal" *ngIf="showSizeModal" role="dialog" aria-labelledby="size-modal-title">
+  <div class="wc-size-modal-header">
+    <h3 id="size-modal-title">Select size</h3>
+    <button class="wc-modal-close" (click)="closeSizeModal()">×</button>
+  </div>
+  <p class="wc-size-modal-sub">Set quantity per size, then add to cart.</p>
+
+  <div class="wc-size-table-modal">
+    <div class="wc-size-row" *ngFor="let row of sizeRows">
+      <span class="wc-size-label">{{ formatSize(row.size) }}</span>
+      <span class="wc-size-stock" *ngIf="row.quantity > 0 && row.quantity <= 5">({{ row.quantity }} left)</span>
+      <span class="wc-size-stock wc-size-stock--out" *ngIf="row.quantity === 0">Out of stock</span>
+      <div class="wc-qty-ctrl" [class.wc-qty-ctrl--disabled]="row.quantity === 0">
+        <button class="wc-qty-btn" (click)="changeQty(row, -1)"
+          [disabled]="row.cartQty <= 0 || row.quantity === 0">−</button>
+        <span class="wc-qty-val">{{ row.cartQty }}</span>
+        <button class="wc-qty-btn" (click)="changeQty(row, 1)"
+          [disabled]="row.cartQty >= row.quantity || row.quantity === 0">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="cartError" class="wc-cart-error" style="margin-bottom:10px">{{ cartError }}</div>
+
+  <div class="wc-size-modal-footer">
+    <button class="wc-btn-outline-dark" (click)="closeSizeModal()">Cancel</button>
+    <button class="wc-btn-add-cart"
+      [disabled]="cartBusy || totalCartItems() === 0"
+      (click)="addToCart()">
+      <span *ngIf="cartBusy" class="wc-dot-loader"></span>
+      {{ cartBusy ? 'Adding…' : 'Add to cart' + (totalCartItems() > 0 ? ' (' + totalCartItems() + ')' : '') }}
+    </button>
+  </div>
+</div>

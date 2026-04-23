@@ -279,10 +279,10 @@ export class FactoryProductWizardComponent implements OnInit {
   uploadViewImages(): void {
     if (this.currentColorId == null) { this.error = 'Add a color first.'; return; }
     const uploads: any[] = [];
-    if (this.frontImageFile) uploads.push(this.factory.uploadColorViewImage(this.currentColorId, this.frontImageFile, 1));
-    if (this.backImageFile) uploads.push(this.factory.uploadColorViewImage(this.currentColorId, this.backImageFile, 2));
-    if (this.rightImageFile) uploads.push(this.factory.uploadColorViewImage(this.currentColorId, this.rightImageFile, 3));
-    if (this.leftImageFile) uploads.push(this.factory.uploadColorViewImage(this.currentColorId, this.leftImageFile, 4));
+    if (this.frontImageFile) uploads.push(this.factory.replaceColorViewImage(this.currentColorId, this.frontImageFile, 1));
+    if (this.backImageFile) uploads.push(this.factory.replaceColorViewImage(this.currentColorId, this.backImageFile, 2));
+    if (this.rightImageFile) uploads.push(this.factory.replaceColorViewImage(this.currentColorId, this.rightImageFile, 3));
+    if (this.leftImageFile) uploads.push(this.factory.replaceColorViewImage(this.currentColorId, this.leftImageFile, 4));
     if (uploads.length === 0) { this.error = 'Select at least one view image.'; return; }
     this.busy = true;
     this.error = '';
@@ -424,10 +424,11 @@ export class FactoryProductWizardComponent implements OnInit {
     this.error = '';
     this.message = '';
     const uploads: any[] = [];
-    if (this.editColorFrontFile) uploads.push(this.factory.uploadColorViewImage(cid, this.editColorFrontFile, 1));
-    if (this.editColorBackFile) uploads.push(this.factory.uploadColorViewImage(cid, this.editColorBackFile, 2));
-    if (this.editColorRightFile) uploads.push(this.factory.uploadColorViewImage(cid, this.editColorRightFile, 3));
-    if (this.editColorLeftFile) uploads.push(this.factory.uploadColorViewImage(cid, this.editColorLeftFile, 4));
+    // Use PUT (replace) instead of POST so existing view sides are overwritten
+    if (this.editColorFrontFile) uploads.push(this.factory.replaceColorViewImage(cid, this.editColorFrontFile, 1));
+    if (this.editColorBackFile) uploads.push(this.factory.replaceColorViewImage(cid, this.editColorBackFile, 2));
+    if (this.editColorRightFile) uploads.push(this.factory.replaceColorViewImage(cid, this.editColorRightFile, 3));
+    if (this.editColorLeftFile) uploads.push(this.factory.replaceColorViewImage(cid, this.editColorLeftFile, 4));
     if (this.editColorMainFile) uploads.push(this.factory.uploadColorMainImage(this.productId, cid, this.editColorMainFile));
     if (uploads.length === 0) { this.error = 'Select at least one image to upload.'; return; }
     this.busy = true;
@@ -487,10 +488,10 @@ export class FactoryProductWizardComponent implements OnInit {
       next: ({ colorId }) => {
         // Upload optional view images
         const uploads: any[] = [];
-        if (this.frontImageFile) uploads.push(this.factory.uploadColorViewImage(colorId, this.frontImageFile, 1));
-        if (this.backImageFile) uploads.push(this.factory.uploadColorViewImage(colorId, this.backImageFile, 2));
-        if (this.rightImageFile) uploads.push(this.factory.uploadColorViewImage(colorId, this.rightImageFile, 3));
-        if (this.leftImageFile) uploads.push(this.factory.uploadColorViewImage(colorId, this.leftImageFile, 4));
+        if (this.frontImageFile) uploads.push(this.factory.replaceColorViewImage(colorId, this.frontImageFile, 1));
+        if (this.backImageFile) uploads.push(this.factory.replaceColorViewImage(colorId, this.backImageFile, 2));
+        if (this.rightImageFile) uploads.push(this.factory.replaceColorViewImage(colorId, this.rightImageFile, 3));
+        if (this.leftImageFile) uploads.push(this.factory.replaceColorViewImage(colorId, this.leftImageFile, 4));
         if (uploads.length === 0) {
           this.busy = false;
           this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null });

@@ -110,11 +110,17 @@ export interface FactoryProfile {
   name: string;
   email: string;
   phoneNumber?: string;
-  address?: string;
+  description?: string;
+  address?: {
+    country?: string;
+    state?: string;
+    city?: string;
+    street?: string;
+    buildingNumber?: string;
+  };
   imageUrl?: string;
   commercialRegisterNumber?: string;
   taxIdNumber?: string;
-  description?: string;
   state?: string;
   city?: string;
   street?: string;
@@ -276,19 +282,33 @@ export class FactoryApiService {
     );
   }
 
-  uploadColorViewImage(
+  /** PUT /api/factories/designed-product-colors/{colorId}/images/{viewSide}
+   *  Replaces an existing view image for a color side (new backend endpoint). */
+  replaceColorViewImage(
     colorId: number,
     file: File,
     viewSide: number
   ): Observable<void> {
-    const url = `${this.base}/api/factories/product-colors/${colorId}/images`;
+    const url = `${this.base}/api/factories/designed-product-colors/${colorId}/images/${viewSide}`;
     const fd = new FormData();
-    fd.append('Image', file, file.name);
-    fd.append('ViewSide', String(viewSide));
-    return this.http.post<ApiEnvelope>(url, fd).pipe(
+    fd.append('NewImage', file, file.name);
+    return this.http.put<ApiEnvelope | null>(url, fd).pipe(
       map(res => {
-        if (!res.isSuccess) {
-          throw this.envErr(res);
+        if (res && typeof res === 'object' && 'isSuccess' in res && !res.isSuccess) {
+          throw this.envErr(res as ApiEnvelope);
+        }
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
+  /** DELETE /api/factories/product-images/{imageId} — delete a single image */
+  deleteProductImage(imageId: number): Observable<void> {
+    const url = `${this.base}/api/factories/product-images/${imageId}`;
+    return this.http.delete<ApiEnvelope | null>(url).pipe(
+      map(body => {
+        if (body && typeof body === 'object' && 'isSuccess' in body && !body.isSuccess) {
+          throw this.envErr(body as ApiEnvelope);
         }
       }),
       catchError(e => this.mapErr(e))

@@ -1,13 +1,9 @@
 (function () {
   'use strict';
 
-  const LEGACY_DESIGNS_KEY = 'wearcast_designs';
   const COLORS = ['purple', 'pink', 'lightpink', 'lightgray', 'black', 'darkgray', 'white', 'darkblue'];
 
-  function getDesignsStorageKey() {
-    var k = typeof window !== 'undefined' ? window.__WEARCAST_DESIGNS_STORAGE_KEY__ : '';
-    return typeof k === 'string' && k.length ? k : LEGACY_DESIGNS_KEY;
-  }
+  // Local design storage removed; all persistence goes through backend APIs.
 
   // Product images: use files in assets/ (e.g. hoodie-front.png or hoodie-front.jpg)
   var ASSETS = {
@@ -227,7 +223,7 @@
         bulletsEl.style.display = 'none';
       }
       if (pillEl) pillEl.style.display = 'none';
-      
+
       if (p.sizes && p.sizes.length && tbodyEl) {
         tbodyEl.innerHTML = sizeRowsToHtml(p.sizes);
         var labels = p.sizes.map(function (s) { return s.label; }).join(', ');
@@ -712,22 +708,8 @@
   }
 
   function getSavedDesigns() {
-    try {
-      var key = getDesignsStorageKey();
-      var raw = localStorage.getItem(key);
-      if (raw) {
-        return JSON.parse(raw);
-      }
-      if (key === 'wearcast_designs:guest' || key === LEGACY_DESIGNS_KEY) {
-        var legacy = localStorage.getItem(LEGACY_DESIGNS_KEY);
-        if (legacy) {
-          return JSON.parse(legacy);
-        }
-      }
-      return [];
-    } catch (e) {
-      return [];
-    }
+    // Local saves disabled; all designs must be persisted via the backend API.
+    return [];
   }
 
   function setProductImage() {
@@ -858,14 +840,13 @@
 
   /**
    * Factory catalog templates: POST design to API when logged in.
-   * Built-in templates (hoodie/tshirt/cap): localStorage only.
+   * Built-in templates (hoodie/tshirt/cap) cannot be saved (server-only).
+   * Generates 4-view composite images (product bg + design overlay) before saving.
    */
   function saveDesign(name) {
-    saveCurrentViewToStore();
     var p = PRODUCTS[currentProduct];
     var cat = p && p.wearcastCatalog;
     var fn = window.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
-    var vd = viewDesigns[currentProduct];
     if (cat && typeof fn === 'function') {
       var colorId = cat.colorIdsBySlug && cat.colorIdsBySlug[currentColor];
       if (!colorId) {
@@ -873,71 +854,38 @@
         return;
       }
       if (saveConfirm) saveConfirm.disabled = true;
-      fn({
-        productId: cat.designedProductId,
-        productColorId: colorId,
-        viewDesignsJson: JSON.stringify(vd || {})
-      }).then(function () {
-        if (saveModal) saveModal.classList.add('hidden');
-        saveDesignToList(name, {
-          silent: true,
-          skipModalClose: true,
-          savedToAccount: true
+      // Generate 4-view composite images first, then POST to server
+      generateAllViewImages(function(viewImages) {
+        var vd = viewDesigns[currentProduct];
+        fn({
+          productId: cat.designedProductId,
+          productColorId: colorId,
+          viewDesignsJson: JSON.stringify(vd || {}),
+          frontImage: viewImages.front,
+          backImage: viewImages.back,
+          leftImage: viewImages.left,
+          rightImage: viewImages.right
+        }).then(function () {
+          if (saveModal) saveModal.classList.add('hidden');
+          alert('Design saved to your WearCast account.');
+        }).catch(function (err) {
+          var msg = (err && err.message) ? err.message : String(err);
+          alert('Could not save to the server: ' + msg);
+        }).finally(function () {
+          if (saveConfirm) saveConfirm.disabled = false;
         });
-        alert('Design saved to your WearCast account. It is listed under My saved designs on this device.');
-      }).catch(function (err) {
-        var msg = (err && err.message) ? err.message : String(err);
-        if (window.confirm('Could not save to the server (' + msg + '). Save on this device only?')) {
-          saveDesignToList(name);
-        }
-      }).finally(function () {
-        if (saveConfirm) saveConfirm.disabled = false;
       });
       return;
     }
-    saveDesignToList(name);
+    alert('Saving built-in templates locally is disabled. Please use a catalog product to save via the server.');
   }
+
 
   function saveDesignToList(name, opts) {
     opts = opts || {};
-    var list = getSavedDesigns();
-    var id = 'id_' + Date.now();
-    var state = getDesignState(false);
-    var item = {
-      id: id,
-      name: name || 'Untitled design',
-      createdAt: new Date().toISOString(),
-      state: state,
-      savedToAccount: !!opts.savedToAccount
-    };
-    try {
-      list.push(item);
-      localStorage.setItem(getDesignsStorageKey(), JSON.stringify(list));
-      if (!opts.skipModalClose && saveModal) saveModal.classList.add('hidden');
-      if (!opts.silent) {
-        alert('Design saved! Open "My saved designs" to see it.');
-      }
-    } catch (err) {
-      if (err && err.name === 'QuotaExceededError') {
-        list.pop();
-        state = getDesignState(true);
-        item.state = state;
-        list.push(item);
-        try {
-          localStorage.setItem(getDesignsStorageKey(), JSON.stringify(list));
-          if (!opts.skipModalClose && saveModal) saveModal.classList.add('hidden');
-          if (!opts.silent) {
-            alert('Design saved with reduced image quality (to fit storage). Open "My saved designs" to see it.');
-          }
-        } catch (err2) {
-          list.pop();
-          if (saveModal) saveModal.classList.remove('hidden');
-          alert('Storage is full. Delete some saved designs from "My saved designs", or remove uploaded images from this design, then try again.');
-        }
-      } else {
-        console.error('Save failed:', err);
-        alert('Could not save design. Check the console for details.');
-      }
+    // Local saves disabled; all designs must be persisted via the backend API.
+    if (!opts.silent) {
+      alert('Design saved! Open "My saved designs" to see it.');
     }
   }
 
@@ -952,8 +900,7 @@
 
   function deleteDesignById(id, e) {
     e.stopPropagation();
-    const list = getSavedDesigns().filter(function (d) { return d.id !== id; });
-    localStorage.setItem(getDesignsStorageKey(), JSON.stringify(list));
+    // Local saves disabled; nothing to delete.
     renderSavedList();
   }
 
@@ -1106,6 +1053,80 @@
     sizeQtyModal.classList.remove('hidden');
   }
 
+  /**
+   * Generates composite PNG images for all 4 views (front/back/left/right).
+   * Each image is composed by drawing the product background image for that view
+   * on an off-screen Fabric.js canvas, then loading the saved design JSON on top.
+   * Calls callback({ front, back, left, right }) with base64 data URLs (or null if no image).
+   */
+  function generateAllViewImages(callback) {
+    saveCurrentViewToStore();
+    var vd = viewDesigns[currentProduct] || {};
+    var colorImgs = (getProductImages() || {})[currentColor] || {};
+    var views = ['front', 'back', 'left', 'right'];
+    var results = { front: null, back: null, left: null, right: null };
+    var remaining = views.length;
+    var w = canvas ? canvas.getWidth() : 400;
+    var h = canvas ? canvas.getHeight() : 480;
+
+    function finish() {
+      remaining--;
+      if (remaining === 0) { callback(results); }
+    }
+
+    views.forEach(function(view) {
+      var canvasJson = vd[view] || null;
+      var bgUrl = colorImgs[view] || null;
+
+      var offEl = document.createElement('canvas');
+      offEl.width = w;
+      offEl.height = h;
+
+      var tempCanvas = new fabric.Canvas(offEl, {
+        width: w, height: h, backgroundColor: 'transparent', selection: false
+      });
+
+      var doExport = function() {
+        try {
+          results[view] = tempCanvas.toDataURL({ format: 'png', multiplier: 1 });
+        } catch (e) {
+          console.warn('WearCast: failed to export view image for', view, e);
+        }
+        try { tempCanvas.dispose(); } catch (e2) {}
+        finish();
+      };
+
+      var loadDesign = function() {
+        if (canvasJson && canvasJson.objects && canvasJson.objects.length > 0) {
+          tempCanvas.loadFromJSON(canvasJson, function() {
+            tempCanvas.renderAll();
+            doExport();
+          });
+        } else {
+          tempCanvas.renderAll();
+          doExport();
+        }
+      };
+
+      if (bgUrl) {
+        fabric.Image.fromURL(bgUrl, function(img) {
+          if (img && img.width > 0 && img.height > 0) {
+            img.set({
+              left: 0, top: 0, originX: 'left', originY: 'top',
+              scaleX: w / img.width, scaleY: h / img.height,
+              selectable: false, evented: false
+            });
+            tempCanvas.add(img);
+            tempCanvas.sendToBack(img);
+          }
+          loadDesign();
+        }, { crossOrigin: 'anonymous' });
+      } else {
+        loadDesign();
+      }
+    });
+  }
+
   function confirmSizeQtyAddToCart() {
     var fnSave = window.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
     var fnCart = window.__WEARCAST_ADD_DESIGNED_TO_CART__;
@@ -1147,41 +1168,46 @@
       alert('Choose at least one size with a quantity greater than zero.');
       return;
     }
-    saveCurrentViewToStore();
-    var vd = viewDesigns[currentProduct];
     if (sizeQtyModalConfirm) sizeQtyModalConfirm.disabled = true;
 
-    // Save a unique design for EACH size to avoid backend cart item overwriting,
-    // then add each one individually to the cart.
-    var promises = lines.map(function(L) {
-      return fnSave({
-        productId: cat.designedProductId,
-        productColorId: colorId,
-        viewDesignsJson: JSON.stringify(vd || {})
-      }).then(function (designId) {
-        if (designId == null || designId === undefined) {
-          throw new Error('The server did not return a design id.');
-        }
-        var id = typeof designId === 'number' ? designId : parseInt(designId, 10);
-        if (!Number.isFinite(id)) {
-          throw new Error('Invalid design id from server.');
-        }
-        return fnCart([{ designId: id, size: L.size, quantity: L.quantity }]);
+    // Generate composite view images (product bg + design overlay) for all 4 sides,
+    // then save a unique draft design per size (with images attached) and add to cart.
+    generateAllViewImages(function(viewImages) {
+      var vd = viewDesigns[currentProduct];
+      var promises = lines.map(function(L) {
+        return fnSave({
+          productId: cat.designedProductId,
+          productColorId: colorId,
+          viewDesignsJson: JSON.stringify(vd || {}),
+          frontImage: viewImages.front,
+          backImage: viewImages.back,
+          leftImage: viewImages.left,
+          rightImage: viewImages.right
+        }).then(function (designId) {
+          if (designId == null || designId === undefined) {
+            throw new Error('The server did not return a design id.');
+          }
+          var id = typeof designId === 'number' ? designId : parseInt(designId, 10);
+          if (!Number.isFinite(id)) {
+            throw new Error('Invalid design id from server.');
+          }
+          return fnCart([{ designId: id, size: L.size, quantity: L.quantity }]);
+        });
       });
-    });
 
-    Promise.all(promises)
-      .then(function () {
-        closeSizeQtyModal();
-        alert('Added to cart. Open the cart to review your items.');
-      })
-      .catch(function (err) {
-        var msg = err && err.message ? err.message : String(err);
-        alert('Could not add to cart: ' + msg);
-      })
-      .finally(function () {
-        if (sizeQtyModalConfirm) sizeQtyModalConfirm.disabled = false;
-      });
+      Promise.all(promises)
+        .then(function () {
+          closeSizeQtyModal();
+          alert('Added to cart. Open the cart to review your items.');
+        })
+        .catch(function (err) {
+          var msg = err && err.message ? err.message : String(err);
+          alert('Could not add to cart: ' + msg);
+        })
+        .finally(function () {
+          if (sizeQtyModalConfirm) sizeQtyModalConfirm.disabled = false;
+        });
+    });
   }
 
   function applyDesignerBootstrap() {

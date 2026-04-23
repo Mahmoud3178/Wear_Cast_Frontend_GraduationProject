@@ -22,7 +22,16 @@ export class FactoryProfileComponent implements OnInit {
   isEditing = false;
   editForm = {
     name: '',
-    address: '',
+    description: '',
+    taxIdNumber: '',
+    commercialRegisterNumber: '',
+    address: {
+      country: '',
+      state: '',
+      city: '',
+      street: '',
+      buildingNumber: ''
+    },
     phoneNumber: '',
     email: ''
   };
@@ -45,7 +54,16 @@ export class FactoryProfileComponent implements OnInit {
         this.profile = profile;
         this.editForm = {
           name: profile.name || '',
-          address: profile.address || '',
+          description: profile.description || '',
+          taxIdNumber: profile.taxIdNumber || '',
+          commercialRegisterNumber: profile.commercialRegisterNumber || '',
+          address: {
+            country: profile.address?.country || '',
+            state: profile.address?.state || '',
+            city: profile.address?.city || '',
+            street: profile.address?.street || '',
+            buildingNumber: profile.address?.buildingNumber || ''
+          },
           phoneNumber: profile.phoneNumber || '',
           email: profile.email || ''
         };
@@ -80,7 +98,16 @@ export class FactoryProfileComponent implements OnInit {
     if (this.profile) {
       this.editForm = {
         name: this.profile.name || '',
-        address: this.profile.address || '',
+        description: this.profile.description || '',
+        taxIdNumber: this.profile.taxIdNumber || '',
+        commercialRegisterNumber: this.profile.commercialRegisterNumber || '',
+        address: {
+          country: this.profile.address?.country || '',
+          state: this.profile.address?.state || '',
+          city: this.profile.address?.city || '',
+          street: this.profile.address?.street || '',
+          buildingNumber: this.profile.address?.buildingNumber || ''
+        },
         phoneNumber: this.profile.phoneNumber || '',
         email: this.profile.email || ''
       };
@@ -94,7 +121,16 @@ export class FactoryProfileComponent implements OnInit {
 
     this.factoryApi.updateFactoryProfile({
       name: this.editForm.name.trim(),
-      address: this.editForm.address.trim(),
+      description: this.editForm.description.trim(),
+      taxIdNumber: this.editForm.taxIdNumber.trim(),
+      commercialRegisterNumber: this.editForm.commercialRegisterNumber.trim(),
+      address: {
+        country: this.editForm.address.country.trim(),
+        state: this.editForm.address.state.trim(),
+        city: this.editForm.address.city.trim(),
+        street: this.editForm.address.street.trim(),
+        buildingNumber: this.editForm.address.buildingNumber.trim()
+      },
       phoneNumber: this.editForm.phoneNumber.trim(),
       email: this.editForm.email.trim()
     }).subscribe({

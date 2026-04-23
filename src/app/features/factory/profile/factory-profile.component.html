@@ -39,9 +39,25 @@
               <label class="text-muted small">Phone</label>
               <p class="mb-0">{{ profile.phoneNumber || 'Not set' }}</p>
             </div>
+            <div class="col-md-6" *ngIf="profile.taxIdNumber">
+              <label class="text-muted small">Tax ID Number</label>
+              <p class="mb-0">{{ profile.taxIdNumber }}</p>
+            </div>
+            <div class="col-md-6" *ngIf="profile.commercialRegisterNumber">
+              <label class="text-muted small">Commercial Register Number</label>
+              <p class="mb-0">{{ profile.commercialRegisterNumber }}</p>
+            </div>
+            <div class="col-12" *ngIf="profile.description">
+              <label class="text-muted small">Description</label>
+              <p class="mb-0">{{ profile.description }}</p>
+            </div>
             <div class="col-12">
               <label class="text-muted small">Address</label>
-              <p class="mb-0">{{ profile.address || 'Not set' }}</p>
+              <p class="mb-0" *ngIf="profile.address?.street">
+                {{ profile.address?.buildingNumber }} {{ profile.address?.street }}, 
+                {{ profile.address?.city }}, {{ profile.address?.state }}, {{ profile.address?.country }}
+              </p>
+              <p class="mb-0" *ngIf="!profile.address?.street">Not set</p>
             </div>
             <div class="col-md-6" *ngIf="profile.factoryId">
               <label class="text-muted small">Factory ID</label>
@@ -71,9 +87,37 @@
             <label class="form-label">Phone Number</label>
             <input type="tel" class="form-control" [(ngModel)]="editForm.phoneNumber" name="phoneNumber">
           </div>
+          <div class="col-md-6">
+            <label class="form-label">Tax ID Number <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="editForm.taxIdNumber" name="taxIdNumber" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Commercial Register Number <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="editForm.commercialRegisterNumber" name="commercialRegisterNumber" required>
+          </div>
           <div class="col-12">
-            <label class="form-label">Address</label>
-            <textarea class="form-control" [(ngModel)]="editForm.address" name="address" rows="2"></textarea>
+            <label class="form-label">Description <span class="text-danger">*</span></label>
+            <textarea class="form-control" [(ngModel)]="editForm.description" name="description" rows="3" required></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Country</label>
+            <input type="text" class="form-control" [(ngModel)]="editForm.address.country" name="country">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">State/Province</label>
+            <input type="text" class="form-control" [(ngModel)]="editForm.address.state" name="state">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" [(ngModel)]="editForm.address.city" name="city">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Street</label>
+            <input type="text" class="form-control" [(ngModel)]="editForm.address.street" name="street">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Building No.</label>
+            <input type="text" class="form-control" [(ngModel)]="editForm.address.buildingNumber" name="buildingNumber">
           </div>
         </div>
         <div class="d-flex gap-2 mt-4">
@@ -89,31 +133,5 @@
     </div>
   </div>
 
-  <!-- Factory Managers -->
-  <h2 class="h4 fw-bold mb-3">Factory Managers</h2>
-  <div class="card wc-factory-card border-0">
-    <div class="card-body p-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <p class="text-muted small mb-0">Managers can access the factory portal and manage products.</p>
-        <a routerLink="/factory/managers" class="btn btn-dark btn-sm rounded-pill px-3">
-          <i class="bi bi-plus-lg me-1"></i> Add Manager
-        </a>
-      </div>
-      
-      <ul class="list-group list-group-flush" *ngIf="managers.length > 0">
-        <li class="list-group-item d-flex justify-content-between align-items-center py-3" *ngFor="let manager of managers">
-          <div>
-            <span class="fw-medium">{{ manager.name }}</span>
-            <span class="text-muted small d-block">{{ manager.email }}</span>
-          </div>
-          <span class="badge bg-secondary" *ngIf="manager.isActive">Active</span>
-        </li>
-      </ul>
-      
-      <div class="alert alert-light border rounded-3" *ngIf="managers.length === 0">
-        <p class="mb-1">No managers assigned yet.</p>
-        <p class="small text-muted mb-0"><a routerLink="/factory/managers">Add a manager</a> to help manage your factory.</p>
-      </div>
-    </div>
-  </div>
+
 </div>

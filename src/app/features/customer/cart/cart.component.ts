@@ -11,6 +11,7 @@ import {
   CartFixedItem,
   CartDesignItem
 } from '../../../core/services/cart.service';
+import { FixedProductService } from '../../../core/services/fixed-product.service';
 
 /** Unified view model for both fixed + designed items */
 export interface CartItemView {
@@ -19,11 +20,14 @@ export interface CartItemView {
   meta: string;
   imageUrl: string;
   price: number;
-  size: string;
-  quantity: number;
+  size?: string;
+  quantity?: number;
   type: 'fixed' | 'design';
+  // For fixed items
+  sizes?: { sizeEnum: number; sizeLabel: string; quantity: number }[];
   // raw refs for update calls
   colorId?: number;
+  productId?: number;
   designId?: number;
 }
 
@@ -39,15 +43,39 @@ export class CartComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
+  // Size details modal
+  showProductDetailsModal = false;
+  activeProductDetails: any = null;
+  detailsModalLoading = false;
+
   subtotal = computed(() =>
-    this.items().reduce((s, i) => s + i.price * (i.quantity ?? 1), 0)
+    this.items().reduce((s, i) => {
+      let qty = 0;
+      if (i.sizes && i.sizes.length > 0) {
+        qty = i.sizes.reduce((sum, sz) => sum + sz.quantity, 0);
+      } else {
+        qty = i.quantity ?? 1;
+      }
+      return s + i.price * qty;
+    }, 0)
   );
   total = computed(() => this.subtotal());
   totalQuantity = computed(() =>
-    this.items().reduce((sum, i) => sum + (i.quantity ?? 1), 0)
+    this.items().reduce((sum, i) => {
+      let qty = 0;
+      if (i.sizes && i.sizes.length > 0) {
+        qty = i.sizes.reduce((s, sz) => s + sz.quantity, 0);
+      } else {
+        qty = i.quantity ?? 1;
+      }
+      return sum + qty;
+    }, 0)
   );
 
-  constructor(private readonly cartService: CartService) {}
+  constructor(
+    private readonly cartService: CartService,
+    private readonly fixedProductService: FixedProductService
+  ) {}
 
   ngOnInit(): void {
     this.loadCart();
@@ -83,20 +111,39 @@ export class CartComponent implements OnInit {
         };
 
         const fixedViews: CartItemView[] = (fixed ?? []).map((f: any) => {
-          const sVal = mapSize(f.size ?? f.Size);
           const colorName = f.colorName || f.ColorName || '';
-          const rawQty = f.quantity ?? f.Quantity ?? f.qty ?? f.Qty ?? 1;
-          const metaParts = [colorName, sVal ? `Size: ${sVal}` : ''].filter(Boolean);
+          const basePrice = f.price || f.Price || 0;
+          const imageUrl  = f.imageUrl || f.ImageUrl || f.image || f.Image || '/assets/placeholder.jpg';
+          const productName = f.productName || f.ProductName || f.name || f.Name || 'Fixed Product';
+          const colorId = f.colorId || f.ColorId;
+          const cartItemId = f.cartItemId || f.CartItemId;
+          const productId = f.productId || f.ProductId;
+
+          // API may return a flat { size, quantity } OR a grouped { sizes: [{size,quantity}] }
+          const sizesArray: { size: any; quantity: number }[] = Array.isArray(f.sizes ?? f.Sizes)
+            ? (f.sizes ?? f.Sizes)
+            : [{ size: f.size ?? f.Size ?? f.sizeId ?? f.SizeId, quantity: f.quantity ?? f.Quantity ?? 1 }];
+
+          const sizesList = sizesArray
+            .filter(s => s.quantity > 0 || s.size != null)
+            .map((s) => {
+              const sVal = mapSize(s.size) || '';
+              const sizeEnum = typeof s.size === 'number' ? s.size : (mapSize(s.size) ? this.sizeToEnum(mapSize(s.size)!) : 0);
+              return { sizeLabel: sVal, quantity: s.quantity ?? 1, sizeEnum };
+            });
+
+          const metaParts = [colorName].filter(Boolean);
+          
           return {
-            cartItemId: f.cartItemId || f.CartItemId,
-            name: f.productName || f.ProductName || f.name || f.Name || 'Fixed Product',
+            cartItemId,
+            name: productName,
             meta: metaParts.join(' · ') || 'Fixed Product',
-            imageUrl: f.imageUrl || f.ImageUrl || f.image || f.Image || '/assets/placeholder.jpg',
-            price: f.price || f.Price || 0,
-            size: sVal,
-            quantity: f.quantity ?? f.Quantity ?? f.qty ?? f.Qty ?? 1,
-            type: 'fixed',
-            colorId: f.colorId || f.ColorId
+            imageUrl,
+            price: basePrice,
+            type: 'fixed' as const,
+            sizes: sizesList,
+            colorId,
+            productId
           };
         });
 
@@ -135,7 +182,12 @@ export class CartComponent implements OnInit {
     });
   }
 
-  removeItem(item: CartItemView): void {
+  removeItem(item: CartItemView, sizeEnum?: number): void {
+    if (item.type === 'fixed' && item.colorId != null && sizeEnum != null) {
+      this.updateQty(item, 0, sizeEnum);
+      return;
+    }
+    // For design items, fallback to full delete
     this.cartService.deleteItem(item.cartItemId).subscribe({
       next: () => {
         this.items.update(list => list.filter(i => i.cartItemId !== item.cartItemId));
@@ -146,57 +198,111 @@ export class CartComponent implements OnInit {
     });
   }
 
-  increaseQty(item: CartItemView): void {
-    this.updateQty(item, item.quantity + 1);
+  increaseQty(item: CartItemView, sizeEnum?: number): void {
+    const currentQty = this.getCurrentQty(item, sizeEnum);
+    this.updateQty(item, currentQty + 1, sizeEnum);
   }
 
-  decreaseQty(item: CartItemView): void {
-    if (item.quantity <= 1) {
-      this.removeItem(item);
+  decreaseQty(item: CartItemView, sizeEnum?: number): void {
+    const currentQty = this.getCurrentQty(item, sizeEnum);
+    if (currentQty <= 1) {
+      this.removeItem(item, sizeEnum);
       return;
     }
-    this.updateQty(item, item.quantity - 1);
+    this.updateQty(item, currentQty - 1, sizeEnum);
   }
 
-  private updateQty(item: CartItemView, qty: number): void {
-    // Optimistically update UI
-    this.items.update(list =>
-      list.map(i => i.cartItemId === item.cartItemId ? { ...i, quantity: qty } : i)
-    );
+  private getCurrentQty(item: CartItemView, sizeEnum?: number): number {
+    if (item.type === 'fixed' && sizeEnum != null) {
+      return item.sizes?.find(s => s.sizeEnum === sizeEnum)?.quantity ?? 1;
+    }
+    return item.quantity ?? 1;
+  }
 
-    const sizeEnum = this.sizeToEnum(item.size);
+  private updateQty(item: CartItemView, qty: number, sizeEnum?: number): void {
+    // Optimistically update UI
+    if (item.type === 'fixed' && sizeEnum != null) {
+      this.items.update(list => list.map(i => {
+        if (i.cartItemId !== item.cartItemId) return i;
+        const newSizes = i.sizes?.map(s => s.sizeEnum === sizeEnum ? { ...s, quantity: qty } : s) || [];
+        const filteredSizes = newSizes.filter(s => s.quantity > 0);
+        if (filteredSizes.length === 0) return null as any; // All sizes removed
+        return { ...i, sizes: filteredSizes };
+      }).filter(Boolean));
+    } else {
+      if (qty <= 0) {
+        this.items.update(list => list.filter(i => i.cartItemId !== item.cartItemId));
+      } else {
+        this.items.update(list =>
+          list.map(i => i.cartItemId === item.cartItemId ? { ...i, quantity: qty } : i)
+        );
+      }
+    }
+
+    const actualSizeEnum = sizeEnum ?? this.sizeToEnum(item.size);
 
     const req$ = item.type === 'fixed' && item.colorId != null
-      ? this.cartService.addOrUpdateFixed({ colorId: item.colorId, size: sizeEnum, quantity: qty })
+      ? this.cartService.addOrUpdateFixed({
+          colorId: item.colorId,
+          sizes: [{ size: actualSizeEnum, quantity: qty }]
+        })
       : item.type === 'design' && item.designId != null
-        ? this.cartService.addOrUpdateDesigned({ designId: item.designId, size: sizeEnum, quantity: qty })
+        ? this.cartService.addOrUpdateDesigned({ designId: item.designId, size: actualSizeEnum, quantity: qty })
         : of(null);
 
     req$.subscribe({
       error: (err) => {
         console.error('Failed to update quantity', err);
-        // Rollback
-        this.items.update(list =>
-          list.map(i => i.cartItemId === item.cartItemId ? { ...i, quantity: item.quantity } : i)
-        );
+        // Rollback simple, just reload cart
+        this.loadCart();
       }
     });
   }
 
   /** Maps size string like "S", "M", "L", "XL", "XXL" to the API integer enum */
-  private sizeToEnum(size: string): number {
+  private sizeToEnum(size: string | undefined | null): number {
+    if (!size) return 14; // default M
     const map: Record<string, number> = {
-      '2XS': 11, 'XXS': 11,
-      'XS': 12,
-      'S': 13,
-      'M': 14,
-      'L': 15,
-      'XL': 16,
-      '2XL': 17, 'XXL': 17,
-      '3XL': 18, 'XXXL': 18,
-      '4XL': 19,
-      '5XL': 20
+      '2XS': 11, '_2XS': 11, 'XXS': 11,
+      'XS': 12, '_XS': 12,
+      'S': 13, '_S': 13,
+      'M': 14, '_M': 14,
+      'L': 15, '_L': 15,
+      'XL': 16, '_XL': 16,
+      '2XL': 17, '_2XL': 17, 'XXL': 17,
+      '3XL': 18, '_3XL': 18, 'XXXL': 18,
+      '4XL': 19, '_4XL': 19,
+      '5XL': 20, '_5XL': 20
     };
-    return map[size.toUpperCase()] ?? 14;
+    return map[size.toUpperCase().replace(/^_/, '')] ?? 14;
+  }
+
+  // ── Size details modal ─────────────────────────────────────────
+
+  openSizeDetails(item: CartItemView): void {
+    if (item.type !== 'fixed' || !item.productId) return;
+    
+    this.showProductDetailsModal = true;
+    this.detailsModalLoading = true;
+    this.activeProductDetails = null;
+
+    this.fixedProductService.getDetailsById(item.productId).subscribe({
+      next: (res) => {
+        this.detailsModalLoading = false;
+        this.activeProductDetails = res;
+      },
+      error: () => {
+        this.detailsModalLoading = false;
+      }
+    });
+  }
+
+  closeSizeDetailsModal(): void {
+    this.showProductDetailsModal = false;
+    this.activeProductDetails = null;
+  }
+
+  formatSize(s: string): string {
+    return s.replace(/^_/, '');
   }
 }

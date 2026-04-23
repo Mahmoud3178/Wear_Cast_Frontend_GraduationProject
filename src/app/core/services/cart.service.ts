@@ -42,10 +42,14 @@ export interface CartDesignItem {
 //  Request models (from swagger schemas)
 // ────────────────────────────────────────────────────────
 
+export interface SizeQuantityItem {
+  size: number;     // Size enum integer (e.g. _M=14, _L=15)
+  quantity: number;
+}
+
 export interface AddOrUpdateFixedColorToCartRequest {
   colorId: number;
-  size: number;   // Size enum integer
-  quantity: number;
+  sizes: SizeQuantityItem[];  // API requires sizes[] not a single size
 }
 
 export interface AddOrUpdateDesignedToCartRequest {
@@ -124,8 +128,15 @@ export class CartService {
 
   /** POST /api/Cart/AddOrUpdateFixedColorToCart */
   addOrUpdateFixed(req: AddOrUpdateFixedColorToCartRequest): Observable<unknown> {
+    // Send both camelCase and PascalCase to handle different binder configs
+    const body = {
+      colorId: req.colorId,
+      ColorId: req.colorId,
+      sizes: req.sizes,
+      Sizes: req.sizes
+    };
     return this.http
-      .post(`${this.base}/AddOrUpdateFixedColorToCart`, req)
+      .post(`${this.base}/AddOrUpdateFixedColorToCart`, body)
       .pipe(
         catchError(err => throwError(() => new Error(cartHttpMessage(err))))
       );

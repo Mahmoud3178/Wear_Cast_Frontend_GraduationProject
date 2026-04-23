@@ -54,10 +54,11 @@
                   <span class="item-type-badge" [class.item-type-badge--design]="item.type === 'design'">
                     {{ item.type === 'design' ? '✏️ Custom Design' : '🏷️ Fixed Product' }}
                   </span>
-                  <span *ngIf="item.size" class="item-size-badge">Size: {{ item.size }}</span>
+                  <span *ngIf="item.type === 'design' && item.size" class="item-size-badge">Size: {{ item.size }}</span>
                 </div>
               </div>
               <button
+                *ngIf="item.type === 'design'"
                 type="button"
                 class="item-remove"
                 aria-label="Remove item"
@@ -65,25 +66,41 @@
               >Remove</button>
             </div>
 
-            <div class="item-pricing">
+            <div class="item-pricing mb-2">
               <p class="price">{{ item.price | currency:'EGP':'symbol':'1.0-0' }}</p>
               <p class="unit">per item</p>
             </div>
           </div>
 
-          <!-- Quantity -->
-          <div class="item-qty" aria-label="Quantity">
-            <button
-              type="button"
-              aria-label="Decrease quantity"
-              (click)="decreaseQty(item)"
-            >−</button>
-            <span class="qty-value">{{ item.quantity }}</span>
-            <button
-              type="button"
-              aria-label="Increase quantity"
-              (click)="increaseQty(item)"
-            >+</button>
+          <!-- Quantity / Sizes -->
+          <div class="item-sizes-container">
+            <!-- For Design Items (single size/qty) -->
+            <div *ngIf="item.type === 'design'" class="item-qty-row">
+              <div class="item-qty" aria-label="Quantity">
+                <button type="button" aria-label="Decrease quantity" (click)="decreaseQty(item)">−</button>
+                <span class="qty-value">{{ item.quantity }}</span>
+                <button type="button" aria-label="Increase quantity" (click)="increaseQty(item)">+</button>
+              </div>
+            </div>
+
+            <!-- For Fixed Items (grouped sizes) -->
+            <div *ngIf="item.type === 'fixed' && item.sizes">
+              <div class="item-qty-row mb-2 d-flex align-items-center justify-content-between" *ngFor="let s of item.sizes">
+                <div class="d-flex align-items-center">
+                  <span class="badge bg-light text-dark border me-3" style="width: 50px">{{ s.sizeLabel }}</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="item-qty" aria-label="Quantity">
+                    <button type="button" aria-label="Decrease quantity" (click)="decreaseQty(item, s.sizeEnum)">−</button>
+                    <span class="qty-value">{{ s.quantity }}</span>
+                    <button type="button" aria-label="Increase quantity" (click)="increaseQty(item, s.sizeEnum)">+</button>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline-danger border-0" (click)="removeItem(item, s.sizeEnum)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </article>
       </div>
@@ -111,6 +128,55 @@
       </aside>
     </div>
   </section>
-
-  <app-customer-footer></app-customer-footer>
 </main>
+
+<app-customer-footer></app-customer-footer>
+
+<!-- ══════════════════════ Size Details Modal ══════════════════════ -->
+<div class="wc-modal-backdrop" *ngIf="showProductDetailsModal" (click)="closeSizeDetailsModal()"></div>
+<div class="wc-size-modal" *ngIf="showProductDetailsModal" role="dialog" aria-labelledby="size-details-title">
+  <div class="wc-size-modal-header">
+    <h3 id="size-details-title">Product details</h3>
+    <button class="wc-modal-close" (click)="closeSizeDetailsModal()">×</button>
+  </div>
+
+  <div *ngIf="detailsModalLoading" class="p-4 text-center">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Loading details...</p>
+  </div>
+
+  <div *ngIf="!detailsModalLoading && activeProductDetails">
+    <h4 class="mb-2 fw-bold">{{ activeProductDetails.name }}</h4>
+    <p class="text-muted small mb-4">{{ activeProductDetails.description }}</p>
+
+    <h5 class="fw-bold mb-2">Size table</h5>
+    <p class="text-muted small mb-3">Measurements in inches.</p>
+
+    <div class="d-flex flex-column flex-md-row gap-4 mb-4">
+      <div style="flex: 0 0 150px;">
+        <img src="/assets/sizing-guide.svg" alt="Sizing Guide" class="img-fluid border rounded" onerror="this.src='https://placehold.co/150x200?text=Sizing+Guide'" />
+      </div>
+      <div class="flex-grow-1 overflow-auto">
+        <table class="table table-sm table-bordered mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Size</th>
+              <th>A (in)</th>
+              <th>B (in)</th>
+              <th>C (in)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of activeProductDetails.sizeDetails">
+              <td>{{ formatSize(s.size) }}</td>
+              <td>{{ s.a }}</td>
+              <td>{{ s.b }}</td>
+              <td>{{ s.c }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="text-muted small mb-0">Find the right size: compare these measurements with a similar garment you already own.</p>
+  </div>
+</div>

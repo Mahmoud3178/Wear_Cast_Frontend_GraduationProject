@@ -152,6 +152,12 @@
         <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="Search templates..." [(ngModel)]="searchParams.SearchTerm" (keyup.enter)="searchCatalog()">
       </div>
       <div>
+        <select class="form-select bg-dark text-white border-secondary" [(ngModel)]="searchParams.CategoryId" (change)="searchCatalog()" [disabled]="loadingCategories">
+          <option [ngValue]="null">Any Category</option>
+          <option *ngFor="let cat of categories" [ngValue]="cat.id ?? cat.Id">{{ cat.name ?? cat.Name }}</option>
+        </select>
+      </div>
+      <div>
         <select class="form-select bg-dark text-white border-secondary" [(ngModel)]="searchParams.TargetAudience" (change)="searchCatalog()">
           <option [ngValue]="null">Any Audience</option>
           <option [ngValue]="1">Men</option>

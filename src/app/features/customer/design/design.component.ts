@@ -34,10 +34,13 @@ import { CommonModule } from '@angular/common';
 export class CustomerDesignComponent implements AfterViewInit {
   catalogSearchResults: any[] = [];
   loadingProducts = false;
+  categories: any[] = [];
+  loadingCategories = false;
   searchParams: any = {
     SearchTerm: '',
     TargetAudience: null,
     DressStyle: null,
+    CategoryId: null,
     PageIndex: 1,
     PageSize: 50
   };
@@ -74,14 +77,25 @@ export class CustomerDesignComponent implements AfterViewInit {
       __WEARCAST_ADD_DESIGNED_TO_CART__?: (
         items: AddOrUpdateDesignedToCartRequest[]
       ) => Promise<void>;
-      __WEARCAST_DESIGNS_STORAGE_KEY__?: string;
       wearcastOnProductChanged?: (baseProductId: number) => void;
     };
-    w.__WEARCAST_DESIGNS_STORAGE_KEY__ =
-      'wearcast_designs:' + this.auth.getCustomerLocalDesignsScope();
     if (this.auth.getToken()) {
-      w.__WEARCAST_SAVE_CUSTOMER_DESIGN__ = body =>
-        firstValueFrom(this.customerDesign.saveDesign(body));
+      // Updated save design function that accepts view images for the new draft API
+      w.__WEARCAST_SAVE_CUSTOMER_DESIGN__ = async (body) => {
+        // If view images are provided by the designer, include them in the request
+        const request: AddCustomerDesignRequest = {
+          productId: body.productId,
+          productColorId: body.productColorId,
+          viewDesignsJson: body.viewDesignsJson,
+          // View images will be passed by the designer JavaScript if available
+          frontImage: (body as any).frontImage,
+          backImage: (body as any).backImage,
+          leftImage: (body as any).leftImage,
+          rightImage: (body as any).rightImage
+        };
+        return firstValueFrom(this.customerDesign.saveDesign(request));
+      };
+
       w.__WEARCAST_ADD_DESIGNED_TO_CART__ = async (
         items: AddOrUpdateDesignedToCartRequest[]
       ) => {
@@ -113,6 +127,9 @@ export class CustomerDesignComponent implements AfterViewInit {
       this.loadReviews(baseProductId);
     };
 
+    // Load categories for filter
+    this.loadCategories();
+
     const token = this.auth.getToken();
     const extraIds = this.parseDesignedProductIds(
       this.route.snapshot.queryParamMap.get('designedProductIds')
@@ -138,6 +155,31 @@ export class CustomerDesignComponent implements AfterViewInit {
       error: () => {
         this.runDesigner();
         setTimeout(() => this.searchCatalog(), 300);
+      }
+    });
+  }
+
+  loadCategories(): void {
+    this.loadingCategories = true;
+    const url = `${environment.apiUrl}/api/Category/GetAllCategories`;
+    this.http.get<any>(url).subscribe({
+      next: (res) => {
+        this.loadingCategories = false;
+        let arr = res;
+        if (arr && typeof arr === 'object' && 'data' in arr) {
+          arr = arr.data;
+        }
+        if (arr && typeof arr === 'object' && 'items' in arr) {
+          arr = arr.items;
+        }
+        if (arr && typeof arr === 'object' && 'categories' in arr) {
+          arr = arr.categories;
+        }
+        this.categories = Array.isArray(arr) ? arr : [];
+      },
+      error: () => {
+        this.loadingCategories = false;
+        this.categories = [];
       }
     });
   }
@@ -168,11 +210,38 @@ export class CustomerDesignComponent implements AfterViewInit {
           let o = item || {};
           const nested = o.product || o.Product || o.designedProduct || o.DesignedProduct || {};
           o = { ...o, ...nested };
+
+          // Get front-view image from colors array if available
+          let frontImageUrl: string | null = null;
+          const colors = o.colors || o.Colors || o.productColors || o.ProductColors || [];
+          if (Array.isArray(colors) && colors.length > 0) {
+            const firstColor = colors[0];
+            const colorImages = firstColor.images || firstColor.Images || firstColor.productImages || firstColor.ProductImages || [];
+            if (Array.isArray(colorImages)) {
+              // Find front view image
+              const frontImage = colorImages.find((img: any) => {
+                const viewSide = img.viewSide || img.ViewSide || img.side || img.Side || img.view || img.View;
+                return viewSide === 1 || viewSide === 'Front' || viewSide === 'front' || viewSide === 0;
+              });
+              if (frontImage) {
+                frontImageUrl = frontImage.imageUrl || frontImage.ImageUrl || frontImage.url || frontImage.Url || null;
+              }
+              // Fallback to first image if no front view found
+              if (!frontImageUrl && colorImages.length > 0) {
+                frontImageUrl = colorImages[0].imageUrl || colorImages[0].ImageUrl || colorImages[0].url || colorImages[0].Url || null;
+              }
+            }
+            // Try mainImageUrl on color
+            if (!frontImageUrl) {
+              frontImageUrl = firstColor.mainImageUrl || firstColor.MainImageUrl || firstColor.imageUrl || firstColor.ImageUrl || null;
+            }
+          }
+
           return {
             ...o,
             id: o.id ?? o.Id ?? o.productId ?? o.ProductId ?? o.designedProductId ?? o.DesignedProductId,
             name: o.name ?? o.Name ?? o.productName ?? o.ProductName ?? o.title ?? o.Title ?? 'Product',
-            imageUrl: o.imageUrl ?? o.ImageUrl ?? o.pictureUrl ?? o.PictureUrl ?? o.mainImage ?? o.MainImage ?? o.categoryImageUrl ?? (o.colors && o.colors[0] && o.colors[0].mainImageUrl) ?? null,
+            imageUrl: frontImageUrl ?? o.imageUrl ?? o.ImageUrl ?? o.mainImageUrl ?? o.MainImageUrl ?? o.pictureUrl ?? o.PictureUrl ?? o.mainImage ?? o.MainImage ?? o.categoryImageUrl ?? null,
             price: o.price ?? o.Price ?? o.basePrice ?? o.BasePrice
           };
         });
@@ -310,6 +379,7 @@ export class CustomerDesignComponent implements AfterViewInit {
   /**
    * After the designer runs, sync product images from the designer's PRODUCTS
    * registry into our Angular search results so they show real thumbnails.
+   * Prioritizes front-view images from the API/designer over main images.
    */
   syncImagesFromDesigner(): void {
     const w = window as any;
@@ -318,21 +388,35 @@ export class CustomerDesignComponent implements AfterViewInit {
     if (!products) return;
 
     this.catalogSearchResults = this.catalogSearchResults.map(item => {
-      if (item.imageUrl) return item; // already has image
       const key = `p${item.id}`;
       const prod = products[key];
       if (!prod) return item;
-      // Extract first available image from the product's images()
+
+      // Extract front-view image from the designer's product images
       const imgs = typeof prod.images === 'function' ? prod.images() : (prod.images || {});
-      let imageUrl: string | null = null;
+      let frontImageUrl: string | null = null;
+
       for (const colorKey of Object.keys(imgs)) {
         const views = imgs[colorKey];
-        if (views) {
-          imageUrl = views.front || views.back || views.right || views.left || null;
-          if (imageUrl) break;
+        if (views && views.front) {
+          frontImageUrl = views.front;
+          break; // Found front view, use it
         }
       }
-      return { ...item, imageUrl };
+
+      // If no front view found, fall back to any available view
+      if (!frontImageUrl) {
+        for (const colorKey of Object.keys(imgs)) {
+          const views = imgs[colorKey];
+          if (views) {
+            frontImageUrl = views.front || views.back || views.right || views.left || null;
+            if (frontImageUrl) break;
+          }
+        }
+      }
+
+      // Always prefer front image from designer over API main image
+      return { ...item, imageUrl: frontImageUrl || item.imageUrl };
     });
   }
 

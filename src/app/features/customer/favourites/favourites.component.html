@@ -1,0 +1,77 @@
+<app-customer-nav></app-customer-nav>
+
+<main class="wc-favourites-page">
+  <div class="wc-container">
+    <h1 class="wc-page-title">My Favourites</h1>
+
+    <!-- Messages -->
+    <div *ngIf="removeMessage" class="wc-success-msg">{{ removeMessage }}</div>
+    <div *ngIf="removeError" class="wc-error-msg">{{ removeError }}</div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="wc-state-center">
+      <div class="wc-spinner"></div>
+      <p>Loading favourites...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !loading" class="wc-state-center">
+      <p class="wc-error-msg">{{ error }}</p>
+      <button class="wc-btn-primary" (click)="loadFavourites()">Try Again</button>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && favourites.length === 0" class="wc-empty-state">
+      <div class="wc-empty-icon">♡</div>
+      <h2>No favourites yet</h2>
+      <p>Browse our products and add items you love to your favourites.</p>
+      <a routerLink="/customer/category" class="wc-btn-primary">Browse Products</a>
+    </div>
+
+    <!-- Favourites Grid -->
+    <div *ngIf="!loading && !error && favourites.length > 0" class="wc-favourites-grid">
+      <div *ngFor="let item of favourites" class="wc-favourite-card">
+        <!-- Product Image -->
+        <a [routerLink]="['/customer/product', item.fixedProductId || item.id]" class="wc-favourite-image">
+          <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.productName">
+          <div *ngIf="!item.imageUrl" class="wc-placeholder-img">📷</div>
+        </a>
+
+        <!-- Product Info -->
+        <div class="wc-favourite-info">
+          <a [routerLink]="['/customer/product', item.fixedProductId || item.id]" class="wc-favourite-name">
+            {{ item.productName }}
+          </a>
+
+          <div class="wc-favourite-color">
+            <span class="wc-color-dot" [style.background]="item.colorCode"></span>
+            <span>{{ item.colorName }}</span>
+          </div>
+
+          <p class="wc-favourite-price">${{ item.price | number:'1.2-2' }}</p>
+
+          <!-- Available Sizes -->
+          <div class="wc-favourite-sizes" *ngIf="item.sizes.length > 0">
+            <span class="wc-size-label">Sizes:</span>
+            <span *ngFor="let s of item.sizes" class="wc-size-chip"
+                  [class.out-of-stock]="s.quantity === 0">
+              {{ formatSize(s.size) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="wc-favourite-actions">
+          <button class="wc-btn-remove"
+                  (click)="removeFromFavourites(item)"
+                  [disabled]="removingId === item.fixedProductColorId">
+            <span *ngIf="removingId === item.fixedProductColorId" class="wc-dot-loader"></span>
+            {{ removingId === item.fixedProductColorId ? 'Removing...' : '♡ Remove' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<app-customer-footer></app-customer-footer>

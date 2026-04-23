@@ -399,47 +399,6 @@ export class AuthService {
     return role ? [role.toLowerCase()] : [];
   }
 
-  /**
-   * Stable scope for browser-only saved designs so each customer account has its own list.
-   * Uses JWT subject / nameidentifier when present, otherwise email from token or profile.
-   */
-  getCustomerLocalDesignsScope(): string {
-    const token = this.getToken();
-    if (!token) {
-      return 'guest';
-    }
-    const payload = this.decodeJwtPayload(token);
-    if (payload) {
-      const idKeys = [
-        'sub',
-        'nameid',
-        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
-        'userId',
-        'UserId',
-        'uid',
-        'Uid'
-      ];
-      for (const k of idKeys) {
-        const v = payload[k];
-        if (typeof v === 'string' && v.trim()) {
-          return 'u:' + v.trim();
-        }
-        if (typeof v === 'number' && Number.isFinite(v)) {
-          return 'u:' + String(v);
-        }
-      }
-      const email = this.pickEmailFromPayload(payload);
-      if (email) {
-        return 'e:' + email.trim().toLowerCase();
-      }
-    }
-    const prof = this.getCustomerProfile();
-    if (prof?.email?.trim()) {
-      return 'e:' + prof.email.trim().toLowerCase();
-    }
-    return 'guest';
-  }
-
   isLoggedIn(): boolean {
     return !!localStorage.getItem('token');
   }

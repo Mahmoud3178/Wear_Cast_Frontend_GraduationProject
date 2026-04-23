@@ -4,13 +4,28 @@
   <section class="wc-category-main">
     <aside class="wc-filters">
       <h2>Filters</h2>
+
+      <div class="filter-group">
+        <p class="label">Search</p>
+        <input type="text" class="form-control form-control-sm" placeholder="Search products..."
+          [(ngModel)]="searchTerm" (keyup.enter)="fetchProducts()">
+      </div>
+
+      <div class="filter-group">
+        <p class="label">Category</p>
+        <select class="form-select form-select-sm" [(ngModel)]="selectedCategory" (change)="fetchProducts()" [disabled]="loadingCategories">
+          <option [ngValue]="null">All Categories</option>
+          <option *ngFor="let cat of categories" [ngValue]="cat.id ?? cat.Id">{{ cat.name ?? cat.Name }}</option>
+        </select>
+      </div>
+
       <div class="filter-group">
         <p class="label">Target Audience</p>
         <button
           *ngFor="let aud of targetAudiences"
           class="chip"
           [class.chip--active]="aud.value === selectedAudience"
-          (click)="selectedAudience = aud.value">
+          (click)="selectedAudience = aud.value; fetchProducts()">
           {{ aud.label }}
         </button>
       </div>
@@ -21,14 +36,14 @@
           *ngFor="let style of dressStyles"
           class="chip"
           [class.chip--active]="style.value === selectedStyle"
-          (click)="selectedStyle = style.value">
+          (click)="selectedStyle = style.value; fetchProducts()">
           {{ style.label }}
         </button>
       </div>
 
       <div class="filter-group">
         <p class="label">Sort By</p>
-        <select class="form-select mt-2" [(ngModel)]="selectedSort">
+        <select class="form-select form-select-sm mt-2" [(ngModel)]="selectedSort" (change)="fetchProducts()">
           <option [ngValue]="sort.value" *ngFor="let sort of sortOptions">{{sort.label}}</option>
         </select>
       </div>
@@ -36,8 +51,8 @@
       <div class="filter-group mt-3">
         <p class="label">Price Range</p>
         <div class="d-flex gap-2">
-          <input type="number" class="form-control" placeholder="Min" [(ngModel)]="minPrice" min="0">
-          <input type="number" class="form-control" placeholder="Max" [(ngModel)]="maxPrice" min="0">
+          <input type="number" class="form-control form-control-sm" placeholder="Min (0)" [(ngModel)]="minPrice" min="0">
+          <input type="number" class="form-control form-control-sm" placeholder="Max (any)" [(ngModel)]="maxPrice" min="0">
         </div>
       </div>
 
@@ -48,8 +63,8 @@
 
     <section class="wc-category-grid">
       <div class="wc-category-header">
-        <h1>Catalog</h1>
-        <p class="meta">Showing {{ products.length }} items</p>
+        <h1>Products</h1>
+        <p class="meta">Showing {{ products.length }} of {{ totalCount }} items</p>
       </div>
 
       <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
@@ -57,18 +72,29 @@
       <div *ngIf="!loading && products.length === 0 && !error" class="text-muted text-center py-5">No products found matching these filters.</div>
 
       <div class="grid" *ngIf="products.length > 0">
-        <article class="wc-card" *ngFor="let p of products" routerLink="/customer/product">
-          <div class="image" [style.background-image]="p.imageUrl ? 'url(' + p.imageUrl + ')' : null">
-            <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" loading="lazy" class="h-100 w-100 object-fit-cover opacity-0">
+        <article class="wc-card" *ngFor="let p of products" [routerLink]="'/customer/product/' + p.id">
+          <div class="image">
+            <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" loading="lazy">
+            <div *ngIf="!p.imageUrl" class="image-placeholder">📷</div>
           </div>
           <h3>{{ p.name }}</h3>
-          <p class="meta">{{ p.categoryName || 'Catalog' }} · Target: {{ p.targetAudience === 1 ? 'Men' : (p.targetAudience === 2 ? 'Women' : (p.targetAudience === 3 ? 'Unisex' : (p.targetAudience === 8 ? 'Babies' : 'Kids'))) }}</p>
-          <p class="price">${{ p.price }}</p>
+          <p class="meta">{{ p.categoryName || 'Catalog' }} · {{ audienceLabel(p.targetAudience) || 'All' }}</p>
+          <p class="price">${{ p.price | number:'1.2-2' }}</p>
         </article>
+      </div>
+
+      <!-- Pagination -->
+      <div class="wc-pagination" *ngIf="!loading && totalPages > 1">
+        <button class="wc-page-btn" [disabled]="pageIndex === 1" (click)="changePage(pageIndex - 1)">
+          ← Prev
+        </button>
+        <span class="wc-page-info">Page {{ pageIndex }} of {{ totalPages }}</span>
+        <button class="wc-page-btn" [disabled]="pageIndex === totalPages" (click)="changePage(pageIndex + 1)">
+          Next →
+        </button>
       </div>
     </section>
   </section>
 
   <app-customer-footer></app-customer-footer>
 </main>
-

@@ -363,9 +363,8 @@
                 <!-- Inline edit form -->
                 <ng-container *ngIf="editingColorId === color.colorId">
                   <hr class="my-2">
-                  <div class="alert alert-warning py-2 small mb-2">
-                    <strong>Note:</strong> You can only upload photos for <em>sides that have no photo yet</em>.
-                    The API does not currently support replacing existing photos. To replace a photo, delete this color and re-add it.
+                  <div class="alert alert-info py-2 small mb-2">
+                    <strong>Tip:</strong> Select new images below to replace existing view photos for this color.
                   </div>
                   <div class="row g-2">
                     <div class="col-6">

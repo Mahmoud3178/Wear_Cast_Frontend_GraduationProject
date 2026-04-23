@@ -25,6 +25,9 @@
         class="wc-nav-auth"
         (click)="signOut()"
       >Sign out</button>
+      <a routerLink="/customer/favourites" class="wc-icon-btn" aria-label="Favourites" *ngIf="auth.isLoggedIn()">
+        <span class="wc-icon">♡</span>
+      </a>
       <a routerLink="/customer/cart" class="wc-icon-btn" aria-label="Cart">
         <span class="wc-icon">🛒</span>
       </a>
