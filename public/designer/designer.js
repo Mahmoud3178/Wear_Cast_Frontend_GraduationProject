@@ -115,18 +115,8 @@
   var viewRedoStacks = {};
   var VIEW_KEYS = ['front', 'back', 'right', 'left'];
 
-  var STICKER_TAGS = [
-    'Football', 'Cool', 'Star', 'Christmas', 'Dog', 'Love', 'Heart', 'Money',
-    'Rose', 'Flower', 'Fire', 'Skull', 'Music', 'Sport', 'Circle', 'Flags'
-  ];
-
-  var STICKERS = [
-    { id: 'rose1', name: 'Red rose', category: 'rose', price: 2, image: 'https://placehold.co/200x200/fee2e2/7f1d1d?text=Rose+1' },
-    { id: 'rose2', name: 'Dripping rose', category: 'rose', price: 2, image: 'https://placehold.co/200x200/fecaca/7f1d1d?text=Rose+2' },
-    { id: 'sport1', name: 'Football club', category: 'sport', price: 2, image: 'https://placehold.co/200x200/dbeafe/1d4ed8?text=Sport' },
-    { id: 'music1', name: 'Music note', category: 'music', price: 2, image: 'https://placehold.co/200x200/e0f2fe/0369a1?text=Music' },
-    { id: 'star1', name: 'Star badge', category: 'all', price: 2, image: 'https://placehold.co/200x200/fef9c3/a16207?text=Star' }
-  ];
+  /** Last fetch from GET /api/design-assets (client-side search filter). */
+  var lastDesignAssetRows = [];
 
   function getStageDimensions() {
     var p = PRODUCTS[currentProduct];
@@ -495,7 +485,8 @@
     viewRedoStacks[currentProduct][currentView] = redoStack.slice();
   }
 
-  function loadViewFromStore(view) {
+  /** @param {function(): void} [done] — called after Fabric has finished loading the view (or cleared). */
+  function loadViewFromStore(view, done) {
     viewDesigns[currentProduct] = viewDesigns[currentProduct] || {};
     viewUndoStacks[currentProduct] = viewUndoStacks[currentProduct] || {};
     viewRedoStacks[currentProduct] = viewRedoStacks[currentProduct] || {};
@@ -503,6 +494,7 @@
     if (data) {
       canvas.loadFromJSON(data, function () {
         canvas.renderAll();
+        if (typeof done === 'function') done();
       });
       undoStack = (viewUndoStacks[currentProduct][view] || []).slice();
       redoStack = (viewRedoStacks[currentProduct][view] || []).slice();
@@ -512,6 +504,7 @@
       undoStack = [];
       redoStack = [];
       saveState();
+      if (typeof done === 'function') done();
     }
     updateUndoRedoButtons();
   }
@@ -540,45 +533,94 @@
   function renderStickerTags() {
     if (!designTagsEl) return;
     designTagsEl.innerHTML = '';
-    STICKER_TAGS.forEach(function (tag) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'design-tag';
-      btn.textContent = tag;
-      btn.addEventListener('click', function () {
-        if (designSearchInput) designSearchInput.value = tag;
-        renderStickerGrid();
-      });
-      designTagsEl.appendChild(btn);
-    });
+    designTagsEl.hidden = true;
   }
 
-  function renderStickerGrid() {
+  function populateDesignCategorySelect(done) {
+    if (!designCategorySelect) {
+      if (typeof done === 'function') done();
+      return;
+    }
+    var fn = window.__WEARCAST_LOAD_DESIGN_ASSET_CATEGORIES__;
+    if (typeof fn !== 'function') {
+      if (typeof done === 'function') done();
+      return;
+    }
+    fn()
+      .then(function (cats) {
+        while (designCategorySelect.options.length > 1) {
+          designCategorySelect.remove(1);
+        }
+        (cats || []).forEach(function (c) {
+          if (!c || typeof c.id !== 'number') return;
+          var opt = document.createElement('option');
+          opt.value = String(c.id);
+          opt.textContent = c.name || 'Category ' + c.id;
+          designCategorySelect.appendChild(opt);
+        });
+      })
+      .catch(function (e) {
+        console.warn('[WearCast] design asset categories failed', e);
+      })
+      .finally(function () {
+        if (typeof done === 'function') done();
+      });
+  }
+
+  function renderStickerGridFromRows(rows, term) {
     if (!designGridEl) return;
-    var category = designCategorySelect ? designCategorySelect.value : 'all';
-    var term = designSearchInput ? designSearchInput.value.trim().toLowerCase() : '';
     designGridEl.innerHTML = '';
-    STICKERS.filter(function (s) {
-      var matchCat = category === 'all' || s.category === category;
-      var matchTerm = !term || s.name.toLowerCase().indexOf(term) !== -1;
-      return matchCat && matchTerm;
-    }).forEach(function (s) {
+    var t = (term || '').toLowerCase();
+    rows.forEach(function (s) {
+      if (!s || !s.imageUrl) return;
+      if (t && String(s.name || '').toLowerCase().indexOf(t) === -1) return;
       var tile = document.createElement('button');
       tile.type = 'button';
       tile.className = 'design-tile';
       var thumb = document.createElement('div');
       thumb.className = 'design-tile-thumb';
-      thumb.style.backgroundImage = 'url(' + s.image + ')';
+      thumb.style.backgroundImage = 'url(' + s.imageUrl + ')';
       var name = document.createElement('div');
       name.className = 'design-tile-name';
-      name.textContent = s.name;
+      name.textContent = s.name || 'Design';
       tile.appendChild(thumb);
       tile.appendChild(name);
       tile.addEventListener('click', function () {
-        addStickerFromUrl(s.image);
+        addStickerFromUrl(s.imageUrl);
       });
       designGridEl.appendChild(tile);
     });
+    if (!designGridEl.children.length) {
+      designGridEl.innerHTML = '<p class="design-grid-empty">No designs match your search.</p>';
+    }
+  }
+
+  function renderStickerGrid() {
+    if (!designGridEl) return;
+    var categoryVal = designCategorySelect ? designCategorySelect.value : 'all';
+    var categoryId =
+      categoryVal === 'all' ? null : parseInt(categoryVal, 10);
+    if (categoryVal !== 'all' && !Number.isFinite(categoryId)) {
+      categoryId = null;
+    }
+    var term = designSearchInput ? designSearchInput.value.trim() : '';
+    designGridEl.innerHTML = '<p class="design-grid-loading">Loading designs…</p>';
+    var fn = window.__WEARCAST_LOAD_DESIGN_ASSETS__;
+    if (typeof fn !== 'function') {
+      designGridEl.innerHTML =
+        '<p class="design-grid-empty">Design library is unavailable. Refresh the page or sign in.</p>';
+      return;
+    }
+    fn(categoryId, 1, 100)
+      .then(function (rows) {
+        lastDesignAssetRows = Array.isArray(rows) ? rows : [];
+        renderStickerGridFromRows(lastDesignAssetRows, term);
+      })
+      .catch(function (err) {
+        console.error('[WearCast] design assets load failed', err);
+        designGridEl.innerHTML =
+          '<p class="design-grid-empty">Could not load designs. Try again later.</p>';
+      });
   }
 
   function updateUndoRedoButtons() {
@@ -707,9 +749,73 @@
     };
   }
 
-  function getSavedDesigns() {
-    // Local saves disabled; all designs must be persisted via the backend API.
-    return [];
+  function slugFromColorId(cat, colorId) {
+    if (!cat || !cat.colorIdsBySlug || colorId == null) return null;
+    var map = cat.colorIdsBySlug;
+    for (var slug in map) {
+      if (Object.prototype.hasOwnProperty.call(map, slug) && map[slug] === colorId) {
+        return slug;
+      }
+    }
+    return null;
+  }
+
+  /** Apply GET /api/customers/me/designs/{id} payload onto the live editor. */
+  function applyLoadedDesignDto(dto) {
+    if (!dto || typeof dto !== 'object') return;
+    var pid = dto.productId != null ? dto.productId : dto.ProductId;
+    if (pid == null) {
+      pid = dto.designedProductId != null ? dto.designedProductId : dto.DesignedProductId;
+    }
+    var productKey = pid != null ? 'p' + pid : null;
+    if (productKey) {
+      if (!PRODUCTS[productKey]) {
+        alert(
+          'This design belongs to a product that is not loaded. Add ?designedProductIds=' +
+            pid +
+            ' to the URL and reload, or pick that product from the catalog.'
+        );
+        return;
+      }
+      if (currentProduct !== productKey) {
+        setProduct(productKey);
+      }
+    }
+    var cat = PRODUCTS[currentProduct] && PRODUCTS[currentProduct].wearcastCatalog;
+    var colorId = dto.productColorId != null ? dto.productColorId : dto.ProductColorId;
+    if (colorId != null && cat) {
+      var slug = slugFromColorId(cat, colorId);
+      if (slug) setColor(slug);
+    }
+    var jsonStr = dto.viewDesignsJson != null ? dto.viewDesignsJson : dto.ViewDesignsJson;
+    if (typeof jsonStr === 'string' && jsonStr.trim()) {
+      try {
+        var parsed = JSON.parse(jsonStr);
+        viewDesigns[currentProduct] = parsed;
+      } catch (e) {
+        console.warn('[WearCast] invalid viewDesignsJson', e);
+        alert('Could not read saved design data.');
+        return;
+      }
+    }
+    currentView = 'front';
+    document.querySelectorAll('.view-btn').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-view') === 'front');
+    });
+    setProductImage();
+    loadViewFromStore('front');
+    resizeStageAndCanvas();
+    if (canvas) canvas.renderAll();
+    undoStack =
+      viewUndoStacks[currentProduct] && viewUndoStacks[currentProduct][currentView]
+        ? viewUndoStacks[currentProduct][currentView].slice()
+        : [];
+    redoStack =
+      viewRedoStacks[currentProduct] && viewRedoStacks[currentProduct][currentView]
+        ? viewRedoStacks[currentProduct][currentView].slice()
+        : [];
+    if (undoStack.length === 0 && canvas) saveState();
+    updateUndoRedoButtons();
   }
 
   function setProductImage() {
@@ -839,6 +945,30 @@
   }
 
   /**
+   * Count Fabric.js `image` objects across front/back/left/right (customer-uploaded assets).
+   */
+  function countFabricImageAssets(viewDesignsObj) {
+    var sides = ['front', 'back', 'left', 'right'];
+    var n = 0;
+    if (!viewDesignsObj || typeof viewDesignsObj !== 'object') {
+      return 0;
+    }
+    for (var i = 0; i < sides.length; i++) {
+      var doc = viewDesignsObj[sides[i]];
+      if (!doc || !doc.objects || !Array.isArray(doc.objects)) {
+        continue;
+      }
+      for (var j = 0; j < doc.objects.length; j++) {
+        var o = doc.objects[j];
+        if (o && o.type === 'image') {
+          n++;
+        }
+      }
+    }
+    return n;
+  }
+
+  /**
    * Factory catalog templates: POST design to API when logged in.
    * Built-in templates (hoodie/tshirt/cap) cannot be saved (server-only).
    * Generates 4-view composite images (product bg + design overlay) before saving.
@@ -857,7 +987,10 @@
       // Generate 4-view composite images first, then POST to server
       generateAllViewImages(function(viewImages) {
         var vd = viewDesigns[currentProduct];
-        fn({
+        var designName = (name && String(name).trim()) || 'Untitled design';
+        var payload = {
+          name: designName,
+          assetCount: countFabricImageAssets(vd || {}),
           productId: cat.designedProductId,
           productColorId: colorId,
           viewDesignsJson: JSON.stringify(vd || {}),
@@ -865,11 +998,15 @@
           backImage: viewImages.back,
           leftImage: viewImages.left,
           rightImage: viewImages.right
-        }).then(function () {
+        };
+        console.log('[WearCast] saveDesign payload:', payload);
+        fn(payload).then(function (designId) {
+          console.log('[WearCast] saveDesign success, designId:', designId);
           if (saveModal) saveModal.classList.add('hidden');
           alert('Design saved to your WearCast account.');
         }).catch(function (err) {
           var msg = (err && err.message) ? err.message : String(err);
+          console.error('[WearCast] saveDesign error:', err);
           alert('Could not save to the server: ' + msg);
         }).finally(function () {
           if (saveConfirm) saveConfirm.disabled = false;
@@ -890,46 +1027,115 @@
   }
 
   function loadDesignById(id) {
-    const list = getSavedDesigns();
-    const item = list.find(function (d) { return d.id === id; });
-    if (item && item.state) {
-      setDesignState(item.state);
-      loadModal.classList.add('hidden');
+    var fn = window.__WEARCAST_GET_CUSTOMER_DESIGN__;
+    if (typeof fn !== 'function') {
+      alert('Sign in as a customer to load saved designs.');
+      return;
     }
+    fn(id)
+      .then(function (dto) {
+        if (!dto) {
+          alert('Could not load that design.');
+          return;
+        }
+        applyLoadedDesignDto(dto);
+        if (loadModal) loadModal.classList.add('hidden');
+      })
+      .catch(function (err) {
+        var msg = err && err.message ? err.message : String(err);
+        alert('Could not load design: ' + msg);
+      });
   }
 
   function deleteDesignById(id, e) {
     e.stopPropagation();
-    // Local saves disabled; nothing to delete.
-    renderSavedList();
+    var fnDel = window.__WEARCAST_DELETE_CUSTOMER_DESIGN__;
+    if (typeof fnDel !== 'function') {
+      renderSavedList();
+      return;
+    }
+    fnDel(id)
+      .then(function () {
+        renderSavedList();
+      })
+      .catch(function (err) {
+        var msg = err && err.message ? err.message : String(err);
+        alert('Could not delete: ' + msg);
+      });
   }
 
-  function renderSavedList() {
-    const list = getSavedDesigns();
+  function renderSavedListFromArray(list) {
+    if (!savedListEl) return;
     savedListEl.innerHTML = '';
-    if (list.length === 0) {
-      savedListEl.innerHTML = '<p class="saved-empty">No saved designs yet. Save your current design to see it here.</p>';
+    if (!list.length) {
+      savedListEl.innerHTML =
+        '<p class="saved-empty">No saved designs yet. Save your current design to see it here.</p>';
       return;
     }
     list.forEach(function (item) {
-      const div = document.createElement('div');
+      var div = document.createElement('div');
       div.className = 'saved-item';
-      const date = item.createdAt ? new Date(item.createdAt).toLocaleString() : '';
-      const meta = (item.state && item.state.productType) ? item.state.productType + ' · ' + (item.state.productColor || '') + ' · ' + date : date;
-      div.innerHTML =
-        '<div class="saved-item-info">' +
-        '<div class="saved-item-name">' + (item.name || 'Untitled') + '</div>' +
-        '<div class="saved-item-meta">' + meta + '</div>' +
-        '</div>' +
-        '<button type="button" class="saved-item-delete" data-id="' + item.id + '" title="Delete">Delete</button>';
-      div.querySelector('.saved-item-delete').addEventListener('click', function (e) {
-        deleteDesignById(item.id, e);
+      if (item.previewUrl) {
+        var wrap = document.createElement('div');
+        wrap.className = 'saved-item-thumb-wrap';
+        var im = document.createElement('img');
+        im.className = 'saved-item-thumb';
+        im.alt = '';
+        im.src = item.previewUrl;
+        wrap.appendChild(im);
+        div.appendChild(wrap);
+      }
+      var date = item.createdAt ? new Date(item.createdAt).toLocaleString() : '';
+      var info = document.createElement('div');
+      info.className = 'saved-item-info';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'saved-item-name';
+      nameEl.textContent = item.name || 'Untitled';
+      var metaEl = document.createElement('div');
+      metaEl.className = 'saved-item-meta';
+      metaEl.textContent = date;
+      info.appendChild(nameEl);
+      info.appendChild(metaEl);
+      div.appendChild(info);
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'saved-item-delete';
+      del.setAttribute('data-id', String(item.id));
+      del.title = 'Delete';
+      del.textContent = 'Delete';
+      del.addEventListener('click', function (ev) {
+        deleteDesignById(item.id, ev);
       });
+      div.appendChild(del);
       div.addEventListener('click', function (e) {
-        if (!e.target.classList.contains('saved-item-delete')) loadDesignById(item.id);
+        if (e.target.closest('.saved-item-delete')) return;
+        loadDesignById(item.id);
       });
       savedListEl.appendChild(div);
     });
+  }
+
+  function renderSavedList() {
+    if (!savedListEl) return;
+    savedListEl.innerHTML = '<p class="saved-empty">Loading…</p>';
+    var fnList = window.__WEARCAST_LIST_CUSTOMER_DESIGNS__;
+    if (typeof fnList !== 'function') {
+      savedListEl.innerHTML =
+        '<p class="saved-empty">Sign in as a customer to see saved designs.</p>';
+      return;
+    }
+    fnList()
+      .then(function (list) {
+        renderSavedListFromArray(Array.isArray(list) ? list : []);
+      })
+      .catch(function (err) {
+        var msg = err && err.message ? err.message : String(err);
+        savedListEl.innerHTML = '';
+        var p = document.createElement('p');
+        p.className = 'saved-empty';
+        p.textContent = 'Could not load designs: ' + msg;
+        savedListEl.appendChild(p);
+      });
   }
 
   function openSaveModal() {
@@ -1054,77 +1260,161 @@
   }
 
   /**
-   * Generates composite PNG images for all 4 views (front/back/left/right).
-   * Each image is composed by drawing the product background image for that view
-   * on an off-screen Fabric.js canvas, then loading the saved design JSON on top.
-   * Calls callback({ front, back, left, right }) with base64 data URLs (or null if no image).
+   * Compress a data URL (PNG) down to a smaller JPEG to reduce upload size.
+   * maxDim: max width/height in pixels. quality: 0..1 for JPEG encoder.
+   */
+  function compressDataURL(dataUrl, maxDim, quality, cb) {
+    if (!dataUrl) { cb(null); return; }
+    var img = new Image();
+    img.onload = function() {
+      var w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        var ratio = Math.min(maxDim / w, maxDim / h);
+        w = Math.floor(w * ratio);
+        h = Math.floor(h * ratio);
+      }
+      var c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      cb(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = function() { cb(dataUrl); };
+    img.src = dataUrl;
+  }
+
+  /**
+   * Pixel snapshot of what the user sees: #product-image + Fabric canvases (same dimensions).
+   */
+  function compositeStageToDataURL(cb) {
+    if (!canvas) {
+      cb(null);
+      return;
+    }
+    var w = canvas.getWidth();
+    var h = canvas.getHeight();
+    var out = document.createElement('canvas');
+    out.width = w;
+    out.height = h;
+    var ctx = out.getContext('2d');
+    if (productImage && productImage.complete && productImage.naturalWidth > 0) {
+      try {
+        ctx.drawImage(productImage, 0, 0, w, h);
+      } catch (drawErr) {
+        console.warn('WearCast: product image draw skipped', drawErr);
+      }
+    }
+    var lower = canvas.lowerCanvasEl;
+    if (lower) {
+      try {
+        ctx.drawImage(lower, 0, 0, w, h);
+      } catch (e1) {
+        console.warn('WearCast: fabric lower canvas draw failed', e1);
+      }
+    }
+    var upper = canvas.upperCanvasEl;
+    if (upper && upper.width) {
+      try {
+        ctx.drawImage(upper, 0, 0, w, h);
+      } catch (e2) {
+        console.warn('WearCast: fabric upper canvas draw failed', e2);
+      }
+    }
+    var raw = null;
+    try {
+      raw = out.toDataURL('image/png');
+    } catch (e3) {
+      console.warn('WearCast: toDataURL failed', e3);
+    }
+    compressDataURL(raw, 1200, 0.85, function (compressed) {
+      cb(compressed || raw);
+    });
+  }
+
+  /**
+   * Generates composite images for all 4 views by briefly switching the live stage
+   * (garment photo + Fabric overlay) per side. Matches the editor pixel-for-pixel and
+   * waits for Fabric JSON + product image loads before exporting.
    */
   function generateAllViewImages(callback) {
+    if (!canvas) {
+      callback({ front: null, back: null, left: null, right: null });
+      return;
+    }
     saveCurrentViewToStore();
-    var vd = viewDesigns[currentProduct] || {};
-    var colorImgs = (getProductImages() || {})[currentColor] || {};
+    var savedView = currentView;
     var views = ['front', 'back', 'left', 'right'];
     var results = { front: null, back: null, left: null, right: null };
-    var remaining = views.length;
-    var w = canvas ? canvas.getWidth() : 400;
-    var h = canvas ? canvas.getHeight() : 480;
+    var idx = 0;
 
-    function finish() {
-      remaining--;
-      if (remaining === 0) { callback(results); }
+    function restoreAndFinish() {
+      currentView = savedView;
+      document.querySelectorAll('.view-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-view') === currentView);
+      });
+      setProductImage();
+      loadViewFromStore(savedView, function () {
+        setProductImage();
+        if (canvas) canvas.renderAll();
+        callback(results);
+      });
     }
 
-    views.forEach(function(view) {
-      var canvasJson = vd[view] || null;
-      var bgUrl = colorImgs[view] || null;
-
-      var offEl = document.createElement('canvas');
-      offEl.width = w;
-      offEl.height = h;
-
-      var tempCanvas = new fabric.Canvas(offEl, {
-        width: w, height: h, backgroundColor: 'transparent', selection: false
-      });
-
-      var doExport = function() {
-        try {
-          results[view] = tempCanvas.toDataURL({ format: 'png', multiplier: 1 });
-        } catch (e) {
-          console.warn('WearCast: failed to export view image for', view, e);
-        }
-        try { tempCanvas.dispose(); } catch (e2) {}
-        finish();
-      };
-
-      var loadDesign = function() {
-        if (canvasJson && canvasJson.objects && canvasJson.objects.length > 0) {
-          tempCanvas.loadFromJSON(canvasJson, function() {
-            tempCanvas.renderAll();
-            doExport();
-          });
-        } else {
-          tempCanvas.renderAll();
-          doExport();
-        }
-      };
-
-      if (bgUrl) {
-        fabric.Image.fromURL(bgUrl, function(img) {
-          if (img && img.width > 0 && img.height > 0) {
-            img.set({
-              left: 0, top: 0, originX: 'left', originY: 'top',
-              scaleX: w / img.width, scaleY: h / img.height,
-              selectable: false, evented: false
-            });
-            tempCanvas.add(img);
-            tempCanvas.sendToBack(img);
-          }
-          loadDesign();
-        }, { crossOrigin: 'anonymous' });
-      } else {
-        loadDesign();
+    function waitProductImageThen(fn) {
+      if (!productImage || !productImage.src) {
+        setTimeout(fn, 0);
+        return;
       }
-    });
+      if (productImage.complete && productImage.naturalWidth > 0) {
+        setTimeout(fn, 0);
+        return;
+      }
+      productImage.onload = function () {
+        productImage.onload = null;
+        productImage.onerror = null;
+        fn();
+      };
+      productImage.onerror = function () {
+        productImage.onload = null;
+        productImage.onerror = null;
+        fn();
+      };
+    }
+
+    function processNextView() {
+      if (idx >= views.length) {
+        restoreAndFinish();
+        return;
+      }
+      var view = views[idx];
+      currentView = view;
+      document.querySelectorAll('.view-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-view') === currentView);
+      });
+      setProductImage();
+      loadViewFromStore(view, function () {
+        waitProductImageThen(function () {
+          if (canvas) {
+            canvas.discardActiveObject();
+            canvas.renderAll();
+          }
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              compositeStageToDataURL(function (dataUrl) {
+                results[view] = dataUrl;
+                idx++;
+                processNextView();
+              });
+            });
+          });
+        });
+      });
+    }
+
+    processNextView();
   }
 
   function confirmSizeQtyAddToCart() {
@@ -1170,20 +1460,26 @@
     }
     if (sizeQtyModalConfirm) sizeQtyModalConfirm.disabled = true;
 
-    // Generate composite view images (product bg + design overlay) for all 4 sides,
-    // then save a unique draft design per size (with images attached) and add to cart.
+    // Generate composites once, save the design once, then add every size line with the same designId.
     generateAllViewImages(function(viewImages) {
       var vd = viewDesigns[currentProduct];
-      var promises = lines.map(function(L) {
-        return fnSave({
-          productId: cat.designedProductId,
-          productColorId: colorId,
-          viewDesignsJson: JSON.stringify(vd || {}),
-          frontImage: viewImages.front,
-          backImage: viewImages.back,
-          leftImage: viewImages.left,
-          rightImage: viewImages.right
-        }).then(function (designId) {
+      var title = (p && p.title) ? String(p.title) : 'Design';
+      var cartName = title + ' · cart · ' + new Date().toISOString().slice(0, 16).replace('T', ' ');
+      var ac = countFabricImageAssets(vd || {});
+      console.log('[WearCast] addToCart viewImages generated:', Object.keys(viewImages).map(function(k) { return k + ':' + (viewImages[k] ? viewImages[k].length + ' chars' : 'null'); }));
+      var payload = {
+        name: cartName,
+        assetCount: ac,
+        productId: cat.designedProductId,
+        productColorId: colorId,
+        viewDesignsJson: JSON.stringify(vd || {}),
+        frontImage: viewImages.front,
+        backImage: viewImages.back,
+        leftImage: viewImages.left,
+        rightImage: viewImages.right
+      };
+      fnSave(payload)
+        .then(function (designId) {
           if (designId == null || designId === undefined) {
             throw new Error('The server did not return a design id.');
           }
@@ -1191,17 +1487,19 @@
           if (!Number.isFinite(id)) {
             throw new Error('Invalid design id from server.');
           }
-          return fnCart([{ designId: id, size: L.size, quantity: L.quantity }]);
-        });
-      });
-
-      Promise.all(promises)
+          var cartLines = lines.map(function (L) {
+            return { designId: id, size: L.size, quantity: L.quantity };
+          });
+          console.log('[WearCast] addToCart single save designId', id, 'lines', cartLines.length);
+          return fnCart(cartLines);
+        })
         .then(function () {
           closeSizeQtyModal();
           alert('Added to cart. Open the cart to review your items.');
         })
         .catch(function (err) {
           var msg = err && err.message ? err.message : String(err);
+          console.error('[WearCast] addToCart error:', err);
           alert('Could not add to cart: ' + msg);
         })
         .finally(function () {
@@ -1526,14 +1824,26 @@
     }
 
     if (designTagsEl && designGridEl) {
-      renderStickerTags();
-      renderStickerGrid();
-    }
-    if (designCategorySelect) {
-      designCategorySelect.addEventListener('change', renderStickerGrid);
-    }
-    if (designSearchInput) {
-      designSearchInput.addEventListener('input', renderStickerGrid);
+      populateDesignCategorySelect(function () {
+        renderStickerTags();
+        renderStickerGrid();
+      });
+      if (designCategorySelect) {
+        designCategorySelect.addEventListener('change', function () {
+          lastDesignAssetRows = [];
+          renderStickerGrid();
+        });
+      }
+      if (designSearchInput) {
+        designSearchInput.addEventListener('input', function () {
+          var q = designSearchInput.value.trim();
+          if (lastDesignAssetRows.length) {
+            renderStickerGridFromRows(lastDesignAssetRows, q);
+          } else {
+            renderStickerGrid();
+          }
+        });
+      }
     }
 
     rebuildProductListFromProducts();

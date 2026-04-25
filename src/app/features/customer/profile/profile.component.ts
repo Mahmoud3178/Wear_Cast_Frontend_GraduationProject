@@ -11,7 +11,14 @@ import {
 import { FormsModule } from '@angular/forms';
 import { CustomerProfileService, UpdateCustomerRequest, ChangePasswordRequest } from '../../../core/services/customer-profile.service';
 
-import { OrderService, Order } from '../../../core/services/order.service';
+import {
+  CustomerShipmentsService,
+  CustomerShipmentRow,
+  CustomerShipmentListQuery,
+  CustomerShipmentDetailVm,
+  CUSTOMER_SHIPMENT_SORT_OPTIONS,
+  CUSTOMER_SHIPMENT_STATUS_OPTIONS
+} from '../../../core/services/customer-shipments.service';
 
 type ProfileTab = 'info' | 'addresses' | 'orders' | 'security';
 
@@ -43,10 +50,41 @@ export class ProfileComponent implements OnInit {
   editModeInfo = false;
   editModeAddress = false;
 
-  // Orders
-  orders: (Order & { itemsLoading?: boolean })[] = [];
-  ordersLoading = false;
-  expandedOrderId: number | null = null;
+  /** Numeric customer id from GET /api/customers/profile (for CustomerId query when required). */
+  customerNumericId: number | null = null;
+
+  /** Shipments (GET /api/CustomerShipments) */
+  shipments: CustomerShipmentRow[] = [];
+  shipmentsLoading = false;
+  shipmentsError = '';
+  shipmentPageIndex = 1;
+  shipmentPageSize = 10;
+  shipmentPages = 1;
+  shipmentRecords = 0;
+  shipmentsLoadedOnce = false;
+
+  shipmentFilters: {
+    sortBy: number | null;
+    shipmentStatus: number | null;
+    minPrice: string;
+    maxPrice: string;
+    deliveryCity: string;
+    deliveryStreet: string;
+  } = {
+    sortBy: null,
+    shipmentStatus: null,
+    minPrice: '',
+    maxPrice: '',
+    deliveryCity: '',
+    deliveryStreet: ''
+  };
+
+  readonly shipmentSortOptions = CUSTOMER_SHIPMENT_SORT_OPTIONS;
+  readonly shipmentStatusOptions = CUSTOMER_SHIPMENT_STATUS_OPTIONS;
+
+  expandedShipmentId: number | null = null;
+  shipmentDetailLoading = false;
+  shipmentDetail: CustomerShipmentDetailVm | null = null;
 
   infoForm = {
     firstName: '',
@@ -71,7 +109,7 @@ export class ProfileComponent implements OnInit {
   constructor(
     private readonly auth: AuthService,
     private readonly profileService: CustomerProfileService,
-    private readonly orderService: OrderService
+    private readonly customerShipmentsService: CustomerShipmentsService
   ) {}
 
   ngOnInit(): void {
@@ -85,6 +123,27 @@ export class ProfileComponent implements OnInit {
       next: (res) => {
         const data = res?.data ?? res;
         if (data) {
+          const hadCustomerId = this.customerNumericId != null;
+          const cid =
+            data.id ??
+            data.Id ??
+            data.customerId ??
+            data.CustomerId ??
+            data.userId ??
+            data.UserId;
+          if (typeof cid === 'number' && cid > 0) {
+            this.customerNumericId = cid;
+          } else if (typeof cid === 'string' && /^\d+$/.test(cid)) {
+            this.customerNumericId = parseInt(cid, 10);
+          }
+          if (
+            this.activeTab === 'orders' &&
+            !hadCustomerId &&
+            this.customerNumericId != null &&
+            this.shipmentsLoadedOnce
+          ) {
+            this.loadShipments(false);
+          }
           this.infoForm = {
             firstName: data.firstName || this.profile?.firstName || '',
             lastName: data.lastName || this.profile?.lastName || '',
@@ -155,37 +214,98 @@ export class ProfileComponent implements OnInit {
 
   setTab(tab: ProfileTab): void {
     this.activeTab = tab;
-    if (tab === 'orders' && this.orders.length === 0 && !this.ordersLoading) {
-      this.loadOrders();
+    if (tab === 'orders' && !this.shipmentsLoadedOnce && !this.shipmentsLoading) {
+      this.loadShipments(true);
     }
   }
 
-  loadOrders(): void {
-    this.ordersLoading = true;
-    this.orderService.getMyOrders().subscribe({
-      next: (orders) => {
-        this.orders = orders;
-        this.ordersLoading = false;
+  loadShipments(resetPage: boolean): void {
+    if (resetPage) this.shipmentPageIndex = 1;
+    this.shipmentsLoading = true;
+    this.shipmentsError = '';
+    const q: CustomerShipmentListQuery = {
+      customerId: this.customerNumericId,
+      pageIndex: this.shipmentPageIndex,
+      pageSize: this.shipmentPageSize,
+      sortBy: this.shipmentFilters.sortBy,
+      shipmentStatus: this.shipmentFilters.shipmentStatus,
+      deliveryCity: this.shipmentFilters.deliveryCity.trim() || null,
+      deliveryStreet: this.shipmentFilters.deliveryStreet.trim() || null
+    };
+    const minP = parseFloat(this.shipmentFilters.minPrice);
+    if (!isNaN(minP) && minP > 0) q.minPrice = minP;
+    const maxP = parseFloat(this.shipmentFilters.maxPrice);
+    if (!isNaN(maxP) && maxP > 0) q.maxPrice = maxP;
+
+    this.customerShipmentsService.list(q).subscribe({
+      next: (page) => {
+        this.shipments = page.items;
+        this.shipmentPages = Math.max(1, page.pages || 1);
+        this.shipmentRecords = page.records;
+        this.shipmentPageIndex = page.pageIndex;
+        this.shipmentPageSize = page.pageSize;
+        this.shipmentsLoading = false;
+        this.shipmentsLoadedOnce = true;
+        this.expandedShipmentId = null;
+        this.shipmentDetail = null;
       },
       error: () => {
-        this.ordersLoading = false;
+        this.shipmentsLoading = false;
+        this.shipmentsError = 'Could not load shipments. Please try again.';
+        this.shipmentsLoadedOnce = true;
       }
     });
   }
 
-  toggleOrderDetails(order: Order & { itemsLoading?: boolean }): void {
-    if (this.expandedOrderId === order.orderId) {
-      this.expandedOrderId = null;
-      return;
-    }
-    this.expandedOrderId = order.orderId;
-    // Items are already loaded in our mock from customer designs
+  applyShipmentFilters(): void {
+    this.loadShipments(true);
   }
 
-  getOrderBadgeClass(status: number): string {
+  resetShipmentFilters(): void {
+    this.shipmentFilters = {
+      sortBy: null,
+      shipmentStatus: null,
+      minPrice: '',
+      maxPrice: '',
+      deliveryCity: '',
+      deliveryStreet: ''
+    };
+    this.loadShipments(true);
+  }
+
+  changeShipmentPage(delta: number): void {
+    const next = this.shipmentPageIndex + delta;
+    if (next < 1 || next > this.shipmentPages) return;
+    this.shipmentPageIndex = next;
+    this.loadShipments(false);
+  }
+
+  toggleShipmentDetails(row: CustomerShipmentRow): void {
+    if (this.expandedShipmentId === row.id) {
+      this.expandedShipmentId = null;
+      this.shipmentDetail = null;
+      return;
+    }
+    this.expandedShipmentId = row.id;
+    this.shipmentDetail = null;
+    this.shipmentDetailLoading = true;
+    this.customerShipmentsService.getShipmentById(row.id).subscribe({
+      next: (detail) => {
+        this.shipmentDetailLoading = false;
+        this.shipmentDetail = detail;
+      },
+      error: () => {
+        this.shipmentDetailLoading = false;
+        this.shipmentDetail = null;
+      }
+    });
+  }
+
+  getShipmentBadgeClass(status: number | null): string {
+    if (status == null) return 'badge-secondary';
     const map: Record<number, string> = {
       0: 'badge-warning',
-      1: 'badge-info',
+      1: 'badge-warning',
       2: 'badge-info',
       3: 'badge-primary',
       4: 'badge-success',
@@ -193,6 +313,17 @@ export class ProfileComponent implements OnInit {
       6: 'badge-secondary'
     };
     return map[status] ?? 'badge-secondary';
+  }
+
+  shipmentStatusLabel(status: number | null): string {
+    if (status == null) return '—';
+    const found = this.shipmentStatusOptions.find(o => o.value === status);
+    return found?.label ?? `Status ${status}`;
+  }
+
+  formatSizeLabel(size: string): string {
+    if (!size?.trim()) return '';
+    return size.trim().replace(/^_/, '');
   }
 
   get displayName(): string {

@@ -1,10 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface AddCustomerDesignRequest {
+  /** Display name for the design (API `Name`). */
+  name: string;
+  /** Count of user-uploaded image objects in the design JSON (API `AssetCount`). */
+  assetCount: number;
   viewDesignsJson: string;
   productId: number;
   productColorId: number;
@@ -18,6 +22,17 @@ export interface AddCustomerDesignRequest {
 export interface CustomerDesignImageRequest {
   side: 'front' | 'back' | 'left' | 'right';
   imageData: Blob | File | string; // Base64 string, Blob, or File
+}
+
+/** Normalized row for “My saved designs” (GET list). */
+export interface CustomerDesignSummary {
+  id: number;
+  name: string;
+  productId?: number;
+  productColorId?: number;
+  createdAt?: string;
+  /** Thumbnail / front preview if the API returns one */
+  previewUrl?: string;
 }
 
 interface ApiEnvelope<T = unknown> {
@@ -40,11 +55,22 @@ export class CustomerDesignService {
   saveDesign(body: AddCustomerDesignRequest): Observable<number | null> {
     const url = `${this.base}/api/customers/me/designs`;
     const fd = new FormData();
-    fd.append('ProductId', body.productId.toString());
-    fd.append('ProductColorId', body.productColorId.toString());
-    fd.append('ViewDesignsJson', body.viewDesignsJson);
+    const name = (body.name && String(body.name).trim()) || 'My design';
+    const assetCount = Number.isFinite(body.assetCount) ? Math.max(0, Math.floor(body.assetCount)) : 0;
 
-    // Add 4 view images if provided (for the new draft API)
+    // Send both cases — .NET [FromForm] can be case-sensitive depending on config
+    fd.append('Name', name);
+    fd.append('name', name);
+    fd.append('AssetCount', String(assetCount));
+    fd.append('assetCount', String(assetCount));
+    fd.append('ProductId', body.productId.toString());
+    fd.append('productId', body.productId.toString());
+    fd.append('ProductColorId', body.productColorId.toString());
+    fd.append('productColorId', body.productColorId.toString());
+    fd.append('ViewDesignsJson', body.viewDesignsJson);
+    fd.append('viewDesignsJson', body.viewDesignsJson);
+
+    // One file part per side (PascalCase) — duplicate keys can confuse some servers
     if (body.frontImage) {
       this.appendImageToFormData(fd, 'FrontImage', body.frontImage);
     }
@@ -58,8 +84,15 @@ export class CustomerDesignService {
       this.appendImageToFormData(fd, 'RightImage', body.rightImage);
     }
 
+    console.log('[WearCast] POST /api/customers/me/designs');
+    console.log('[WearCast] Name:', name, 'AssetCount:', assetCount);
+    console.log('[WearCast] ProductId:', body.productId, 'ProductColorId:', body.productColorId);
+    console.log('[WearCast] viewDesignsJson length:', body.viewDesignsJson?.length ?? 0);
+    console.log('[WearCast] frontImage length:', (body.frontImage && typeof body.frontImage === 'string') ? body.frontImage.length : 'not-string');
+
     return this.http.post<unknown>(url, fd).pipe(
       map(raw => {
+        console.log('[WearCast] saveDesign response:', raw);
         if (raw && typeof raw === 'object' && 'isSuccess' in raw) {
           const res = raw as ApiEnvelope;
           if (!res.isSuccess) {
@@ -70,14 +103,30 @@ export class CustomerDesignService {
         return this.extractDesignId(raw);
       }),
       catchError((err: unknown) => {
+        console.error('[WearCast] saveDesign HTTP error:', err);
         if (err instanceof HttpErrorResponse) {
-          const b = err.error as ApiEnvelope | Record<string, unknown> | null;
+          const b = err.error as ApiEnvelope | Record<string, unknown> | string | null;
+          if (typeof b === 'string' && b.trim()) {
+            return throwError(() => new Error(b.trim()));
+          }
           if (b && typeof b === 'object' && 'isSuccess' in b && !(b as ApiEnvelope).isSuccess) {
             const e = (b as ApiEnvelope).error?.description;
             return throwError(() => new Error(e || err.message || `HTTP ${err.status}`));
           }
-          if (b && typeof b === 'object' && 'detail' in b && typeof (b as any).detail === 'string') {
-            return throwError(() => new Error((b as any).detail));
+          if (b && typeof b === 'object') {
+            const o = b as Record<string, unknown>;
+            const detail = o['detail'];
+            if (typeof detail === 'string' && detail.trim()) {
+              return throwError(() => new Error(detail.trim()));
+            }
+            const title = o['title'];
+            if (typeof title === 'string' && title.trim()) {
+              return throwError(() => new Error(title.trim()));
+            }
+            const msg = o['message'];
+            if (typeof msg === 'string' && msg.trim()) {
+              return throwError(() => new Error(msg.trim()));
+            }
           }
           return throwError(() => new Error(err.message || `HTTP ${err.status}`));
         }
@@ -143,6 +192,37 @@ export class CustomerDesignService {
     return result;
   }
 
+  /** GET /api/customers/me/designs — paginated list of the customer’s saved designs. */
+  listMyDesigns(
+    pageIndex = 1,
+    pageSize = 50
+  ): Observable<CustomerDesignSummary[]> {
+    const url = `${this.base}/api/customers/me/designs`;
+    return this.http
+      .get<unknown>(url, {
+        params: {
+          pageIndex: String(pageIndex),
+          pageSize: String(pageSize)
+        }
+      })
+      .pipe(map(raw => normalizeCustomerDesignList(raw)));
+  }
+
+  /** GET /api/customers/me/designs/{id} — full design for restoring the editor. */
+  getMyDesignById(id: number): Observable<Record<string, unknown> | null> {
+    const url = `${this.base}/api/customers/me/designs/${id}`;
+    return this.http.get<unknown>(url).pipe(
+      map(raw => unwrapDesignPayload(raw)),
+      catchError(() => of(null))
+    );
+  }
+
+  /** DELETE /api/customers/me/designs/{id} */
+  deleteMyDesign(id: number): Observable<unknown> {
+    const url = `${this.base}/api/customers/me/designs/${id}`;
+    return this.http.delete(url);
+  }
+
   private extractDesignId(data: unknown): number | null {
     if (typeof data === 'number' && Number.isFinite(data)) {
       return data;
@@ -169,4 +249,113 @@ export class CustomerDesignService {
     }
     return null;
   }
+}
+
+function pickNum(o: Record<string, unknown>, keys: string[]): number | undefined {
+  for (const k of keys) {
+    const v = o[k];
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      return v;
+    }
+    if (typeof v === 'string' && /^\d+$/.test(v)) {
+      return parseInt(v, 10);
+    }
+  }
+  return undefined;
+}
+
+function pickStr(o: Record<string, unknown>, keys: string[]): string | undefined {
+  for (const k of keys) {
+    const v = o[k];
+    if (typeof v === 'string' && v.trim()) {
+      return v.trim();
+    }
+  }
+  return undefined;
+}
+
+/** Unwrap `{ isSuccess, data }` or bare object for a single design DTO. */
+function unwrapDesignPayload(root: unknown): Record<string, unknown> | null {
+  if (!root || typeof root !== 'object') {
+    return null;
+  }
+  const o = root as Record<string, unknown>;
+  if ('isSuccess' in o && o['isSuccess'] === false) {
+    return null;
+  }
+  const inner = o['data'] ?? o['Data'];
+  if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+    return inner as Record<string, unknown>;
+  }
+  return o;
+}
+
+function normalizeCustomerDesignList(root: unknown): CustomerDesignSummary[] {
+  if (!root || typeof root !== 'object') {
+    return [];
+  }
+  const o = root as Record<string, unknown>;
+  let rows: unknown[] = [];
+  if (Array.isArray(root)) {
+    rows = root;
+  } else if ('isSuccess' in o && o['isSuccess'] === false) {
+    return [];
+  } else {
+    const data = o['data'] ?? o['Data'] ?? o['items'] ?? o['Items'];
+    if (Array.isArray(data)) {
+      rows = data;
+    } else if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const d = data as Record<string, unknown>;
+      const inner = d['items'] ?? d['Items'] ?? d['designs'] ?? d['Designs'];
+      if (Array.isArray(inner)) {
+        rows = inner;
+      }
+    }
+  }
+  const out: CustomerDesignSummary[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== 'object') {
+      continue;
+    }
+    const r = row as Record<string, unknown>;
+    const id =
+      pickNum(r, ['id', 'Id', 'designId', 'DesignId', 'customerDesignId', 'CustomerDesignId']) ?? 0;
+    if (!id) {
+      continue;
+    }
+    const name =
+      pickStr(r, ['name', 'Name', 'designName', 'DesignName', 'title', 'Title']) ||
+      `Design ${id}`;
+    const productId = pickNum(r, ['productId', 'ProductId', 'designedProductId', 'DesignedProductId']);
+    const productColorId = pickNum(r, ['productColorId', 'ProductColorId', 'colorId', 'ColorId']);
+    const createdAt = pickStr(r, [
+      'createdAt',
+      'CreatedAt',
+      'createdOn',
+      'CreatedOn',
+      'dateCreated',
+      'DateCreated'
+    ]);
+    const previewUrl = pickStr(r, [
+      'frontImageUrl',
+      'FrontImageUrl',
+      'previewImageUrl',
+      'PreviewImageUrl',
+      'thumbnailUrl',
+      'ThumbnailUrl',
+      'imageUrl',
+      'ImageUrl',
+      'mainImageUrl',
+      'MainImageUrl'
+    ]);
+    out.push({
+      id,
+      name,
+      productId,
+      productColorId,
+      createdAt,
+      previewUrl
+    });
+  }
+  return out;
 }

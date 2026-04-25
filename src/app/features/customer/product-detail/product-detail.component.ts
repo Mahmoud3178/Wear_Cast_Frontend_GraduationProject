@@ -113,7 +113,13 @@ export class ProductDetailComponent implements OnInit {
           this.galleryImages = product.imageUrl ? [product.imageUrl] : [];
         }
       },
-      error: () => { this.loading = false; this.error = 'Failed to load product details'; }
+      error: (err: unknown) => {
+        this.loading = false;
+        const msg = err instanceof Error ? err.message : '';
+        this.error =
+          msg?.trim() ||
+          'Could not load this product. If the problem continues, try signing out and opening the page again.';
+      }
     });
   }
 
@@ -142,7 +148,9 @@ export class ProductDetailComponent implements OnInit {
           this.checkIfInFavourites();
         }
       },
-      error: () => { this.colorDetailLoading = false; }
+      error: () => {
+        this.colorDetailLoading = false;
+      }
     });
   }
 

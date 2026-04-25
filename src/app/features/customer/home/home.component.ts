@@ -133,7 +133,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
       map(res => {
         let rows: any = res?.data ?? res;
         if (rows && typeof rows === 'object' && !Array.isArray(rows)) {
-          rows = rows.items ?? rows.data ?? rows.products ?? rows;
+          rows = rows.items ?? rows.Items ?? rows.data ?? rows.Data ?? rows.products ?? rows;
+        }
+        if (rows && typeof rows === 'object' && !Array.isArray(rows)) {
+          rows = rows.items ?? rows.Items ?? rows.records ?? [];
         }
         if (!Array.isArray(rows)) return [];
         return rows.slice(0, 5).map((p: any) => ({

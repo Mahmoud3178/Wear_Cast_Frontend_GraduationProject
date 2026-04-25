@@ -1,3 +1,4 @@
+<div class="customer-page-shell">
 <app-customer-nav></app-customer-nav>
 
 <main class="profile-page">
@@ -123,36 +124,166 @@
 
       <div *ngIf="activeTab === 'orders'" class="card">
         <header class="card-header">
-          <h1>My Designs & Orders</h1>
+          <h1>My shipments</h1>
+          <button type="button" class="primary-btn" *ngIf="shipmentsLoadedOnce" (click)="loadShipments(false)" [disabled]="shipmentsLoading">
+            Refresh
+          </button>
         </header>
         <div class="card-body orders-list">
 
+          <div *ngIf="shipmentsError" class="alert alert-danger py-2">{{ shipmentsError }}</div>
+
+          <div class="shipment-filters" *ngIf="!shipmentsLoading || shipmentsLoadedOnce">
+            <div class="shipment-filters__grid">
+              <div class="field">
+                <label for="ship-sort">Sort</label>
+                <select id="ship-sort" class="form-control" [(ngModel)]="shipmentFilters.sortBy">
+                  <option *ngFor="let o of shipmentSortOptions" [ngValue]="o.value">{{ o.label }}</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="ship-status">Status</label>
+                <select id="ship-status" class="form-control" [(ngModel)]="shipmentFilters.shipmentStatus">
+                  <option *ngFor="let o of shipmentStatusOptions" [ngValue]="o.value">{{ o.label }}</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="ship-min">Min price (EGP)</label>
+                <input id="ship-min" class="form-control" type="number" min="0" step="0.01" [(ngModel)]="shipmentFilters.minPrice" placeholder="Any" />
+              </div>
+              <div class="field">
+                <label for="ship-max">Max price (EGP)</label>
+                <input id="ship-max" class="form-control" type="number" min="0" step="0.01" [(ngModel)]="shipmentFilters.maxPrice" placeholder="Any" />
+              </div>
+              <div class="field">
+                <label for="ship-city">Delivery city</label>
+                <input id="ship-city" class="form-control" type="text" [(ngModel)]="shipmentFilters.deliveryCity" placeholder="Contains…" />
+              </div>
+              <div class="field">
+                <label for="ship-street">Delivery street</label>
+                <input id="ship-street" class="form-control" type="text" [(ngModel)]="shipmentFilters.deliveryStreet" placeholder="Contains…" />
+              </div>
+            </div>
+            <div class="shipment-filters__actions">
+              <button type="button" class="primary-btn" (click)="applyShipmentFilters()" [disabled]="shipmentsLoading">Apply filters</button>
+              <button type="button" class="ghost-btn" (click)="resetShipmentFilters()" [disabled]="shipmentsLoading">Reset</button>
+            </div>
+          </div>
+
           <!-- Loading -->
-          <div *ngIf="ordersLoading" class="text-center py-4">
+          <div *ngIf="shipmentsLoading" class="text-center py-4">
             <span class="spinner-border spinner-border-sm me-2"></span> Loading…
           </div>
 
           <!-- Empty -->
-          <div *ngIf="!ordersLoading && orders.length === 0" class="text-center py-5 text-muted">
-            <p style="font-size:2rem">🎨</p>
-            <p>No designs yet. <a routerLink="/customer/design" class="text-decoration-none">Create your first design!</a></p>
+          <div *ngIf="!shipmentsLoading && shipments.length === 0" class="text-center py-5 text-muted">
+            <p style="font-size:2rem">📦</p>
+            <p>No shipments match your filters.</p>
+            <p class="small mb-0"><a routerLink="/customer/design" class="text-decoration-none">Create a design</a> or browse products to place an order.</p>
           </div>
 
-          <!-- Order/design rows -->
-          <article *ngFor="let order of orders" class="order-row">
-            <div class="order-row-main">
-              <img *ngIf="order.items.length > 0 && order.items[0].imageUrl" [src]="order.items[0].imageUrl" class="order-thumb" [alt]="order.items[0].name">
-              <div *ngIf="order.items.length === 0 || !order.items[0].imageUrl" class="order-thumb order-thumb--empty"></div>
-              <div>
-                <p class="order-id">{{ order.items.length > 0 ? order.items[0].name : ('Design #' + order.orderId) }}</p>
-                <p class="order-date" *ngIf="order.createdAt">{{ order.createdAt | date:'mediumDate' }}</p>
-                <span class="badge" [ngClass]="getOrderBadgeClass(order.status)">{{ order.statusLabel }}</span>
+          <!-- Shipment rows -->
+          <article *ngFor="let s of shipments" class="order-row shipment-row">
+            <button type="button" class="order-row-toggle" (click)="toggleShipmentDetails(s)">
+              <div class="order-row-main">
+                <div class="order-thumb order-thumb--empty shipment-thumb" aria-hidden="true"></div>
+                <div class="text-start">
+                  <p class="order-id">Shipment #{{ s.id }}</p>
+                  <p class="order-date" *ngIf="s.createdAt">{{ s.createdAt | date:'medium' }}</p>
+                  <span class="badge" [ngClass]="getShipmentBadgeClass(s.status)">{{ shipmentStatusLabel(s.status) }}</span>
+                  <p class="shipment-address small text-muted mb-0" *ngIf="s.deliveryCity || s.deliveryStreet">
+                    {{ s.deliveryCity }}<span *ngIf="s.deliveryCity && s.deliveryStreet"> · </span>{{ s.deliveryStreet }}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div class="order-meta">
-              <p>EGP {{ order.total | number:'1.0-0' }}</p>
+              <div class="order-meta text-end">
+                <p>EGP {{ s.total | number:'1.2-2' }}</p>
+                <span class="small text-muted">{{ expandedShipmentId === s.id ? 'Hide' : 'Details' }}</span>
+              </div>
+            </button>
+
+            <div *ngIf="expandedShipmentId === s.id" class="order-items-expand shipment-detail-panel">
+              <div *ngIf="shipmentDetailLoading" class="small text-muted py-2">Loading details…</div>
+              <ng-container *ngIf="!shipmentDetailLoading && shipmentDetail as d">
+                <div class="shipment-detail-summary">
+                  <div>
+                    <span class="shipment-detail-label">Total</span>
+                    <p class="shipment-detail-value">EGP {{ d.price | number:'1.2-2' }}</p>
+                  </div>
+                  <div>
+                    <span class="shipment-detail-label">Status</span>
+                    <p class="shipment-detail-value">
+                      <span class="badge" [ngClass]="getShipmentBadgeClass(d.shipmentStatus)">{{ shipmentStatusLabel(d.shipmentStatus) }}</span>
+                    </p>
+                  </div>
+                  <div *ngIf="d.orderedAt">
+                    <span class="shipment-detail-label">Ordered</span>
+                    <p class="shipment-detail-value">{{ d.orderedAt | date:'medium' }}</p>
+                  </div>
+                </div>
+
+                <section class="shipment-detail-block" *ngIf="d.deliveryAddress as addr">
+                  <h4 class="shipment-detail-heading">Delivery address</h4>
+                  <p class="shipment-detail-lines">
+                    <ng-container *ngIf="addr.street || addr.buildingNumber">
+                      {{ addr.street }}<ng-container *ngIf="addr.street && addr.buildingNumber">, </ng-container>{{ addr.buildingNumber }}<br />
+                    </ng-container>
+                    <ng-container *ngIf="addr.city || addr.state">
+                      {{ addr.city }}<ng-container *ngIf="addr.city && addr.state">, </ng-container>{{ addr.state }}
+                    </ng-container>
+                  </p>
+                </section>
+
+                <section class="shipment-detail-block" *ngIf="d.driverName || d.driverPhoneNumber">
+                  <h4 class="shipment-detail-heading">Driver</h4>
+                  <p class="shipment-detail-lines mb-0">
+                    <span *ngIf="d.driverName">{{ d.driverName }}</span>
+                    <span *ngIf="d.driverName && d.driverPhoneNumber"> · </span>
+                    <span *ngIf="d.driverPhoneNumber">{{ d.driverPhoneNumber }}</span>
+                  </p>
+                </section>
+
+                <section class="shipment-detail-block">
+                  <h4 class="shipment-detail-heading">Timeline</h4>
+                  <ul class="shipment-timeline">
+                    <li *ngFor="let step of d.timeline" [class.shipment-timeline--muted]="!step.at">
+                      <span class="shipment-timeline-label">{{ step.label }}</span>
+                      <span class="shipment-timeline-date" *ngIf="step.at">{{ step.at | date:'medium' }}</span>
+                      <span class="shipment-timeline-date shipment-timeline--muted" *ngIf="!step.at">—</span>
+                    </li>
+                  </ul>
+                </section>
+
+                <section class="shipment-detail-block" *ngIf="d.orderLines.length > 0">
+                  <h4 class="shipment-detail-heading">Items in this shipment</h4>
+                  <ul class="shipment-order-lines">
+                    <li *ngFor="let line of d.orderLines" class="shipment-order-line">
+                      <div class="shipment-order-line__thumb" *ngIf="line.imageUrl">
+                        <img [src]="line.imageUrl" [alt]="line.title" />
+                      </div>
+                      <div class="shipment-order-line__thumb shipment-order-line__thumb--empty" *ngIf="!line.imageUrl" aria-hidden="true"></div>
+                      <div class="shipment-order-line__body">
+                        <p class="shipment-order-line__title">{{ line.title }}</p>
+                        <p class="shipment-order-line__meta" *ngIf="line.subtitle">Size / variant: {{ formatSizeLabel(line.subtitle) }}</p>
+                        <p class="shipment-order-line__meta">Qty {{ line.quantity }}</p>
+                      </div>
+                      <div class="shipment-order-line__prices">
+                        <p *ngIf="line.lineTotal != null">EGP {{ line.lineTotal | number:'1.2-2' }}</p>
+                        <p *ngIf="line.lineTotal == null && line.unitPrice != null" class="small text-muted">EGP {{ line.unitPrice | number:'1.2-2' }} each</p>
+                      </div>
+                    </li>
+                  </ul>
+                </section>
+              </ng-container>
+              <p *ngIf="!shipmentDetailLoading && !shipmentDetail" class="small text-muted mb-0">Could not load shipment details.</p>
             </div>
           </article>
+
+          <div *ngIf="!shipmentsLoading && shipments.length > 0" class="shipment-pagination">
+            <button type="button" class="ghost-btn" (click)="changeShipmentPage(-1)" [disabled]="shipmentPageIndex <= 1">Previous</button>
+            <span class="small">Page {{ shipmentPageIndex }} of {{ shipmentPages }} ({{ shipmentRecords }} total)</span>
+            <button type="button" class="ghost-btn" (click)="changeShipmentPage(1)" [disabled]="shipmentPageIndex >= shipmentPages">Next</button>
+          </div>
 
         </div>
       </div>
@@ -188,5 +319,6 @@
     </section>
   </section>
 
-  <app-customer-footer></app-customer-footer>
 </main>
+<app-customer-footer></app-customer-footer>
+</div>

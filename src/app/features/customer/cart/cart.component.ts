@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+import { environment } from '../../../../environments/environment';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
 import {
@@ -159,16 +160,26 @@ export class CartComponent implements OnInit {
           const nameVal = d.designName || d.DesignName || d.name || d.Name || d.productName || d.ProductName;
           const rawQty = qtyFromArray ?? d.quantity ?? d.Quantity ?? d.qty ?? d.Qty ?? d.cartItemQuantity ?? d.CartItemQuantity ?? 1;
           const metaParts = [sVal ? `Size: ${sVal}` : ''].filter(Boolean);
+          const designImg =
+            this.pickDesignCartImageUrl(d) || '/assets/placeholder.jpg';
           return {
             cartItemId: d.cartItemId || d.CartItemId,
             name: nameVal || 'Custom Design',
             meta: metaParts.join(' · '),
-            imageUrl: d.imageUrl || d.ImageUrl || d.frontImage || d.FrontImage || d.image || d.Image || '/assets/placeholder.jpg',
+            imageUrl: designImg,
             price: d.price || d.Price || 0,
             size: sVal,
             quantity: rawQty,
             type: 'design',
-            designId: d.designId || d.DesignId || d.customerDesignId || d.CustomerDesignId || d.id || d.Id
+            designId:
+              d.designId ||
+              d.DesignId ||
+              d.customerDesignedId ||
+              d.CustomerDesignedId ||
+              d.customerDesignId ||
+              d.CustomerDesignId ||
+              d.id ||
+              d.Id
           };
         });
 
@@ -257,6 +268,62 @@ export class CartComponent implements OnInit {
         this.loadCart();
       }
     });
+  }
+
+  /**
+   * Cart thumbnail URLs: keep absolute `https://…` as returned by the API so the browser
+   * loads the same file the server attached to the design (img tags are not CORS-tainted).
+   * Only root-relative paths are prefixed with `environment.apiUrl`.
+   */
+  private resolveCartThumbnailUrl(raw: string): string {
+    const u = raw.trim();
+    if (!u) return '';
+    if (u.startsWith('data:')) return u;
+    if (/^https?:\/\//i.test(u)) {
+      return u;
+    }
+    if (u.startsWith('//')) {
+      return `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}${u}`;
+    }
+    const base = environment.apiUrl.replace(/\/$/, '');
+    const path = u.startsWith('/') ? u : `/${u}`;
+    return base ? `${base}${path}` : path;
+  }
+
+  /** Cart APIs vary field names for the design preview; `image` is what GetDesignsInCart returns today. */
+  private pickDesignCartImageUrl(d: Record<string, unknown>): string {
+    const keys = [
+      'image',
+      'Image',
+      'compositeImageUrl',
+      'CompositeImageUrl',
+      'frontImageUrl',
+      'FrontImageUrl',
+      'customDesignImageUrl',
+      'CustomDesignImageUrl',
+      'designPreviewUrl',
+      'DesignPreviewUrl',
+      'previewImageUrl',
+      'PreviewImageUrl',
+      'thumbnailUrl',
+      'ThumbnailUrl',
+      'imageUrl',
+      'ImageUrl',
+      'mainImageUrl',
+      'MainImageUrl',
+      'pictureUrl',
+      'PictureUrl',
+      'frontImage',
+      'FrontImage'
+    ];
+    for (const k of keys) {
+      const v = d[k];
+      if (typeof v === 'string' && v.trim()) {
+        const out = this.resolveCartThumbnailUrl(v);
+        if (out) return out;
+      }
+    }
+    return '';
   }
 
   /** Maps size string like "S", "M", "L", "XL", "XXL" to the API integer enum */

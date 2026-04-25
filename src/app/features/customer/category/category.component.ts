@@ -119,8 +119,9 @@ export class CategoryComponent implements OnInit {
       next: (res: any) => {
         this.loading = false;
         this.products = res.items;
-        this.totalCount = res.total || res.records || 0;
-        this.totalPages = res.pages || Math.ceil(this.totalCount / this.pageSize) || 1;
+        this.totalCount = res.total ?? res.records ?? 0;
+        this.totalPages =
+          res.pages ?? Math.max(1, Math.ceil(this.totalCount / this.pageSize));
       },
       error: () => {
         this.loading = false;

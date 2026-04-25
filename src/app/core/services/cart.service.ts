@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 // ────────────────────────────────────────────────────────
 //  Response models (inferred from swagger + API patterns)
@@ -22,6 +22,7 @@ export interface CartFixedItem {
 
 export interface CartDesignItem {
   cartItemId: number;
+  /** Backend cart field (note the “Designed” spelling). */
   customerDesignedId?: number;
   designId?: number;
   designName?: string;
@@ -118,7 +119,9 @@ export class CartService {
 
   /** GET /api/Cart/GetDesignsInCart */
   getDesignItems(): Observable<CartDesignItem[]> {
-    return this.http.get<CartDesignItem[]>(`${this.base}/GetDesignsInCart`);
+    return this.http.get<unknown>(`${this.base}/GetDesignsInCart`).pipe(
+      map(body => normalizeCartDesignItems(body))
+    );
   }
 
   /** DELETE /api/Cart/DeleteCartItem/{CartItemId} */
@@ -142,18 +145,16 @@ export class CartService {
       );
   }
 
-  /** POST /api/Cart/AddOrUpdateDesignedToCart */
+  /** POST /api/Cart/AddOrUpdateDesignedToCart — OpenAPI requires `sizes: [{ size, quantity }]`. */
   addOrUpdateDesigned(req: AddOrUpdateDesignedToCartRequest): Observable<unknown> {
-    // Some backends bind only PascalCase fields; send both to be safe.
+    const sizes: SizeQuantityItem[] = [
+      { size: req.size, quantity: req.quantity }
+    ];
     const body = {
       designId: req.designId,
       DesignId: req.designId,
-      customerDesignId: req.designId,
-      CustomerDesignId: req.designId,
-      size: req.size,
-      Size: req.size,
-      quantity: req.quantity,
-      Quantity: req.quantity
+      sizes,
+      Sizes: sizes
     };
     return this.http
       .post(`${this.base}/AddOrUpdateDesignedToCart`, body)
@@ -161,4 +162,29 @@ export class CartService {
         catchError(err => throwError(() => new Error(cartHttpMessage(err))))
       );
   }
+}
+
+/** Accept raw array or `{ data | items | Data | Items }` envelope from the cart API. */
+function normalizeCartDesignItems(body: unknown): CartDesignItem[] {
+  if (Array.isArray(body)) {
+    return body as CartDesignItem[];
+  }
+  if (!body || typeof body !== 'object') {
+    return [];
+  }
+  const o = body as Record<string, unknown>;
+  if ('isSuccess' in o && o['isSuccess'] === false) {
+    return [];
+  }
+  const inner =
+    o['data'] ??
+    o['Data'] ??
+    o['items'] ??
+    o['Items'] ??
+    o['designs'] ??
+    o['Designs'];
+  if (Array.isArray(inner)) {
+    return inner as CartDesignItem[];
+  }
+  return [];
 }

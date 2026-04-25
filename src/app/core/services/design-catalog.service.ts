@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { WEARCAST_SIZE_ENUM_STRINGS } from './factory-api.service';
 
@@ -115,15 +115,12 @@ export class DesignCatalogService {
     token: string | null,
     options?: { extraProductIds?: number[] }
   ): Observable<DesignerBootstrap> {
-    const fromStorage = this.getRegisteredIds();
     const extra = options?.extraProductIds ?? [];
-    const seedIds = [
-      ...new Set([...fromStorage, ...extra].filter(n => Number.isFinite(n) && n > 0))
-    ];
+    const extraOnly = [...new Set(extra.filter(n => Number.isFinite(n) && n > 0))];
     if (!token) {
       return of({ products: {}, colors: [] });
     }
-    return this.discoverCatalogIdsFromServer(token, seedIds).pipe(
+    return this.discoverCatalogIdsFromServer(token, extraOnly).pipe(
       switchMap(ids => {
         if (!ids.length) {
           return of({ products: {}, colors: [] });
@@ -135,7 +132,16 @@ export class DesignCatalogService {
             })
             .pipe(catchError(() => of(null)))
         );
-        return forkJoin(reqs).pipe(map(responses => ({ responses, ids })));
+        return forkJoin(reqs).pipe(
+          tap(responses => {
+            responses.forEach((dto, i) => {
+              if (!dto) {
+                this.unregisterDesignedProductId(ids[i]);
+              }
+            });
+          }),
+          map(responses => ({ responses, ids }))
+        );
       }),
       switchMap(responses => {
         const rows = 'responses' in responses ? responses.responses : [];
@@ -210,7 +216,7 @@ export class DesignCatalogService {
 
   private discoverCatalogIdsFromServer(
     token: string,
-    fallbackIds: number[]
+    extraProductIds: number[]
   ): Observable<number[]> {
     const url = `${this.base}/api/customer/catalog/designed-products`;
     return this.http
@@ -218,14 +224,17 @@ export class DesignCatalogService {
       .pipe(
         map(body => {
           const ids = extractDesignedProductIdsFromList(body);
-          if (ids.length) {
-            // Keep local cache in sync so older flows still work.
+          if (ids.length > 0) {
             localStorage.setItem(CATALOG_IDS_KEY, JSON.stringify(ids));
-            return ids;
+            return [...new Set([...ids, ...extraProductIds])];
           }
-          return fallbackIds;
+          if (isEmptyDesignedProductListBody(body)) {
+            localStorage.setItem(CATALOG_IDS_KEY, JSON.stringify([]));
+            return [...new Set(extraProductIds)];
+          }
+          return [...new Set(extraProductIds)];
         }),
-        catchError(() => of(fallbackIds))
+        catchError(() => of([...new Set(extraProductIds)]))
       );
   }
 
@@ -398,13 +407,25 @@ export class DesignCatalogService {
     };
   }
 
-  /** Turn API-relative paths into absolute URLs the `<img>` and canvas can load. */
+  /** Turn API-relative paths into absolute URLs the `<img>` and canvas can load.
+   *  In dev (apiUrl empty), absolute backend URLs are made relative so they
+   *  route through the Angular dev-server proxy and avoid CORS.
+   */
   private resolveMediaUrl(raw: string): string {
     const u = raw.trim();
     if (!u) {
       return '';
     }
     if (/^https?:\/\//i.test(u)) {
+      if (!this.base) {
+        // Dev mode: strip origin so images go through the proxy (same-origin)
+        try {
+          const urlObj = new URL(u);
+          return urlObj.pathname + urlObj.search;
+        } catch {
+          return u;
+        }
+      }
       return u;
     }
     if (u.startsWith('//')) {
@@ -589,6 +610,36 @@ function pickColorImagesArray(colorDto: Record<string, unknown>): unknown[] {
   return [];
 }
 
+/** True when the list endpoint clearly returned an empty page (not a parse failure). */
+function isEmptyDesignedProductListBody(body: unknown): boolean {
+  if (Array.isArray(body)) {
+    return body.length === 0;
+  }
+  if (!body || typeof body !== 'object') {
+    return false;
+  }
+  const o = body as Record<string, unknown>;
+  if (o['isSuccess'] === true && o['hasData'] === false) {
+    return true;
+  }
+  const unwrap = (node: unknown): unknown[] | null => {
+    if (Array.isArray(node)) {
+      return node;
+    }
+    if (node && typeof node === 'object' && !Array.isArray(node)) {
+      const n = node as Record<string, unknown>;
+      const nested = n['items'] ?? n['Items'] ?? n['records'] ?? n['Records'];
+      if (Array.isArray(nested)) {
+        return nested;
+      }
+    }
+    return null;
+  };
+  const top = o['data'] ?? o['Data'] ?? o['items'] ?? o['Items'];
+  const arr = unwrap(top) ?? unwrap(o);
+  return arr !== null && arr.length === 0;
+}
+
 /** Extract ids from GET /api/catalog/designed-products list shapes. */
 function extractDesignedProductIdsFromList(body: unknown): number[] {
   let rows: unknown[] = [];
@@ -596,9 +647,22 @@ function extractDesignedProductIdsFromList(body: unknown): number[] {
     rows = body;
   } else if (body && typeof body === 'object') {
     const o = body as Record<string, unknown>;
-    const data = o['data'] ?? o['Data'] ?? o['items'] ?? o['Items'];
+    let data: unknown =
+      o['data'] ?? o['Data'] ?? o['items'] ?? o['Items'] ?? o['result'] ?? o['Result'];
     if (Array.isArray(data)) {
       rows = data;
+    } else if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const inner = data as Record<string, unknown>;
+      const nested =
+        inner['items'] ??
+        inner['Items'] ??
+        inner['records'] ??
+        inner['Records'] ??
+        inner['data'] ??
+        inner['Data'];
+      if (Array.isArray(nested)) {
+        rows = nested;
+      }
     }
   }
   const ids = new Set<number>();

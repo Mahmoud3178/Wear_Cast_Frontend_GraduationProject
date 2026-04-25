@@ -1,7 +1,19 @@
-.profile-page {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+.customer-page-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   background-color: #f9fafb;
   color: #111827;
+}
+
+.customer-page-shell > app-customer-footer {
+  flex-shrink: 0;
+}
+
+.profile-page {
+  flex: 1 1 auto;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
 }
 
 .profile-layout {
@@ -296,4 +308,213 @@
 
 .order-thumb--empty {
   background: #e5e7eb;
+}
+
+.ghost-btn {
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  padding: 8px 14px;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ghost-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.shipment-filters {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.shipment-filters__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px 14px;
+}
+
+.shipment-filters__grid .form-control {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.shipment-filters__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.shipment-row .order-row-toggle {
+  display: contents;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+}
+
+.shipment-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.shipment-detail-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.shipment-detail-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px 20px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.shipment-detail-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.shipment-detail-value {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.shipment-detail-block {
+  margin-bottom: 16px;
+}
+
+.shipment-detail-block:last-child {
+  margin-bottom: 0;
+}
+
+.shipment-detail-heading {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #374151;
+}
+
+.shipment-detail-lines {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1f2937;
+}
+
+.shipment-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shipment-timeline li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  padding: 8px 10px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.shipment-timeline-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.shipment-timeline-date {
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+
+.shipment-timeline--muted {
+  color: #9ca3af !important;
+}
+
+.shipment-order-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shipment-order-line {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.shipment-order-line__thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e5e7eb;
+}
+
+.shipment-order-line__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shipment-order-line__thumb--empty {
+  min-height: 48px;
+}
+
+.shipment-order-line__title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.shipment-order-line__meta {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.shipment-order-line__prices {
+  text-align: right;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
 }

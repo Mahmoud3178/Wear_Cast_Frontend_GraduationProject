@@ -10,5 +10,11 @@
     "secure": true,
     "changeOrigin": true,
     "logLevel": "warn"
+  },
+  "/uploads": {
+    "target": "https://wear-cast.runasp.net",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "warn"
   }
 }

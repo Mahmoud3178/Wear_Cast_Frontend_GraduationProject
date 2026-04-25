@@ -1,5 +1,21 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 
+/**
+ * Public catalog reads: sending a customer JWT makes some backends take an
+ * authenticated code path that can throw (e.g. null reference). Omit Authorization.
+ */
+function isPublicFixedProductCatalogGet(url: string, method: string): boolean {
+  if (method !== 'GET') return false;
+  const u = url.toLowerCase();
+  return (
+    u.includes('/api/fixedproduct/getdetailsbyid/') ||
+    u.includes('/api/fixedproduct/getall') ||
+    u.includes('/api/fixedproduct/getbyid/') ||
+    u.includes('/api/fixedproductcolor/getcolorbyid/') ||
+    u.includes('/api/fixedproductcolor/getallcolorbyproductid/')
+  );
+}
+
 const ANONYMOUS_AUTH_PATHS = [
   '/api/auth/login',
   '/api/auth/register-customer',
@@ -22,6 +38,10 @@ function isAnonymousAuthRequest(url: string): boolean {
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (isAnonymousAuthRequest(req.url)) {
+    return next(req);
+  }
+
+  if (isPublicFixedProductCatalogGet(req.url, req.method)) {
     return next(req);
   }
 

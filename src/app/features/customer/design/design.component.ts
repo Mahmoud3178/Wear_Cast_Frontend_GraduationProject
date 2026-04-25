@@ -7,7 +7,8 @@ import { DesignCatalogService } from '../../../core/services/design-catalog.serv
 import { AuthService } from '../../../core/services/auth.service';
 import {
   CustomerDesignService,
-  type AddCustomerDesignRequest
+  type AddCustomerDesignRequest,
+  type CustomerDesignSummary
 } from '../../../core/services/customer-design.service';
 import {
   CartService,
@@ -20,6 +21,11 @@ import {
 } from '../../../core/services/design-review.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import {
+  DesignAssetsCatalogService,
+  type DesignAssetCategoryRow,
+  type DesignAssetRow
+} from '../../../core/services/design-assets-catalog.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -65,7 +71,8 @@ export class CustomerDesignComponent implements AfterViewInit {
     private readonly customerDesign: CustomerDesignService,
     private readonly cartService: CartService,
     private readonly reviewService: DesignReviewService,
-    private readonly http: HttpClient
+    private readonly http: HttpClient,
+    private readonly designAssetsCatalog: DesignAssetsCatalogService
   ) {}
 
   ngAfterViewInit(): void {
@@ -77,21 +84,59 @@ export class CustomerDesignComponent implements AfterViewInit {
       __WEARCAST_ADD_DESIGNED_TO_CART__?: (
         items: AddOrUpdateDesignedToCartRequest[]
       ) => Promise<void>;
+      __WEARCAST_LIST_CUSTOMER_DESIGNS__?: () => Promise<CustomerDesignSummary[]>;
+      __WEARCAST_GET_CUSTOMER_DESIGN__?: (
+        id: number
+      ) => Promise<Record<string, unknown> | null>;
+      __WEARCAST_DELETE_CUSTOMER_DESIGN__?: (id: number) => Promise<void>;
+      __WEARCAST_LOAD_DESIGN_ASSET_CATEGORIES__?: () => Promise<DesignAssetCategoryRow[]>;
+      __WEARCAST_LOAD_DESIGN_ASSETS__?: (
+        categoryId: number | null,
+        pageIndex?: number,
+        pageSize?: number
+      ) => Promise<DesignAssetRow[]>;
       wearcastOnProductChanged?: (baseProductId: number) => void;
     };
+
+    w.__WEARCAST_LOAD_DESIGN_ASSET_CATEGORIES__ = async () =>
+      firstValueFrom(this.designAssetsCatalog.getCategories());
+
+    w.__WEARCAST_LOAD_DESIGN_ASSETS__ = async (
+      categoryId: number | null,
+      pageIndex = 1,
+      pageSize = 80
+    ) =>
+      firstValueFrom(
+        this.designAssetsCatalog.getAssets(
+          categoryId != null && categoryId > 0 ? categoryId : undefined,
+          pageIndex,
+          pageSize
+        )
+      );
     if (this.auth.getToken()) {
       // Updated save design function that accepts view images for the new draft API
       w.__WEARCAST_SAVE_CUSTOMER_DESIGN__ = async (body) => {
         // If view images are provided by the designer, include them in the request
+        const raw = body as AddCustomerDesignRequest & Record<string, unknown>;
+        const name =
+          typeof raw.name === 'string' && raw.name.trim()
+            ? raw.name.trim()
+            : 'My design';
+        const ac = raw.assetCount;
+        const assetCount =
+          typeof ac === 'number' && Number.isFinite(ac)
+            ? Math.max(0, Math.floor(ac))
+            : 0;
         const request: AddCustomerDesignRequest = {
+          name,
+          assetCount,
           productId: body.productId,
           productColorId: body.productColorId,
           viewDesignsJson: body.viewDesignsJson,
-          // View images will be passed by the designer JavaScript if available
-          frontImage: (body as any).frontImage,
-          backImage: (body as any).backImage,
-          leftImage: (body as any).leftImage,
-          rightImage: (body as any).rightImage
+          frontImage: raw.frontImage as AddCustomerDesignRequest['frontImage'],
+          backImage: raw.backImage as AddCustomerDesignRequest['backImage'],
+          leftImage: raw.leftImage as AddCustomerDesignRequest['leftImage'],
+          rightImage: raw.rightImage as AddCustomerDesignRequest['rightImage']
         };
         return firstValueFrom(this.customerDesign.saveDesign(request));
       };
@@ -116,9 +161,22 @@ export class CustomerDesignComponent implements AfterViewInit {
           throw err;
         }
       };
+
+      w.__WEARCAST_LIST_CUSTOMER_DESIGNS__ = async () =>
+        firstValueFrom(this.customerDesign.listMyDesigns(1, 100));
+
+      w.__WEARCAST_GET_CUSTOMER_DESIGN__ = async (id: number) =>
+        firstValueFrom(this.customerDesign.getMyDesignById(id));
+
+      w.__WEARCAST_DELETE_CUSTOMER_DESIGN__ = async (id: number) => {
+        await firstValueFrom(this.customerDesign.deleteMyDesign(id));
+      };
     } else {
       delete w.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
       delete w.__WEARCAST_ADD_DESIGNED_TO_CART__;
+      delete w.__WEARCAST_LIST_CUSTOMER_DESIGNS__;
+      delete w.__WEARCAST_GET_CUSTOMER_DESIGN__;
+      delete w.__WEARCAST_DELETE_CUSTOMER_DESIGN__;
     }
 
     // Connect product switching in designer to Angular reviews
@@ -245,6 +303,21 @@ export class CustomerDesignComponent implements AfterViewInit {
             price: o.price ?? o.Price ?? o.basePrice ?? o.BasePrice
           };
         });
+        const validIds = new Set(
+          this.catalogSearchResults.map((r: { id?: number }) => r.id).filter((id): id is number => typeof id === 'number' && id > 0)
+        );
+        if (this.selectedProductId != null && !validIds.has(this.selectedProductId)) {
+          const firstId = this.catalogSearchResults[0]?.id;
+          if (typeof firstId === 'number' && firstId > 0) {
+            this.selectedProductId = firstId;
+            this.loadReviews(firstId);
+          } else {
+            this.selectedProductId = null;
+            this.reviews = [];
+            this.myReview = null;
+            this.reviewsLoading = false;
+          }
+        }
         // Sync images from the designer's PRODUCTS registry
         setTimeout(() => this.syncImagesFromDesigner(), 500);
       },
