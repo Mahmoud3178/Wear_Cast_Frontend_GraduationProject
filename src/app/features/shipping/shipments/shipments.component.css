@@ -1,0 +1,32 @@
+.custom-table th {
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.custom-table td {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.custom-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.search-box .form-control {
+  border-radius: var(--border-radius-md);
+  border-color: var(--border-color);
+  background-color: var(--bg-main);
+}
+
+.search-box .form-control:focus {
+  box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.1);
+  border-color: var(--primary-color);
+}

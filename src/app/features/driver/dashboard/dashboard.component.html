@@ -1,1 +1,94 @@
-<p>dashboard works!</p>
+<div class="container-fluid py-4 driver-view">
+  <!-- Header Profile Area -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+      <div class="driver-avatar bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+        <i class="bi bi-person-fill fs-3"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold">Hello, Ahmed!</h4>
+        <span class="text-muted-custom text-sm">Have a safe drive today.</span>
+      </div>
+    </div>
+    <button class="btn btn-light rounded-circle p-2 position-relative">
+      <i class="bi bi-bell fs-5"></i>
+      <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-4" *ngFor="let stat of driverStats">
+      <div class="premium-card text-center py-3 h-100">
+        <i class="bi {{ stat.icon }} fs-4 mb-2 {{ stat.colorClass }}"></i>
+        <h5 class="fw-bold mb-1">{{ stat.value }}</h5>
+        <span class="text-muted-custom text-sm" style="font-size: 0.7rem;">{{ stat.title }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted mt-2">Loading dashboard...</p>
+  </div>
+
+  <div *ngIf="!isLoading">
+    <!-- Current Route Card -->
+    <h5 class="fw-semibold mb-3">Current Route</h5>
+    <div class="premium-card mb-4 bg-primary text-white border-0 shadow-lg route-card" *ngIf="currentRoute">
+      <div class="premium-card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <span class="badge bg-white text-primary text-uppercase px-3 py-2 rounded-pill shadow-sm">
+            <i class="bi bi-geo-alt-fill me-1"></i> {{ getStatusName(currentRoute.shipmentStatus) }}
+          </span>
+          <div class="text-end">
+            <h4 class="mb-0 fw-bold">~15 mins</h4>
+            <span class="text-white-50 text-sm">ETA</span>
+          </div>
+        </div>
+        
+        <h3 class="fw-bold mb-1">{{ currentRoute.deliveryCity }}</h3>
+        <p class="text-white-50 mb-4"><i class="bi bi-signpost me-2"></i>{{ currentRoute.deliveryStreet }}</p>
+        
+        <button class="btn btn-light w-100 fw-bold py-3 shadow-sm rounded-pill d-flex align-items-center justify-content-center gap-2">
+          <i class="bi bi-cursor-fill text-primary"></i>
+          <span class="text-primary">View Shipment Details</span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="premium-card mb-4 border-0 shadow-sm" *ngIf="!currentRoute">
+      <div class="premium-card-body text-center py-5">
+        <i class="bi bi-check2-circle text-success fs-1 mb-2"></i>
+        <h5 class="fw-bold">No Active Route</h5>
+        <p class="text-muted mb-0">You have completed all deliveries or don't have any assigned right now.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <h5 class="fw-semibold mb-3">Quick Actions</h5>
+  <div class="row g-3">
+    <div class="col-6">
+      <button routerLink="../deliveries" class="btn premium-card w-100 py-3 text-start border-0">
+        <div class="d-flex flex-column align-items-center text-center gap-2">
+          <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle">
+            <i class="bi bi-box-seam fs-4"></i>
+          </div>
+          <span class="fw-medium text-main">View Deliveries</span>
+        </div>
+      </button>
+    </div>
+    <div class="col-6">
+      <button class="btn premium-card w-100 py-3 text-start border-0">
+        <div class="d-flex flex-column align-items-center text-center gap-2">
+          <div class="bg-danger bg-opacity-10 text-danger p-3 rounded-circle">
+            <i class="bi bi-exclamation-triangle fs-4"></i>
+          </div>
+          <span class="fw-medium text-main">Report Issue</span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>

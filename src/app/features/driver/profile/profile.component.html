@@ -1,0 +1,118 @@
+<div class="profile-container">
+  <div class="header-section">
+    <div>
+      <h2>My Profile</h2>
+      <p class="subtitle">Manage your personal information and preferences</p>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+  </div>
+
+  <div *ngIf="!isLoading && profile" class="profile-content">
+    <div class="profile-card">
+      <div class="card-header">
+        <div class="header-title">
+          <i class="fas fa-user"></i>
+          <h3>Personal Information</h3>
+        </div>
+        <button class="action-btn outline" (click)="toggleEdit()">
+          <i class="fas" [ngClass]="isEditing ? 'fa-times' : 'fa-edit'"></i>
+          {{ isEditing ? 'Cancel' : 'Edit Profile' }}
+        </button>
+      </div>
+
+      <div class="card-body">
+        <div class="profile-header-info">
+          <div class="image-section">
+            <div class="image-wrapper">
+              <img *ngIf="profile.profileImageUrl" [src]="profile.profileImageUrl" alt="Profile" class="profile-img">
+              <div *ngIf="!profile.profileImageUrl" class="image-placeholder">
+                <i class="fas fa-user-circle"></i>
+              </div>
+            </div>
+            <div class="image-upload" *ngIf="isEditing">
+              <label for="profileImage" class="upload-btn">
+                <i class="fas fa-camera"></i> Change Photo
+              </label>
+              <input type="file" id="profileImage" (change)="onImageSelected($event)" accept="image/*" class="hidden-input">
+            </div>
+          </div>
+          
+          <div class="quick-stats" *ngIf="!isEditing">
+            <div class="stat-badge status-badge" [ngClass]="'status-' + profile.status">
+              {{ DriverStatusEnum[profile.status] }}
+            </div>
+            <div class="stat-badge vehicle-badge">
+              <i class="fas fa-motorcycle"></i> {{ VehicleTypeEnum[profile.vehicleType] }}
+            </div>
+          </div>
+        </div>
+
+        <form *ngIf="isEditing" (ngSubmit)="saveProfile()" #profileNgForm="ngForm">
+          <div class="form-row">
+            <div class="form-group half">
+              <label>First Name</label>
+              <input type="text" [(ngModel)]="editForm.firstName" name="firstName" required class="form-control">
+            </div>
+            <div class="form-group half">
+              <label>Last Name</label>
+              <input type="text" [(ngModel)]="editForm.lastName" name="lastName" required class="form-control">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label>City</label>
+              <input type="text" [(ngModel)]="editForm.address.city" name="city" required class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label>Phone Number</label>
+              <input type="text" [(ngModel)]="editForm.phoneNumber" name="phone" class="form-control">
+            </div>
+            <div class="form-group half">
+              <label>Vehicle Type</label>
+              <select [(ngModel)]="editForm.vehicleType" name="vehicle" class="form-control">
+                <option [ngValue]="VehicleTypeEnum.Bicycle">Bicycle</option>
+                <option [ngValue]="VehicleTypeEnum.Motorcycle">Motorcycle</option>
+                <option [ngValue]="VehicleTypeEnum.Car">Car</option>
+                <option [ngValue]="VehicleTypeEnum.Van">Van</option>
+                <option [ngValue]="VehicleTypeEnum.Truck">Truck</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="primary-btn" [disabled]="!profileNgForm.form.valid">Save Changes</button>
+          </div>
+        </form>
+
+        <div *ngIf="!isEditing" class="info-grid">
+          <div class="info-item">
+            <span class="label">Full Name</span>
+            <span class="value">{{ profile.driverName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">City</span>
+            <span class="value">{{ profile.driverCity }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Phone Number</span>
+            <span class="value">{{ profile.phoneNumber || 'Not provided' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Email</span>
+            <span class="value">{{ profile.email || 'Not provided' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">National ID</span>
+            <span class="value">{{ profile.nationalId || 'Not provided' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

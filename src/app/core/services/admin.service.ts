@@ -9,7 +9,65 @@ export class AdminService {
 
   private baseUrl = `${environment.apiUrl}/api/FixedProduct`;
   private orderUrl = `${environment.apiUrl}/api/Orders`;
+  private customerUrl = `${environment.apiUrl}/api/admin/customers`;
+  private shippingUrl = `${environment.apiUrl}/api/admin/shipping-companies`;
+  
   constructor(private http: HttpClient) {}
+
+  // 🔹 Get All Customers (Admin)
+  getAllCustomers(pageIndex = 1, pageSize = 10, searchTerm?: string) {
+    let params = new HttpParams()
+      .set('PageIndex', pageIndex)
+      .set('PageSize', pageSize);
+
+    if (searchTerm) {
+      params = params.set('SearchTerm', searchTerm);
+    }
+
+    return this.http.get(`${this.customerUrl}`, { 
+      params,
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${this.getToken()}`
+      })
+    });
+  }
+
+  // 🔹 Get All Shipping Companies (Admin)
+  getAllShippingCompanies(pageIndex = 1, pageSize = 10) {
+    let params = new HttpParams()
+      .set('PageIndex', pageIndex)
+      .set('PageSize', pageSize);
+
+    return this.http.get(`${this.shippingUrl}`, { 
+      params,
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${this.getToken()}`
+      })
+    });
+  }
+
+  // 🔹 Get All Sellers (Admin)
+  getAllSellers(pageIndex = 1, pageSize = 10) {
+    let params = new HttpParams()
+      .set('PageIndex', pageIndex)
+      .set('PageSize', pageSize);
+
+    return this.http.get(`${environment.apiUrl}/api/admin/sellers`, { 
+      params,
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${this.getToken()}`
+      })
+    });
+  }
+
+  // 🔹 Get Seller By Id (Admin)
+  getSellerById(id: string) {
+    return this.http.get(`${environment.apiUrl}/api/admin/sellers/${id}`, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${this.getToken()}`
+      })
+    });
+  }
 
   // 🔹 Get All Products
   getAllProducts(pageIndex = 1, pageSize = 10, searchTerm?: string) {

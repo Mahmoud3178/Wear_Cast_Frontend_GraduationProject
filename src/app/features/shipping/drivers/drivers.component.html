@@ -1,0 +1,179 @@
+<div class="drivers-container">
+  <div class="header-section">
+    <div>
+      <h2>Drivers Management</h2>
+      <p class="subtitle">Manage all drivers for the shipping company</p>
+    </div>
+    <button class="primary-btn" (click)="openCreateModal()">
+      <i class="fas fa-plus"></i> Add New Driver
+    </button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading drivers...</p>
+  </div>
+
+  <div *ngIf="!isLoading && drivers.length === 0" class="empty-state">
+    <i class="fas fa-id-card empty-icon"></i>
+    <h3>No Drivers Found</h3>
+    <p>You haven't added any drivers yet.</p>
+  </div>
+
+  <div *ngIf="!isLoading && drivers.length > 0" class="drivers-grid">
+    <div *ngFor="let driver of drivers" class="driver-card">
+      <div class="driver-header">
+        <div class="driver-info">
+          <div class="avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div>
+            <h3>{{ driver.driverName }}</h3>
+            <span class="city"><i class="fas fa-map-marker-alt"></i> {{ driver.driverCity }}</span>
+          </div>
+        </div>
+        <span class="badge" [ngClass]="getStatusBadgeClass(driver.status)">
+          {{ DriverStatusEnum[driver.status] }}
+        </span>
+      </div>
+      
+      <div class="driver-stats">
+        <div class="stat">
+          <span class="label">Vehicle</span>
+          <span class="value"><i class="fas" [ngClass]="getVehicleIcon(driver.vehicleType)"></i> {{ VehicleTypeEnum[driver.vehicleType] }}</span>
+        </div>
+        <div class="stat">
+          <span class="label">Active</span>
+          <span class="value">{{ driver.numberOfActiveShipments }}</span>
+        </div>
+        <div class="stat">
+          <span class="label">Delivered</span>
+          <span class="value">{{ driver.numberOfDeliveredShipments }}</span>
+        </div>
+      </div>
+      
+      <div class="driver-actions">
+        <button class="action-btn outline" (click)="openStatusModal(driver)">
+          Update Status
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal-overlay" *ngIf="showCreateModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add New Driver</h3>
+      <button class="close-btn" (click)="closeCreateModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <form (ngSubmit)="createDriver()" #createForm="ngForm">
+        <div class="form-row">
+          <div class="form-group half">
+            <label>First Name *</label>
+            <input type="text" [(ngModel)]="newDriver.firstName" name="firstName" required class="form-control">
+          </div>
+          <div class="form-group half">
+            <label>Last Name *</label>
+            <input type="text" [(ngModel)]="newDriver.lastName" name="lastName" required class="form-control">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group half">
+            <label>City *</label>
+            <input type="text" [(ngModel)]="newDriver.city" name="city" required class="form-control">
+          </div>
+          <div class="form-group half">
+            <label>State *</label>
+            <input type="text" [(ngModel)]="newDriver.state" name="state" required class="form-control">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Street *</label>
+            <input type="text" [(ngModel)]="newDriver.street" name="street" required class="form-control">
+          </div>
+          <div class="form-group half">
+            <label>Building Number *</label>
+            <input type="text" [(ngModel)]="newDriver.buildingNumber" name="buildingNumber" required class="form-control">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Vehicle Type *</label>
+            <select [(ngModel)]="newDriver.vehicleType" name="vehicle" class="form-control">
+              <option [ngValue]="VehicleTypeEnum.Bicycle">Bicycle</option>
+              <option [ngValue]="VehicleTypeEnum.Motorcycle">Motorcycle</option>
+              <option [ngValue]="VehicleTypeEnum.Car">Car</option>
+              <option [ngValue]="VehicleTypeEnum.Van">Van</option>
+              <option [ngValue]="VehicleTypeEnum.Truck">Truck</option>
+            </select>
+          </div>
+          <div class="form-group half">
+            <label>Email</label>
+            <input type="email" [(ngModel)]="newDriver.email" name="email" class="form-control">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Phone Number</label>
+            <input type="text" [(ngModel)]="newDriver.phoneNumber" name="phone" class="form-control">
+          </div>
+          <div class="form-group half">
+            <label>National ID</label>
+            <input type="text" [(ngModel)]="newDriver.nationalId" name="nationalId" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Password</label>
+            <input type="password" [(ngModel)]="newDriver.password" name="password" class="form-control">
+          </div>
+          <div class="form-group half">
+            <label>Confirm Password</label>
+            <input type="password" [(ngModel)]="newDriver.confirmPassword" name="confirmPassword" class="form-control">
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" (click)="closeCreateModal()">Cancel</button>
+          <button type="submit" class="primary-btn" [disabled]="!createForm.form.valid">Create Driver</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Status Modal -->
+<div class="modal-overlay" *ngIf="showStatusModal">
+  <div class="modal-content small-modal">
+    <div class="modal-header">
+      <h3>Update Status</h3>
+      <button class="close-btn" (click)="closeStatusModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p>Select new status for <strong>{{ selectedDriver?.driverName }}</strong></p>
+      
+      <div class="form-group">
+        <label>Status</label>
+        <select [(ngModel)]="newStatus" class="form-control">
+          <option [ngValue]="DriverStatusEnum.Available">Available</option>
+          <option [ngValue]="DriverStatusEnum.Busy">Busy</option>
+          <option [ngValue]="DriverStatusEnum.Offline">Offline</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" (click)="closeStatusModal()">Cancel</button>
+        <button type="button" class="primary-btn" (click)="updateDriverStatus()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -73,10 +73,18 @@ export const routes: Routes = [
       import('./features/factory/factory.routes').then(m => m.FACTORY_ROUTES)
   },
   {
+    path: 'shipping',
+    loadChildren: () =>
+      import('./features/shipping/shipping.routes').then(m => m.SHIPPING_ROUTES)
+  },
+  {
+    path: 'driver',
+    loadChildren: () =>
+      import('./features/driver/driver.routes').then(m => m.DRIVER_ROUTES)
+  },
+  {
     path: '',
     redirectTo: 'customer',
     pathMatch: 'full'
   }
-
-
 ];

@@ -383,6 +383,18 @@ export class AuthService {
     return localStorage.getItem('role');
   }
 
+  getCurrentUserId(): string | null {
+    const t = this.getToken();
+    if (!t) return null;
+    const payload = this.decodeJwtPayload(t);
+    if (!payload) return null;
+    const uid =
+      payload['nameid'] ??
+      payload['sub'] ??
+      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+    return uid ? String(uid) : null;
+  }
+
   getToken(): string | null {
     return localStorage.getItem('token');
   }
@@ -600,6 +612,12 @@ export class AuthService {
     }
     if (u.includes('SELLER')) {
       return 'SELLER';
+    }
+    if (u.includes('SHIPPING')) {
+      return 'SHIPPING';
+    }
+    if (u.includes('DRIVER')) {
+      return 'DRIVER';
     }
     return 'CUSTOMER';
   }

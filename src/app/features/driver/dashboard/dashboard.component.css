@@ -1,0 +1,13 @@
+/* Mobile-first layout optimizations */
+.driver-view {
+  max-width: 600px; /* Constrain width to simulate mobile/tablet feel on desktop */
+  margin: 0 auto;
+}
+
+.route-card {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+}
+
+.text-main {
+  color: var(--text-main);
+}

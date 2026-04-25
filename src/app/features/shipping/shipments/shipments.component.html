@@ -1,1 +1,189 @@
-<p>shipments works!</p>
+<div class="container-fluid py-4">
+  <div class="page-header mb-4">
+    <h1 class="page-title">Manage Shipments</h1>
+    <button class="btn btn-premium"><i class="bi bi-plus-lg me-2"></i>Create Shipment</button>
+  </div>
+
+  <div class="premium-card">
+    <!-- Filters Area -->
+    <div class="premium-card-header d-flex flex-wrap gap-3 align-items-center justify-content-between">
+      <div class="search-box position-relative" style="width: 300px;">
+        <i class="bi bi-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+        <input type="text" class="form-control ps-5" placeholder="Search ID, destination, driver..." 
+               [(ngModel)]="searchTerm" (ngModelChange)="filterShipments()">
+      </div>
+      
+      <div class="d-flex gap-3 align-items-center">
+        <label class="text-muted-custom fw-medium text-sm text-nowrap">Filter by Status:</label>
+        <select class="form-select" style="min-width: 150px;" [(ngModel)]="statusFilter" (ngModelChange)="filterShipments()">
+          <option value="All">All Statuses</option>
+          <option [ngValue]="ShipmentStatusEnum.Pending">Pending</option>
+          <option [ngValue]="ShipmentStatusEnum.ReadyForPickup">Ready For Pickup</option>
+          <option [ngValue]="ShipmentStatusEnum.InTransit">In Transit</option>
+          <option [ngValue]="ShipmentStatusEnum.Delivered">Delivered</option>
+          <option [ngValue]="ShipmentStatusEnum.Cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Table Area -->
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 custom-table">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="ps-4">Shipment ID</th>
+            <th scope="col">Date</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Destination</th>
+            <th scope="col">Driver</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let shipment of filteredShipments">
+            <td class="ps-4 fw-semibold text-primary">#{{ shipment.id }}</td>
+            <td>{{ shipment.orderTime | date:'mediumDate' }}</td>
+            <td>{{ shipment.customerName }}</td>
+            <td>{{ shipment.deliveryCity }}, {{ shipment.deliveryStreet }}</td>
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="driver-avatar bg-secondary bg-opacity-25 rounded-circle me-2 d-flex align-items-center justify-content-center text-secondary" style="width: 32px; height: 32px;">
+                  <i class="bi bi-person-fill"></i>
+                </div>
+                <span>{{ shipment.driverName || 'Unassigned' }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" 
+                    [ngClass]="{
+                      'status-success': shipment.shipmentStatus === ShipmentStatusEnum.Delivered,
+                      'status-warning': shipment.shipmentStatus === ShipmentStatusEnum.Pending,
+                      'status-info': shipment.shipmentStatus === ShipmentStatusEnum.InTransit || shipment.shipmentStatus === ShipmentStatusEnum.ReadyForPickup,
+                      'status-danger': shipment.shipmentStatus === ShipmentStatusEnum.Cancelled
+                    }">
+                {{ getStatusName(shipment.shipmentStatus) }}
+              </span>
+            </td>
+            <td class="text-end pe-4">
+              <button *ngIf="!shipment.driverName" class="btn btn-sm btn-primary me-2 rounded-pill px-3" (click)="openAssignModal(shipment)">
+                Assign Driver
+              </button>
+              <button class="btn btn-sm btn-light rounded-circle" title="View Details" (click)="openDetailsModal(shipment)">
+                <i class="bi bi-eye"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredShipments.length === 0">
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+              No shipments found matching your criteria.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination Footer -->
+    <div class="premium-card-body border-top d-flex justify-content-between align-items-center">
+      <span class="text-muted-custom text-sm">Showing {{filteredShipments.length}} of {{allShipments.length}} shipments</span>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Driver Modal -->
+<div class="modal d-block bg-dark bg-opacity-50" tabindex="-1" *ngIf="showAssignModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold">Assign Driver</h5>
+        <button type="button" class="btn-close" (click)="closeAssignModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Assign a driver to Shipment #{{ selectedShipmentForAssign?.id }}</p>
+        <div class="mb-3">
+          <label class="form-label fw-medium">Select Driver</label>
+          <select class="form-select" [(ngModel)]="selectedDriverId">
+            <option [ngValue]="null" disabled>Choose a driver...</option>
+            <option *ngFor="let driver of drivers" [ngValue]="driver.id">
+              {{ driver.driverName }} - {{ driver.driverCity }}
+            </option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer border-top-0 pt-0">
+        <button type="button" class="btn btn-light" (click)="closeAssignModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" [disabled]="!selectedDriverId" (click)="assignDriver()">Assign Driver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Shipment Details Modal -->
+<div class="modal d-block bg-dark bg-opacity-50" tabindex="-1" *ngIf="showDetailsModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold">Shipment Details #{{ selectedShipmentDetails?.id }}</h5>
+        <button type="button" class="btn-close" (click)="closeDetailsModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="isLoadingDetails">
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="text-muted mt-2">Loading details...</p>
+        </div>
+      </div>
+      <div class="modal-body" *ngIf="!isLoadingDetails && selectedShipmentDetails">
+        <div class="row g-4 mb-4">
+          <div class="col-md-6">
+            <h6 class="fw-bold text-muted text-uppercase mb-3" style="font-size: 0.75rem;">Customer Information</h6>
+            <p class="mb-1"><i class="bi bi-person me-2 text-primary"></i> <strong>{{ selectedShipmentDetails.customerName }}</strong></p>
+            <p class="mb-1"><i class="bi bi-telephone me-2 text-primary"></i> {{ selectedShipmentDetails.customerPhoneNumber }}</p>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold text-muted text-uppercase mb-3" style="font-size: 0.75rem;">Delivery Details</h6>
+            <p class="mb-1"><i class="bi bi-geo-alt me-2 text-primary"></i> {{ selectedShipmentDetails.deliveryAddress.street }}, {{ selectedShipmentDetails.deliveryAddress.city }}</p>
+            <p class="mb-1"><i class="bi bi-upc-scan me-2 text-primary"></i> Code: <strong>{{ selectedShipmentDetails.deliveryCode }}</strong></p>
+            <p class="mb-1"><i class="bi bi-currency-dollar me-2 text-primary"></i> Price: {{ selectedShipmentDetails.price | currency }}</p>
+          </div>
+        </div>
+        
+        <h6 class="fw-bold text-muted text-uppercase mb-3" style="font-size: 0.75rem;">Orders Included</h6>
+        <div class="table-responsive border rounded mb-4">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Order ID</th>
+                <th>Store</th>
+                <th class="text-end pe-3">Items</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let order of selectedShipmentDetails.orders">
+                <td class="ps-3">#{{ order.orderId }}</td>
+                <td>{{ order.storeName }}</td>
+                <td class="text-end pe-3">{{ order.itemsCount }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div *ngIf="selectedShipmentDetails.driverId">
+          <h6 class="fw-bold text-muted text-uppercase mb-3" style="font-size: 0.75rem;">Assigned Driver</h6>
+          <div class="d-flex align-items-center bg-light rounded p-3">
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-3">
+              <i class="bi bi-person-badge fs-4"></i>
+            </div>
+            <div>
+              <p class="fw-bold mb-0">{{ selectedShipmentDetails.driverName }}</p>
+              <p class="text-muted mb-0 small">{{ selectedShipmentDetails.driverPhoneNumber }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-top-0 pt-0">
+        <button type="button" class="btn btn-primary" (click)="closeDetailsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

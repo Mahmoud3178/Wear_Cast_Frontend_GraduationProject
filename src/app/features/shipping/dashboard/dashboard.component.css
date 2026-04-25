@@ -1,0 +1,31 @@
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.list-group-item {
+  border-left: none;
+  border-right: none;
+  border-bottom: 1px solid var(--border-color);
+  background: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.list-group-item:first-child {
+  border-top: none;
+}
+
+.list-group-item:last-child {
+  border-bottom: none;
+}
+
+.list-group-item:hover {
+  background-color: var(--bg-main);
+}
