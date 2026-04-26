@@ -11,23 +11,6 @@
     </div>
   </div>
 
-  <div class="card wc-factory-card border-0 mb-4">
-    <div class="card-body p-4">
-      <p class="text-muted small mb-0">
-        This page shows products created by your factory and stored on the server.
-        Products are visible to customers via the catalog API.
-        <span *ngIf="items.length > 0">
-          Share this link so others can load the same templates:
-          <a
-            routerLink="/customer/design"
-            [queryParams]="designStudioQueryParams ?? {}"
-            class="text-decoration-none d-inline-block text-break fw-medium"
-            >/customer/design<span *ngIf="designStudioQueryParams as q">?designedProductIds={{ q.designedProductIds }}</span></a>
-        </span>
-      </p>
-    </div>
-  </div>
-
   <div *ngIf="loadError" class="alert alert-danger py-2 small">{{ loadError }}</div>
   <div *ngIf="deleteError" class="alert alert-danger py-2 small">{{ deleteError }}</div>
   <div *ngIf="loading" class="text-muted small mb-2">Loading products from server…</div>
@@ -54,7 +37,15 @@
         </div>
         <div>
           <div class="fw-medium">{{ item.name }}</div>
-          <div class="small text-muted">{{ item.categoryName }} · ${{ item.price }}</div>
+          <div class="small text-muted">
+            {{ item.categoryName }} · {{ item.targetAudienceLabel }} · ${{ item.price }}
+          </div>
+          <div class="small text-muted">
+            Rating:
+            <span *ngIf="item.averageRating != null">{{ item.averageRating }}/5</span>
+            <span *ngIf="item.averageRating == null">N/A</span>
+            · Reviews: {{ item.reviewCount }}
+          </div>
         </div>
       </div>
       <div class="d-flex flex-wrap gap-2">

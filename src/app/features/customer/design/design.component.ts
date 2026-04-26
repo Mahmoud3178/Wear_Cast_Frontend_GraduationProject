@@ -300,7 +300,21 @@ export class CustomerDesignComponent implements AfterViewInit {
             id: o.id ?? o.Id ?? o.productId ?? o.ProductId ?? o.designedProductId ?? o.DesignedProductId,
             name: o.name ?? o.Name ?? o.productName ?? o.ProductName ?? o.title ?? o.Title ?? 'Product',
             imageUrl: frontImageUrl ?? o.imageUrl ?? o.ImageUrl ?? o.mainImageUrl ?? o.MainImageUrl ?? o.pictureUrl ?? o.PictureUrl ?? o.mainImage ?? o.MainImage ?? o.categoryImageUrl ?? null,
-            price: o.price ?? o.Price ?? o.basePrice ?? o.BasePrice
+            price: o.price ?? o.Price ?? o.basePrice ?? o.BasePrice,
+            averageRating:
+              o.averageRating ??
+              o.AverageRating ??
+              o.rating ??
+              o.Rating ??
+              null,
+            reviewCount:
+              o.reviewCount ??
+              o.ReviewCount ??
+              o.ratingsCount ??
+              o.RatingsCount ??
+              o.totalReviews ??
+              o.TotalReviews ??
+              0
           };
         });
         const validIds = new Set(

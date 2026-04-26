@@ -130,38 +130,50 @@
     <p *ngIf="product.description" class="wc-size-description">{{ product.description }}</p>
     <p class="wc-size-hint">Compare these measurements with a similar garment you already own.</p>
 
-    <div class="wc-size-table-wrapper" *ngIf="colorDetail && colorDetail.sizes.length > 0">
-      <table class="wc-size-table-detailed">
-        <thead>
-          <tr>
-            <th>Size</th>
-            <th>In Stock</th>
-            <th *ngIf="product.sizeDetails && product.sizeDetails.length > 0">A (Length)</th>
-            <th *ngIf="product.sizeDetails && product.sizeDetails.length > 0">B (Chest)</th>
-            <th *ngIf="product.sizeDetails && product.sizeDetails.length > 0">C (Sleeve)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let s of colorDetail.sizes">
-            <td class="size-cell">{{ formatSize(s.size) }}</td>
-            <td [class.out-of-stock]="s.quantity === 0">
-              {{ s.quantity > 0 ? s.quantity + ' available' : 'Out of stock' }}
-            </td>
-            <ng-container *ngIf="product.sizeDetails && product.sizeDetails.length > 0">
-              <ng-container *ngIf="getSizeDetail(s.size) as detail; else emptyDetails">
-                <td>{{ detail.a }}</td>
-                <td>{{ detail.b }}</td>
-                <td>{{ detail.c }}</td>
+    <div class="wc-size-modal-layout" *ngIf="colorDetail && colorDetail.sizes.length > 0">
+      <div class="wc-size-modal-image-col">
+        <img
+          *ngIf="product.imageUrl"
+          [src]="product.imageUrl"
+          [alt]="product.categoryName || product.name"
+          class="wc-size-modal-image"
+        />
+        <div *ngIf="!product.imageUrl" class="wc-size-modal-image-placeholder">No image</div>
+      </div>
+
+      <div class="wc-size-table-wrapper">
+        <table class="wc-size-table-detailed">
+          <thead>
+            <tr>
+              <th>Size</th>
+              <th>In Stock</th>
+              <th *ngIf="product.sizeDetails && product.sizeDetails.length > 0">A (Inch)</th>
+              <th *ngIf="product.sizeDetails && product.sizeDetails.length > 0">B (Inch)</th>
+              <th *ngIf="product.sizeDetails && product.sizeDetails.length > 0">C (Inch)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of colorDetail.sizes">
+              <td class="size-cell">{{ formatSize(s.size) }}</td>
+              <td [class.out-of-stock]="s.quantity === 0">
+                {{ s.quantity > 0 ? s.quantity + ' available' : 'Out of stock' }}
+              </td>
+              <ng-container *ngIf="product.sizeDetails && product.sizeDetails.length > 0">
+                <ng-container *ngIf="getSizeDetail(s.size) as detail; else emptyDetails">
+                  <td>{{ detail.a }}</td>
+                  <td>{{ detail.b }}</td>
+                  <td>{{ detail.c }}</td>
+                </ng-container>
+                <ng-template #emptyDetails>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                </ng-template>
               </ng-container>
-              <ng-template #emptyDetails>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-              </ng-template>
-            </ng-container>
-          </tr>
-        </tbody>
-      </table>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
   <div class="wc-modal-footer">

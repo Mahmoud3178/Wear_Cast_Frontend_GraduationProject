@@ -67,6 +67,14 @@ export interface SavedColor {
   imageUrl: string | null;
 }
 
+export interface ExistingSizeRow {
+  id: number | null;
+  size: WearcastSizeString;
+  a: number;
+  b: number;
+  c: number;
+}
+
 /** Wizard step for create mode */
 export type WizardStep = 'base' | 'color' | 'photos' | 'sizes';
 
@@ -117,6 +125,10 @@ export class FactoryProductWizardComponent implements OnInit {
 
   // ── Sizes ───────────────────────────────────────────────────────────────────
   sizeForm = { size: '_M' as WearcastSizeString, a: 26.5, b: 20, c: 24.5 };
+  existingSizes: ExistingSizeRow[] = [];
+  editingSizeId: number | null = null;
+  sizeEditForm = { size: '_M' as WearcastSizeString, a: 26.5, b: 20, c: 24.5 };
+  categoryPreviewImageUrl: string | null = null;
 
   // ── State ───────────────────────────────────────────────────────────────────
   busy = false;
@@ -218,6 +230,11 @@ export class FactoryProductWizardComponent implements OnInit {
 
   categoryValue(c: CategoryDto): number { return resolveCategoryId(c); }
 
+  onCategoryChanged(categoryId: number): void {
+    this.createForm.categoryId = categoryId;
+    this.loadCategoryPreviewImage(categoryId);
+  }
+
   // ── Create wizard steps ──────────────────────────────────────────────────────
 
   createProduct(): void {
@@ -244,6 +261,7 @@ export class FactoryProductWizardComponent implements OnInit {
         this.busy = false;
         this.productId = productId;
         this.catalog.registerDesignedProductId(productId);
+        this.loadCategoryPreviewImage(this.createForm.categoryId);
         this.currentStep = 'color';
         this.message = `Product created! Now add your first color.`;
       },
@@ -333,8 +351,66 @@ export class FactoryProductWizardComponent implements OnInit {
     this.factory.addProductSize(this.productId, {
       size, a: this.sizeForm.a, b: this.sizeForm.b, c: this.sizeForm.c
     }).subscribe({
-      next: () => { this.busy = false; this.message = `Size ${size.replace(/^_/, '')} added.`; },
+      next: ({ id }) => {
+        this.busy = false;
+        this.existingSizes = [
+          ...this.existingSizes,
+          { id: id ?? null, size, a: this.sizeForm.a, b: this.sizeForm.b, c: this.sizeForm.c }
+        ];
+        if (id == null && this.isEditMode && this.productId != null) {
+          // Some API variants do not return created size id; re-fetch to discover ids.
+          this.loadExistingProduct(this.productId);
+        }
+        this.message = `Size ${size.replace(/^_/, '')} added.`;
+      },
       error: (e: Error) => { this.busy = false; this.error = e.message || 'Add size failed'; }
+    });
+  }
+
+  startEditSize(row: ExistingSizeRow): void {
+    if (row.id == null) {
+      this.error = 'This size row cannot be edited because no size id was returned by the API.';
+      return;
+    }
+    this.editingSizeId = row.id;
+    this.sizeEditForm = { size: row.size, a: row.a, b: row.b, c: row.c };
+  }
+
+  cancelEditSize(): void {
+    this.editingSizeId = null;
+  }
+
+  saveEditedSize(): void {
+    if (this.editingSizeId == null) return;
+    this.error = '';
+    this.message = '';
+    this.busy = true;
+    this.factory.updateProductSize(this.editingSizeId, {
+      size: this.sizeEditForm.size,
+      a: this.sizeEditForm.a,
+      b: this.sizeEditForm.b,
+      c: this.sizeEditForm.c
+    }).subscribe({
+      next: () => {
+        this.busy = false;
+        this.existingSizes = this.existingSizes.map(s =>
+          s.id === this.editingSizeId
+            ? {
+                ...s,
+                size: this.sizeEditForm.size,
+                a: this.sizeEditForm.a,
+                b: this.sizeEditForm.b,
+                c: this.sizeEditForm.c
+              }
+            : s
+        );
+        this.message = `Size ${this.sizeEditForm.size.replace(/^_/, '')} updated.`;
+        this.editingSizeId = null;
+      },
+      error: (e: Error) => {
+        this.busy = false;
+        this.error = e.message || 'Update size failed';
+      }
     });
   }
 
@@ -352,6 +428,8 @@ export class FactoryProductWizardComponent implements OnInit {
         this.productId = id;
         this.catalog.registerDesignedProductId(id);
         this.applyProductDto(dto);
+        this.existingSizes = this.extractSizesFromDto(dto);
+        this.loadCategoryPreviewImage(this.createForm.categoryId);
         this.extractColorsFromDto(dto);
         this.loadProductColors(id);
       }
@@ -542,6 +620,56 @@ export class FactoryProductWizardComponent implements OnInit {
     }
     const defColor = num(merged['defaultColorId'] ?? merged['DefaultColorId']);
     if (defColor != null && defColor > 0) this.selectedDefaultColorId = defColor;
+  }
+
+  private loadCategoryPreviewImage(categoryId: number): void {
+    if (!categoryId || categoryId <= 0) {
+      this.categoryPreviewImageUrl = null;
+      return;
+    }
+    this.factory.getCategoryById(categoryId).subscribe({
+      next: (cat) => {
+        this.categoryPreviewImageUrl = cat?.imageUrl ?? null;
+      },
+      error: () => {
+        this.categoryPreviewImageUrl = null;
+      }
+    });
+  }
+
+  private extractSizesFromDto(dto: Record<string, unknown>): ExistingSizeRow[] {
+    const merged = mergeNestedProductShape(dto);
+    const raw =
+      merged['sizeDetails'] ??
+      merged['SizeDetails'] ??
+      merged['productSizes'] ??
+      merged['ProductSizes'] ??
+      [];
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((r: unknown) => {
+        if (!r || typeof r !== 'object') return null;
+        const o = r as Record<string, unknown>;
+        const rawSize = pickStr(o, ['size', 'Size']);
+        if (!rawSize) return null;
+        const size = (rawSize.startsWith('_') ? rawSize : `_${rawSize}`) as WearcastSizeString;
+        if (!WEARCAST_SIZE_ENUM_STRINGS.includes(size)) return null;
+        const id = num(
+          o['id'] ??
+            o['Id'] ??
+            o['sizeId'] ??
+            o['SizeId'] ??
+            o['productSizeId'] ??
+            o['ProductSizeId'] ??
+            o['sizeDetailId'] ??
+            o['SizeDetailId']
+        );
+        const a = num(o['a'] ?? o['A']) ?? 0;
+        const b = num(o['b'] ?? o['B']) ?? 0;
+        const c = num(o['c'] ?? o['C']) ?? 0;
+        return { id: id != null ? id : null, size, a, b, c } as ExistingSizeRow;
+      })
+      .filter((x: ExistingSizeRow | null): x is ExistingSizeRow => !!x);
   }
 
   private mapTargetAudienceToNumber(value: unknown): number | null {

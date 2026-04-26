@@ -12,7 +12,13 @@
 
     <div class="wc-actions">
       <div class="wc-search">
-        <input type="search" placeholder="Search for products..." aria-label="Search for products">
+        <input
+          type="search"
+          placeholder="Search for products..."
+          aria-label="Search for products"
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="runSearch()"
+        >
       </div>
       <a
         *ngIf="!auth.isLoggedIn()"

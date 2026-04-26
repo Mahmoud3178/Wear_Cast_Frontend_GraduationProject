@@ -336,18 +336,7 @@ function normalizeCustomerDesignList(root: unknown): CustomerDesignSummary[] {
       'dateCreated',
       'DateCreated'
     ]);
-    const previewUrl = pickStr(r, [
-      'frontImageUrl',
-      'FrontImageUrl',
-      'previewImageUrl',
-      'PreviewImageUrl',
-      'thumbnailUrl',
-      'ThumbnailUrl',
-      'imageUrl',
-      'ImageUrl',
-      'mainImageUrl',
-      'MainImageUrl'
-    ]);
+    const previewUrl = pickPreviewUrl(r);
     out.push({
       id,
       name,
@@ -358,4 +347,46 @@ function normalizeCustomerDesignList(root: unknown): CustomerDesignSummary[] {
     });
   }
   return out;
+}
+
+function pickPreviewUrl(r: Record<string, unknown>): string | undefined {
+  const direct = pickStr(r, [
+    'frontImageUrl',
+    'FrontImageUrl',
+    'previewImageUrl',
+    'PreviewImageUrl',
+    'thumbnailUrl',
+    'ThumbnailUrl',
+    'imageUrl',
+    'ImageUrl',
+    'mainImageUrl',
+    'MainImageUrl'
+  ]);
+  if (direct) return direct;
+
+  const nestedFront = r['frontImage'] ?? r['FrontImage'];
+  if (nestedFront && typeof nestedFront === 'object' && !Array.isArray(nestedFront)) {
+    const nested = pickStr(nestedFront as Record<string, unknown>, [
+      'url',
+      'Url',
+      'imageUrl',
+      'ImageUrl',
+      'fileUrl',
+      'FileUrl'
+    ]);
+    if (nested) return nested;
+  }
+
+  const images = r['images'] ?? r['Images'];
+  if (Array.isArray(images)) {
+    for (const img of images) {
+      if (!img || typeof img !== 'object') continue;
+      const o = img as Record<string, unknown>;
+      const side = String(o['side'] ?? o['Side'] ?? o['view'] ?? o['View'] ?? '').toLowerCase();
+      const url = pickStr(o, ['url', 'Url', 'imageUrl', 'ImageUrl', 'fileUrl', 'FileUrl']);
+      if (!url) continue;
+      if (!side || side === 'front' || side === '1') return url;
+    }
+  }
+  return undefined;
 }

@@ -32,7 +32,16 @@ function pickProductName(dto: Record<string, unknown>, id: number): string {
   templateUrl: './factory-products.component.html'
 })
 export class FactoryProductsComponent implements OnInit {
-  items: { id: number; name: string; price: number; categoryName: string; mainImageUrl: string | null }[] = [];
+  items: {
+    id: number;
+    name: string;
+    price: number;
+    categoryName: string;
+    mainImageUrl: string | null;
+    targetAudienceLabel: string;
+    averageRating: number | null;
+    reviewCount: number;
+  }[] = [];
   loading = false;
   loadError = '';
   deletingId: number | null = null;
@@ -66,7 +75,16 @@ export class FactoryProductsComponent implements OnInit {
     });
   }
 
-  deleteProduct(item: { id: number; name: string; price: number; categoryName: string; mainImageUrl: string | null }): void {
+  deleteProduct(item: {
+    id: number;
+    name: string;
+    price: number;
+    categoryName: string;
+    mainImageUrl: string | null;
+    targetAudienceLabel: string;
+    averageRating: number | null;
+    reviewCount: number;
+  }): void {
     if (
       !confirm(
         `Delete "${item.name}" from the server? This cannot be undone.`

@@ -101,7 +101,7 @@
   var productDetailsModal, productDetailsOpenBtn, productDetailsCloseBtn;
   var productsModal, productsModalClose;
   var sizeQtyModal, sizeQtyRowsEl, sizeQtyModalClose, sizeQtyModalCancel, sizeQtyModalConfirm;
-  var designsPanel, designCategorySelect, designSearchInput, designTagsEl, designGridEl;
+  var designsPanel, designsBackdrop, designModalCloseBtn, designCategorySelect, designSearchInput, designTagsEl, designGridEl;
 
   let canvas;
   let currentProduct = '';
@@ -527,7 +527,18 @@
       canvas.setActiveObject(img);
       canvas.renderAll();
       saveState();
+      closeDesignsPanel();
     }, { crossOrigin: 'anonymous' });
+  }
+
+  function openDesignsPanel() {
+    if (designsPanel) designsPanel.classList.remove('hidden');
+    if (designsBackdrop) designsBackdrop.classList.remove('hidden');
+  }
+
+  function closeDesignsPanel() {
+    if (designsPanel) designsPanel.classList.add('hidden');
+    if (designsBackdrop) designsBackdrop.classList.add('hidden');
   }
 
   function renderStickerTags() {
@@ -1660,6 +1671,8 @@
     savedListEl = document.getElementById('saved-list');
     loadCloseBtn = document.getElementById('load-close');
     designsPanel = document.getElementById('designs-panel');
+    designsBackdrop = document.getElementById('designs-backdrop');
+    designModalCloseBtn = document.getElementById('designs-modal-close');
     designCategorySelect = document.getElementById('design-category-select');
     designSearchInput = document.getElementById('design-search');
     designTagsEl = document.getElementById('design-tags');
@@ -1685,7 +1698,7 @@
     });
     document.querySelectorAll('.tool-btn[data-tool="designs"]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (designsPanel) designsPanel.classList.remove('hidden');
+        openDesignsPanel();
       });
     });
     document.querySelectorAll('.tool-btn[data-tool="products"]').forEach(function (btn) {
@@ -1768,10 +1781,17 @@
         document.querySelectorAll('.tool-btn').forEach(function (b) { b.classList.remove('active'); });
         this.classList.add('active');
         if (designsPanel && this.dataset.tool !== 'designs') {
-          designsPanel.classList.add('hidden');
+          closeDesignsPanel();
         }
       });
     });
+
+    if (designModalCloseBtn) {
+      designModalCloseBtn.addEventListener('click', closeDesignsPanel);
+    }
+    if (designsBackdrop) {
+      designsBackdrop.addEventListener('click', closeDesignsPanel);
+    }
 
     document.getElementById('header-save-btn').addEventListener('click', openSaveModal);
     document.getElementById('header-load-btn').addEventListener('click', openLoadModal);

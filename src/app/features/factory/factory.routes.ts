@@ -30,6 +30,13 @@ export const FACTORY_ROUTES: Routes = [
           )
       },
       {
+        path: 'orders',
+        loadComponent: () =>
+          import('./orders/factory-orders.component').then(
+            m => m.FactoryOrdersComponent
+          )
+      },
+      {
         path: 'products/new',
         loadComponent: () =>
           import('./product-wizard/factory-product-wizard.component').then(

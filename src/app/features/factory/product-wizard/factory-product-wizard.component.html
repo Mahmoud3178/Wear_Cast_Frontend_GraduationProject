@@ -7,14 +7,7 @@
   <h1 class="wc-factory-page-title h3 fw-bold mb-2">
     {{ isEditMode ? 'Edit designed product' : 'New designed product' }}
   </h1>
-  <p class="text-muted small mb-4 wc-wizard-lead" *ngIf="!isEditMode">
-    Creates a <strong>designed</strong> product template: factory sets base photos for
-    front / back / right / left per color, and size measurements (a, b, c).
-    Customers use these in the design studio.
-  </p>
-  <p class="text-muted small mb-4 wc-wizard-lead" *ngIf="isEditMode">
-    Edit product details, manage colors, and add sizes below.
-  </p>
+  <div class="mb-4"></div>
 
   <!-- Alerts -->
   <div *ngIf="error" class="alert alert-danger py-2 small">{{ error }}</div>
@@ -60,12 +53,11 @@
         </div>
         <div class="col-md-4">
           <label class="form-label">Category</label>
-          <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat">
+          <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat" (ngModelChange)="onCategoryChanged($event)">
             <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">
               {{ c.name ?? c.Name ?? 'Category' }}
             </option>
           </select>
-          <div class="form-text">Loaded from the server.</div>
         </div>
         <div class="col-md-4">
           <label class="form-label">Dress style</label>
@@ -88,7 +80,6 @@
               <label class="form-check-label" [for]="'aud-' + o.value">{{ o.label }}</label>
             </div>
           </div>
-          <div class="form-text">At least one required (API does not accept audience code 0).</div>
         </div>
 
         <div class="col-12">
@@ -150,7 +141,6 @@
         <div class="col-md-5">
           <label class="form-label">Catalog / Main image <span class="text-danger">*</span></label>
           <input type="file" class="form-control" accept="image/*" (change)="pickMainFile($event)">
-          <div class="form-text">This is the thumbnail shown in the product listing.</div>
         </div>
         <div class="col-12">
           <button type="button" class="btn btn-dark" [disabled]="busy" (click)="addColor()">
@@ -169,10 +159,6 @@
         <span class="ms-auto small text-muted fw-normal">Color id: <code>{{ currentColorId }}</code></span>
       </div>
       <div class="card-body">
-        <p class="small text-muted mb-3">
-          Upload photos showing different sides of the product in this color. The design studio uses these as backgrounds for customer designs.
-          At least one photo is recommended.
-        </p>
         <div class="row g-3 mb-4">
           <div class="col-md-3">
             <label class="form-label small fw-semibold">Front view</label>
@@ -229,30 +215,41 @@
         <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
           <span class="badge rounded-pill bg-secondary">4</span> Sizes (Size string + a/b/c measurements)
         </div>
-        <div class="card-body row g-3 align-items-end">
-          <div class="col-md-3">
-            <label class="form-label">Size</label>
-            <select class="form-select" [(ngModel)]="sizeForm.size" name="sz">
-              <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">A (cm)</label>
-            <input type="number" class="form-control" [(ngModel)]="sizeForm.a" name="a" step="0.01">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">B (cm)</label>
-            <input type="number" class="form-control" [(ngModel)]="sizeForm.b" name="b" step="0.01">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">C (cm)</label>
-            <input type="number" class="form-control" [(ngModel)]="sizeForm.c" name="c" step="0.01">
-          </div>
-          <div class="col-md-3">
-            <button type="button" class="btn btn-outline-dark w-100" [disabled]="busy" (click)="addSize()">
-              <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
-              Add size
-            </button>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-lg-3">
+              <div class="wc-size-side-preview border rounded p-2 bg-light">
+                <img *ngIf="categoryPreviewImageUrl; else noCatImage" [src]="categoryPreviewImageUrl" alt="Category preview" class="img-fluid rounded">
+                <ng-template #noCatImage>
+                  <div class="wc-size-side-empty text-muted small">No category image available</div>
+                </ng-template>
+              </div>
+            </div>
+            <div class="col-lg-9">
+              <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                  <label class="form-label">Size</label>
+                  <select class="form-select" [(ngModel)]="sizeForm.size" name="sz">
+                    <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
+                  </select>
+                </div>
+                <div class="col-md-2"><label class="form-label">A (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.a" name="a" step="0.01"></div>
+                <div class="col-md-2"><label class="form-label">B (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.b" name="b" step="0.01"></div>
+                <div class="col-md-2"><label class="form-label">C (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.c" name="c" step="0.01"></div>
+                <div class="col-md-3"><button type="button" class="btn btn-outline-dark w-100" [disabled]="busy" (click)="addSize()"><span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>Add size</button></div>
+              </div>
+              <div class="table-responsive mt-3" *ngIf="existingSizes.length > 0">
+                <table class="table table-sm align-middle">
+                  <thead><tr><th>Size</th><th>A</th><th>B</th><th>C</th><th class="text-end">Action</th></tr></thead>
+                  <tbody>
+                    <tr *ngFor="let sz of existingSizes">
+                      <td>{{ sz.size.replace('_', '') }}</td><td>{{ sz.a }}</td><td>{{ sz.b }}</td><td>{{ sz.c }}</td>
+                      <td class="text-end"><button type="button" class="btn btn-outline-secondary btn-sm" (click)="startEditSize(sz)">Edit</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
         <div class="card-footer bg-white border-top-0 pt-0">
@@ -284,7 +281,7 @@
         </div>
         <div class="col-md-4">
           <label class="form-label">Category</label>
-          <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat">
+          <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat" (ngModelChange)="onCategoryChanged($event)">
             <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">{{ c.name ?? c.Name ?? 'Category' }}</option>
           </select>
         </div>
@@ -462,30 +459,58 @@
       <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
         <span class="badge rounded-pill bg-dark">3</span> Add size
       </div>
-      <div class="card-body row g-3 align-items-end">
-        <div class="col-md-3">
-          <label class="form-label">Size</label>
-          <select class="form-select" [(ngModel)]="sizeForm.size" name="esz">
-            <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">A (cm)</label>
-          <input type="number" class="form-control" [(ngModel)]="sizeForm.a" name="ea" step="0.01">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">B (cm)</label>
-          <input type="number" class="form-control" [(ngModel)]="sizeForm.b" name="eb" step="0.01">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">C (cm)</label>
-          <input type="number" class="form-control" [(ngModel)]="sizeForm.c" name="ec" step="0.01">
-        </div>
-        <div class="col-md-3">
-          <button type="button" class="btn btn-outline-dark w-100" [disabled]="busy || productId == null" (click)="addSize()">
-            <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
-            Add size row
-          </button>
+      <div class="card-body">
+        <div class="row g-4">
+          <div class="col-lg-3">
+            <div class="wc-size-side-preview border rounded p-2 bg-light">
+              <img *ngIf="categoryPreviewImageUrl; else noCatImageEdit" [src]="categoryPreviewImageUrl" alt="Category preview" class="img-fluid rounded">
+              <ng-template #noCatImageEdit>
+                <div class="wc-size-side-empty text-muted small">No category image available</div>
+              </ng-template>
+            </div>
+          </div>
+          <div class="col-lg-9">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label">Size</label>
+                <select class="form-select" [(ngModel)]="sizeForm.size" name="esz">
+                  <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
+                </select>
+              </div>
+              <div class="col-md-2"><label class="form-label">A (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.a" name="ea" step="0.01"></div>
+              <div class="col-md-2"><label class="form-label">B (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.b" name="eb" step="0.01"></div>
+              <div class="col-md-2"><label class="form-label">C (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.c" name="ec" step="0.01"></div>
+              <div class="col-md-3"><button type="button" class="btn btn-outline-dark w-100" [disabled]="busy || productId == null" (click)="addSize()"><span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>Add size row</button></div>
+            </div>
+            <div class="table-responsive mt-3" *ngIf="existingSizes.length > 0">
+              <table class="table table-sm align-middle">
+                <thead><tr><th>Size</th><th>A</th><th>B</th><th>C</th><th class="text-end">Action</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let sz of existingSizes">
+                    <td>{{ sz.size.replace('_', '') }}</td><td>{{ sz.a }}</td><td>{{ sz.b }}</td><td>{{ sz.c }}</td>
+                    <td class="text-end"><button type="button" class="btn btn-outline-secondary btn-sm" (click)="startEditSize(sz)">Edit</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="border rounded p-3 mt-3 bg-light" *ngIf="editingSizeId != null">
+              <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                  <label class="form-label">Size</label>
+                  <select class="form-select" [(ngModel)]="sizeEditForm.size" name="editSz">
+                    <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
+                  </select>
+                </div>
+                <div class="col-md-2"><label class="form-label">A (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeEditForm.a" name="editA" step="0.01"></div>
+                <div class="col-md-2"><label class="form-label">B (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeEditForm.b" name="editB" step="0.01"></div>
+                <div class="col-md-2"><label class="form-label">C (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeEditForm.c" name="editC" step="0.01"></div>
+                <div class="col-md-3 d-flex gap-2">
+                  <button type="button" class="btn btn-dark btn-sm flex-grow-1" [disabled]="busy" (click)="saveEditedSize()">Save</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="busy" (click)="cancelEditSize()">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

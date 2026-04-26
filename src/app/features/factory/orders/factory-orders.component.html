@@ -1,0 +1,87 @@
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <h1 class="wc-factory-page-title h3 fw-bold mb-0">Orders</h1>
+    <button
+      type="button"
+      class="btn btn-outline-dark btn-sm rounded-pill px-3"
+      (click)="loadOrders()"
+      [disabled]="loadingOrders"
+    >
+      <i class="bi bi-arrow-clockwise me-1" [class.spin]="loadingOrders"></i> Refresh
+    </button>
+  </div>
+
+  <div *ngIf="loadError" class="alert alert-danger py-2 small">{{ loadError }}</div>
+  <div *ngIf="loadingOrders" class="text-muted small mb-2">Loading orders from server…</div>
+
+  <div class="alert alert-light border rounded-3" *ngIf="!loadingOrders && !orders.length && !loadError">
+    <p class="mb-0">No orders found for this factory yet.</p>
+  </div>
+
+  <div class="list-group wc-factory-card border-0" *ngIf="orders.length">
+    <div
+      class="list-group-item py-3"
+      *ngFor="let order of orders; trackBy: trackByOrderId"
+    >
+      <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+        <div>
+          <div class="fw-semibold">Order #{{ order.id }}</div>
+          <div class="small text-muted">
+            {{ order.recipientName }} <span *ngIf="order.recipientPhoneNumber">· {{ order.recipientPhoneNumber }}</span>
+          </div>
+          <div class="small text-muted">
+            {{ order.createdOn | date: 'medium' }} · {{ order.itemsCount }} items
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge rounded-pill bg-secondary-subtle text-secondary">{{ order.status }}</span>
+          <span class="fw-semibold">${{ order.totalAmount }}</span>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-dark rounded-pill px-3"
+            (click)="toggleItems(order)"
+          >
+            {{ expandedOrderId === order.id ? 'Hide items' : 'View items' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-3 border-top pt-3" *ngIf="expandedOrderId === order.id">
+        <div *ngIf="loadingItemsForId === order.id" class="small text-muted">Loading items…</div>
+
+        <div *ngIf="loadingItemsForId !== order.id && !(itemsByOrderId[order.id]?.length)" class="small text-muted">
+          No items found.
+        </div>
+
+        <ul class="list-group list-group-flush" *ngIf="loadingItemsForId !== order.id && itemsByOrderId[order.id]?.length">
+          <li class="list-group-item px-0 py-2" *ngFor="let item of itemsByOrderId[order.id]">
+            <div class="d-flex align-items-center gap-3">
+              <img
+                *ngIf="item.imageUrl"
+                [src]="item.imageUrl"
+                [alt]="item.productName"
+                class="rounded"
+                style="width: 52px; height: 52px; object-fit: cover;"
+              >
+              <div
+                *ngIf="!item.imageUrl"
+                class="bg-light rounded d-flex align-items-center justify-content-center text-muted"
+                style="width: 52px; height: 52px;"
+              >
+                <i class="bi bi-image"></i>
+              </div>
+              <div class="flex-grow-1">
+                <div class="fw-medium">{{ item.productName }}</div>
+                <div class="small text-muted">Qty: {{ item.quantity }} · Size: {{ item.size }}</div>
+              </div>
+              <div class="text-end small">
+                <div>${{ item.unitPrice }} each</div>
+                <div class="fw-semibold">${{ item.totalPrice }}</div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

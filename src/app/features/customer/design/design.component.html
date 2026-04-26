@@ -56,9 +56,11 @@
       <button type="button" class="view-btn" data-view="left">Left</button>
     </div>
 
+    <div id="designs-backdrop" class="designs-backdrop hidden"></div>
     <section id="designs-panel" class="designs-panel hidden">
       <div class="designs-header">
         <h3>Choose a design</h3>
+        <button type="button" id="designs-modal-close" class="details-close-btn" aria-label="Close">✕</button>
         <div class="designs-search">
           <select id="design-category-select">
             <option value="all">All designs</option>
@@ -240,6 +242,9 @@
         <div *ngIf="!p.imageUrl" class="no-img">No Image</div>
         <h4 class="h6 mb-1 text-truncate text-white">{{ p.name }}</h4>
         <p class="small text-muted mb-0" *ngIf="p.price">${{ p.price }}</p>
+        <p class="small text-muted mb-0">
+          ★ {{ (p.averageRating ?? 0) | number:'1.1-1' }} · {{ p.reviewCount ?? 0 }} reviews
+        </p>
       </div>
     </div>
   </div>

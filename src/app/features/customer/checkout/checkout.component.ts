@@ -79,41 +79,75 @@ export class CheckoutComponent implements OnInit {
         return s;
       };
 
-      const allItems = [
-        ...(fixed ?? []).map((f: any) => {
-          const sVal = mapSize(f.size ?? f.Size);
-          const rawQty = f.quantity ?? f.Quantity ?? f.qty ?? f.Qty ?? 1;
-          return {
-            name: f.productName || f.ProductName || f.name || f.Name || 'Product',
-            imageUrl: f.imageUrl || f.ImageUrl || f.image || f.Image || '/assets/placeholder.jpg',
-            price: f.price || f.Price || 0,
-            quantity: rawQty,
-            size: sVal,
-            meta: [(f.colorName || f.ColorName), sVal ? 'Size: ' + sVal : null].filter(Boolean).join(' · ')
-          };
-        }),
-        ...(designs ?? []).map((d: any) => {
-          // API returns sizes array with nested size and quantityInCart
-          const sizesArray = d.sizes ?? d.Sizes ?? [];
-          const sizeEntry = Array.isArray(sizesArray) && sizesArray.length > 0 ? sizesArray[0] : null;
-          const sizeFromArray = sizeEntry?.size ?? sizeEntry?.Size;
-          const qtyFromArray = sizeEntry?.quantityInCart ?? sizeEntry?.QuantityInCart;
+      const fixedRows = (fixed ?? []).flatMap((f: any) => {
+        const sizesArray: { size: any; quantity: number }[] = Array.isArray(f.sizes ?? f.Sizes)
+          ? (f.sizes ?? f.Sizes)
+          : [{
+              size: f.size ?? f.Size,
+              quantity:
+                f.quantity ??
+                f.Quantity ??
+                f.quantityInCart ??
+                f.QuantityInCart ??
+                1
+            }];
+        const name = f.productName || f.ProductName || f.name || f.Name || 'Product';
+        const imageUrl = f.imageUrl || f.ImageUrl || f.image || f.Image || '/assets/placeholder.jpg';
+        const unitPrice = this.asNum(f.price ?? f.Price, 0);
+        const colorName = f.colorName || f.ColorName || '';
+        return sizesArray
+          .map((s: any) => {
+            const sVal = mapSize(s.size);
+            const qty = this.asNum(s.quantity ?? s.Quantity ?? s.quantityInCart ?? s.QuantityInCart, 0);
+            if (qty <= 0) return null;
+            return {
+              name,
+              imageUrl,
+              price: unitPrice,
+              quantity: qty,
+              size: sVal,
+              meta: [colorName, sVal ? 'Size: ' + sVal : null].filter(Boolean).join(' · ')
+            };
+          })
+          .filter((x: any) => !!x);
+      });
 
-          const rawSize = sizeFromArray ?? d.size ?? d.Size ?? d.itemSize ?? d.ItemSize ?? d.productSize ?? d.ProductSize ?? d.designSize ?? d.DesignSize;
-          const sVal = mapSize(rawSize);
-          const nameVal = d.designName || d.DesignName || d.name || d.Name || d.productName || d.ProductName;
-          const rawQty = qtyFromArray ?? d.quantity ?? d.Quantity ?? d.cartItemQuantity ?? d.CartItemQuantity ?? 1;
+      const designRows = (designs ?? []).flatMap((d: any) => {
+        const sizesArray = Array.isArray(d.sizes ?? d.Sizes) ? (d.sizes ?? d.Sizes) : [];
+        const name = d.designName || d.DesignName || d.name || d.Name || d.productName || d.ProductName || 'Custom Design';
+        const imageUrl = d.imageUrl || d.ImageUrl || d.frontImage || d.FrontImage || d.image || d.Image || '/assets/placeholder.jpg';
+        const unitPrice = this.asNum(d.price ?? d.Price, 0);
+        const mapped = sizesArray
+          .map((s: any) => {
+            const sVal = mapSize(s?.size ?? s?.Size);
+            const qty = this.asNum(s?.quantityInCart ?? s?.QuantityInCart ?? s?.quantity ?? s?.Quantity, 0);
+            if (!sVal || qty <= 0) return null;
+            return {
+              name,
+              imageUrl,
+              price: unitPrice,
+              quantity: qty,
+              size: sVal,
+              meta: `Custom Design · Size: ${sVal}`
+            };
+          })
+          .filter((x: any) => !!x);
 
-          return {
-            name: nameVal || 'Custom Design',
-            imageUrl: d.imageUrl || d.ImageUrl || d.frontImage || d.FrontImage || d.image || d.Image || '/assets/placeholder.jpg',
-            price: d.price || d.Price || 0,
-            quantity: rawQty,
-            size: sVal,
-            meta: 'Custom Design' + (sVal ? ` · Size: ${sVal}` : '')
-          };
-        })
-      ];
+        if (mapped.length) return mapped;
+
+        const fallbackSize = mapSize(d.size ?? d.Size ?? d.itemSize ?? d.ItemSize ?? d.productSize ?? d.ProductSize ?? d.designSize ?? d.DesignSize);
+        const fallbackQty = this.asNum(d.quantity ?? d.Quantity ?? d.cartItemQuantity ?? d.CartItemQuantity, 1);
+        return [{
+          name,
+          imageUrl,
+          price: unitPrice,
+          quantity: fallbackQty,
+          size: fallbackSize,
+          meta: 'Custom Design' + (fallbackSize ? ` · Size: ${fallbackSize}` : '')
+        }];
+      });
+
+      const allItems = [...fixedRows, ...designRows];
       this.cartItems.set(allItems);
       this.loading.set(false);
     });
@@ -165,5 +199,11 @@ export class CheckoutComponent implements OnInit {
         this.submitting.set(false);
       }
     });
+  }
+
+  private asNum(v: unknown, fallback: number): number {
+    const n = typeof v === 'number' ? v : parseInt(String(v ?? ''), 10);
+    if (!Number.isFinite(n)) return fallback;
+    return n;
   }
 }

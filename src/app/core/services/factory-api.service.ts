@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -49,6 +49,12 @@ export interface CategoryDto {
   Id?: number;
   name?: string;
   Name?: string;
+}
+
+export interface CategoryDetailsDto {
+  id: number;
+  name: string;
+  imageUrl: string | null;
 }
 
 export interface FactoryRegisterForm {
@@ -136,6 +142,25 @@ export interface FactoryManager {
   isActive: boolean;
 }
 
+export interface FactoryOrderSummary {
+  id: number;
+  status: string;
+  createdOn: string;
+  recipientName: string;
+  recipientPhoneNumber: string;
+  totalAmount: number;
+  itemsCount: number;
+}
+
+export interface FactoryOrderItem {
+  productName: string;
+  imageUrl: string | null;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  size: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FactoryApiService {
   private readonly base = environment.apiUrl;
@@ -162,6 +187,31 @@ export class FactoryApiService {
         return [];
       }),
       catchError(e => this.mapErr(e))
+    );
+  }
+
+  getCategoryById(categoryId: number): Observable<CategoryDetailsDto | null> {
+    const url = `${this.base}/api/Category/GetCategoryById/${categoryId}`;
+    return this.http.get<unknown>(url).pipe(
+      map(body => {
+        const payload = this.unwrapPayload<Record<string, unknown>>(body);
+        if (!payload) return null;
+        const id = this.toNum(payload['id'] ?? payload['Id']) ?? categoryId;
+        const name =
+          this.pickString(payload, ['name', 'Name', 'title', 'Title']) ||
+          `Category #${id}`;
+        const imageUrl =
+          this.pickString(payload, [
+            'imageUrl',
+            'ImageUrl',
+            'image',
+            'Image',
+            'categoryImageUrl',
+            'CategoryImageUrl'
+          ]) || null;
+        return { id, name, imageUrl };
+      }),
+      catchError(() => of(null))
     );
   }
 
@@ -215,7 +265,16 @@ export class FactoryApiService {
     );
   }
 
-  getDesignedProducts(): Observable<{ id: number; name: string; price: number; categoryName: string; mainImageUrl: string | null }[]> {
+  getDesignedProducts(): Observable<{
+    id: number;
+    name: string;
+    price: number;
+    categoryName: string;
+    mainImageUrl: string | null;
+    targetAudienceLabel: string;
+    averageRating: number | null;
+    reviewCount: number;
+  }[]> {
     // Use factory catalog endpoint to get all products for this factory
     const url = `${this.base}/api/factories/catalog/designed-products`;
     return this.http.get<ApiEnvelope | unknown>(url).pipe(
@@ -231,7 +290,19 @@ export class FactoryApiService {
           const price = o.price ?? o.Price ?? 0;
           const categoryName = o.categoryName ?? o.CategoryName ?? '';
           const mainImageUrl = o.mainImageUrl ?? o.MainImageUrl ?? null;
-          return { id, name, price, categoryName, mainImageUrl };
+          const targetAudienceLabel = this.targetAudienceLabelFromRow(o);
+          const averageRatingRaw = this.toNum(o.averageRating ?? o.AverageRating);
+          const reviewCountRaw = this.toNum(o.reviewCount ?? o.ReviewCount ?? o.ratingsCount ?? o.RatingsCount) ?? 0;
+          return {
+            id,
+            name,
+            price,
+            categoryName,
+            mainImageUrl,
+            targetAudienceLabel,
+            averageRating: averageRatingRaw != null ? Number(averageRatingRaw.toFixed(1)) : null,
+            reviewCount: Math.max(0, Math.floor(reviewCountRaw))
+          };
         });
       }),
       catchError(() => of([]))
@@ -476,15 +547,111 @@ export class FactoryApiService {
     );
   }
 
+  /** GET /api/Orders/GetAllByID — list orders for current factory account. */
+  getFactoryOrders(
+    pageNumber = 1,
+    pageSize = 50
+  ): Observable<FactoryOrderSummary[]> {
+    const url = `${this.base}/api/Orders/GetAllByID`;
+    const factoryId = this.auth.getFactoryId();
+    let params = new HttpParams()
+      .set('pageNumber', String(pageNumber))
+      .set('pageSize', String(pageSize));
+    if (factoryId != null) {
+      params = params
+        .set('factoryId', String(factoryId))
+        .set('providedFactoryId', String(factoryId));
+    }
+    return this.http.get<unknown>(url, { params }).pipe(
+      map(res => {
+        const payload = this.unwrapPayload<any>(res);
+        const list = payload?.items ?? payload?.data ?? payload ?? [];
+        if (!Array.isArray(list)) return [];
+        return list.map((row: any) => ({
+          id: this.toNum(row?.id ?? row?.Id ?? row?.orderId ?? row?.OrderId) ?? 0,
+          status: this.pickString(row ?? {}, ['status', 'Status']) || 'Unknown',
+          createdOn:
+            this.pickString(row ?? {}, ['createdOn', 'CreatedOn', 'createdAt', 'CreatedAt']) || '',
+          recipientName:
+            this.pickString(row ?? {}, ['recipientName', 'RecipientName']) || 'Customer',
+          recipientPhoneNumber:
+            this.pickString(row ?? {}, ['recipientPhoneNumber', 'RecipientPhoneNumber']) || '',
+          totalAmount:
+            this.toNum(
+              row?.totalAmount ?? row?.TotalAmount ?? row?.amount ?? row?.Amount
+            ) ?? 0,
+          itemsCount:
+            this.toNum(
+              row?.itemsCount ??
+                row?.ItemsCount ??
+                (Array.isArray(row?.items) ? row.items.length : null)
+            ) ?? 0
+        }));
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  /** GET /api/Orders/{orderId}/items — list order items. */
+  getFactoryOrderItems(orderId: number): Observable<FactoryOrderItem[]> {
+    const url = `${this.base}/api/Orders/${orderId}/items`;
+    return this.http.get<unknown>(url).pipe(
+      map(res => {
+        const payload = this.unwrapPayload<any>(res);
+        const list = payload?.items ?? payload?.data ?? payload ?? [];
+        if (!Array.isArray(list)) return [];
+        return list.map((row: any) => ({
+          productName:
+            this.pickString(row ?? {}, [
+              'productName',
+              'ProductName',
+              'name',
+              'Name'
+            ]) || 'Item',
+          imageUrl:
+            this.pickString(row ?? {}, ['imageUrl', 'ImageUrl', 'productImage', 'ProductImage']) ||
+            null,
+          quantity: this.toNum(row?.quantity ?? row?.Quantity) ?? 0,
+          unitPrice: this.toNum(row?.unitPrice ?? row?.UnitPrice ?? row?.price ?? row?.Price) ?? 0,
+          totalPrice:
+            this.toNum(row?.totalPrice ?? row?.TotalPrice) ??
+            (this.toNum(row?.quantity ?? row?.Quantity) ?? 0) *
+              (this.toNum(row?.unitPrice ?? row?.UnitPrice ?? row?.price ?? row?.Price) ?? 0),
+          size: this.pickString(row ?? {}, ['size', 'Size']) || '-'
+        }));
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   addProductSize(
     productId: number,
     body: { size: string; a: number; b: number; c: number }
-  ): Observable<void> {
+  ): Observable<{ id?: number }> {
     const url = `${this.base}/api/factories/products/${productId}/sizes`;
     return this.http.post<ApiEnvelope>(url, body).pipe(
       map(res => {
         if (!res.isSuccess) {
           throw this.envErr(res);
+        }
+        const data = (res.data ?? {}) as Record<string, unknown>;
+        const id = this.toNum(data['id'] ?? data['Id'] ?? data['sizeId'] ?? data['SizeId']) ?? undefined;
+        return { id };
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
+  /** PUT /api/factories/product-sizes/{Id} */
+  updateProductSize(
+    sizeId: number,
+    body: { size: string; a: number; b: number; c: number }
+  ): Observable<void> {
+    const url = `${this.base}/api/factories/product-sizes/${sizeId}`;
+    return this.http.put<ApiEnvelope | null>(url, body).pipe(
+      map(res => {
+        if (res && typeof res === 'object' && 'isSuccess' in res && !res.isSuccess) {
+          throw this.envErr(res as ApiEnvelope);
         }
       }),
       catchError(e => this.mapErr(e))
@@ -636,5 +803,60 @@ export class FactoryApiService {
     }
     // Otherwise assume it's already the payload
     return res as T;
+  }
+
+  private pickString(obj: Record<string, unknown>, keys: string[]): string {
+    for (const k of keys) {
+      const v = obj[k];
+      if (typeof v === 'string' && v.trim()) {
+        return v.trim();
+      }
+    }
+    return '';
+  }
+
+  private toNum(v: unknown): number | null {
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v)) return parseFloat(v);
+    return null;
+  }
+
+  private targetAudienceLabel(v: unknown): string {
+    if (typeof v === 'string' && v.trim()) return v.trim();
+    const n = this.toNum(v);
+    if (n == null) return 'All';
+    const map: Record<number, string> = {
+      1: 'Men',
+      2: 'Women',
+      3: 'Unisex',
+      4: 'Kids',
+      8: 'Babies'
+    };
+    return map[Math.floor(n)] ?? 'All';
+  }
+
+  private targetAudienceLabelFromRow(row: Record<string, unknown>): string {
+    const single =
+      row['targetAudienceName'] ??
+      row['TargetAudienceName'] ??
+      row['targetAudience'] ??
+      row['TargetAudience'];
+    if (single != null) {
+      return this.targetAudienceLabel(single);
+    }
+    const many =
+      row['targetAudiences'] ??
+      row['TargetAudiences'] ??
+      row['audiences'] ??
+      row['Audiences'];
+    if (Array.isArray(many) && many.length > 0) {
+      const labels = many
+        .map(v => this.targetAudienceLabel(v))
+        .filter(v => !!v && v !== 'All');
+      if (labels.length > 0) {
+        return [...new Set(labels)].join(', ');
+      }
+    }
+    return 'All';
   }
 }

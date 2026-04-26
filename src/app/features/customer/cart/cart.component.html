@@ -54,16 +54,20 @@
                   <span class="item-type-badge" [class.item-type-badge--design]="item.type === 'design'">
                     {{ item.type === 'design' ? '✏️ Custom Design' : '🏷️ Fixed Product' }}
                   </span>
-                  <span *ngIf="item.type === 'design' && item.size" class="item-size-badge">Size: {{ item.size }}</span>
+                  <span *ngIf="item.type === 'design' && item.sizes?.length" class="item-size-badge">
+                    {{ item.sizes!.length }} size{{ item.sizes!.length === 1 ? '' : 's' }}
+                  </span>
                 </div>
               </div>
               <button
-                *ngIf="item.type === 'design'"
                 type="button"
-                class="item-remove"
-                aria-label="Remove item"
+                class="item-remove item-remove--icon"
+                aria-label="Delete item"
+                title="Delete item"
                 (click)="removeItem(item)"
-              >Remove</button>
+              >
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
 
             <div class="item-pricing mb-2">
@@ -74,8 +78,23 @@
 
           <!-- Quantity / Sizes -->
           <div class="item-sizes-container">
-            <!-- For Design Items (single size/qty) -->
-            <div *ngIf="item.type === 'design'" class="item-qty-row">
+            <!-- For Design Items (sizes) -->
+            <div *ngIf="item.type === 'design' && item.sizes?.length">
+              <div class="item-qty-row mb-2 d-flex align-items-center justify-content-between" *ngFor="let s of item.sizes">
+                <div class="d-flex align-items-center">
+                  <span class="badge bg-light text-dark border me-3" style="width: 60px">{{ s.sizeLabel }}</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="item-qty" aria-label="Quantity">
+                    <button type="button" aria-label="Decrease quantity" (click)="decreaseQty(item, s.sizeEnum)">−</button>
+                    <span class="qty-value">{{ s.quantity }}</span>
+                    <button type="button" aria-label="Increase quantity" (click)="increaseQty(item, s.sizeEnum)">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="item.type === 'design' && (!item.sizes || item.sizes.length === 0)" class="item-qty-row">
               <div class="item-qty" aria-label="Quantity">
                 <button type="button" aria-label="Decrease quantity" (click)="decreaseQty(item)">−</button>
                 <span class="qty-value">{{ item.quantity }}</span>
@@ -95,9 +114,6 @@
                     <span class="qty-value">{{ s.quantity }}</span>
                     <button type="button" aria-label="Increase quantity" (click)="increaseQty(item, s.sizeEnum)">+</button>
                   </div>
-                  <button type="button" class="btn btn-sm btn-outline-danger border-0" (click)="removeItem(item, s.sizeEnum)">
-                    <i class="bi bi-trash"></i>
-                  </button>
                 </div>
               </div>
             </div>

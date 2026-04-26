@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
@@ -17,6 +17,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class CategoryComponent implements OnInit {
   private readonly fixedProductService = inject(FixedProductService);
+  private readonly route = inject(ActivatedRoute);
 
   targetAudiences = [
     { label: 'Any', value: null },
@@ -65,7 +66,13 @@ export class CategoryComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
-    this.fetchProducts();
+    this.route.queryParamMap.subscribe(params => {
+      const q = (params.get('q') || '').trim();
+      if (q !== this.searchTerm) {
+        this.searchTerm = q;
+      }
+      this.fetchProducts(1);
+    });
   }
 
   private readonly http = inject(HttpClient);

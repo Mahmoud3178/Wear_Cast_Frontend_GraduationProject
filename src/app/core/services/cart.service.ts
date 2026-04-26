@@ -131,10 +131,15 @@ export class CartService {
 
   /** POST /api/Cart/AddOrUpdateFixedColorToCart */
   addOrUpdateFixed(req: AddOrUpdateFixedColorToCartRequest): Observable<unknown> {
+    const first = req.sizes?.[0];
     // Send both camelCase and PascalCase to handle different binder configs
     const body = {
       colorId: req.colorId,
       ColorId: req.colorId,
+      size: first?.size,
+      Size: first?.size,
+      quantity: first?.quantity,
+      Quantity: first?.quantity,
       sizes: req.sizes,
       Sizes: req.sizes
     };
@@ -153,6 +158,10 @@ export class CartService {
     const body = {
       designId: req.designId,
       DesignId: req.designId,
+      size: req.size,
+      Size: req.size,
+      quantity: req.quantity,
+      Quantity: req.quantity,
       sizes,
       Sizes: sizes
     };
