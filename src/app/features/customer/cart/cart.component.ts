@@ -262,7 +262,8 @@ export class CartComponent implements OnInit {
   }
 
   /**
-   * Cart APIs expect quantity delta (+1 / -1), not final absolute quantity.
+   * Fixed cart endpoint now receives absolute quantity after change.
+   * Designed endpoint remains delta-based until backend confirms otherwise.
    */
   private updateQty(item: CartItemView, delta: number, sizeEnum?: number): void {
     const targetSizeEnum = sizeEnum ?? item.sizes?.[0]?.sizeEnum ?? this.sizeToEnum(item.size);
@@ -297,7 +298,7 @@ export class CartComponent implements OnInit {
     const req$ = item.type === 'fixed' && item.colorId != null
       ? this.cartService.addOrUpdateFixed({
           colorId: item.colorId,
-          sizes: [{ size: actualSizeEnum, quantity: delta }]
+          sizes: [{ size: actualSizeEnum, quantity: Math.max(0, nextQty) }]
         })
       : item.type === 'design' && item.designId != null
         ? this.cartService.addOrUpdateDesigned({ designId: item.designId, size: actualSizeEnum, quantity: delta })
@@ -314,7 +315,7 @@ export class CartComponent implements OnInit {
           colorId: item.colorId,
           designId: item.designId,
           size: actualSizeEnum,
-          delta
+          sentQuantity: item.type === 'fixed' ? Math.max(0, nextQty) : delta
         });
         // Rollback simple, just reload cart
         this.loadCart();

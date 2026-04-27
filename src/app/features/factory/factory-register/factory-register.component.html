@@ -72,8 +72,7 @@
                 required
               />
               <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
-                <span *ngIf="!showPassword">👁️</span>
-                <span *ngIf="showPassword">🙈</span>
+                <i class="bi" [class.bi-eye]="showPassword" [class.bi-eye-slash]="!showPassword"></i>
               </button>
             </div>
           </div>
@@ -88,8 +87,7 @@
                 required
               />
               <button type="button" class="btn btn-outline-secondary" (click)="showConfirmPassword = !showConfirmPassword" tabindex="-1" aria-label="Toggle confirm password visibility">
-                <span *ngIf="!showConfirmPassword">👁️</span>
-                <span *ngIf="showConfirmPassword">🙈</span>
+                <i class="bi" [class.bi-eye]="showConfirmPassword" [class.bi-eye-slash]="!showConfirmPassword"></i>
               </button>
             </div>
           </div>

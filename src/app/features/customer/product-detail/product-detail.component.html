@@ -49,7 +49,7 @@
             <span *ngIf="!favouriteLoading">{{ isInFavourites ? '♥' : '♡' }}</span>
           </button>
         </div>
-        <p class="wc-price">${{ product.price | number:'1.2-2' }}</p>
+        <p class="wc-price">EGP {{ product.price | number:'1.2-2' }}</p>
 
         <!-- Favourite messages -->
         <div *ngIf="favouriteMessage" class="wc-fav-success">{{ favouriteMessage }}</div>
@@ -107,7 +107,7 @@
           </button>
           <button class="wc-btn-size-table" (click)="openSizeTableModal()"
             *ngIf="colorDetail && colorDetail.sizes.length > 0">
-            📏 Size Table
+            Details
           </button>
         </div>
 
@@ -123,7 +123,7 @@
 <div class="wc-modal-backdrop" *ngIf="showSizeTableModal" (click)="closeSizeTableModal()"></div>
 <div class="wc-size-table-modal-popup" *ngIf="showSizeTableModal" role="dialog" aria-labelledby="size-table-modal-title">
   <div class="wc-modal-header">
-    <h3 id="size-table-modal-title">Size Table</h3>
+    <h3 id="size-table-modal-title">Details</h3>
     <button class="wc-modal-close" (click)="closeSizeTableModal()">×</button>
   </div>
   <div class="wc-modal-body" *ngIf="product">

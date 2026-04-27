@@ -353,14 +353,24 @@ function pickPreviewUrl(r: Record<string, unknown>): string | undefined {
   const direct = pickStr(r, [
     'frontImageUrl',
     'FrontImageUrl',
+    'frontDesignImageUrl',
+    'FrontDesignImageUrl',
+    'frontViewImageUrl',
+    'FrontViewImageUrl',
     'previewImageUrl',
     'PreviewImageUrl',
     'thumbnailUrl',
     'ThumbnailUrl',
+    'thumbUrl',
+    'ThumbUrl',
+    'image',
+    'Image',
     'imageUrl',
     'ImageUrl',
     'mainImageUrl',
-    'MainImageUrl'
+    'MainImageUrl',
+    'url',
+    'Url'
   ]);
   if (direct) return direct;
 
@@ -375,6 +385,24 @@ function pickPreviewUrl(r: Record<string, unknown>): string | undefined {
       'FileUrl'
     ]);
     if (nested) return nested;
+  }
+
+  const viewImages = r['viewImages'] ?? r['ViewImages'] ?? r['designImages'] ?? r['DesignImages'];
+  if (Array.isArray(viewImages)) {
+    for (const img of viewImages) {
+      if (!img || typeof img !== 'object') continue;
+      const o = img as Record<string, unknown>;
+      const sideRaw = o['side'] ?? o['Side'] ?? o['view'] ?? o['View'] ?? o['viewSide'] ?? o['ViewSide'];
+      const side = String(sideRaw ?? '').toLowerCase();
+      const isFront =
+        side === 'front' ||
+        side === '1' ||
+        side === '0' ||
+        side === 'frontside';
+      if (!isFront && side) continue;
+      const url = pickStr(o, ['url', 'Url', 'imageUrl', 'ImageUrl', 'fileUrl', 'FileUrl']);
+      if (url) return url;
+    }
   }
 
   const images = r['images'] ?? r['Images'];

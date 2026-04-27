@@ -289,7 +289,7 @@ export class ProfileComponent implements OnInit {
     this.expandedShipmentId = row.id;
     this.shipmentDetail = null;
     this.shipmentDetailLoading = true;
-    this.customerShipmentsService.getShipmentById(row.id).subscribe({
+    this.customerShipmentsService.getShipmentDetailWithItems(row.id, row).subscribe({
       next: (detail) => {
         this.shipmentDetailLoading = false;
         this.shipmentDetail = detail;

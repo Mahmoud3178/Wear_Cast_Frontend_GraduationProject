@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
@@ -127,6 +127,45 @@ export class CustomerShipmentsService {
     const url = `${this.base}/api/Customer/shipments/${shipmentId}`;
     return this.http.get<unknown>(url, { ...this.authOpts() }).pipe(
       map(body => normalizeShipmentDetail(unwrapDataObject(body))),
+      catchError(() => of(null))
+    );
+  }
+
+  /** GET /api/Orders/shipment/{shipmentId}/items */
+  getShipmentOrderItems(shipmentId: number): Observable<CustomerShipmentOrderLineVm[]> {
+    const url = `${this.base}/api/Orders/shipment/${shipmentId}/items`;
+    return this.http.get<unknown>(url, { ...this.authOpts() }).pipe(
+      map(body => normalizeShipmentOrderItems(body)),
+      catchError(() => of([]))
+    );
+  }
+
+  getShipmentDetailWithItems(
+    shipmentId: number,
+    shipmentRow?: CustomerShipmentRow
+  ): Observable<CustomerShipmentDetailVm | null> {
+    return forkJoin({
+      detail: this.getShipmentById(shipmentId),
+      items: this.getShipmentOrderItems(shipmentId)
+    }).pipe(
+      map(({ detail, items }) => {
+        if (!detail) {
+          return mergeShipmentItemsIntoFallback(shipmentId, items, shipmentRow);
+        }
+        const mergedLines = items.length > 0 ? items : detail.orderLines;
+        const detailTotal =
+          detail.price > 0
+            ? detail.price
+            : computeShipmentTotalFromLines(mergedLines);
+        return {
+          ...detail,
+          price: detailTotal,
+          shipmentStatus:
+            detail.shipmentStatus ?? shipmentRow?.status ?? null,
+          orderedAt: detail.orderedAt ?? shipmentRow?.createdAt ?? null,
+          orderLines: mergedLines
+        };
+      }),
       catchError(() => of(null))
     );
   }
@@ -266,6 +305,116 @@ function normalizeShipmentDetail(
   };
 }
 
+function normalizeShipmentOrderItems(root: unknown): CustomerShipmentOrderLineVm[] {
+  const list = unwrapShipmentItemsArray(root);
+  const orderLines: CustomerShipmentOrderLineVm[] = [];
+  for (const rawItem of list) {
+    const line = mapShipmentOrderLine(rawItem);
+    if (line) orderLines.push(line);
+  }
+  return orderLines;
+}
+
+function unwrapShipmentItemsArray(root: unknown): unknown[] {
+  if (Array.isArray(root)) {
+    return root;
+  }
+  if (!root || typeof root !== 'object') {
+    return [];
+  }
+  const source = root as Record<string, unknown>;
+  const payload =
+    source['data'] ??
+    source['Data'] ??
+    source['result'] ??
+    source['Result'] ??
+    root;
+
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return [];
+  }
+
+  const p = payload as Record<string, unknown>;
+  const itemsRoot =
+    p['items'] ??
+    p['Items'] ??
+    p['orderItems'] ??
+    p['OrderItems'] ??
+    p['lines'] ??
+    p['Lines'] ??
+    p['data'] ??
+    p['Data'];
+
+  if (Array.isArray(itemsRoot)) {
+    return itemsRoot;
+  }
+
+  // Some APIs return grouped payload:
+  // { fixedItems: { items: [...] }, designedItems: { items: [...] } }
+  const fixedItemsBox = p['fixedItems'] ?? p['FixedItems'];
+  const designedItemsBox = p['designedItems'] ?? p['DesignedItems'];
+  const grouped: unknown[] = [];
+  if (fixedItemsBox && typeof fixedItemsBox === 'object' && !Array.isArray(fixedItemsBox)) {
+    const fb = fixedItemsBox as Record<string, unknown>;
+    const arr = fb['items'] ?? fb['Items'];
+    if (Array.isArray(arr)) {
+      grouped.push(...arr);
+    }
+  }
+  if (
+    designedItemsBox &&
+    typeof designedItemsBox === 'object' &&
+    !Array.isArray(designedItemsBox)
+  ) {
+    const db = designedItemsBox as Record<string, unknown>;
+    const arr = db['items'] ?? db['Items'];
+    if (Array.isArray(arr)) {
+      grouped.push(...arr);
+    }
+  }
+  if (grouped.length > 0) {
+    return grouped;
+  }
+  return [];
+}
+
+function computeShipmentTotalFromLines(lines: CustomerShipmentOrderLineVm[]): number {
+  return lines.reduce((sum, line) => {
+    if (line.lineTotal != null) return sum + line.lineTotal;
+    if (line.unitPrice != null) return sum + line.unitPrice * line.quantity;
+    return sum;
+  }, 0);
+}
+
+function mergeShipmentItemsIntoFallback(
+  shipmentId: number,
+  items: CustomerShipmentOrderLineVm[],
+  shipmentRow?: CustomerShipmentRow
+): CustomerShipmentDetailVm {
+  const totalFromItems = computeShipmentTotalFromLines(items);
+  return {
+    id: shipmentId,
+    price: shipmentRow?.total ?? totalFromItems,
+    shipmentStatus: shipmentRow?.status ?? null,
+    orderedAt: shipmentRow?.createdAt ?? null,
+    deliveryAddress: null,
+    driverName: null,
+    driverPhoneNumber: null,
+    timeline: [
+      { label: 'Ordered', at: shipmentRow?.createdAt ?? null },
+      { label: 'Ready for pickup', at: null },
+      { label: 'Trip started', at: null },
+      { label: 'Out for delivery', at: null },
+      { label: 'Delivered', at: null }
+    ],
+    orderLines: items
+  };
+}
+
 function pickIso(o: Record<string, unknown>, keys: string[]): string | null {
   const s = pickStr(o, keys);
   return s || null;
@@ -314,7 +463,9 @@ function mapShipmentOrderLine(entry: unknown): CustomerShipmentOrderLineVm | nul
     pickStr(src, ['size', 'Size', 'sku', 'Sku', 'colorName', 'ColorName']) ||
     pickStr(o, ['size', 'Size']) ||
     '';
-  const qRaw = pickNum(src, ['quantity', 'Quantity']) ?? pickNum(o, ['quantity', 'Quantity']);
+  const qRaw =
+    pickNum(src, ['quantity', 'Quantity', 'totalQuantity', 'TotalQuantity']) ??
+    pickNum(o, ['quantity', 'Quantity', 'totalQuantity', 'TotalQuantity']);
   const quantity = qRaw != null && qRaw > 0 ? qRaw : 1;
   const unitPrice =
     pickFloat(src, ['unitPrice', 'UnitPrice', 'price', 'Price']) ??
@@ -324,6 +475,10 @@ function mapShipmentOrderLine(entry: unknown): CustomerShipmentOrderLineVm | nul
     pickFloat(o, ['lineTotal', 'LineTotal', 'total', 'Total']);
   const imageUrl =
     pickStr(src, [
+      'frontImageUrl',
+      'FrontImageUrl',
+      'image',
+      'Image',
       'imageUrl',
       'ImageUrl',
       'thumbnailUrl',
@@ -333,14 +488,33 @@ function mapShipmentOrderLine(entry: unknown): CustomerShipmentOrderLineVm | nul
     ]) ||
     pickStr(o, ['imageUrl', 'ImageUrl']) ||
     null;
+  const sizesRaw = src['sizes'] ?? src['Sizes'] ?? o['sizes'] ?? o['Sizes'];
+  const sizesLabel = buildSizesLabel(sizesRaw);
   return {
     title,
-    subtitle,
+    subtitle: sizesLabel || subtitle,
     quantity: Math.max(1, quantity),
     unitPrice: unitPrice ?? null,
     lineTotal: lineTotal ?? null,
     imageUrl: imageUrl || null
   };
+}
+
+function buildSizesLabel(sizesRaw: unknown): string {
+  if (!Array.isArray(sizesRaw) || sizesRaw.length === 0) {
+    return '';
+  }
+  const parts: string[] = [];
+  for (const row of sizesRaw) {
+    if (!row || typeof row !== 'object') continue;
+    const o = row as Record<string, unknown>;
+    const sizeName =
+      pickStr(o, ['sizeName', 'SizeName', 'size', 'Size']).replace(/^_/, '') || '';
+    const qty = pickNum(o, ['quantity', 'Quantity']) ?? 0;
+    if (!sizeName) continue;
+    parts.push(qty > 0 ? `${sizeName} x${qty}` : sizeName);
+  }
+  return parts.join(', ');
 }
 
 function unwrapPagedPayload(root: unknown): { obj: Record<string, unknown>; items: unknown[] } {

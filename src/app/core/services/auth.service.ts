@@ -103,6 +103,54 @@ export class AuthService {
     );
   }
 
+  refreshToken(): Observable<AuthSession> {
+    const refreshToken = localStorage.getItem('refreshToken') || '';
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+    const url = `${this.apiUrl}/api/auth/refresh-token`;
+    return this.http
+      .post<ApiEnvelope | Record<string, unknown>>(url, { refreshToken })
+      .pipe(
+        map(body => {
+          if (
+            body &&
+            typeof body === 'object' &&
+            'isSuccess' in body &&
+            (body as ApiEnvelope).isSuccess === false
+          ) {
+            throw this.apiFailure(body as ApiEnvelope);
+          }
+          const payload = unwrapAuthPayload(body);
+          return this.normalizeLoginData(payload);
+        }),
+        catchError(err => this.handleHttpError(err))
+      );
+  }
+
+  revokeRefreshToken(): Observable<void> {
+    const refreshToken = localStorage.getItem('refreshToken') || '';
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+    const url = `${this.apiUrl}/api/auth/revoke-refresh-token`;
+    return this.http
+      .post<ApiEnvelope | Record<string, unknown>>(url, { refreshToken })
+      .pipe(
+        map(body => {
+          if (
+            body &&
+            typeof body === 'object' &&
+            'isSuccess' in body &&
+            (body as ApiEnvelope).isSuccess === false
+          ) {
+            throw this.apiFailure(body as ApiEnvelope);
+          }
+        }),
+        catchError(err => this.handleHttpError(err))
+      );
+  }
+
   /** Ask the API to send another confirmation email (same address used at registration). */
   resendConfirmationEmail(email: string): Observable<void> {
     const url = `${this.apiUrl}/api/auth/resend-confirmation-email`;
@@ -416,6 +464,7 @@ export class AuthService {
   }
 
   logout(): void {
+    this.revokeRefreshToken().subscribe({ error: () => {} });
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('role');
@@ -426,6 +475,7 @@ export class AuthService {
 
   /** Factory portal sign-out → factory login screen. */
   logoutFactory(): void {
+    this.revokeRefreshToken().subscribe({ error: () => {} });
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('role');
@@ -729,4 +779,25 @@ export class AuthService {
     }
     return throwError(() => new Error(String(err)));
   }
+}
+
+function unwrapAuthPayload(
+  body: ApiEnvelope | Record<string, unknown>
+): Record<string, unknown> {
+  if (!body || typeof body !== 'object') {
+    return {};
+  }
+  const o = body as Record<string, unknown>;
+  let payload: unknown =
+    o['data'] ?? o['Data'] ?? o['result'] ?? o['Result'] ?? body;
+  if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+    const p = payload as Record<string, unknown>;
+    const inner = p['data'] ?? p['Data'];
+    if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+      payload = inner;
+    }
+  }
+  return payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? (payload as Record<string, unknown>)
+    : {};
 }

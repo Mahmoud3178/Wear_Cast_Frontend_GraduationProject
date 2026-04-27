@@ -18,8 +18,7 @@
           <div class="input-group">
             <input class="form-control" [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="form.password" required autocomplete="current-password">
             <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
-              <span *ngIf="!showPassword">👁️</span>
-              <span *ngIf="showPassword">🙈</span>
+              <i class="bi" [class.bi-eye]="showPassword" [class.bi-eye-slash]="!showPassword"></i>
             </button>
           </div>
         </div>
