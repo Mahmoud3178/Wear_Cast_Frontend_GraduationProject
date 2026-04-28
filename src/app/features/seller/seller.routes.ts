@@ -43,6 +43,12 @@ export const SELLER_ROUTES: Routes = [
     import('./edit-product/edit-product.component')
       .then(m => m.EditProductComponent)
 },
+{
+  path: 'add-product',
+  loadComponent: () =>
+    import('./add-product/add-product.component')
+      .then(m => m.AddProductComponent)
+},
       {
       path: 'inventory',
         loadComponent: () =>

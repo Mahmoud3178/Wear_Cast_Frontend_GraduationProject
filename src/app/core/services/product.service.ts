@@ -13,9 +13,27 @@ export class ProductService {
   constructor(private http: HttpClient) {}
 
   // 🔹 Get All Products
-  getAll(pageIndex = 1, pageSize = 100): Observable<any> {
-    return this.http.get(`${this.api}/api/FixedProduct/GetAll?pageIndex=${pageIndex}&pageSize=${pageSize}`);
-  }
+getAll(
+  pageIndex = 1,
+  pageSize = 100,
+  searchTerm: string = '',
+  categoryId?: number,
+  minPrice?: number,
+  maxPrice?: number
+): Observable<any> {
+
+  let params: any = {
+    PageIndex: pageIndex,
+    PageSize: pageSize
+  };
+
+  if (searchTerm) params.SearchTerm = searchTerm;
+  if (categoryId) params.CategoryId = categoryId;
+  if (minPrice) params.MinPrice = minPrice;
+  if (maxPrice) params.MaxPrice = maxPrice;
+
+  return this.http.get(`${this.api}/api/FixedProduct/GetAll`, { params });
+}
 
   // 🔹 Get Product By Id
   getById(id: number): Observable<any> {

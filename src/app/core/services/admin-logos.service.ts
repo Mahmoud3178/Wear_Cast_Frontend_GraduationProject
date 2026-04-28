@@ -34,6 +34,13 @@ getAssets(categoryId?: number, pageIndex = 1, pageSize = 20) {
     return this.http.get(`${this.base}/api/assets-categories`);
   }
 
+    addCategory(body: any) {
+    return this.http.post(`${this.base}/api/assets-categories`, body, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${this.getToken()}`
+      })
+    });
+  }
   // 🔹 Create logo
   createLogo(formData: FormData) {
     return this.http.post(`${this.base}/api/admin/design-assets`, formData, {

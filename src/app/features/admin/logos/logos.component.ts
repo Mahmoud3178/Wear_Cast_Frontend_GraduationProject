@@ -16,10 +16,11 @@ export class LogosComponent implements OnInit {
   logos: any[] = [];
   categories: any[] = [];
 
-selectedCategory: number | null = null;
+  selectedCategory: number | null = null;
   selectedLogo: any = null;
 
   searchTerm: string = '';
+  newCategoryName: string = '';
 
   constructor(private service: AdminLogosService) {}
 
@@ -28,44 +29,58 @@ selectedCategory: number | null = null;
   }
 
   // 🔹 Load Categories
-loadCategories() {
-  this.service.getCategories().subscribe({
-    next: (res: any) => {
-      this.categories = res?.data || [];
+  loadCategories() {
+    this.service.getCategories().subscribe({
+      next: (res: any) => {
+        this.categories = res?.data || [];
+        this.selectedCategory = null;
+        this.loadLogos();
+      }
+    });
+  }
 
-      // 🔥 خليه ALL افتراضي
-      this.selectedCategory = null;
-
-      this.loadLogos();
-    }
-  });
-}
   // 🔹 Load Logos
-loadLogos() {
+  loadLogos() {
+    this.service.getAssets(this.selectedCategory ?? undefined).subscribe({
+      next: (res: any) => {
+        this.logos = res?.data?.items || res?.data || [];
+      }
+    });
+  }
 
-  this.service.getAssets(this.selectedCategory ?? undefined).subscribe({
-    next: (res: any) => {
-
-      // حسب الـ API بتاعك
-      this.logos = res?.data?.items || res?.data || [];
-
-    }
-  });
-
-}
-  // 🔹 Filter by category
+  // 🔹 Change Category
   onCategoryChange() {
     this.loadLogos();
   }
 
-  // 🔹 Open Offcanvas
-openLogo(logo: any) {
-  this.selectedLogo = {
-    ...logo,
-    widthPx: logo.widthPx || 100,
-    heightPx: logo.heightPx || 100
-  };
-}
+  // 🔹 Add Category
+  addCategory() {
+
+    if (!this.newCategoryName.trim()) return;
+
+    const body = {
+      name: this.newCategoryName
+    };
+
+    this.service.addCategory(body).subscribe({
+      next: () => {
+        this.newCategoryName = '';
+        this.loadCategories();
+
+        const modal = document.getElementById('addCategoryModal');
+        modal?.querySelector('.btn-close')?.dispatchEvent(new Event('click'));
+      }
+    });
+  }
+
+  // 🔹 Open Logo
+  openLogo(logo: any) {
+    this.selectedLogo = {
+      ...logo,
+      widthPx: logo.widthPx || 100,
+      heightPx: logo.heightPx || 100
+    };
+  }
 
   // 🔹 Delete
   deleteLogo(id: number) {
@@ -78,25 +93,22 @@ openLogo(logo: any) {
   }
 
   // 🔹 Update
-updateLogo() {
-  if (!this.selectedLogo) return;
+  updateLogo() {
 
-  const formData = new FormData();
-  formData.append('Name', this.selectedLogo.name || '');
-  formData.append('WidthPx', this.selectedLogo.widthPx || 0);
-  formData.append('HeightPx', this.selectedLogo.heightPx || 0);
+    if (!this.selectedLogo) return;
 
-  // 🔥 الصح هنا
-  formData.append('CategoryId', this.selectedLogo.categoryId?.toString());
+    const formData = new FormData();
+    formData.append('Name', this.selectedLogo.name || '');
+    formData.append('WidthPx', this.selectedLogo.widthPx || 0);
+    formData.append('HeightPx', this.selectedLogo.heightPx || 0);
+    formData.append('CategoryId', this.selectedLogo.categoryId?.toString());
 
-  this.service.updateLogo(this.selectedLogo.id, formData).subscribe({
-    next: () => {
-      this.loadLogos();
-    }
-  });
-}
+    this.service.updateLogo(this.selectedLogo.id, formData).subscribe({
+      next: () => this.loadLogos()
+    });
+  }
 
-  // 🔹 Search filter
+  // 🔹 Filter Search
   get filteredLogos() {
     return this.logos.filter(l =>
       l.name?.toLowerCase().includes(this.searchTerm.toLowerCase())
