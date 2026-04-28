@@ -188,7 +188,12 @@ export class CheckoutComponent implements OnInit {
         }
       },
       error: (err: any) => {
-        let msg = err?.error?.message || err?.error?.detail || err?.message || 'Checkout failed. Please try again.';
+        let msg =
+          err?.error?.description ||
+          err?.error?.message ||
+          err?.error?.detail ||
+          err?.message ||
+          'Checkout failed. Please try again.';
 
         // Handle specific backend SQL errors with user-friendly messages
         if (msg.includes("Invalid column name") || msg.includes("column name")) {

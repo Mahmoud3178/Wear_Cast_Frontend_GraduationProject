@@ -12,6 +12,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class FactoryLoginComponent {
   form = { email: '', password: '' };
+  accountType: 'factory' | 'manager' = 'factory';
   errorMessage = '';
   submitting = false;
   showPassword = false;
@@ -27,11 +28,13 @@ export class FactoryLoginComponent {
     this.auth.login(this.form).subscribe({
       next: res => {
         this.submitting = false;
-        if (res.role !== 'FACTORY') {
+        const role = (res.role || '').toUpperCase();
+        if (role !== 'FACTORY' && role !== 'FACTORY_MANAGER') {
           this.errorMessage =
-            'This portal is for factory accounts only. Use the main sign-in for customers.';
+            'This portal is for factory accounts only (factory or factory manager). Use the main sign-in for customers.';
           return;
         }
+        this.auth.setFactoryPortalAccountType(this.accountType);
         this.auth.saveUser(res);
         void this.router.navigate(['/factory']);
       },

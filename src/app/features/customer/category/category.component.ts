@@ -41,7 +41,8 @@ export class CategoryComponent implements OnInit {
     { label: 'Most Popular', value: 0 },
     { label: 'Newest', value: 1 },
     { label: 'Price (Low to High)', value: 2 },
-    { label: 'Price (High to Low)', value: 3 }
+    { label: 'Price (High to Low)', value: 3 },
+    { label: 'Best Seller', value: 4 }
   ];
 
   categories: any[] = [];

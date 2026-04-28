@@ -47,7 +47,10 @@ export class LoginComponent implements OnInit {
         this.auth.saveUser(res);
         if (res.role === 'ADMIN') {
           void this.router.navigate(['/admin']);
-        } else if (res.role === 'FACTORY') {
+        } else if (
+          res.role === 'FACTORY' ||
+          res.role === 'FACTORY_MANAGER'
+        ) {
           void this.router.navigate(['/factory']);
         } else if (res.role === 'SELLER') {
           void this.router.navigate(['/seller/dashboard']);

@@ -13,12 +13,6 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class FactoryLayoutComponent {
   constructor(private readonly auth: AuthService) {}
 
-  /** Only main factory account can create managers, not factory managers */
-  get isFactory(): boolean {
-    const roles = this.auth.getUserRoles();
-    return roles.includes('Factory') || roles.includes('factory');
-  }
-
   logout(): void {
     this.auth.logoutFactory();
   }

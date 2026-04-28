@@ -25,6 +25,38 @@
         <button type="submit" class="btn btn-dark w-100" [disabled]="submitting">
           {{ submitting ? 'Signing in…' : 'Sign in' }}
         </button>
+
+        <div class="mt-4 pt-3 border-top">
+          <label class="form-label d-block mb-2 fw-semibold">Sign in as</label>
+          <div class="d-flex gap-2 flex-wrap">
+            <input
+              type="radio"
+              class="btn-check"
+              name="accountType"
+              id="account-type-factory"
+              value="factory"
+              [(ngModel)]="accountType"
+            >
+            <label class="btn btn-outline-secondary flex-grow-1" for="account-type-factory">
+              Factory
+            </label>
+
+            <input
+              type="radio"
+              class="btn-check"
+              name="accountType"
+              id="account-type-manager"
+              value="manager"
+              [(ngModel)]="accountType"
+            >
+            <label class="btn btn-outline-secondary flex-grow-1" for="account-type-manager">
+              Factory Manager
+            </label>
+          </div>
+          <small class="text-muted d-block mt-2">
+            This controls which profile experience opens after sign in.
+          </small>
+        </div>
       </form>
 
       <p class="text-center small text-muted mt-4 mb-0">

@@ -10,6 +10,8 @@ const ROLE_CLAIM =
 
 const CUSTOMER_PROFILE_KEY = 'wearcast:customerProfile';
 export const FACTORY_ID_STORAGE_KEY = 'wearcast:factoryId';
+const FACTORY_PORTAL_ACCOUNT_TYPE_KEY = 'wearcast:factoryPortalAccountType';
+export type FactoryPortalAccountType = 'factory' | 'manager';
 
 /** Registration + JWT merge for profile until a GET /me API exists. */
 export interface CustomerProfileSnapshot {
@@ -104,13 +106,19 @@ export class AuthService {
   }
 
   refreshToken(): Observable<AuthSession> {
+    const token = localStorage.getItem('token') || '';
     const refreshToken = localStorage.getItem('refreshToken') || '';
     if (!refreshToken) {
       return throwError(() => new Error('No refresh token available'));
     }
     const url = `${this.apiUrl}/api/auth/refresh-token`;
     return this.http
-      .post<ApiEnvelope | Record<string, unknown>>(url, { refreshToken })
+      .post<ApiEnvelope | Record<string, unknown>>(url, {
+        token,
+        refreshToken,
+        Token: token,
+        RefreshToken: refreshToken
+      })
       .pipe(
         map(body => {
           if (
@@ -129,13 +137,19 @@ export class AuthService {
   }
 
   revokeRefreshToken(): Observable<void> {
+    const token = localStorage.getItem('token') || '';
     const refreshToken = localStorage.getItem('refreshToken') || '';
     if (!refreshToken) {
       return throwError(() => new Error('No refresh token available'));
     }
     const url = `${this.apiUrl}/api/auth/revoke-refresh-token`;
     return this.http
-      .post<ApiEnvelope | Record<string, unknown>>(url, { refreshToken })
+      .post<ApiEnvelope | Record<string, unknown>>(url, {
+        token,
+        refreshToken,
+        Token: token,
+        RefreshToken: refreshToken
+      })
       .pipe(
         map(body => {
           if (
@@ -455,8 +469,40 @@ export class AuthService {
     }
     const token = this.getToken();
     if (!token) return [];
-    const role = this.roleFromJwt(token);
-    return role ? [role.toLowerCase()] : [];
+    return this.rolesFromJwt(token).map(r => r.toLowerCase());
+  }
+
+  isFactoryManager(): boolean {
+    const payload = this.decodeJwtPayload(this.getToken() || '');
+    if (payload) {
+      const roles = this.rolesFromPayload(payload).map(r =>
+        this.normalizeRole(r)
+      );
+      // If token contains FACTORY, treat it as factory account.
+      if (roles.includes('FACTORY')) {
+        return false;
+      }
+      return roles.includes('FACTORY_MANAGER');
+    }
+    const roles = this.getUserRoles();
+    return roles.some(r => this.normalizeRole(r) === 'FACTORY_MANAGER');
+  }
+
+  isFactoryAccount(): boolean {
+    const payload = this.decodeJwtPayload(this.getToken() || '');
+    if (payload) {
+      const roles = this.rolesFromPayload(payload).map(r =>
+        this.normalizeRole(r)
+      );
+      if (roles.includes('FACTORY')) {
+        return true;
+      }
+      if (roles.includes('FACTORY_MANAGER')) {
+        return false;
+      }
+    }
+    const role = this.getRole();
+    return !!role && this.normalizeRole(role) === 'FACTORY';
   }
 
   isLoggedIn(): boolean {
@@ -480,7 +526,20 @@ export class AuthService {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('role');
     localStorage.removeItem(FACTORY_ID_STORAGE_KEY);
+    localStorage.removeItem(FACTORY_PORTAL_ACCOUNT_TYPE_KEY);
     void this.router.navigate(['/factory/login']);
+  }
+
+  setFactoryPortalAccountType(type: FactoryPortalAccountType): void {
+    localStorage.setItem(FACTORY_PORTAL_ACCOUNT_TYPE_KEY, type);
+  }
+
+  getFactoryPortalAccountType(): FactoryPortalAccountType | null {
+    const raw = localStorage.getItem(FACTORY_PORTAL_ACCOUNT_TYPE_KEY);
+    if (raw === 'factory' || raw === 'manager') {
+      return raw;
+    }
+    return null;
   }
 
   private readCustomerProfileRaw(): CustomerProfileSnapshot | null {
@@ -623,18 +682,32 @@ export class AuthService {
   }
 
   private roleFromJwt(token: string): string | null {
-    const payload = this.decodeJwtPayload(token);
-    if (!payload) {
+    const roles = this.rolesFromJwt(token);
+    if (roles.length === 0) {
       return null;
     }
+    return roles[0];
+  }
+
+  private rolesFromJwt(token: string): string[] {
+    const payload = this.decodeJwtPayload(token);
+    if (!payload) {
+      return [];
+    }
+    return this.rolesFromPayload(payload);
+  }
+
+  private rolesFromPayload(payload: Record<string, unknown>): string[] {
     const r = payload['role'] ?? payload[ROLE_CLAIM];
-    if (typeof r === 'string') {
-      return r;
+    if (typeof r === 'string' && r.trim()) {
+      return [r.trim()];
     }
-    if (Array.isArray(r) && r.length > 0 && typeof r[0] === 'string') {
-      return r[0];
+    if (Array.isArray(r)) {
+      return r.filter(
+        (x): x is string => typeof x === 'string' && x.trim().length > 0
+      );
     }
-    return null;
+    return [];
   }
 
   private decodeJwtPayload(token: string): Record<string, unknown> | null {
@@ -654,6 +727,9 @@ export class AuthService {
 
   private normalizeRole(r: string): string {
     const u = r.toUpperCase();
+    if (u.includes('FACTORYMANAGER') || u.includes('FACTORY_MANAGER')) {
+      return 'FACTORY_MANAGER';
+    }
     if (u.includes('ADMIN')) {
       return 'ADMIN';
     }

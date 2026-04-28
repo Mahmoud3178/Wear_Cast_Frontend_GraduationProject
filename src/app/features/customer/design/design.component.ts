@@ -47,6 +47,9 @@ export class CustomerDesignComponent implements AfterViewInit {
     TargetAudience: null,
     DressStyle: null,
     CategoryId: null,
+    SortBy: null,
+    MinPrice: '',
+    MaxPrice: '',
     PageIndex: 1,
     PageSize: 50
   };

@@ -142,6 +142,22 @@ export interface FactoryManager {
   isActive: boolean;
 }
 
+export interface FactoryManagerProfile {
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  email?: string;
+  phoneNumber?: string;
+  imageUrl?: string;
+}
+
+export interface UpdateFactoryManagerProfileRequest {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  providedManagerId: number;
+}
+
 export interface FactoryOrderSummary {
   id: number;
   status: string;
@@ -544,6 +560,36 @@ export class FactoryApiService {
         return list ?? [];
       }),
       catchError(() => of([]))
+    );
+  }
+
+  /** GET /api/factory-managers/profile */
+  getFactoryManagerProfile(): Observable<FactoryManagerProfile> {
+    const url = `${this.base}/api/factory-managers/profile`;
+    return this.http
+      .get<ApiEnvelope<FactoryManagerProfile> | FactoryManagerProfile>(url)
+      .pipe(
+        map(res => {
+          const payload = this.unwrapPayload<FactoryManagerProfile>(res);
+          if (!payload) {
+            throw new Error('Failed to load manager profile');
+          }
+          return payload;
+        }),
+        catchError(e => this.mapErr(e))
+      );
+  }
+
+  /** PUT /api/factory-managers/profile */
+  updateFactoryManagerProfile(body: UpdateFactoryManagerProfileRequest): Observable<void> {
+    const url = `${this.base}/api/factory-managers/profile`;
+    return this.http.put<ApiEnvelope | null>(url, body).pipe(
+      map(res => {
+        if (res && typeof res === 'object' && 'isSuccess' in res && !res.isSuccess) {
+          throw this.envErr(res as ApiEnvelope);
+        }
+      }),
+      catchError(e => this.mapErr(e))
     );
   }
 

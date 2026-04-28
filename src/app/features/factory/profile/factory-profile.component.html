@@ -1,7 +1,7 @@
 <div class="container py-5">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-    <h1 class="h3 fw-bold mb-0">Factory Profile</h1>
-    <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3" (click)="startEdit()" *ngIf="!isEditing && profile">
+    <h1 class="h3 fw-bold mb-0">{{ isManagerAccount ? 'Manager Profile' : 'Factory Profile' }}</h1>
+    <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3" (click)="startEdit()" *ngIf="!isEditing && (profile || managerProfile)">
       <i class="bi bi-pencil me-1"></i> Edit Profile
     </button>
   </div>
@@ -11,17 +11,23 @@
   <div *ngIf="loading" class="text-muted small mb-2">Loading profile...</div>
 
   <!-- Profile View Mode -->
-  <div class="card wc-factory-card border-0 mb-4" *ngIf="!isEditing && profile">
+  <div class="card wc-factory-card border-0 mb-4" *ngIf="!isEditing && (profile || managerProfile)">
     <div class="card-body p-4">
       <div class="row">
         <div class="col-md-3 text-center mb-3 mb-md-0">
           <div class="factory-avatar mb-3">
-            <img *ngIf="profile.imageUrl" [src]="profile.imageUrl" alt="Factory" class="rounded-circle img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;">
-            <div *ngIf="!profile.imageUrl" class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 120px; height: 120px; margin: 0 auto;">
-              <i class="bi bi-building fs-1"></i>
+            <img
+              *ngIf="(isManagerAccount ? managerProfile?.imageUrl : profile?.imageUrl) as imageUrl"
+              [src]="imageUrl"
+              alt="Profile"
+              class="rounded-circle img-thumbnail"
+              style="width: 120px; height: 120px; object-fit: cover;"
+            >
+            <div *ngIf="!(isManagerAccount ? managerProfile?.imageUrl : profile?.imageUrl)" class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 120px; height: 120px; margin: 0 auto;">
+              <i class="bi fs-1" [ngClass]="isManagerAccount ? 'bi-person' : 'bi-building'"></i>
             </div>
           </div>
-          <div class="mb-3">
+          <div class="mb-3" *ngIf="!isManagerAccount">
             <label class="btn btn-outline-secondary btn-sm">
               <i class="bi bi-camera me-1"></i> Change Image
               <input type="file" accept="image/*" (change)="onImageSelected($event)" hidden>
@@ -29,39 +35,35 @@
           </div>
         </div>
         <div class="col-md-9">
-          <h2 class="h4 mb-3">{{ profile.name }}</h2>
+          <h2 class="h4 mb-3">{{ isManagerAccount ? editForm.name : profile?.name }}</h2>
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="text-muted small">Email</label>
-              <p class="mb-0">{{ profile.email || 'Not set' }}</p>
-            </div>
-            <div class="col-md-6">
               <label class="text-muted small">Phone</label>
-              <p class="mb-0">{{ profile.phoneNumber || 'Not set' }}</p>
+              <p class="mb-0">{{ (isManagerAccount ? managerProfile?.phoneNumber : profile?.phoneNumber) || 'Not set' }}</p>
             </div>
-            <div class="col-md-6" *ngIf="profile.taxIdNumber">
+            <div class="col-md-6" *ngIf="!isManagerAccount && profile?.taxIdNumber">
               <label class="text-muted small">Tax ID Number</label>
-              <p class="mb-0">{{ profile.taxIdNumber }}</p>
+              <p class="mb-0">{{ profile?.taxIdNumber }}</p>
             </div>
-            <div class="col-md-6" *ngIf="profile.commercialRegisterNumber">
+            <div class="col-md-6" *ngIf="!isManagerAccount && profile?.commercialRegisterNumber">
               <label class="text-muted small">Commercial Register Number</label>
-              <p class="mb-0">{{ profile.commercialRegisterNumber }}</p>
+              <p class="mb-0">{{ profile?.commercialRegisterNumber }}</p>
             </div>
-            <div class="col-12" *ngIf="profile.description">
+            <div class="col-12" *ngIf="!isManagerAccount && profile?.description">
               <label class="text-muted small">Description</label>
-              <p class="mb-0">{{ profile.description }}</p>
+              <p class="mb-0">{{ profile?.description }}</p>
             </div>
-            <div class="col-12">
+            <div class="col-12" *ngIf="!isManagerAccount">
               <label class="text-muted small">Address</label>
-              <p class="mb-0" *ngIf="profile.address?.street">
-                {{ profile.address?.buildingNumber }} {{ profile.address?.street }}, 
-                {{ profile.address?.city }}, {{ profile.address?.state }}, {{ profile.address?.country }}
+              <p class="mb-0" *ngIf="profile?.address?.street">
+                {{ profile?.address?.buildingNumber }} {{ profile?.address?.street }},
+                {{ profile?.address?.city }}, {{ profile?.address?.state }}, {{ profile?.address?.country }}
               </p>
-              <p class="mb-0" *ngIf="!profile.address?.street">Not set</p>
+              <p class="mb-0" *ngIf="!profile?.address?.street">Not set</p>
             </div>
-            <div class="col-md-6" *ngIf="profile.factoryId">
+            <div class="col-md-6" *ngIf="!isManagerAccount && profile?.factoryId">
               <label class="text-muted small">Factory ID</label>
-              <p class="mb-0">#{{ profile.factoryId }}</p>
+              <p class="mb-0">#{{ profile?.factoryId }}</p>
             </div>
           </div>
         </div>
@@ -75,47 +77,51 @@
       <h3 class="h5 mb-3">Edit Profile</h3>
       <form (ngSubmit)="saveProfile()">
         <div class="row g-3">
-          <div class="col-md-6">
+          <div class="col-md-6" *ngIf="!isManagerAccount">
             <label class="form-label">Factory Name</label>
             <input type="text" class="form-control" [(ngModel)]="editForm.name" name="name" required>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" [(ngModel)]="editForm.email" name="email" required>
+          <div class="col-md-6" *ngIf="isManagerAccount">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-control" [(ngModel)]="editForm.firstName" name="firstName" required>
+          </div>
+          <div class="col-md-6" *ngIf="isManagerAccount">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-control" [(ngModel)]="editForm.lastName" name="lastName" required>
           </div>
           <div class="col-md-6">
             <label class="form-label">Phone Number</label>
             <input type="tel" class="form-control" [(ngModel)]="editForm.phoneNumber" name="phoneNumber">
           </div>
-          <div class="col-md-6">
+          <div class="col-md-6" *ngIf="!isManagerAccount">
             <label class="form-label">Tax ID Number <span class="text-danger">*</span></label>
             <input type="text" class="form-control" [(ngModel)]="editForm.taxIdNumber" name="taxIdNumber" required>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-6" *ngIf="!isManagerAccount">
             <label class="form-label">Commercial Register Number <span class="text-danger">*</span></label>
             <input type="text" class="form-control" [(ngModel)]="editForm.commercialRegisterNumber" name="commercialRegisterNumber" required>
           </div>
-          <div class="col-12">
+          <div class="col-12" *ngIf="!isManagerAccount">
             <label class="form-label">Description <span class="text-danger">*</span></label>
             <textarea class="form-control" [(ngModel)]="editForm.description" name="description" rows="3" required></textarea>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-6" *ngIf="!isManagerAccount">
             <label class="form-label">Country</label>
             <input type="text" class="form-control" [(ngModel)]="editForm.address.country" name="country">
           </div>
-          <div class="col-md-6">
+          <div class="col-md-6" *ngIf="!isManagerAccount">
             <label class="form-label">State/Province</label>
             <input type="text" class="form-control" [(ngModel)]="editForm.address.state" name="state">
           </div>
-          <div class="col-md-6">
+          <div class="col-md-6" *ngIf="!isManagerAccount">
             <label class="form-label">City</label>
             <input type="text" class="form-control" [(ngModel)]="editForm.address.city" name="city">
           </div>
-          <div class="col-md-4">
+          <div class="col-md-4" *ngIf="!isManagerAccount">
             <label class="form-label">Street</label>
             <input type="text" class="form-control" [(ngModel)]="editForm.address.street" name="street">
           </div>
-          <div class="col-md-2">
+          <div class="col-md-2" *ngIf="!isManagerAccount">
             <label class="form-label">Building No.</label>
             <input type="text" class="form-control" [(ngModel)]="editForm.address.buildingNumber" name="buildingNumber">
           </div>
