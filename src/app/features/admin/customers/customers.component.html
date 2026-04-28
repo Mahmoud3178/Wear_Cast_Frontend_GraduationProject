@@ -17,7 +17,8 @@
       <input type="text"
              class="form-control border-start-0"
              placeholder="Search by name or email..."
-             [(ngModel)]="searchTerm">
+             [(ngModel)]="searchTerm"
+             (input)="onSearch()">
     </div>
 
     <!-- Filters -->
@@ -58,12 +59,13 @@
         </thead>
 
         <tbody>
-          <tr *ngFor="let c of filteredCustomers()" style="cursor:pointer">
+          <!-- ✅ استخدم array مباشرة -->
+          <tr *ngFor="let c of filteredCustomers" style="cursor:pointer">
 
             <!-- Name + Image -->
             <td class="d-flex align-items-center gap-2"
                 (click)="goToDetails(c.id)">
-              <img [src]="c.image"
+              <img [src]="c.image || 'https://i.pravatar.cc/40'"
                    class="rounded-circle"
                    width="35"
                    height="35">
@@ -71,7 +73,7 @@
             </td>
 
             <td (click)="goToDetails(c.id)">{{c.email}}</td>
-            <td (click)="goToDetails(c.id)">{{c.phone}}</td>
+            <td (click)="goToDetails(c.id)">{{c.phoneNumber}}</td>
 
             <!-- Status -->
             <td (click)="goToDetails(c.id)">
@@ -79,7 +81,7 @@
                 [ngClass]="c.status === 'Active'
                   ? 'bg-success-subtle text-success'
                   : 'bg-warning-subtle text-warning'">
-                {{c.status}}
+                {{c.status || 'Active'}}
               </span>
             </td>
 
@@ -102,6 +104,14 @@
             </td>
 
           </tr>
+
+          <!-- Empty state -->
+          <tr *ngIf="!isLoading && filteredCustomers.length === 0">
+            <td colspan="5" class="text-center text-muted py-4">
+              No customers found
+            </td>
+          </tr>
+
         </tbody>
 
       </table>
@@ -111,13 +121,36 @@
 
   <!-- Footer -->
   <div class="d-flex justify-content-between mt-3">
+
     <small class="text-muted">
-      Showing {{filteredCustomers().length}} of {{customers.length}}
+      Showing {{ (currentPage - 1) * pageSize + 1 }}
+      –
+      {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }}
+      of {{ totalCount }}
     </small>
 
-    <div>
-      <button class="btn btn-outline-secondary btn-sm">Previous</button>
-      <button class="btn btn-outline-secondary btn-sm">Next</button>
+    <!-- Pagination -->
+    <div class="d-flex gap-1">
+
+      <button class="btn btn-outline-secondary btn-sm"
+              (click)="prevPage()"
+              [disabled]="currentPage === 1">
+        Previous
+      </button>
+
+      <button class="btn btn-outline-secondary btn-sm"
+              *ngFor="let page of totalPages"
+              [class.active]="page === currentPage"
+              (click)="goToPage(page)">
+        {{page}}
+      </button>
+
+      <button class="btn btn-outline-secondary btn-sm"
+              (click)="nextPage()"
+              [disabled]="currentPage === totalPages.length">
+        Next
+      </button>
+
     </div>
   </div>
 

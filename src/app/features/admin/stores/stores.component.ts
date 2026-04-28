@@ -1,57 +1,62 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormsModule, NgModel } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { AllSellerForAdminService } from '../../../core/services/all-seller-for-admin.service';
+
 @Component({
   selector: 'app-stores',
   standalone: true,
-  imports: [CommonModule,FormsModule,RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './stores.component.html',
   styleUrl: './stores.component.css'
 })
 export class StoresComponent {
 
   stores: any[] = [];
-  filteredStores: any[] = [];
-
   isLoading = false;
 
-  // pagination
+  // pagination (server-side)
   pageSize = 5;
   currentPage = 1;
+  totalCount = 0;
 
   activeFilter = 'All';
   searchTerm = '';
+
+  constructor(private sellerService: AllSellerForAdminService) {}
 
   ngOnInit(): void {
     this.loadStores();
   }
 
-  loadStores() {
-    // داتا مؤقتة (لحد ما تربطي API)
-this.stores = [
-  { id: 1, name: 'The Green Leaf', email: 'leaf@mail.com', status: 'Approved' },
-  { id: 2, name: 'Modern Threads', email: 'threads@mail.com', status: 'Pending' },
-  { id: 3, name: 'Gadget Hub', email: 'gadget@mail.com', status: 'Banned' },
-  { id: 4, name: 'Book Corner', email: 'book@mail.com', status: 'Approved' },
-  { id: 5, name: 'Home Essentials', email: 'home@mail.com', status: 'Banned' }
-];
+loadStores() {
+  this.isLoading = true;
 
-    this.applyFilters();
-  }
+  this.sellerService
+    .getAllSellers(this.currentPage, this.pageSize, this.searchTerm)
+    .subscribe({
+      next: (res: any) => {
 
-  applyFilters() {
-    this.filteredStores = this.stores.filter(store => {
-      const matchesSearch =
-        store.name.toLowerCase().includes(this.searchTerm.toLowerCase());
+        // ✅ الصح
+        this.stores = res.data.items;
 
-      const matchesStatus =
-        this.activeFilter === 'All' || store.status === this.activeFilter;
+        // pagination
+        this.totalCount = res.data.records;
 
-      return matchesSearch && matchesStatus;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.isLoading = false;
+      }
     });
+}
 
+  // 🔍 search
+  applyFilters() {
     this.currentPage = 1;
+    this.loadStores();
   }
 
   setFilter(filter: string) {
@@ -62,36 +67,27 @@ this.stores = [
   // pagination
   get totalPages(): number[] {
     return Array.from(
-      { length: Math.ceil(this.filteredStores.length / this.pageSize) },
+      { length: Math.ceil(this.totalCount / this.pageSize) },
       (_, i) => i + 1
     );
   }
 
-  get startIndex(): number {
-    return (this.currentPage - 1) * this.pageSize;
-  }
-
-  get endIndex(): number {
-    return Math.min(this.startIndex + this.pageSize, this.filteredStores.length);
-  }
-
-  get pagedStores() {
-    return this.filteredStores.slice(this.startIndex, this.endIndex);
-  }
-
   goToPage(page: number) {
     this.currentPage = page;
+    this.loadStores();
   }
 
   nextPage() {
     if (this.currentPage < this.totalPages.length) {
       this.currentPage++;
+      this.loadStores();
     }
   }
 
   prevPage() {
     if (this.currentPage > 1) {
       this.currentPage--;
+      this.loadStores();
     }
   }
 }

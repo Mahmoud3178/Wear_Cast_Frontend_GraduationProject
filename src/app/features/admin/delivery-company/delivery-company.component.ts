@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ShippingCompanyForAdminService } from '../../../core/services/shipping-company-for-admin.service';
 
 @Component({
   selector: 'app-delivery-company',
@@ -10,35 +11,46 @@ import { CommonModule } from '@angular/common';
 })
 export class DeliveryCompanyComponent {
 
-  stats = [
-    {
-      title: 'Total Deliveries',
-      value: '14,203',
-      change: '+12%',
-      desc: 'Compared to last month',
-      color: 'success'
-    },
-    {
-      title: 'Avg. Delivery Time',
-      value: '2.4 Days',
-      change: '-4h',
-      desc: 'Within expected range',
-      color: 'success'
-    },
-    {
-      title: 'On-Time Rate',
-      value: '96.5%',
-      change: '-1.2%',
-      desc: 'Target: 98.0%',
-      color: 'danger'
-    },
-    {
-      title: 'Active Partners',
-      value: '1',
-      change: 'Single',
-      desc: 'Primary Logistics Provider',
-      color: 'primary'
-    }
-  ];
+  company: any;
+  isLoading = false;
 
+  constructor(private service: ShippingCompanyForAdminService) {}
+
+  ngOnInit() {
+    this.loadCompany();
+  }
+
+ loadCompany() {
+    this.isLoading = true;
+
+    this.service.getCompanyProfile(1).subscribe({
+      next: (res: any) => {
+
+        const c = res.data;
+
+        this.company = {
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          phoneNumber: c.phoneNumber,
+          commercialRegisterNumber: c.commercialRegisterNumber,
+          taxIdNumber: c.taxIdNumber,
+          description: c.description,
+          deliveryFee: c.deliveryFee,
+          logo: c.logoUrl,
+
+          state: c.address?.state,
+          city: c.address?.city,
+          street: c.address?.street,
+          buildingNumber: c.address?.buildingNumber
+        };
+
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.isLoading = false;
+      }
+    });
+  }
 }

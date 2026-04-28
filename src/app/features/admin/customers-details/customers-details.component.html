@@ -16,59 +16,39 @@
     <div class="col-md-4">
       <div class="card p-3 text-center shadow-sm">
 
-        <img src="https://i.pravatar.cc/100" class="rounded-circle mx-auto mb-2">
+        <!-- Image -->
+        <img [src]="customer?.image"
+             class="rounded-circle mx-auto mb-2"
+             width="100"
+             height="100">
 
-        <h5>Customer #{{customerId}}</h5>
-        <p class="text-muted">email&#64;example.com</p>
+        <!-- Name -->
+        <h5>{{customer?.name}}</h5>
+
+        <!-- Phone -->
+        <p class="text-muted">{{customer?.phoneNumber}}</p>
 
         <hr>
 
-        <div class="d-flex justify-content-between">
-          <div>
-            <small>Total Orders</small>
-            <h6>24</h6>
-          </div>
-
-          <div>
-            <small>Total Spent</small>
-            <h6>$3,450</h6>
-          </div>
-        </div>
+        <!-- Address -->
+        <p><strong>City:</strong> {{customer?.city}}</p>
+        <p><strong>State:</strong> {{customer?.state}}</p>
+        <p><strong>Street:</strong> {{customer?.street}}</p>
+        <p><strong>Building:</strong> {{customer?.buildingNumber}}</p>
 
       </div>
     </div>
 
-    <!-- Orders -->
+    <!-- Right -->
     <div class="col-md-8">
       <div class="card shadow-sm">
 
         <div class="card-body">
           <h6 class="fw-bold mb-3">Order History</h6>
 
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Date</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr>
-                <td>#ORD-001</td>
-                <td>2024-01-01</td>
-                <td>$120</td>
-              </tr>
-
-              <tr>
-                <td>#ORD-002</td>
-                <td>2024-02-01</td>
-                <td>$250</td>
-              </tr>
-            </tbody>
-
-          </table>
+          <div class="text-center text-muted py-4">
+            No orders available
+          </div>
 
         </div>
       </div>

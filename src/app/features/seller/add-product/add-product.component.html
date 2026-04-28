@@ -4,97 +4,124 @@
 
   <!-- STEP 1 -->
   <div *ngIf="currentStep === 1">
-    <div class="mb-3">
-      <label class="form-label">Product Name</label>
-      <input type="text" class="form-control" [(ngModel)]="name">
+
+    <input class="form-control mb-2" placeholder="Product Name" [(ngModel)]="name">
+    <textarea class="form-control mb-2" placeholder="Description" [(ngModel)]="description"></textarea>
+
+    <div class="row">
+      <div class="col">
+        <select class="form-select mb-2" [(ngModel)]="targetAudience">
+          <option [value]="1">Men</option>
+          <option [value]="2">Women</option>
+          <option [value]="3">Kids</option>
+        </select>
+      </div>
+
+      <div class="col">
+        <input type="number" class="form-control mb-2" placeholder="Price" [(ngModel)]="price">
+      </div>
     </div>
 
-    <div class="mb-3">
-      <label class="form-label">Description</label>
-      <textarea class="form-control" [(ngModel)]="description"></textarea>
-    </div>
+    <select class="form-select mb-2" [(ngModel)]="categoryId">
+      <option *ngFor="let cat of categories" [value]="cat.id">
+        {{ cat.name }}
+      </option>
+    </select>
 
-    <div class="mb-3">
-      <label class="form-label">Target Audience</label>
-      <select class="form-select" [(ngModel)]="targetAudience">
-        <option [value]="1">Men</option>
-        <option [value]="2">Women</option>
-        <option [value]="3">Kids</option>
-      </select>
-    </div>
+    <select class="form-select mb-2" [(ngModel)]="dressStyle">
+      <option [value]="1">Casual</option>
+      <option [value]="2">Formal</option>
+      <option [value]="3">Sport</option>
+    </select>
 
-    <div class="mb-3">
-      <label class="form-label">Price</label>
-      <input type="number" class="form-control" [(ngModel)]="price">
-    </div>
+    <!-- Sizes -->
+    <table class="table table-bordered text-center">
+      <tr>
+        <th>Size</th><th>A</th><th>B</th><th>C</th>
+      </tr>
 
-    <div class="mb-3">
-      <label class="form-label">Category</label>
-      <select class="form-select" [(ngModel)]="categoryId">
-        <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
-      </select>
-    </div>
-
-    <div class="mb-3">
-      <label class="form-label">Dress Style</label>
-      <select class="form-select" [(ngModel)]="dressStyle">
-        <option [value]="1">Casual</option>
-        <option [value]="2">Formal</option>
-        <option [value]="3">Sport</option>
-      </select>
-    </div>
-
-    <!-- Sizes Table -->
-    <table class="table table-bordered text-center mt-3">
-      <thead>
-        <tr>
-          <th>Size</th>
-          <th>A</th>
-          <th>B</th>
-          <th>C</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let s of sizes; let i = index">
-          <td>{{ s.name }}</td>
-          <td><input type="number" class="form-control" [(ngModel)]="sizes[i].a"></td>
-          <td><input type="number" class="form-control" [(ngModel)]="sizes[i].b"></td>
-          <td><input type="number" class="form-control" [(ngModel)]="sizes[i].c"></td>
-        </tr>
-      </tbody>
+      <tr *ngFor="let s of sizes; let i = index">
+        <td>{{ s.name }}</td>
+        <td><input class="form-control" [(ngModel)]="sizes[i].a"></td>
+        <td><input class="form-control" [(ngModel)]="sizes[i].b"></td>
+        <td><input class="form-control" [(ngModel)]="sizes[i].c"></td>
+      </tr>
     </table>
 
-    <button class="btn btn-primary w-100 mt-3" (click)="createProduct()">Next ➜</button>
+    <button class="btn btn-primary w-100" (click)="createProduct()">
+      Next
+    </button>
   </div>
 
   <!-- STEP 2 -->
   <div *ngIf="currentStep === 2">
-    <div class="mb-3">
-      <label class="form-label">Color Name</label>
-      <input type="text" class="form-control" [(ngModel)]="colorName">
+
+    <h4 class="mb-3">Product Colors</h4>
+
+    <!-- COLORS LOOP -->
+    <div *ngFor="let c of colors; let i = index" class="border p-3 mb-3">
+
+      <input class="form-control mb-2"
+             placeholder="Color Name"
+             [(ngModel)]="c.colorName">
+
+      <input type="color"
+             class="form-control form-control-color mb-2"
+             [(ngModel)]="c.colorCode">
+
+      <!-- ⭐ AI TOOL IMAGE (MAIN IMAGE) -->
+      <label class="fw-bold text-primary">
+        AI Tool Image (Main Product Image)
+      </label>
+
+      <input type="file"
+             class="form-control mb-2"
+             (change)="onMainImage($event, i)">
+
+      <input type="file"
+             class="form-control mb-2"
+             multiple
+             (change)="onAdditionalImages($event, i)">
+
+      <!-- Sizes per color -->
+      <table class="table table-bordered text-center">
+        <tr>
+          <th>Size</th><th>A</th><th>B</th><th>C</th>
+        </tr>
+
+        <tr *ngFor="let s of c.sizes">
+          <td>{{ s.name }}</td>
+          <td><input class="form-control" [(ngModel)]="s.a"></td>
+          <td><input class="form-control" [(ngModel)]="s.b"></td>
+          <td><input class="form-control" [(ngModel)]="s.c"></td>
+        </tr>
+      </table>
+
+      <button class="btn btn-danger btn-sm"
+              (click)="removeColor(i)"
+              *ngIf="colors.length > 1">
+        Remove
+      </button>
+
     </div>
 
-    <div class="mb-3">
-      <label class="form-label">Color Code</label>
-      <input type="color" class="form-control form-control-color" [(ngModel)]="colorCode">
+    <button class="btn btn-outline-primary w-100 mb-3"
+            (click)="addColor()">
+      + Add Color
+    </button>
+
+    <button class="btn btn-success w-100"
+            (click)="saveProduct()"
+            [disabled]="isSaving">
+
+      {{ isSaving ? 'Saving...' : 'Save Product' }}
+
+    </button>
+
+    <div *ngIf="successMessage" class="alert alert-success mt-3 text-center">
+      {{ successMessage }}
     </div>
 
-    <div class="mb-3">
-      <label class="form-label">Main Image</label>
-      <input type="file" class="form-control" (change)="onMainImage($event)">
-    </div>
-
-    <div class="mb-3">
-      <label class="form-label">Additional Images</label>
-      <input type="file" class="form-control" multiple (change)="onAdditionalImages($event)">
-    </div>
-
-    <div class="d-flex gap-2 mt-3">
-      <button class="btn btn-secondary w-50" (click)="prevStep()">⬅ Back</button>
-      <button class="btn btn-success w-50" (click)="saveProduct()">Save Product</button>
-    </div>
   </div>
-  <div *ngIf="successMessage" class="alert alert-success mt-3 text-center">
-  {{ successMessage }}
-</div>
+
 </div>

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 
 @Component({
@@ -11,42 +12,42 @@ import { ProductService } from '../../../core/services/product.service';
   styleUrl: './add-product.component.css'
 })
 export class AddProductComponent implements OnInit {
-  router: any;
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    private router: Router
+  ) {}
 
   currentStep = 1;
 
-  // 🔹 Step 1
+  // STEP 1
   name = '';
   description = '';
-  price: number = 0;
-  targetAudience: any;
+  price = 0;
+  targetAudience: number = 1;
   categoryId: any;
   dressStyle: any;
 
   categories: any[] = [];
-successMessage = '';
-isSaving = false;
-  // 🔹 Step 2
-  colorName = '';
-  colorCode = '#000000';
-  mainImage: any;
-  additionalImages: any[] = [];
+
+  // STEP 2
   productId: any;
+  isSaving = false;
+  successMessage = '';
+
+  colors: any[] = [];
 
   sizes = [
-    { name: '2XS', a: 0, b: 0, c: 0, quantity: 0 },
-    { name: 'XS', a: 0, b: 0, c: 0, quantity: 0 },
-    { name: 'S', a: 0, b: 0, c: 0, quantity: 0 },
-    { name: 'M', a: 0, b: 0, c: 0, quantity: 0 },
-    { name: 'L', a: 0, b: 0, c: 0, quantity: 0 },
-    { name: 'XL', a: 0, b: 0, c: 0, quantity: 0 },
-    { name: '2XL', a: 0, b: 0, c: 0, quantity: 0 }
+    { name: '2XS', a: 0, b: 0, c: 0 },
+    { name: 'XS', a: 0, b: 0, c: 0 },
+    { name: 'S', a: 0, b: 0, c: 0 },
+    { name: 'M', a: 0, b: 0, c: 0 },
+    { name: 'L', a: 0, b: 0, c: 0 },
+    { name: 'XL', a: 0, b: 0, c: 0 },
+    { name: '2XL', a: 0, b: 0, c: 0 }
   ];
 
-  // 🔹 Size Mapping to match backend enum
-  sizeMapping: Record<string, number> = {
+  sizeMapping: any = {
     '2XS': 11,
     'XS': 12,
     'S': 13,
@@ -58,6 +59,7 @@ isSaving = false;
 
   ngOnInit() {
     this.loadCategories();
+    this.addColor(); // default color
   }
 
   loadCategories() {
@@ -66,78 +68,93 @@ isSaving = false;
     });
   }
 
+  // STEP 1
   createProduct() {
-  const sizeDetails = this.sizes.map(s => ({
-    size: this.sizeMapping[s.name],
-    a: s.a || 0.1,
-    b: s.b || 0.1,
-    c: s.c || 0.1
-  }));
 
-  const body = {
-    name: this.name,
-    description: this.description,
-    price: +this.price,
-    categoryId: +this.categoryId,
-    dressStyle: +this.dressStyle,
-    targetAudience: +this.targetAudience,
-    sizeDetails: sizeDetails
-  };
+    const body = {
+      name: this.name,
+      description: this.description,
+      price: this.price,
+      categoryId: this.categoryId,
+      dressStyle: this.dressStyle,
+      targetAudience: this.targetAudience,
+      sizeDetails: this.sizes.map(s => ({
+        size: this.sizeMapping[s.name],
+        a: s.a,
+        b: s.b,
+        c: s.c
+      }))
+    };
 
-  this.productService.create(body).subscribe({
-    next: (res: any) => {
-      this.productId = res.id; // 🔹 رقم المنتج فقط
+    this.productService.create(body).subscribe((res: any) => {
+      this.productId = res.id;
       this.currentStep = 2;
-    },
-    error: err => console.error('Error creating product', err)
-  });
-}
+    });
+  }
 
-saveProduct() {
-  if (!this.productId) return;
+  // COLORS
+  addColor() {
+    this.colors.push({
+      colorName: '',
+      colorCode: '#000000',
+      mainImage: null,
+      additionalImages: [],
+      sizes: JSON.parse(JSON.stringify(this.sizes))
+    });
+  }
 
-  this.isSaving = true; // لو عايز تعمل loading indicator
+  removeColor(i: number) {
+    this.colors.splice(i, 1);
+  }
 
-  const sizesArray = this.sizes.map(s => ({
-    size: this.sizeMapping[s.name],
-    quantity: s.quantity > 0 ? s.quantity : 1,
-    a: s.a,
-    b: s.b,
-    c: s.c
-  }));
+  onMainImage(event: any, i: number) {
+    this.colors[i].mainImage = event.target.files[0];
+  }
 
-  const formData = new FormData();
-  formData.append('ProductId', this.productId.toString());
-  formData.append('ColorName', this.colorName);
-  formData.append('ColorCode', this.colorCode);
-  formData.append('Sizes', JSON.stringify(sizesArray));
+  onAdditionalImages(event: any, i: number) {
+    this.colors[i].additionalImages = Array.from(event.target.files);
+  }
 
-  if (this.mainImage) formData.append('Image', this.mainImage);
-  this.additionalImages.forEach(file => formData.append('AdditionalImages', file));
+  // SAVE
+  saveProduct() {
 
-  this.productService.createProductColor(formData).subscribe({
-    next: res => {
-      this.isSaving = false;
-      this.successMessage = 'Product added successfully! 🎉';
+    this.isSaving = true;
 
-      // بعد 2 ثانية يحولك لصفحة المنتجات
-      setTimeout(() => {
-        this.router.navigate(['/products']); // عدل حسب route بتاعك
-      }, 2000);
-    },
-    error: err => {
-      this.isSaving = false;
-      console.error('Error saving product', err);
-    }
-  });
-}
+    const requests = this.colors.map(c => {
 
-  // 🔹 Image handlers
-  onMainImage(event: any) { this.mainImage = event.target.files[0]; }
-  onAdditionalImages(event: any) { this.additionalImages = Array.from(event.target.files); }
+      const formData = new FormData();
 
-  // 🔹 Navigation
-  prevStep() { this.currentStep = 1; }
-  nextStep() { this.currentStep = 2; }
+      formData.append('ProductId', this.productId);
+      formData.append('ColorName', c.colorName);
+      formData.append('ColorCode', c.colorCode);
 
+      if (c.mainImage)
+        formData.append('Image', c.mainImage);
+
+      c.additionalImages.forEach((f: any) =>
+        formData.append('AdditionalImages', f)
+      );
+
+      formData.append('Sizes', JSON.stringify(
+        c.sizes.map((s: any) => ({
+          size: this.sizeMapping[s.name],
+          a: s.a,
+          b: s.b,
+          c: s.c
+        }))
+      ));
+
+      return this.productService.createProductColor(formData);
+    });
+
+    Promise.all(requests.map(r => r.toPromise()))
+      .then(() => {
+        this.isSaving = false;
+        this.successMessage = 'Product added successfully';
+
+        setTimeout(() => {
+          this.router.navigate(['/products']);
+        }, 1500);
+      });
+  }
 }

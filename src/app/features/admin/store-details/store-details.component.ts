@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { AllSellerForAdminService } from '../../../core/services/all-seller-for-admin.service';
 
 @Component({
   selector: 'app-store-details',
@@ -13,41 +14,47 @@ export class StoreDetailsComponent {
 
   storeId!: string;
   store: any;
+  isLoading = false;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private sellerService: AllSellerForAdminService
+  ) {}
 
   ngOnInit(): void {
     this.storeId = this.route.snapshot.paramMap.get('id')!;
-    this.loadStore();
+
+    // 🧠 لو جاية من navigation
+    const nav = history.state;
+    if (nav?.store) {
+      this.store = nav.store;
+    } else {
+      this.loadStore();
+    }
   }
 
   loadStore() {
-    // mock data (بدل API)
-    this.store = {
-      id: this.storeId,
-      name: 'The Corner Store',
-      status: 'Pending',
-      email: 'store@mail.com',
-      phone: '+123456789',
-      address: 'Cairo, Egypt',
-      createdAt: 'Aug 12, 2023',
-      documents: [
-        { name: 'Business License.pdf' },
-        { name: 'ID Front.jpg' },
-        { name: 'ID Back.jpg' }
-      ],
-      history: [
-        { text: 'Store Created', color: 'text-primary' },
-        { text: 'Status set to Pending', color: 'text-warning' }
-      ]
-    };
+    this.isLoading = true;
+
+    this.sellerService.getSellerById(this.storeId).subscribe({
+      next: (res: any) => {
+        this.store = res.data || res;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.isLoading = false;
+      }
+    });
   }
 
   approveStore() {
+    // هنا تربط API approve بعدين
     this.store.status = 'Approved';
   }
 
   banStore() {
+    // هنا تربط API ban بعدين
     this.store.status = 'Banned';
   }
 }

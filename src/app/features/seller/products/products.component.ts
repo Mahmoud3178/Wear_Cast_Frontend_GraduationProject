@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css']
 })
@@ -14,8 +15,12 @@ export class ProductsComponent implements OnInit {
 
   products: any[] = [];
   isLoading = false;
-  searchText: string = '';
 
+  searchText: string = '';
+  selectedCategory: number | null = null;
+  minPrice: number | null = null;
+  maxPrice: number | null = null;
+activeFilter: 'all' | 'low' | 'out' = 'all';
   stats = [
     { title: 'Total Products', value: 0, icon: 'bi-box-seam', color: 'text-primary' },
     { title: 'Approved', value: 0, icon: 'bi-check-circle', color: 'text-success' },
@@ -23,7 +28,6 @@ export class ProductsComponent implements OnInit {
     { title: 'Low Stock', value: 0, icon: 'bi-bag-fill', color: 'text-warning' }
   ];
 
-  // pagination
   pageSize = 5;
   currentPage = 1;
 
@@ -33,75 +37,113 @@ export class ProductsComponent implements OnInit {
     this.loadProducts();
   }
 
+  // 🔥 مهم: لما أي فلتر يتغير
+  onFilterChange() {
+    this.currentPage = 1;
+    this.loadProducts();
+  }
+
   loadProducts() {
     this.isLoading = true;
 
-    this.productService.getAll().subscribe({
+    this.productService.getAll(
+      this.currentPage,
+      this.pageSize,
+      this.searchText,
+      this.selectedCategory ?? undefined,
+      this.minPrice ?? undefined,
+      this.maxPrice ?? undefined
+    ).subscribe({
       next: (res: any) => {
-        // تأكد إن products مصفوفة
-       this.products = Array.isArray(res?.items) ? res.items : [];
 
-        // إضافة قيم افتراضية لو مش موجودة
+        this.products = Array.isArray(res?.items) ? res.items : [];
+
         this.products = this.products.map(p => ({
           ...p,
-          stockStatus: p.stock > 10 ? 'In Stock' : (p.stock > 0 ? 'Low Stock' : 'Out of Stock'),
-          approval: p.approval || 'Pending',
-          image: p.image || 'https://via.placeholder.com/40'
+          stockStatus: p.stock > 10 ? 'In Stock' :
+                      (p.stock > 0 ? 'Low Stock' : 'Out of Stock'),
+          approval: p.approval || 'Pending'
         }));
 
-        // تحديث الإحصائيات
-        this.stats[0].value = this.products.length;
+        this.stats[0].value = res?.records || this.products.length;
         this.stats[1].value = this.products.filter(p => p.approval === 'Approved').length;
         this.stats[2].value = this.products.filter(p => p.approval === 'Pending').length;
         this.stats[3].value = this.products.filter(p => p.stock < 10).length;
 
         this.isLoading = false;
       },
-      error: (err) => {
-        console.error(err);
-        this.isLoading = false;
-      }
+      error: () => this.isLoading = false
     });
   }
 
-  // Pagination logic
-  get totalPages(): number[] {
-    return Array.from(
-      { length: Math.ceil(this.filteredProducts.length / this.pageSize) },
-      (_, i) => i + 1
-    );
+get totalPages(): number[] {
+  return Array.from(
+    { length: Math.ceil(this.filteredProducts.length / this.pageSize) },
+    (_, i) => i + 1
+  );
+}
+
+get startIndex(): number {
+  return (this.currentPage - 1) * this.pageSize;
+}
+
+get endIndex(): number {
+  return Math.min(this.startIndex + this.pageSize, this.filteredProducts.length);
+}
+
+get pagedProducts(): any[] {
+  return this.filteredProducts.slice(this.startIndex, this.endIndex);
+}
+
+  goToPage(page: number) {
+    this.currentPage = page;
+    this.loadProducts();
   }
 
-  get startIndex(): number {
-    return (this.currentPage - 1) * this.pageSize;
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadProducts();
+    }
   }
 
-  get endIndex(): number {
-    return Math.min(this.startIndex + this.pageSize, this.filteredProducts.length);
+  nextPage() {
+    if (this.currentPage < this.totalPages.length) {
+      this.currentPage++;
+      this.loadProducts();
+    }
   }
+get lowStockCount(): number {
+  return this.products.filter(p => p.stock > 0 && p.stock < 10).length;
+}
 
-  // Filtered & paginated products
-  get filteredProducts(): any[] {
-    if (!Array.isArray(this.products)) return [];
-    return this.products.filter(p =>
+get outOfStockCount(): number {
+  return this.products.filter(p => p.stock === 0).length;
+}
+setFilter(type: 'all' | 'low' | 'out') {
+  this.activeFilter = type;
+  this.currentPage = 1;
+}
+get filteredProducts(): any[] {
+
+  let data = [...this.products];
+
+  // search
+  if (this.searchText) {
+    data = data.filter(p =>
       p.name.toLowerCase().includes(this.searchText.toLowerCase())
     );
   }
 
-  get pagedProducts(): any[] {
-    return this.filteredProducts.slice(this.startIndex, this.endIndex);
+  // STOCK FILTER (المهم هنا)
+  if (this.activeFilter === 'low') {
+    data = data.filter(p => p.stock > 0 && p.stock < 10);
   }
 
-  // Pagination controls
-  goToPage(page: number) {
-    this.currentPage = page;
+  if (this.activeFilter === 'out') {
+    data = data.filter(p => p.stock === 0);
   }
 
-  prevPage() {
-    if (this.currentPage > 1) this.currentPage--;
-  }
-
-  nextPage() {
-    if (this.currentPage < this.totalPages.length) this.currentPage++;
-  }
+  return data;
+}
 }
