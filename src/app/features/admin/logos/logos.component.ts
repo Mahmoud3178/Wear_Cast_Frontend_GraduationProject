@@ -81,32 +81,44 @@ export class LogosComponent implements OnInit {
       heightPx: logo.heightPx || 100
     };
   }
+  closePanel() {
+  const panel = document.getElementById('logoPanel');
 
-  // 🔹 Delete
-  deleteLogo(id: number) {
-    this.service.deleteLogo(id).subscribe({
-      next: () => {
-        this.logos = this.logos.filter(l => l.id !== id);
-        this.selectedLogo = null;
-      }
-    });
+  if (panel) {
+    const bsOffcanvas = (window as any).bootstrap?.Offcanvas.getInstance(panel);
+    bsOffcanvas?.hide();
   }
 
+  this.selectedLogo = null;
+}
+deleteLogo(id: number) {
+
+  if (!confirm('Are you sure you want to delete this logo?')) return;
+
+  this.service.deleteLogo(id).subscribe({
+    next: () => {
+      this.logos = this.logos.filter(l => l.id !== id);
+      this.closePanel(); // 👈 مهم
+    }
+  });
+}
   // 🔹 Update
-  updateLogo() {
+updateLogo() {
+  if (!this.selectedLogo) return;
 
-    if (!this.selectedLogo) return;
+  const formData = new FormData();
+  formData.append('Name', this.selectedLogo.name || '');
+  formData.append('WidthPx', this.selectedLogo.widthPx || 0);
+  formData.append('HeightPx', this.selectedLogo.heightPx || 0);
+  formData.append('CategoryId', this.selectedLogo.categoryId?.toString());
 
-    const formData = new FormData();
-    formData.append('Name', this.selectedLogo.name || '');
-    formData.append('WidthPx', this.selectedLogo.widthPx || 0);
-    formData.append('HeightPx', this.selectedLogo.heightPx || 0);
-    formData.append('CategoryId', this.selectedLogo.categoryId?.toString());
-
-    this.service.updateLogo(this.selectedLogo.id, formData).subscribe({
-      next: () => this.loadLogos()
-    });
-  }
+  this.service.updateLogo(this.selectedLogo.id, formData).subscribe({
+    next: () => {
+      this.loadLogos();
+      this.closePanel(); // 👈 مهم
+    }
+  });
+}
 
   // 🔹 Filter Search
   get filteredLogos() {

@@ -24,7 +24,6 @@ export class CustomersComponent {
   customers: any[] = [];
   isLoading = false;
 
-  // pagination
   currentPage = 1;
   pageSize = 5;
   totalCount = 0;
@@ -33,79 +32,67 @@ export class CustomersComponent {
     this.loadCustomers();
   }
 
- loadCustomers() {
-  this.isLoading = true;
+  loadCustomers() {
+    this.isLoading = true;
 
-  this.customerService
-    .getAllCustomers(this.currentPage, this.pageSize, this.searchTerm)
-    .subscribe({
+    this.customerService.getAllCustomers(
+      this.currentPage,
+      this.pageSize,
+      this.searchTerm
+    ).subscribe({
       next: (res: any) => {
 
         this.customers = res.data.items.map((c: any) => ({
           id: c.id,
-
-          // ✅ دمج الاسم
-          name: `${c.firstName} ${c.lastName}`,
-
+          name: `${c.firstName ?? ''} ${c.lastName ?? ''}`,
           email: c.email,
           phoneNumber: c.phoneNumber,
 
-          // ✅ الصورة
-          image: c.imageUrl || 'https://i.pravatar.cc/40',
+          // ✅ FIX IMAGE (both cases)
+          image: c.imageUrl || c.imageurl || 'https://i.pravatar.cc/40',
 
-          city: c.city,
-
-          // مؤقت لحد ما الباك يدعمها
+          city: c.city ?? '',
           status: 'Active'
         }));
 
         this.totalCount = res.data.records;
-
         this.isLoading = false;
       },
-      error: (err) => {
-        console.error(err);
-        this.isLoading = false;
-      }
+      error: () => this.isLoading = false
     });
-}
+  }
 
-  // 🔍 search
   onSearch() {
     this.currentPage = 1;
     this.loadCustomers();
-  }
-
-  setFilter(filter: string) {
-    this.selectedFilter = filter;
   }
 
   goToDetails(id: number) {
     this.router.navigate(['/admin/customers', id]);
   }
 
-  // ⚠️ فلترة بسيطة (لو مفيش status من API)
-  get filteredCustomers() {
-    return this.customers.filter(c => {
-
-      if (this.selectedFilter === 'active' && c.status !== 'Active') return false;
-      if (this.selectedFilter === 'suspended' && c.status !== 'Suspended') return false;
-
-      return true;
-    });
+  setFilter(filter: string) {
+    this.selectedFilter = filter;
   }
 
-  // pagination
-  get totalPages(): number[] {
-    return Array.from(
-      { length: Math.ceil(this.totalCount / this.pageSize) },
-      (_, i) => i + 1
-    );
+  get filteredCustomers() {
+    return this.customers.filter(c => {
+      if (this.selectedFilter === 'active' && c.status !== 'Active') return false;
+      if (this.selectedFilter === 'suspended' && c.status !== 'Suspended') return false;
+      return true;
+    });
   }
 
   goToPage(page: number) {
     this.currentPage = page;
     this.loadCustomers();
+  }
+
+  get totalPages(): number[] {
+    return Array.from(
+      { length: Math.ceil(this.totalCount / this.pageSize) },
+      (_, i) => i + 1
+    );
   }
 
   nextPage() {
@@ -120,5 +107,13 @@ export class CustomersComponent {
       this.currentPage--;
       this.loadCustomers();
     }
+  }
+
+  deleteCustomer(id: number) {
+    if (!confirm('Delete customer?')) return;
+
+    this.customerService.deleteCustomer(id).subscribe({
+      next: () => this.loadCustomers()
+    });
   }
 }

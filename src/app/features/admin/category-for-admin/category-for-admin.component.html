@@ -1,0 +1,133 @@
+<div class="container p-4">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h3 class="fw-bold">Categories Dashboard</h3>
+
+    <div class="btn-group">
+
+      <button class="btn"
+              [ngClass]="activeTab === 'product' ? 'btn-primary' : 'btn-outline-primary'"
+              (click)="setTab('product')">
+        Products
+      </button>
+
+      <button class="btn"
+              [ngClass]="activeTab === 'asset' ? 'btn-dark' : 'btn-outline-dark'"
+              (click)="setTab('asset')">
+        Assets
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- FORM -->
+  <div class="card shadow-sm border-0 mb-4 p-4">
+
+    <h5 class="mb-3">
+      {{ editMode ? 'Update Category' : 'Add New Category' }}
+    </h5>
+
+    <div class="row g-2">
+
+      <!-- NAME -->
+      <div class="col-md-6">
+        <input class="form-control"
+               placeholder="Enter category name"
+               [(ngModel)]="name">
+      </div>
+
+      <!-- IMAGE (ONLY FOR PRODUCT) -->
+      <div class="col-md-6" *ngIf="activeTab === 'product'">
+        <input type="file"
+               class="form-control"
+               (change)="onFileChange($event)">
+      </div>
+
+    </div>
+
+    <div class="mt-3 text-end">
+      <button class="btn btn-success px-4"
+        (click)="activeTab === 'product'
+                  ? addProduct()
+                  : (editMode ? updateAsset() : addAsset())">
+
+        {{ editMode ? 'Update' : 'Save' }}
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ================= PRODUCT ================= -->
+  <div *ngIf="activeTab === 'product'">
+
+    <div class="row g-3">
+
+      <div class="col-md-3" *ngFor="let c of productCategories">
+
+        <div class="card h-100 shadow-sm border-0 category-card">
+
+          <img *ngIf="c.imageUrl"
+               [src]="c.imageUrl"
+               class="card-img-top"
+               style="height:150px; object-fit:cover">
+
+          <div class="card-body text-center">
+
+            <h6 class="fw-bold">{{ c.name }}</h6>
+
+            <button class="btn btn-outline-danger btn-sm mt-2 w-100"
+                    (click)="deleteProduct(c.id)">
+              Delete
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ================= ASSET ================= -->
+  <div *ngIf="activeTab === 'asset'">
+
+    <div class="row g-3">
+
+      <div class="col-md-3" *ngFor="let c of assetCategories">
+
+        <div class="card h-100 shadow-sm border-0 text-center p-3 category-card">
+
+          <div class="category-icon mb-2">
+            📦
+          </div>
+
+          <h6 class="fw-bold">{{ c.name }}</h6>
+
+          <div class="d-flex gap-2 mt-2 justify-content-center">
+
+            <button class="btn btn-outline-warning btn-sm"
+                    (click)="editAsset(c)">
+              Edit
+            </button>
+
+            <button class="btn btn-outline-danger btn-sm"
+                    (click)="deleteAsset(c.id)">
+              Delete
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

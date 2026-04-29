@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 })
 export class AllCustomersForAdminService {
 
-  private baseUrl = `${environment.apiUrl}/api/admin/customers`;
+  private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -21,11 +21,39 @@ export class AllCustomersForAdminService {
       params = params.set('SearchTerm', searchTerm);
     }
 
-    return this.http.get(`${this.baseUrl}/all`, { params });
+    return this.http.get(`${this.baseUrl}/api/admin/customers/all`, { params });
   }
+
   getCustomerById(id: number) {
-  return this.http.get('/api/customers/profile', {
+    return this.http.get(`${this.baseUrl}/api/customers/profile`, {
+      params: { ProvidedCustomerId: id }
+    });
+  }
+
+updateCustomer(id: number, body: any) {
+  return this.http.put(`${this.baseUrl}/api/customers/profile`, {
+    ...body,
+    providedCustomerId: id
+  });
+}
+deleteCustomer(id: number) {
+  return this.http.delete(`${this.baseUrl}/api/admin/customers/profile`, {
     params: { ProvidedCustomerId: id }
   });
 }
+
+  updateCustomerImage(id: number, file: File) {
+    const formData = new FormData();
+    formData.append('NewImage', file);
+    formData.append('ProvidedCustomerId', id.toString());
+
+    return this.http.put(`${this.baseUrl}/api/customers/profile-image`, formData);
+  }
+
+  // 🚀 OPTIONAL: Orders (لو موجود endpoint)
+  getCustomerOrders(id: number) {
+    return this.http.get(`${this.baseUrl}/api/customers/orders`, {
+      params: { customerId: id }
+    });
+  }
 }

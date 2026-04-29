@@ -15,6 +15,7 @@ export class CustomersDetailsComponent {
 
   customerId!: number;
   customer: any;
+  orders: any[] = [];
   isLoading = false;
 
   constructor(
@@ -40,22 +41,39 @@ export class CustomersDetailsComponent {
           name: `${c.firstName ?? ''} ${c.lastName ?? ''}`.trim(),
           phoneNumber: c.phoneNumber,
 
-          // ✅ الصورة صح
-          image: c.imageurl || 'https://i.pravatar.cc/100',
+          // ✅ FIX IMAGE
+          image: c.imageUrl || c.imageurl || 'https://i.pravatar.cc/100',
 
-          // ✅ العنوان من object
-          city: c.address?.city,
-          state: c.address?.state,
-          street: c.address?.street,
-          buildingNumber: c.address?.buildingNumber
+          city: c.address?.city || '',
+          state: c.address?.state || '',
+          street: c.address?.street || '',
+          buildingNumber: c.address?.buildingNumber || ''
         };
+
+        this.loadOrders();
 
         this.isLoading = false;
       },
-      error: (err) => {
-        console.error(err);
-        this.isLoading = false;
+      error: () => this.isLoading = false
+    });
+  }
+
+  loadOrders() {
+    this.customerService.getCustomerOrders(this.customerId).subscribe({
+      next: (res: any) => {
+        this.orders = res.data || [];
+      },
+      error: () => {
+        this.orders = [];
       }
+    });
+  }
+
+  deleteCustomer() {
+    if (!confirm('Delete customer?')) return;
+
+    this.customerService.deleteCustomer(this.customerId).subscribe({
+      next: () => history.back()
     });
   }
 }

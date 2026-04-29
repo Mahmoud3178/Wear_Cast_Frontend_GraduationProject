@@ -1,0 +1,53 @@
+.custom-card {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  transition: 0.3s;
+}
+
+.custom-card:hover {
+  transform: translateY(-3px);
+}
+
+.section-title {
+  font-weight: 600;
+  margin-bottom: 15px;
+  border-left: 4px solid #0d6efd;
+  padding-left: 10px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.info-item span {
+  color: #888;
+  font-size: 13px;
+}
+
+.desc-box {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.store-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #eee;
+}
+
+.store-logo {
+  max-height: 220px;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  transition: 0.3s;
+}
+
+.store-logo:hover {
+  transform: scale(1.05);
+}

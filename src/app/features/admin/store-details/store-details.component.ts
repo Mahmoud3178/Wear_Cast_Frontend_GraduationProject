@@ -12,7 +12,7 @@ import { AllSellerForAdminService } from '../../../core/services/all-seller-for-
 })
 export class StoreDetailsComponent {
 
-  storeId!: string;
+  storeId!: number;
   store: any;
   isLoading = false;
 
@@ -22,23 +22,17 @@ export class StoreDetailsComponent {
   ) {}
 
   ngOnInit(): void {
-    this.storeId = this.route.snapshot.paramMap.get('id')!;
-
-    // 🧠 لو جاية من navigation
-    const nav = history.state;
-    if (nav?.store) {
-      this.store = nav.store;
-    } else {
-      this.loadStore();
-    }
+    this.storeId = +this.route.snapshot.paramMap.get('id')!;
+    this.loadStore();
   }
 
   loadStore() {
     this.isLoading = true;
 
-    this.sellerService.getSellerById(this.storeId).subscribe({
+    this.sellerService.getSellerProfile(this.storeId).subscribe({
       next: (res: any) => {
-        this.store = res.data || res;
+        // 👇 أهم سطر هنا
+        this.store = res?.data || res;
         this.isLoading = false;
       },
       error: (err) => {
@@ -46,15 +40,5 @@ export class StoreDetailsComponent {
         this.isLoading = false;
       }
     });
-  }
-
-  approveStore() {
-    // هنا تربط API approve بعدين
-    this.store.status = 'Approved';
-  }
-
-  banStore() {
-    // هنا تربط API ban بعدين
-    this.store.status = 'Banned';
   }
 }

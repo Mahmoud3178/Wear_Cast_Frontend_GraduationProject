@@ -1,72 +1,118 @@
-<div class="container-fluid">
+<div class="container-fluid p-4" *ngIf="store">
 
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4 pt-4">
-    <div>
-      <h3 class="fw-bold">Store Details</h3>
-      <span class="badge rounded-pill"
-        [ngClass]="{
-          'bg-success-subtle text-success': store.status === 'Approved',
-          'bg-warning-subtle text-warning': store.status === 'Pending',
-          'bg-danger-subtle text-danger': store.status === 'Banned'
-        }">
-        {{ store.status }}
-      </span>
-    </div>
+  <!-- HEADER -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body d-flex align-items-center gap-3">
 
-    <div class="d-flex gap-2">
-      <button class="btn btn-success" (click)="approveStore()">
-        Approve
-      </button>
-      <button class="btn btn-danger" (click)="banStore()">
-        Ban
-      </button>
+      <img [src]="store.logoUrl"
+           class="store-avatar">
+
+      <div>
+        <h3 class="fw-bold mb-1">{{ store.name }}</h3>
+
+        <div class="text-muted small">
+          <i class="bi bi-geo-alt"></i>
+          {{ store.address?.city }} - {{ store.address?.state }}
+        </div>
+
+        <div class="text-muted small">
+          <i class="bi bi-envelope"></i>
+          {{ store.email }}
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <div class="row g-3">
+  <div class="row g-4">
 
-    <!-- Store Info -->
+    <!-- BASIC INFO -->
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card custom-card h-100">
         <div class="card-body">
 
-          <h6 class="fw-bold mb-3">Store Information</h6>
+          <h6 class="section-title">Basic Info</h6>
 
-          <p><strong>Name:</strong> {{ store.name }}</p>
-          <p><strong>Created:</strong> {{ store.createdAt }}</p>
+          <div class="info-item">
+            <span>ID</span>
+            <strong>#{{ store.id }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span>Name</span>
+            <strong>{{ store.name }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span>Email</span>
+            <strong>{{ store.email }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span>Phone</span>
+            <strong>{{ store.phoneNumber }}</strong>
+          </div>
 
         </div>
       </div>
     </div>
 
-    <!-- Contact -->
+    <!-- BUSINESS INFO -->
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card custom-card h-100">
         <div class="card-body">
 
-          <h6 class="fw-bold mb-3">Contact Info</h6>
+          <h6 class="section-title">Business Info</h6>
 
-          <p>{{ store.email }}</p>
-          <p>{{ store.phone }}</p>
-          <p>{{ store.address }}</p>
+          <div class="info-item">
+            <span>Commercial Reg</span>
+            <strong>{{ store.commercialRegisterNumber }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span>Tax ID</span>
+            <strong>{{ store.taxIdNumber }}</strong>
+          </div>
+
+          <div class="mt-3">
+            <span class="text-muted small">Description</span>
+            <p class="desc-box">
+              {{ store.description || 'No description provided' }}
+            </p>
+          </div>
 
         </div>
       </div>
     </div>
 
-    <!-- Documents -->
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm">
+    <!-- ADDRESS -->
+    <div class="col-md-12">
+      <div class="card custom-card">
         <div class="card-body">
 
-          <h6 class="fw-bold mb-3">Verification Documents</h6>
+          <h6 class="section-title">Address</h6>
 
-          <div *ngFor="let doc of store.documents"
-               class="d-flex justify-content-between align-items-center mb-2">
+          <div class="row">
 
-            <span>{{ doc.name }}</span>
-            <button class="btn btn-sm btn-light">View</button>
+            <div class="col-md-3 info-item">
+              <span>State</span>
+              <strong>{{ store.address?.state }}</strong>
+            </div>
+
+            <div class="col-md-3 info-item">
+              <span>City</span>
+              <strong>{{ store.address?.city }}</strong>
+            </div>
+
+            <div class="col-md-3 info-item">
+              <span>Street</span>
+              <strong>{{ store.address?.street }}</strong>
+            </div>
+
+            <div class="col-md-3 info-item">
+              <span>Building</span>
+              <strong>{{ store.address?.buildingNumber }}</strong>
+            </div>
 
           </div>
 
@@ -74,46 +120,20 @@
       </div>
     </div>
 
-    <!-- History -->
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm">
+    <!-- LOGO -->
+    <div class="col-md-12">
+      <div class="card custom-card text-center">
         <div class="card-body">
 
-          <h6 class="fw-bold mb-3">Activation History</h6>
+          <h6 class="section-title">Store Logo</h6>
 
-          <div *ngFor="let h of store.history" class="mb-2">
-            <span [class]="h.color">{{ h.text }}</span>
-          </div>
+          <img [src]="store.logoUrl"
+               class="store-logo">
 
         </div>
       </div>
     </div>
 
   </div>
-  <div class="modal fade" id="banModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
 
-      <div class="modal-header">
-        <h5 class="modal-title">Ban Store</h5>
-      </div>
-
-      <div class="modal-body">
-        <textarea class="form-control" placeholder="Reason..."></textarea>
-
-        <div class="mt-3 d-flex gap-2">
-          <button class="btn btn-outline-secondary">1 Week</button>
-          <button class="btn btn-outline-secondary">1 Month</button>
-          <button class="btn btn-danger">Permanent</button>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-light">Cancel</button>
-        <button class="btn btn-danger">Confirm Ban</button>
-      </div>
-
-    </div>
-  </div>
-</div>
 </div>

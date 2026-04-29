@@ -84,6 +84,24 @@ export const ADMIN_ROUTES: Routes = [
     import('./customers-details/customers-details.component')
       .then(m => m.CustomersDetailsComponent)
 },
+  {
+    path: 'seller-applications',
+    loadComponent: () =>
+      import('./seller-apllications/seller-apllications.component')
+        .then(m => m.SellerApllicationsComponent)
+  },
+  {
+  path: 'categories',
+  loadComponent: () =>
+    import('./category-for-admin/category-for-admin.component')
+      .then(m => m.CategoryForAdminComponent)
+},
+  {
+  path: 'Factory',
+  loadComponent: () =>
+    import('./factory/factory.component')
+      .then(m => m.FactoryComponent)
+},
 {
   path: 'orders',
   loadComponent: () =>

@@ -1,58 +1,47 @@
-<div class="container-fluid p-4">
+<div class="container p-4">
 
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold">Customer Details</h4>
+  <div class="d-flex justify-content-between mb-3">
+    <h4>Customer Details</h4>
 
-    <div>
-      <button class="btn btn-outline-primary btn-sm">Edit Profile</button>
-      <button class="btn btn-danger btn-sm">Block Account</button>
-    </div>
+    <button class="btn btn-danger"
+            (click)="deleteCustomer()">
+      Delete
+    </button>
   </div>
 
-  <div class="row">
+  <div class="card p-4 text-center shadow-sm">
 
-    <!-- Left Card -->
-    <div class="col-md-4">
-      <div class="card p-3 text-center shadow-sm">
+    <img [src]="customer?.image"
+         class="rounded-circle mx-auto mb-3"
+         width="120"
+         height="120"
+         style="object-fit:cover">
 
-        <!-- Image -->
-        <img [src]="customer?.image"
-             class="rounded-circle mx-auto mb-2"
-             width="100"
-             height="100">
+    <h5>{{customer?.name}}</h5>
+    <p>{{customer?.phoneNumber}}</p>
 
-        <!-- Name -->
-        <h5>{{customer?.name}}</h5>
+    <hr>
 
-        <!-- Phone -->
-        <p class="text-muted">{{customer?.phoneNumber}}</p>
+    <p>City: {{customer?.city}}</p>
+    <p>State: {{customer?.state}}</p>
+    <p>Street: {{customer?.street}}</p>
+    <p>Building: {{customer?.buildingNumber}}</p>
 
-        <hr>
+  </div>
 
-        <!-- Address -->
-        <p><strong>City:</strong> {{customer?.city}}</p>
-        <p><strong>State:</strong> {{customer?.state}}</p>
-        <p><strong>Street:</strong> {{customer?.street}}</p>
-        <p><strong>Building:</strong> {{customer?.buildingNumber}}</p>
+  <div class="card mt-3 p-3">
 
+    <h5>Orders</h5>
+
+    <div *ngIf="orders.length; else empty">
+      <div *ngFor="let o of orders" class="border p-2 mb-2">
+        Order #{{o.id}} - {{o.status}}
       </div>
     </div>
 
-    <!-- Right -->
-    <div class="col-md-8">
-      <div class="card shadow-sm">
-
-        <div class="card-body">
-          <h6 class="fw-bold mb-3">Order History</h6>
-
-          <div class="text-center text-muted py-4">
-            No orders available
-          </div>
-
-        </div>
-      </div>
-    </div>
+    <ng-template #empty>
+      <p class="text-muted">No orders found</p>
+    </ng-template>
 
   </div>
 

@@ -37,13 +37,8 @@ loadStores() {
     .getAllSellers(this.currentPage, this.pageSize, this.searchTerm)
     .subscribe({
       next: (res: any) => {
-
-        // ✅ الصح
         this.stores = res.data.items;
-
-        // pagination
         this.totalCount = res.data.records;
-
         this.isLoading = false;
       },
       error: (err) => {

@@ -3,8 +3,8 @@
   <!-- HEADER -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h3 class="fw-bold">Delivery Company 🚚</h3>
-      <p class="text-muted">Manage delivery company profile</p>
+      <h3 class="fw-bold">Factory 🏭</h3>
+      <p class="text-muted">Manage factory profile</p>
     </div>
 
     <div class="d-flex gap-2">
@@ -16,7 +16,7 @@
         Save
       </button>
 
-      <button class="btn btn-danger" (click)="deleteCompany()" disabled>
+      <button class="btn btn-danger" (click)="deleteFactory()" disabled>
         Delete
       </button>
     </div>
@@ -27,24 +27,22 @@
     <div class="spinner-border text-primary"></div>
   </div>
 
-  <div *ngIf="!loading && company">
+  <div *ngIf="!loading && factory">
 
     <div class="row g-4">
 
-      <!-- LEFT SIDE -->
+      <!-- LEFT -->
       <div class="col-md-4">
 
         <div class="card border-0 shadow-sm text-center p-3">
 
-          <img [src]="company.logoUrl"
-               class="company-logo mb-3">
+          <img [src]="factory.logoUrl" class="company-logo mb-3">
 
-          <h5 class="fw-bold">{{ company.name }}</h5>
+          <h5 class="fw-bold">{{ factory.name }}</h5>
 
-          <p class="text-muted">{{ company.email }}</p>
-          <p class="text-muted">{{ company.phoneNumber }}</p>
+          <p class="text-muted">{{ factory.email }}</p>
+          <p class="text-muted">{{ factory.phoneNumber }}</p>
 
-          <!-- UPLOAD -->
           <div *ngIf="editMode">
             <input type="file" class="form-control mb-2" (change)="onFileChange($event)">
             <button class="btn btn-sm btn-dark w-100" (click)="uploadLogo()">
@@ -56,12 +54,12 @@
 
       </div>
 
-      <!-- RIGHT SIDE -->
+      <!-- RIGHT -->
       <div class="col-md-8">
 
         <div class="card border-0 shadow-sm p-3">
 
-          <h5 class="fw-bold mb-3">Company Info</h5>
+          <h5 class="fw-bold mb-3">Factory Info</h5>
 
           <div class="row g-3">
 
@@ -81,11 +79,6 @@
             </div>
 
             <div class="col-md-6">
-              <label>Delivery Fee</label>
-              <input type="number" class="form-control" [(ngModel)]="form.deliveryFee" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
               <label>Commercial Reg</label>
               <input class="form-control" [(ngModel)]="form.commercialRegisterNumber" [disabled]="!editMode">
             </div>
@@ -100,37 +93,6 @@
               <textarea class="form-control" rows="3"
                         [(ngModel)]="form.description"
                         [disabled]="!editMode"></textarea>
-            </div>
-
-          </div>
-
-        </div>
-
-        <!-- ADDRESS -->
-        <div class="card border-0 shadow-sm p-3 mt-3">
-
-          <h5 class="fw-bold mb-3">Address</h5>
-
-          <div class="row g-3">
-
-            <div class="col-md-6">
-              <label>State</label>
-              <input class="form-control" [(ngModel)]="form.state" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>City</label>
-              <input class="form-control" [(ngModel)]="form.city" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>Street</label>
-              <input class="form-control" [(ngModel)]="form.street" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>Building</label>
-              <input class="form-control" [(ngModel)]="form.buildingNumber" [disabled]="!editMode">
             </div>
 
           </div>

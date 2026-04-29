@@ -1,0 +1,107 @@
+<div class="container mt-4">
+
+  <h3>Seller Applications</h3>
+
+  <!-- TABLE -->
+  <table class="table table-hover mt-3">
+    <thead>
+      <tr>
+        <th>Seller</th>
+        <th>Email</th>
+        <th>City</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let app of applications"
+          (click)="open(app)"
+          style="cursor:pointer">
+
+        <td>{{ app.sellerName }}</td>
+        <td>{{ app.sellerEmail }}</td>
+        <td>{{ app.city }}</td>
+
+        <td>
+          <span class="badge"
+            [ngClass]="{
+              'bg-success': app.status === 'Approved',
+              'bg-warning': app.status === 'Pending',
+              'bg-danger': app.status === 'Rejected'
+            }">
+            {{ app.status }}
+          </span>
+        </td>
+
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- SIDE DRAWER -->
+<div class="drawer" [class.open]="showDrawer">
+
+  <div *ngIf="selectedApplication">
+
+    <h5 class="mb-2">{{ selectedApplication.sellerName }}</h5>
+
+    <!-- ✅ EMAIL من API الصح -->
+    <p><strong>Email:</strong> {{ selectedApplication.sellerEmail }}</p>
+
+    <p><strong>Manager:</strong>
+      {{ selectedApplication.managerFirstName }}
+      {{ selectedApplication.managerLastName }}
+    </p>
+
+    <p><strong>City:</strong> {{ selectedApplication.sellerAddress?.city }}</p>
+
+    <p><strong>Phone:</strong> {{ selectedApplication.sellerPhoneNumber }}</p>
+
+    <hr>
+
+    <!-- STATUS -->
+    <span class="badge mb-3"
+      [ngClass]="{
+        'bg-success': selectedApplication.status === 'Approved',
+        'bg-warning': selectedApplication.status === 'Pending',
+        'bg-danger': selectedApplication.status === 'Rejected'
+      }">
+      {{ selectedApplication.status }}
+    </span>
+
+    <!-- APPROVE -->
+    <button class="btn btn-success w-100 mb-2"
+            (click)="approve()"
+            [disabled]="selectedApplication.status !== 'Pending'">
+      Approve
+    </button>
+
+    <!-- REJECT -->
+    <button class="btn btn-danger w-100 mb-2"
+            (click)="enableReject()"
+            [disabled]="selectedApplication.status !== 'Pending'">
+      Reject
+    </button>
+
+    <!-- REJECT REASON -->
+    <div *ngIf="rejectMode">
+      <textarea class="form-control mb-2"
+                placeholder="Reason..."
+                [(ngModel)]="rejectReason">
+      </textarea>
+
+      <button class="btn btn-danger w-100"
+              (click)="reject()">
+        Confirm Reject
+      </button>
+    </div>
+
+    <button class="btn btn-secondary w-100 mt-3"
+            (click)="close()">
+      Close
+    </button>
+
+  </div>
+
+</div>

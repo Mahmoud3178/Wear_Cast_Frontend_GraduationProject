@@ -16,18 +16,10 @@ export class DesignProductDetailsComponent implements OnInit {
   loading = true;
 
   selectedColor: any;
+  currentImage: string = '';
+
   Math = Math;
-getFullStars(rating: number): number {
-  return Math.floor(rating || 0);
-}
 
-getEmptyStars(rating: number): number {
-  return 5 - Math.ceil(rating || 0);
-}
-
-hasHalfStar(rating: number): boolean {
-  return (rating || 0) % 1 >= 0.5;
-}
   constructor(
     private route: ActivatedRoute,
     private service: AdminDesignProductsService
@@ -49,6 +41,8 @@ hasHalfStar(rating: number): boolean {
 
         this.selectedColor = this.product?.colors?.[0];
 
+        this.setDefaultImage();
+
         this.loading = false;
       },
       error: (err) => {
@@ -58,9 +52,21 @@ hasHalfStar(rating: number): boolean {
     });
   }
 
+  setDefaultImage() {
+    if (this.selectedColor?.images?.length) {
+      this.currentImage = this.selectedColor.images[0].imageUrl;
+    } else {
+      this.currentImage = this.selectedColor?.mainImageUrl;
+    }
+  }
+
   changeColor(color: any) {
     this.selectedColor = color;
-    this.loadProduct(this.product.id, color.id);
+    this.setDefaultImage();
+  }
+
+  changeImage(img: string) {
+    this.currentImage = img;
   }
 
   getImage(img: string) {

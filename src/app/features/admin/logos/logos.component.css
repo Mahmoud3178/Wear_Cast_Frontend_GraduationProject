@@ -14,3 +14,48 @@
   border-radius: 10px;
   margin: auto;
 }
+.category-card {
+  cursor: pointer;
+  transition: 0.3s;
+  border-radius: 12px;
+}
+
+.category-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.category-card.active {
+  border: 2px solid #0d6efd;
+  background: #f0f6ff;
+}
+.logo-card {
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.logo-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.logo-img-wrapper {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+}
+
+.logo-img-wrapper img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.offcanvas-body img {
+  border-radius: 10px;
+  background: #f8f9fa;
+  padding: 10px;
+}

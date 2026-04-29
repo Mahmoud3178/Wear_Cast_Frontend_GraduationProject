@@ -11,7 +11,7 @@ export class AdminService {
   private orderUrl = `${environment.apiUrl}/api/Orders`;
   private customerUrl = `${environment.apiUrl}/api/admin/customers`;
   private shippingUrl = `${environment.apiUrl}/api/admin/shipping-companies`;
-  
+
   constructor(private http: HttpClient) {}
 
   // 🔹 Get All Customers (Admin)
@@ -24,7 +24,7 @@ export class AdminService {
       params = params.set('SearchTerm', searchTerm);
     }
 
-    return this.http.get(`${this.customerUrl}`, { 
+    return this.http.get(`${this.customerUrl}`, {
       params,
       headers: new HttpHeaders({
         Authorization: `Bearer ${this.getToken()}`
@@ -38,7 +38,7 @@ export class AdminService {
       .set('PageIndex', pageIndex)
       .set('PageSize', pageSize);
 
-    return this.http.get(`${this.shippingUrl}`, { 
+    return this.http.get(`${this.shippingUrl}`, {
       params,
       headers: new HttpHeaders({
         Authorization: `Bearer ${this.getToken()}`
@@ -52,7 +52,7 @@ export class AdminService {
       .set('PageIndex', pageIndex)
       .set('PageSize', pageSize);
 
-    return this.http.get(`${environment.apiUrl}/api/admin/sellers`, { 
+    return this.http.get(`${environment.apiUrl}/api/admin/sellers`, {
       params,
       headers: new HttpHeaders({
         Authorization: `Bearer ${this.getToken()}`
@@ -83,9 +83,19 @@ export class AdminService {
   }
 
   // 🔹 Get Product Details
-  getProductById(id: number) {
-    return this.http.get(`${this.baseUrl}/GetDetailsById/${id}`);
+getProductById(id: number, colorId?: number) {
+
+  let params = new HttpParams();
+
+  if (colorId) {
+    params = params.set('colorId', colorId);
   }
+
+  return this.http.get(
+    `${this.baseUrl}/GetDetailsById/${id}`,
+    { params }
+  );
+}
 private getToken(): string {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   return user?.token || '';

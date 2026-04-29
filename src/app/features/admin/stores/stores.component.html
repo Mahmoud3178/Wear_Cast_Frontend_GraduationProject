@@ -21,7 +21,7 @@
     </div>
   </div>
 
-  <!-- Filters -->
+  <!-- Filters
   <div class="d-flex gap-2 mb-3">
     <button class="btn btn-sm rounded-pill"
             [ngClass]="activeFilter === 'All' ? 'btn-primary' : 'btn-outline-secondary'"
@@ -46,52 +46,56 @@
             (click)="setFilter('Banned')">
       Banned
     </button>
-  </div>
+  </div> -->
 
   <!-- Table -->
   <div class="card border-0 shadow-sm">
     <div class="table-responsive">
       <table class="table align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>Store Name</th>
-            <th>Email</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
+<thead class="table-light">
+  <tr>
+    <th>Store</th>
+    <th>Email</th>
+    <th>Phone</th>
+    <th>City</th>
+    <th class="text-end">Action</th>
+  </tr>
+</thead>
 
-        <tbody>
+<tbody>
 <tr *ngFor="let store of stores">
-            <td class="fw-semibold">
-              {{ store.name }}
-            </td>
 
-            <td class="text-muted">
-              {{ store.email }}
-            </td>
+  <td class="fw-semibold d-flex align-items-center gap-2">
+    <img [src]="store.logoUrl"
+         width="40"
+         height="40"
+         class="rounded-circle object-fit-cover">
 
-            <td>
-              <span class="badge rounded-pill"
-                [ngClass]="{
-                  'bg-success-subtle text-success': store.status === 'Approved',
-                  'bg-warning-subtle text-warning': store.status === 'Pending',
-                  'bg-danger-subtle text-danger': store.status === 'Banned'
-                }">
-                {{ store.status }}
-              </span>
-            </td>
-<td>
-<button
-  class="btn btn-sm btn-light"
-  [routerLink]="[store.id]"
-  [state]="{ store: store }">
-  See Details
-</button>
-</td>
+    {{ store.name }}
+  </td>
 
-          </tr>
-        </tbody>
+  <td class="text-muted">
+    {{ store.email }}
+  </td>
+
+  <td>
+    {{ store.phoneNumber }}
+  </td>
+
+  <td>
+    {{ store.city }}
+  </td>
+
+  <td>
+    <button
+      class="btn btn-sm btn-light"
+      [routerLink]="[store.id]">
+      See Details
+    </button>
+  </td>
+
+</tr>
+</tbody>
       </table>
     </div>
 

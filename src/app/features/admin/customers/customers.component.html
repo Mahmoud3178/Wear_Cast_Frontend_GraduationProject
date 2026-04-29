@@ -1,16 +1,18 @@
 <div class="container-fluid p-4">
 
-  <!-- Title -->
-  <div class="mb-3">
-    <h4 class="fw-bold">Customer List</h4>
-    <p class="text-muted">Manage, search, and filter all customer accounts.</p>
+  <!-- Header -->
+  <div class="mb-4">
+    <h4 class="fw-bold mb-1">Customer List</h4>
+    <p class="text-muted mb-0">
+      Manage, search, and filter all customer accounts.
+    </p>
   </div>
 
   <!-- Search + Filters -->
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
 
     <!-- Search -->
-    <div class="input-group search-box">
+    <div class="input-group search-box" style="max-width: 320px;">
       <span class="input-group-text bg-white border-end-0">
         🔍
       </span>
@@ -22,127 +24,135 @@
     </div>
 
     <!-- Filters -->
-    <div class="btn-group">
+    <div class="btn-group shadow-sm">
+
       <button class="btn btn-sm"
-        [ngClass]="selectedFilter === 'all' ? 'btn-primary' : 'btn-outline-secondary'"
+        [ngClass]="selectedFilter === 'all' ? 'btn-primary' : 'btn-outline-primary'"
         (click)="setFilter('all')">
-        All Customers
+        All
       </button>
 
       <button class="btn btn-sm"
-        [ngClass]="selectedFilter === 'active' ? 'btn-primary' : 'btn-outline-secondary'"
+        [ngClass]="selectedFilter === 'active' ? 'btn-primary' : 'btn-outline-primary'"
         (click)="setFilter('active')">
         Active
       </button>
 
       <button class="btn btn-sm"
-        [ngClass]="selectedFilter === 'suspended' ? 'btn-primary' : 'btn-outline-secondary'"
+        [ngClass]="selectedFilter === 'suspended' ? 'btn-primary' : 'btn-outline-primary'"
         (click)="setFilter('suspended')">
         Suspended
       </button>
+
     </div>
+
   </div>
 
-  <!-- Table -->
-  <div class="card shadow-sm">
+  <!-- Table Card -->
+  <div class="card border-0 shadow-sm">
+
     <div class="card-body p-0">
 
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>Customer Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Account Status</th>
-            <th></th>
-          </tr>
-        </thead>
+      <div class="table-responsive">
 
-        <tbody>
-          <!-- ✅ استخدم array مباشرة -->
-          <tr *ngFor="let c of filteredCustomers" style="cursor:pointer">
+        <table class="table table-hover align-middle mb-0">
 
-            <!-- Name + Image -->
-            <td class="d-flex align-items-center gap-2"
-                (click)="goToDetails(c.id)">
-              <img [src]="c.image || 'https://i.pravatar.cc/40'"
-                   class="rounded-circle"
-                   width="35"
-                   height="35">
-              {{c.name}}
-            </td>
+          <!-- Header -->
+          <thead class="table-light">
+            <tr>
+              <th>Customer</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
 
-            <td (click)="goToDetails(c.id)">{{c.email}}</td>
-            <td (click)="goToDetails(c.id)">{{c.phoneNumber}}</td>
+          <!-- Body -->
+          <tbody>
 
-            <!-- Status -->
-            <td (click)="goToDetails(c.id)">
-              <span class="badge px-3 py-1"
-                [ngClass]="c.status === 'Active'
-                  ? 'bg-success-subtle text-success'
-                  : 'bg-warning-subtle text-warning'">
-                {{c.status || 'Active'}}
-              </span>
-            </td>
+<tr *ngFor="let c of filteredCustomers"
+    (click)="goToDetails(c.id)"
+    style="cursor: pointer;">
 
-            <!-- Actions -->
-            <td class="text-end">
-              <div class="dropdown">
-                <button class="btn btn-sm" data-bs-toggle="dropdown">
-                  ⋮
-                </button>
+  <td>
+    <div class="d-flex align-items-center gap-2">
+      <img [src]="c.image" class="rounded-circle" width="40" height="40">
+      <div>
+        <div class="fw-bold">{{c.name}}</div>
+        <small class="text-muted">ID: {{c.id}}</small>
+      </div>
+    </div>
+  </td>
 
-                <ul class="dropdown-menu">
-                  <li>
-                    <button class="dropdown-item">Edit</button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item text-danger">Delete</button>
-                  </li>
-                </ul>
-              </div>
-            </td>
+  <td>{{c.email}}</td>
+  <td>{{c.phoneNumber}}</td>
 
-          </tr>
+  <td>
+    <span class="badge bg-success">Active</span>
+  </td>
 
-          <!-- Empty state -->
-          <tr *ngIf="!isLoading && filteredCustomers.length === 0">
-            <td colspan="5" class="text-center text-muted py-4">
-              No customers found
-            </td>
-          </tr>
+  <td class="text-end">
 
-        </tbody>
+    <!-- ⚠️ مهم جدًا -->
+    <button class="btn btn-sm btn-light"
+            (click)="$event.stopPropagation(); goToDetails(c.id)">
+      Edit
+    </button>
 
-      </table>
+    <button class="btn btn-sm btn-danger"
+            (click)="$event.stopPropagation(); deleteCustomer(c.id)">
+      Delete
+    </button>
+
+  </td>
+
+</tr>
+
+            <!-- Empty -->
+            <tr *ngIf="!isLoading && filteredCustomers.length === 0">
+              <td colspan="5" class="text-center text-muted py-5">
+                <div>
+                  <i class="bi bi-people fs-1"></i>
+                  <p class="mt-2 mb-0">No customers found</p>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
 
     </div>
+
   </div>
 
-  <!-- Footer -->
-  <div class="d-flex justify-content-between mt-3">
+  <!-- Pagination -->
+  <div class="d-flex justify-content-between align-items-center mt-3">
 
     <small class="text-muted">
-      Showing {{ (currentPage - 1) * pageSize + 1 }}
+      Showing
+      {{ (currentPage - 1) * pageSize + 1 }}
       –
       {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }}
       of {{ totalCount }}
     </small>
 
-    <!-- Pagination -->
-    <div class="d-flex gap-1">
+    <div class="btn-group">
 
       <button class="btn btn-outline-secondary btn-sm"
               (click)="prevPage()"
               [disabled]="currentPage === 1">
-        Previous
+        Prev
       </button>
 
-      <button class="btn btn-outline-secondary btn-sm"
+      <button class="btn btn-sm"
               *ngFor="let page of totalPages"
-              [class.active]="page === currentPage"
+              [ngClass]="page === currentPage ? 'btn-primary' : 'btn-outline-primary'"
               (click)="goToPage(page)">
-        {{page}}
+        {{ page }}
       </button>
 
       <button class="btn btn-outline-secondary btn-sm"
@@ -152,6 +162,7 @@
       </button>
 
     </div>
+
   </div>
 
 </div>

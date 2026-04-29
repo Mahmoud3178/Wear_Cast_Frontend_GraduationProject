@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -16,32 +16,23 @@ export class AdminLogosService {
     return user?.token || '';
   }
 
-getAssets(categoryId?: number, pageIndex = 1, pageSize = 20) {
+  // ================= LOGOS =================
 
-  if (categoryId === null || categoryId === undefined) {
-    return this.http.get(`${this.base}/api/design-assets`, {
-      params: { pageIndex, pageSize }
-    });
+  getAssets(categoryId?: number, pageIndex = 1, pageSize = 20) {
+
+    let url = `${this.base}/api/design-assets`;
+
+    if (categoryId) {
+      url += `/category/${categoryId}`;
+    }
+
+    const params = new HttpParams()
+      .set('pageIndex', pageIndex.toString())
+      .set('pageSize', pageSize.toString());
+
+    return this.http.get(url, { params });
   }
 
-  return this.http.get(`${this.base}/api/design-assets/category/${categoryId}`, {
-    params: { pageIndex, pageSize }
-  });
-}
-
-  // 🔹 Get categories
-  getCategories() {
-    return this.http.get(`${this.base}/api/assets-categories`);
-  }
-
-    addCategory(body: any) {
-    return this.http.post(`${this.base}/api/assets-categories`, body, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${this.getToken()}`
-      })
-    });
-  }
-  // 🔹 Create logo
   createLogo(formData: FormData) {
     return this.http.post(`${this.base}/api/admin/design-assets`, formData, {
       headers: new HttpHeaders({
@@ -50,7 +41,6 @@ getAssets(categoryId?: number, pageIndex = 1, pageSize = 20) {
     });
   }
 
-  // 🔹 Update logo
   updateLogo(id: number, formData: FormData) {
     return this.http.put(`${this.base}/api/admin/design-assets/${id}`, formData, {
       headers: new HttpHeaders({
@@ -59,7 +49,6 @@ getAssets(categoryId?: number, pageIndex = 1, pageSize = 20) {
     });
   }
 
-  // 🔹 Delete logo
   deleteLogo(id: number) {
     return this.http.delete(`${this.base}/api/admin/design-assets/${id}`, {
       headers: new HttpHeaders({
@@ -68,8 +57,33 @@ getAssets(categoryId?: number, pageIndex = 1, pageSize = 20) {
     });
   }
 
-  // 🔹 Get single asset
-  getLogoById(id: number) {
-    return this.http.get(`${this.base}/api/design-assets/${id}`);
+  // ================= CATEGORY =================
+
+  getCategories() {
+    return this.http.get(`${this.base}/api/assets-categories`);
+  }
+
+  addCategory(body: any) {
+    return this.http.post(`${this.base}/api/assets-categories`, body, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${this.getToken()}`
+      })
+    });
+  }
+
+  updateCategory(id: number, body: any) {
+    return this.http.put(`${this.base}/api/assets-categories/${id}`, body, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${this.getToken()}`
+      })
+    });
+  }
+
+  deleteCategory(id: number) {
+    return this.http.delete(`${this.base}/api/assets-categories/${id}`, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${this.getToken()}`
+      })
+    });
   }
 }

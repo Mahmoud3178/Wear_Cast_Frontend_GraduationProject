@@ -25,8 +25,10 @@ export class AllSellerForAdminService {
     return this.http.get(`${this.baseUrl}/allForAdmin`, { params });
   }
 
-  // 🔹 Get seller by id (لو عندك API ليها)
-  getSellerById(id: string) {
-    return this.http.get(`${this.baseUrl}/${id}`);
+  // 🔥 الصحيح للتفاصيل
+  getSellerProfile(id: number) {
+    return this.http.get(`${this.baseUrl}/profile`, {
+      params: { ProvidedSellerId: id }
+    });
   }
 }
