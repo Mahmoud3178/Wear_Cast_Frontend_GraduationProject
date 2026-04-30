@@ -1,11 +1,11 @@
 const https = require('https');
 
-https.get('https://wear-cast.runasp.net/openapi/v1.json', (res) => {
+https.get('http://localhost:5245/openapi/v1.json', (res) => {
   let data = '';
   res.on('data', (chunk) => {
     data += chunk;
   });
-  
+
   res.on('end', () => {
     try {
       const swagger = JSON.parse(data);

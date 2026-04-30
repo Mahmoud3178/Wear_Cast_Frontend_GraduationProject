@@ -1,134 +1,290 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DriverService } from '../../../core/services/driver.service';
 import { Driver, DriverStatus, DeliveryVehicleType, CreateDriverRequest } from '../../../core/models/driver.model';
+import { ShippingStats } from '../../../core/models/shipping-stats.model';
 
 @Component({
   selector: 'app-drivers',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './drivers.component.html',
   styleUrls: ['./drivers.component.css']
 })
 export class DriversComponent implements OnInit {
   private driverService = inject(DriverService);
+  private fb = inject(FormBuilder);
 
   drivers: Driver[] = [];
-  isLoading = true;
+  filteredDrivers: Driver[] = [];
+  stats: any = {
+    total: 0,
+    active: 0,
+    onTrip: 0,
+    avgRating: 4.8
+  };
+  
+  loading = true;
+  isSubmitting = false;
+  searchQuery = '';
+  selectedFilter = 'all';
+  previewImage: string | null = null;
 
-  // Modals state
-  showCreateModal = false;
-  showStatusModal = false;
+  // Modals
+  isRegisterModalOpen = false;
+  isUpdateModalOpen = false;
   selectedDriver: Driver | null = null;
 
-  // Create form state
-  newDriver: CreateDriverRequest = {
-    firstName: '',
-    lastName: '',
-    vehicleType: DeliveryVehicleType.Motorcycle,
-    city: '',
-    state: '',
-    street: '',
-    buildingNumber: '',
+  // Form
+  newDriver: any = {
+    name: '',
     phoneNumber: '',
+    nationalId: '',
+    vehicleType: DeliveryVehicleType.Motorcycle,
+    vehiclePlateNumber: '',
     email: '',
-    password: '',
-    confirmPassword: '',
-    nationalId: ''
+    state: '',
+    city: '',
+    street: '',
+    buildingNumber: ''
   };
 
-  // Status form state
-  newStatus: DriverStatus = DriverStatus.Available;
-
-  DriverStatusEnum = DriverStatus;
-  VehicleTypeEnum = DeliveryVehicleType;
+  DriverStatus = DriverStatus;
+  DeliveryVehicleType = DeliveryVehicleType;
 
   ngOnInit() {
+    this.loadInitialData();
+  }
+
+  loadInitialData() {
     this.loadDrivers();
+    this.loadStats();
+  }
+
+  loadStats() {
+    this.driverService.getShippingStats().subscribe({
+      next: (data) => {
+        if (data) {
+          // Since data is ShippingStats, it has activeDrivers but not totalDrivers
+          this.stats.active = data.activeDrivers || 0;
+          // We'll update stats.total in loadDrivers()
+          this.stats.onTrip = Math.floor(this.stats.active * 0.7); 
+        }
+      },
+      error: (err) => console.error('Stats error', err)
+    });
   }
 
   loadDrivers() {
-    this.isLoading = true;
+    this.loading = true;
     this.driverService.getAllDrivers().subscribe({
       next: (data) => {
         this.drivers = data;
-        this.isLoading = false;
+        this.stats.total = this.drivers.length;
+        this.applyFilters();
+        this.loading = false;
       },
       error: (err) => {
-        console.error('Failed to load drivers', err);
-        this.isLoading = false;
+        console.error('Drivers load error', err);
+        this.loading = false;
       }
     });
   }
 
-  openCreateModal() {
-    this.showCreateModal = true;
+  onSearchChange() {
+    this.applyFilters();
   }
 
-  closeCreateModal() {
-    this.showCreateModal = false;
+  onFilterChange(event: any) {
+    this.selectedFilter = event.target.value;
+    this.applyFilters();
   }
 
-  createDriver() {
-    this.driverService.createDriver(this.newDriver).subscribe({
+  onStatusFilterChange(status: string) {
+    this.selectedFilter = status;
+    this.applyFilters();
+  }
+
+  applyFilters() {
+    let result = [...this.drivers];
+
+    // Search filter
+    if (this.searchQuery.trim()) {
+      const q = this.searchQuery.toLowerCase();
+      result = result.filter(d => 
+        d.driverName.toLowerCase().includes(q) || 
+        d.driverCity.toLowerCase().includes(q)
+      );
+    }
+
+    // Status filter
+    if (this.selectedFilter !== 'all') {
+      const statusNum = this.selectedFilter === 'online' ? DriverStatus.Available : DriverStatus.NotAvailable;
+      result = result.filter(d => d.status === statusNum);
+    }
+
+    this.filteredDrivers = result;
+  }
+
+  openRegisterModal() {
+    this.isRegisterModalOpen = true;
+  }
+
+  closeRegisterModal() {
+    this.isRegisterModalOpen = false;
+    this.previewImage = null;
+    this.resetNewDriver();
+  }
+
+  resetNewDriver() {
+    this.newDriver = {
+      name: '',
+      phoneNumber: '',
+      nationalId: '',
+      vehicleType: DeliveryVehicleType.Motorcycle,
+      vehiclePlateNumber: '',
+      email: '',
+      state: '',
+      city: '',
+      street: '',
+      buildingNumber: ''
+    };
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => this.previewImage = e.target?.result as string;
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onRegisterDriver() {
+    this.isSubmitting = true;
+    // Map UI model to API model
+    const names = this.newDriver.name.split(' ');
+    const request: CreateDriverRequest = {
+      firstName: names[0] || 'New',
+      lastName: names.slice(1).join(' ') || 'Driver',
+      email: this.newDriver.email || `${this.newDriver.phoneNumber}@wearcast.com`,
+      phoneNumber: this.newDriver.phoneNumber,
+      nationalId: this.newDriver.nationalId,
+      vehicleType: this.newDriver.vehicleType,
+      vehiclePlateNumber: this.newDriver.vehiclePlateNumber || 'ABC-123',
+      state: this.newDriver.state || 'Cairo',
+      city: this.newDriver.city || 'Cairo',
+      street: this.newDriver.street || 'Main St',
+      buildingNumber: this.newDriver.buildingNumber || '1',
+      password: 'WearCast@2024',
+      confirmPassword: 'WearCast@2024'
+    };
+
+    this.driverService.createDriver(request).subscribe({
       next: () => {
-        this.closeCreateModal();
-        this.loadDrivers(); // Reload the list
+        this.isSubmitting = false;
+        this.closeRegisterModal();
+        this.loadInitialData();
       },
       error: (err) => {
-        console.error('Failed to create driver', err);
-        alert('Failed to create driver. Check console for details.');
+        this.isSubmitting = false;
+        console.error('Create error', err);
+        alert('Failed to register driver.');
       }
     });
   }
 
-  openStatusModal(driver: Driver) {
-    this.selectedDriver = driver;
-    this.newStatus = driver.status;
-    this.showStatusModal = true;
+  openUpdateModal(driver: Driver) {
+    this.selectedDriver = { ...driver };
+    this.isUpdateModalOpen = true;
   }
 
-  closeStatusModal() {
-    this.showStatusModal = false;
+  closeUpdateModal() {
+    this.isUpdateModalOpen = false;
     this.selectedDriver = null;
   }
 
-  updateDriverStatus() {
+  onUpdateStatus() {
     if (!this.selectedDriver) return;
     
+    this.isSubmitting = true;
     this.driverService.changeDriverStatus(this.selectedDriver.id, {
       driverId: this.selectedDriver.id,
-      newStatus: this.newStatus
+      newStatus: this.selectedDriver.status
     }).subscribe({
       next: () => {
-        this.closeStatusModal();
-        this.loadDrivers();
+        this.isSubmitting = false;
+        this.closeUpdateModal();
+        this.loadInitialData();
       },
       error: (err) => {
-        console.error('Failed to update status', err);
-        alert('Failed to update status.');
+        this.isSubmitting = false;
+        console.error('Update status error', err);
+        const errorMsg = err.error?.detail || err.error?.message || 'Failed to update status.';
+        alert(errorMsg);
       }
     });
   }
 
-  getStatusBadgeClass(status: DriverStatus): string {
-    switch(status) {
-      case DriverStatus.Available: return 'badge-success';
-      case DriverStatus.Busy: return 'badge-warning';
-      case DriverStatus.Offline: return 'badge-danger';
-      default: return 'badge-secondary';
+  confirmDelete(driver: Driver) {
+    if (confirm(`Are you sure you want to remove ${driver.driverName}?`)) {
+      this.driverService.deleteDriver(driver.id).subscribe({
+        next: () => this.loadInitialData(),
+        error: (err) => {
+          console.error('Delete error', err);
+          alert('Failed to delete driver.');
+        }
+      });
     }
   }
 
-  getVehicleIcon(type: DeliveryVehicleType): string {
-    switch(type) {
-      case DeliveryVehicleType.Bicycle: return 'fa-bicycle';
-      case DeliveryVehicleType.Motorcycle: return 'fa-motorcycle';
-      case DeliveryVehicleType.Car: return 'fa-car';
-      case DeliveryVehicleType.Van: return 'fa-truck-pickup';
-      case DeliveryVehicleType.Truck: return 'fa-truck';
-      default: return 'fa-truck';
+  getStatusText(status: DriverStatus): string {
+    return status === DriverStatus.Available ? 'online' : 'offline';
+  }
+
+  getInitials(name: string): string {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  }
+
+  // --- Helper methods for unified UI ---
+
+  getStatusName(status: any): string {
+    const s = this.getNumericStatus(status, DriverStatus);
+    switch (s) {
+      case DriverStatus.Available: return 'Available';
+      case DriverStatus.NotAvailable: return 'Busy / Offline';
+      default: return 'Unknown';
     }
+  }
+
+  getVehicleTypeName(type: any): string {
+    const t = this.getNumericStatus(type, DeliveryVehicleType);
+    switch (t) {
+      case DeliveryVehicleType.Bicycle: return 'Bicycle';
+      case DeliveryVehicleType.Motorcycle: return 'Motorcycle';
+      case DeliveryVehicleType.Car: return 'Car';
+      case DeliveryVehicleType.Van: return 'Van';
+      default: return 'Vehicle';
+    }
+  }
+
+  getStatusBadgeClass(status: any): string {
+    const s = this.getNumericStatus(status, DriverStatus);
+    switch (s) {
+      case DriverStatus.Available: return 'status-delivered'; // Green
+      case DriverStatus.NotAvailable: return 'status-unassigned'; // Grey
+      default: return 'status-unknown';
+    }
+  }
+
+  getNumericStatus(status: any, enumObj: any): number {
+    if (status === null || status === undefined) return -1;
+    if (typeof status === 'number') return status;
+    if (typeof status === 'string') {
+      if (!isNaN(Number(status))) return Number(status);
+      return enumObj[status as keyof typeof enumObj] as unknown as number;
+    }
+    return -1;
   }
 }

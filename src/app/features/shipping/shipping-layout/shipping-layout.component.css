@@ -1,0 +1,138 @@
+:host {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 80px;
+  --header-height: 70px;
+  --transition-speed: 0.3s;
+}
+
+.shipping-layout-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background-color: #f8fafc;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Sidebar Wrapper */
+.sidebar-wrapper {
+  width: var(--sidebar-width);
+  height: 100%;
+  flex-shrink: 0;
+  transition: width var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1001;
+}
+
+.shipping-layout-container.sidebar-collapsed .sidebar-wrapper {
+  width: var(--sidebar-collapsed-width);
+}
+
+.sidebar-toggle-btn {
+  position: absolute;
+  right: -12px;
+  top: 85px;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  z-index: 10;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background: #f1f5f9;
+  color: var(--bs-primary);
+  transform: scale(1.1);
+}
+
+/* Main Content Wrapper */
+.main-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.content-body {
+  flex-grow: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-scroll-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar Styling */
+.content-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content-scroll-container::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+.content-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 991.98px) {
+  .sidebar-wrapper {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+  }
+
+  .shipping-layout-container:not(.sidebar-collapsed) .sidebar-wrapper {
+    transform: translateX(0);
+    width: 280px;
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+  }
+}
+
+/* Sticky Header Adjustment */
+app-shipping-header {
+  display: block;
+  flex-shrink: 0;
+}
+
+app-shipping-footer {
+  display: block;
+  flex-shrink: 0;
+}

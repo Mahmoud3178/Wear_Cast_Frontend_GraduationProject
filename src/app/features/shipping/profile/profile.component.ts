@@ -61,15 +61,15 @@ export class ShippingProfileComponent implements OnInit {
           name: data.name,
           email: data.email,
           phoneNumber: data.phoneNumber,
-          commercialRegisterNumber: '',
-          taxIdNumber: '',
-          description: '',
-          deliveryFee: 0,
+          commercialRegisterNumber: data.commercialRegisterNumber,
+          taxIdNumber: data.taxIdNumber,
+          description: data.description,
+          deliveryFee: data.deliveryFee,
           address: {
-            state: '',
-            city: data.address || '',
-            street: '',
-            buildingNumber: ''
+            state: data.address?.state || '',
+            city: data.address?.city || '',
+            street: data.address?.street || '',
+            buildingNumber: data.address?.buildingNumber || ''
           }
         };
         this.isLoadingCompany = false;
@@ -108,15 +108,15 @@ export class ShippingProfileComponent implements OnInit {
         name: this.company.name,
         email: this.company.email,
         phoneNumber: this.company.phoneNumber,
-        commercialRegisterNumber: '',
-        taxIdNumber: '',
-        description: '',
-        deliveryFee: 0,
+        commercialRegisterNumber: this.company.commercialRegisterNumber,
+        taxIdNumber: this.company.taxIdNumber,
+        description: this.company.description,
+        deliveryFee: this.company.deliveryFee,
         address: {
-          state: '',
-          city: this.company.address || '',
-          street: '',
-          buildingNumber: ''
+          state: this.company.address?.state || '',
+          city: this.company.address?.city || '',
+          street: this.company.address?.street || '',
+          buildingNumber: this.company.address?.buildingNumber || ''
         }
       };
     }

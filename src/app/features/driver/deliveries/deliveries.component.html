@@ -34,8 +34,8 @@
 
     <div *ngFor="let delivery of deliveries()" class="premium-card delivery-card" 
          [ngClass]="{
-           'border-primary shadow-md': delivery.shipmentStatus === ShipmentStatus.InTransit, 
-           'opacity-75': delivery.shipmentStatus === ShipmentStatus.Delivered
+           'border-primary shadow-md': delivery.shipmentStatus === ShipmentStatusEnum.OutForDelivery,
+           'opacity-75': delivery.shipmentStatus === ShipmentStatusEnum.Delivered
          }">
       
       <!-- Card Header (Always visible) -->
@@ -44,10 +44,10 @@
           <span class="fw-bold text-muted-custom text-sm">#{{ delivery.id }}</span>
           <span class="status-badge"
                 [ngClass]="{
-                  'status-success': delivery.shipmentStatus === ShipmentStatus.Delivered,
-                  'status-warning': delivery.shipmentStatus === ShipmentStatus.Pending || delivery.shipmentStatus === ShipmentStatus.ReadyForPickup,
-                  'status-info': delivery.shipmentStatus === ShipmentStatus.InTransit,
-                  'bg-secondary text-white': delivery.shipmentStatus === ShipmentStatus.Cancelled
+                  'status-success': delivery.shipmentStatus === ShipmentStatusEnum.Delivered,
+                  'status-warning': delivery.shipmentStatus === ShipmentStatusEnum.Pending || delivery.shipmentStatus === ShipmentStatusEnum.PickingUp,
+                  'status-info': delivery.shipmentStatus === ShipmentStatusEnum.OutForDelivery,
+                  'bg-secondary text-white': false
                 }">
             {{ getStatusText(delivery.shipmentStatus) }}
           </span>
@@ -79,15 +79,15 @@
           </div>
 
           <!-- Actions -->
-          <div class="d-flex gap-2" *ngIf="delivery.shipmentStatus !== ShipmentStatus.Delivered && delivery.shipmentStatus !== ShipmentStatus.Cancelled">
+          <div class="d-flex gap-2" *ngIf="delivery.shipmentStatus !== ShipmentStatusEnum.Delivered">
             <button class="btn btn-primary flex-grow-1 fw-medium" 
-                    *ngIf="delivery.shipmentStatus === ShipmentStatus.ReadyForPickup"
-                    (click)="updateStatus(delivery, ShipmentStatus.InTransit)">
+                    *ngIf="delivery.shipmentStatus === ShipmentStatusEnum.PickingUp"
+                    (click)="updateStatus(delivery, ShipmentStatusEnum.OutForDelivery)">
               <i class="bi bi-truck me-1"></i> Start Trip
             </button>
             <button class="btn btn-success flex-grow-1 fw-medium" 
-                    *ngIf="delivery.shipmentStatus === ShipmentStatus.InTransit"
-                    (click)="updateStatus(delivery, ShipmentStatus.Delivered)">
+                    *ngIf="delivery.shipmentStatus === ShipmentStatusEnum.OutForDelivery"
+                    (click)="updateStatus(delivery, ShipmentStatusEnum.Delivered)">
               <i class="bi bi-check2-all me-1"></i> Mark Delivered
             </button>
             <button class="btn btn-outline-secondary rounded">

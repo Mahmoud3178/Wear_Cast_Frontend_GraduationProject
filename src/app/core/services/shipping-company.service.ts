@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { 
   ShippingCompany, 
@@ -20,7 +20,9 @@ export class ShippingCompanyService {
 
   // --- Shipping Company ---
   getCompany(): Observable<ShippingCompany> {
-    return this.http.get<ShippingCompany>(`${this.apiUrl}/shipping-companies/profile`);
+    return this.http.get<any>(`${this.apiUrl}/shipping-companies/profile`).pipe(
+      map(res => res.data)
+    );
   }
 
   createCompany(request: CreateShippingCompanyRequest): Observable<void> {
@@ -48,7 +50,9 @@ export class ShippingCompanyService {
 
   // --- Shipping Company Manager ---
   getManager(): Observable<ShippingCompanyManager> {
-    return this.http.get<ShippingCompanyManager>(`${this.apiUrl}/shipping-company-managers/profile`);
+    return this.http.get<any>(`${this.apiUrl}/shipping-company-managers/profile`).pipe(
+      map(res => res.data)
+    );
   }
 
   createManager(request: CreateManagerRequest): Observable<void> {
@@ -59,3 +63,4 @@ export class ShippingCompanyService {
     return this.http.put<void>(`${this.apiUrl}/shipping-company-managers/profile`, request);
   }
 }
+

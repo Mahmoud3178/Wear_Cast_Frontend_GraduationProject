@@ -85,7 +85,7 @@ export class CustomerShipmentsService {
   constructor(
     private readonly http: HttpClient,
     private readonly auth: AuthService
-  ) {}
+  ) { }
 
   list(q: CustomerShipmentListQuery): Observable<CustomerShipmentListResult> {
     const url = `${this.base}/api/CustomerShipments`;
@@ -607,13 +607,13 @@ export const CUSTOMER_SHIPMENT_SORT_OPTIONS: ReadonlyArray<{
   label: string;
   value: number | null;
 }> = [
-  { label: 'Default (newest)', value: null },
-  { label: 'Oldest', value: 1 },
-  { label: 'Items (fewest first)', value: 2 },
-  { label: 'Items (most first)', value: 3 },
-  { label: 'Price (low → high)', value: 4 },
-  { label: 'Price (high → low)', value: 5 }
-];
+    { label: 'Default (newest)', value: null },
+    { label: 'Oldest', value: 1 },
+    { label: 'Items (fewest first)', value: 2 },
+    { label: 'Items (most first)', value: 3 },
+    { label: 'Price (low → high)', value: 4 },
+    { label: 'Price (high → low)', value: 5 }
+  ];
 
 /**
  * `ShipmentStatus` filter — must match backend enum; omit for all.
@@ -622,11 +622,11 @@ export const CUSTOMER_SHIPMENT_STATUS_OPTIONS: ReadonlyArray<{
   label: string;
   value: number | null;
 }> = [
-  { label: 'All statuses', value: null },
-  { label: 'Placed', value: 0 },
-  { label: 'Pending', value: 1 },
-  { label: 'Processing', value: 2 },
-  { label: 'Shipped', value: 3 },
-  { label: 'Delivered', value: 4 },
-  { label: 'Cancelled', value: 5 }
-];
+    { label: 'All statuses', value: null },
+    { label: 'Placed', value: 0 },
+    { label: 'Pending', value: 1 },
+    { label: 'Processing', value: 2 },
+    { label: 'Shipped', value: 3 },
+    { label: 'Delivered', value: 4 },
+    { label: 'Cancelled', value: 5 }
+  ];

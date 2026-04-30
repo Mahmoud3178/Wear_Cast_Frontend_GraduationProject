@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Driver, CreateDriverRequest, UpdateDriverRequest, UpdateDriverStatusRequest, DriverProfile } from '../models/driver.model';
+import { Driver, DriverStatus, CreateDriverRequest, UpdateDriverStatusRequest, DriverProfile, UpdateDriverRequest } from '../models/driver.model';
+import { ShippingStats } from '../models/shipping-stats.model';
 import { DriverShipment, DriverShipmentDetails, UpdateShipmentStatusRequest, ShipmentStatus } from '../models/shipment.model';
 import { DriverDashboardStats } from '../models/dashboard.model';
+import { PaginatedResponse } from '../models/pagination.model';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +17,13 @@ export class DriverService {
 
   // --- Drivers (Admin/Manager) ---
   getAllDrivers(): Observable<Driver[]> {
-    return this.http.get<Driver[]>(`${this.apiUrl}/Drivers/GetAll`);
+    return this.http.get<PaginatedResponse<Driver>>(`${this.apiUrl}/Drivers/GetAll`).pipe(
+      map(response => response.items || [])
+    );
+  }
+
+  getShippingStats(): Observable<ShippingStats> {
+    return this.http.get<ShippingStats>(`${this.apiUrl}/Shipments/stats`);
   }
 
   getDriverById(id: number): Observable<DriverProfile> {
@@ -49,9 +57,15 @@ export class DriverService {
     return this.http.put<void>(`${this.apiUrl}/drivers/profile-image`, formData);
   }
 
+  deleteDriver(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/Drivers/${id}`);
+  }
+
   // --- Driver Shipments ---
   getAllDriverShipments(): Observable<DriverShipment[]> {
-    return this.http.get<DriverShipment[]>(`${this.apiUrl}/DriverShipments`);
+    return this.http.get<PaginatedResponse<DriverShipment>>(`${this.apiUrl}/DriverShipments`).pipe(
+      map(response => response.items || [])
+    );
   }
 
   getDriverShipmentById(id: number): Observable<DriverShipmentDetails> {
@@ -65,12 +79,17 @@ export class DriverService {
   // Dashboard calculations
   getDashboardStats(shipments: DriverShipment[]): DriverDashboardStats {
     const today = new Date().toDateString();
-    const todayDeliveries = shipments.filter(s => 
-      s.shipmentStatus === ShipmentStatus.Delivered && 
-      new Date(s.orderTime).toDateString() === today
-    ).length;
+    const todayDeliveries = shipments.filter(s => {
+      const status = typeof s.shipmentStatus === 'string' ? ShipmentStatus[s.shipmentStatus as keyof typeof ShipmentStatus] : s.shipmentStatus;
+      return status === ShipmentStatus.Delivered && 
+             new Date(s.orderTime).toDateString() === today;
+    }).length;
 
-    const completedDeliveries = shipments.filter(s => s.shipmentStatus === ShipmentStatus.Delivered).length;
+    const completedDeliveries = shipments.filter(s => {
+      const status = typeof s.shipmentStatus === 'string' ? ShipmentStatus[s.shipmentStatus as keyof typeof ShipmentStatus] : s.shipmentStatus;
+      return status === ShipmentStatus.Delivered;
+    }).length;
+    
     // We don't have earnings in DTO, mock it based on completed
     const totalEarnings = completedDeliveries * 15.5; 
 
@@ -83,9 +102,15 @@ export class DriverService {
   }
 
   getCurrentRoute(shipments: DriverShipment[]): DriverShipment | null {
-    const active = shipments.find(s => s.shipmentStatus === ShipmentStatus.InTransit);
+    const active = shipments.find(s => {
+      const status = typeof s.shipmentStatus === 'string' ? ShipmentStatus[s.shipmentStatus as keyof typeof ShipmentStatus] : s.shipmentStatus;
+      return status === ShipmentStatus.OutForDelivery;
+    });
     if (active) return active;
     
-    return shipments.find(s => s.shipmentStatus === ShipmentStatus.ReadyForPickup) || null;
+    return shipments.find(s => {
+      const status = typeof s.shipmentStatus === 'string' ? ShipmentStatus[s.shipmentStatus as keyof typeof ShipmentStatus] : s.shipmentStatus;
+      return status === ShipmentStatus.PickingUp;
+    }) || null;
   }
 }

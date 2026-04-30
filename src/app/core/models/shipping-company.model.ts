@@ -3,10 +3,20 @@ export interface ShippingCompany {
   name: string;
   email: string;
   phoneNumber: string;
-  address: string;
+  commercialRegisterNumber: string;
+  taxIdNumber: string;
+  description: string;
+  deliveryFee: number;
+  address: {
+    state: string;
+    city: string;
+    street: string;
+    buildingNumber: string;
+  };
   profileImageUrl?: string;
   managersCount: number;
 }
+
 
 export interface ShippingCompanyManager {
   id: string; // usually string ID from Identity
