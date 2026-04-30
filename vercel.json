@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://localhost:5245/api/:path*"
+      "destination": "https://wear-cast.runasp.net/api/:path*"
     },
     {
       "source": "/me/:path*",
-      "destination": "http://localhost:5245/me/:path*"
+      "destination": "https://wear-cast.runasp.net/me/:path*"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "http://localhost:5245/uploads/:path*"
+      "destination": "https://wear-cast.runasp.net/uploads/:path*"
     }
   ]
 }
