@@ -263,7 +263,16 @@
                       </div>
                       <div class="shipment-order-line__thumb shipment-order-line__thumb--empty" *ngIf="!line.imageUrl" aria-hidden="true"></div>
                       <div class="shipment-order-line__body">
-                        <p class="shipment-order-line__title">{{ line.title }}</p>
+                        <p class="shipment-order-line__title">
+                          <button
+                            type="button"
+                            class="btn btn-link p-0 text-start"
+                            (click)="openShipmentItem(line)"
+                            [disabled]="line.kind === 'fixed' ? !line.productId : !line.designedProductId"
+                          >
+                            {{ line.title }}
+                          </button>
+                        </p>
                         <p class="shipment-order-line__meta" *ngIf="line.subtitle">Size / variant: {{ formatSizeLabel(line.subtitle) }}</p>
                         <p class="shipment-order-line__meta">Qty {{ line.quantity }}</p>
                       </div>

@@ -414,6 +414,33 @@ export class FactoryProductWizardComponent implements OnInit {
     });
   }
 
+  deleteSize(row: ExistingSizeRow): void {
+    if (row.id == null) {
+      this.error = 'This size row cannot be deleted because no size id was returned by the API.';
+      return;
+    }
+    if (!confirm(`Delete size ${row.size.replace(/^_/, '')}?`)) {
+      return;
+    }
+    this.error = '';
+    this.message = '';
+    this.busy = true;
+    this.factory.deleteProductSize(row.id).subscribe({
+      next: () => {
+        this.busy = false;
+        this.existingSizes = this.existingSizes.filter(s => s.id !== row.id);
+        if (this.editingSizeId === row.id) {
+          this.editingSizeId = null;
+        }
+        this.message = `Size ${row.size.replace(/^_/, '')} deleted.`;
+      },
+      error: (e: Error) => {
+        this.busy = false;
+        this.error = e.message || 'Delete size failed';
+      }
+    });
+  }
+
   // ── Edit mode ────────────────────────────────────────────────────────────────
 
   private loadExistingProduct(id: number): void {

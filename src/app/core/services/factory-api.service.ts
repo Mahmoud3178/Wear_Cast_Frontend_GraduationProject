@@ -125,6 +125,7 @@ export interface FactoryProfile {
     buildingNumber?: string;
   };
   imageUrl?: string;
+  logoUrl?: string;
   commercialRegisterNumber?: string;
   taxIdNumber?: string;
   state?: string;
@@ -513,7 +514,11 @@ export class FactoryApiService {
         if (!payload) {
           throw new Error('Failed to load factory profile');
         }
-        return payload;
+        return {
+          ...payload,
+          // Backend currently returns logoUrl for factory profile image.
+          imageUrl: payload.imageUrl || payload.logoUrl
+        };
       }),
       catchError(e => this.mapErr(e))
     );
@@ -695,6 +700,19 @@ export class FactoryApiService {
   ): Observable<void> {
     const url = `${this.base}/api/factories/product-sizes/${sizeId}`;
     return this.http.put<ApiEnvelope | null>(url, body).pipe(
+      map(res => {
+        if (res && typeof res === 'object' && 'isSuccess' in res && !res.isSuccess) {
+          throw this.envErr(res as ApiEnvelope);
+        }
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
+  /** DELETE /api/factories/product-sizes/{Id} */
+  deleteProductSize(sizeId: number): Observable<void> {
+    const url = `${this.base}/api/factories/product-sizes/${sizeId}`;
+    return this.http.delete<ApiEnvelope | null>(url).pipe(
       map(res => {
         if (res && typeof res === 'object' && 'isSuccess' in res && !res.isSuccess) {
           throw this.envErr(res as ApiEnvelope);

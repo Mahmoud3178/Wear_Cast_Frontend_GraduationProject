@@ -240,11 +240,14 @@
               </div>
               <div class="table-responsive mt-3" *ngIf="existingSizes.length > 0">
                 <table class="table table-sm align-middle">
-                  <thead><tr><th>Size</th><th>A</th><th>B</th><th>C</th><th class="text-end">Action</th></tr></thead>
+                  <thead><tr><th>Size</th><th>A</th><th>B</th><th>C</th><th class="text-end">Actions</th></tr></thead>
                   <tbody>
                     <tr *ngFor="let sz of existingSizes">
                       <td>{{ sz.size.replace('_', '') }}</td><td>{{ sz.a }}</td><td>{{ sz.b }}</td><td>{{ sz.c }}</td>
-                      <td class="text-end"><button type="button" class="btn btn-outline-secondary btn-sm" (click)="startEditSize(sz)">Edit</button></td>
+                      <td class="text-end d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="startEditSize(sz)">Edit</button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy" (click)="deleteSize(sz)">Delete</button>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -484,11 +487,14 @@
             </div>
             <div class="table-responsive mt-3" *ngIf="existingSizes.length > 0">
               <table class="table table-sm align-middle">
-                <thead><tr><th>Size</th><th>A</th><th>B</th><th>C</th><th class="text-end">Action</th></tr></thead>
+                <thead><tr><th>Size</th><th>A</th><th>B</th><th>C</th><th class="text-end">Actions</th></tr></thead>
                 <tbody>
                   <tr *ngFor="let sz of existingSizes">
                     <td>{{ sz.size.replace('_', '') }}</td><td>{{ sz.a }}</td><td>{{ sz.b }}</td><td>{{ sz.c }}</td>
-                    <td class="text-end"><button type="button" class="btn btn-outline-secondary btn-sm" (click)="startEditSize(sz)">Edit</button></td>
+                    <td class="text-end d-flex justify-content-end gap-2">
+                      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="startEditSize(sz)">Edit</button>
+                      <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy" (click)="deleteSize(sz)">Delete</button>
+                    </td>
                   </tr>
                 </tbody>
               </table>

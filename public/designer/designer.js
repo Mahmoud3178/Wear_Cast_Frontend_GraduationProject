@@ -512,7 +512,7 @@
   function addStickerFromUrl(url) {
     if (!canvas || !url) return;
     var dim = getStageDimensions();
-    fabric.Image.fromURL(url, function (img) {
+    function mountSticker(img) {
       if (!img) return;
       var scale = Math.min(140 / img.width, 140 / img.height, 1);
       img.set({
@@ -528,6 +528,21 @@
       canvas.renderAll();
       saveState();
       closeDesignsPanel();
+    }
+
+    // Try CORS-safe load first for export compatibility, then fallback without
+    // crossOrigin because some production media hosts reject anonymous CORS.
+    fabric.Image.fromURL(url, function (img) {
+      if (img) {
+        mountSticker(img);
+        return;
+      }
+      fabric.Image.fromURL(url, function (fallbackImg) {
+        if (!fallbackImg) {
+          return;
+        }
+        mountSticker(fallbackImg);
+      });
     }, { crossOrigin: 'anonymous' });
   }
 

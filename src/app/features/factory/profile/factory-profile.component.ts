@@ -50,8 +50,7 @@ export class FactoryProfileComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.isManagerAccount =
-      this.auth.getFactoryPortalAccountType() === 'manager';
+    this.isManagerAccount = this.auth.getFactoryPortalAccountType() === 'manager';
     this.loadProfile();
   }
 
@@ -59,32 +58,11 @@ export class FactoryProfileComponent implements OnInit {
     this.loading = true;
     this.errorMsg = '';
     const handleFactorySuccess = (fp: FactoryProfile) => {
-      this.isManagerAccount = false;
       this.profile = fp;
-      this.managerProfile = null;
-      this.editForm = {
-        name: fp.name || '',
-        firstName: '',
-        lastName: '',
-        description: fp.description || '',
-        taxIdNumber: fp.taxIdNumber || '',
-        commercialRegisterNumber: fp.commercialRegisterNumber || '',
-        address: {
-          country: fp.address?.country || '',
-          state: fp.address?.state || '',
-          city: fp.address?.city || '',
-          street: fp.address?.street || '',
-          buildingNumber: fp.address?.buildingNumber || ''
-        },
-        phoneNumber: fp.phoneNumber || ''
-      };
-      this.loading = false;
       this.loadManagers();
     };
     const handleManagerSuccess = (mp: FactoryManagerProfile) => {
-      this.isManagerAccount = true;
       this.managerProfile = mp;
-      this.profile = null;
       const firstName = (mp.firstName || '').trim();
       const lastName = (mp.lastName || '').trim();
       const fullName = (mp.name || '').trim();
@@ -105,28 +83,20 @@ export class FactoryProfileComponent implements OnInit {
         phoneNumber: mp.phoneNumber || ''
       };
       this.loading = false;
-      this.managers = [];
     };
     const handleError = (err: Error) => {
       this.errorMsg = err.message || 'Failed to load factory profile.';
       this.loading = false;
     };
-    if (this.isManagerAccount) {
-      this.factoryApi.getFactoryManagerProfile().subscribe({
-        next: profile => handleManagerSuccess(profile),
-        error: handleError
-      });
-      return;
-    }
-
+    this.factoryApi.getFactoryManagerProfile().subscribe({
+      next: profile => handleManagerSuccess(profile),
+      error: () => {
+        // keep factory profile visible even if manager profile is unavailable
+      }
+    });
     this.factoryApi.getFactoryProfile().subscribe({
       next: profile => handleFactorySuccess(profile),
-      error: () => {
-        this.factoryApi.getFactoryManagerProfile().subscribe({
-          next: profile => handleManagerSuccess(profile),
-          error: handleError
-        });
-      }
+      error: handleError
     });
   }
 

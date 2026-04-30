@@ -53,6 +53,10 @@ export interface CustomerShipmentTimelineEntryVm {
 }
 
 export interface CustomerShipmentOrderLineVm {
+  kind: 'fixed' | 'designed';
+  productId: number | null;
+  designedProductId: number | null;
+  customerDesignId: number | null;
   title: string;
   subtitle: string;
   quantity: number;
@@ -490,7 +494,21 @@ function mapShipmentOrderLine(entry: unknown): CustomerShipmentOrderLineVm | nul
     null;
   const sizesRaw = src['sizes'] ?? src['Sizes'] ?? o['sizes'] ?? o['Sizes'];
   const sizesLabel = buildSizesLabel(sizesRaw);
+  const productId =
+    pickNum(src, ['productId', 'ProductId']) ?? pickNum(o, ['productId', 'ProductId']);
+  const designedProductId =
+    pickNum(src, ['designedProductId', 'DesignedProductId']) ??
+    pickNum(o, ['designedProductId', 'DesignedProductId']);
+  const customerDesignId =
+    pickNum(src, ['customerDesignId', 'CustomerDesignId']) ??
+    pickNum(o, ['customerDesignId', 'CustomerDesignId']);
+  const kind: 'fixed' | 'designed' =
+    designedProductId != null || customerDesignId != null ? 'designed' : 'fixed';
   return {
+    kind,
+    productId: productId ?? null,
+    designedProductId: designedProductId ?? null,
+    customerDesignId: customerDesignId ?? null,
     title,
     subtitle: sizesLabel || subtitle,
     quantity: Math.max(1, quantity),

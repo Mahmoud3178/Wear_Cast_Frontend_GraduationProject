@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
 import {
@@ -109,7 +109,8 @@ export class ProfileComponent implements OnInit {
   constructor(
     private readonly auth: AuthService,
     private readonly profileService: CustomerProfileService,
-    private readonly customerShipmentsService: CustomerShipmentsService
+    private readonly customerShipmentsService: CustomerShipmentsService,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
@@ -324,6 +325,20 @@ export class ProfileComponent implements OnInit {
   formatSizeLabel(size: string): string {
     if (!size?.trim()) return '';
     return size.trim().replace(/^_/, '');
+  }
+
+  openShipmentItem(line: CustomerShipmentDetailVm['orderLines'][number]): void {
+    if (line.kind === 'designed') {
+      if (line.designedProductId != null && line.designedProductId > 0) {
+        void this.router.navigate(['/customer/design'], {
+          queryParams: { designedProductIds: line.designedProductId }
+        });
+      }
+      return;
+    }
+    if (line.productId != null && line.productId > 0) {
+      void this.router.navigate(['/customer/product', line.productId]);
+    }
   }
 
   get displayName(): string {
