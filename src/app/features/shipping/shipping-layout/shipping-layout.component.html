@@ -1,0 +1,30 @@
+<div class="shipping-layout-container" [class.sidebar-collapsed]="isSidebarCollapsed">
+  <!-- Sidebar Container -->
+  <aside class="sidebar-wrapper">
+    <app-shipping-sidebar [isCollapsed]="isSidebarCollapsed"></app-shipping-sidebar>
+    
+    <!-- Collapse Toggle (Visible on Desktop) -->
+    <button class="sidebar-toggle-btn d-none d-lg-flex" (click)="toggleSidebar()">
+      <i class="bi" [class.bi-chevron-left]="!isSidebarCollapsed" [class.bi-chevron-right]="isSidebarCollapsed"></i>
+    </button>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="main-wrapper">
+    <!-- Header -->
+    <app-shipping-header class="sticky-top"></app-shipping-header>
+
+    <!-- Content Body -->
+    <main class="content-body">
+      <div class="content-scroll-container">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <app-shipping-footer></app-shipping-footer>
+  </div>
+
+  <!-- Mobile Overlay -->
+  <div class="sidebar-overlay d-lg-none" (click)="toggleSidebar()" *ngIf="!isSidebarCollapsed"></div>
+</div>

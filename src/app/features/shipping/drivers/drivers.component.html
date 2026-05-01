@@ -1,178 +1,333 @@
-<div class="drivers-container">
-  <div class="header-section">
+<div class="drivers-container p-4">
+  <!-- Header Section -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h2>Drivers Management</h2>
-      <p class="subtitle">Manage all drivers for the shipping company</p>
+      <h2 class="fw-bold mb-1">Drivers Management</h2>
+      <p class="text-muted mb-0">Monitor and manage your delivery fleet</p>
     </div>
-    <button class="primary-btn" (click)="openCreateModal()">
-      <i class="fas fa-plus"></i> Add New Driver
+    <button class="btn btn-premium d-flex align-items-center gap-2" (click)="openRegisterModal()">
+      <i class="bi bi-person-plus-fill"></i>
+      <span>Add New Driver</span>
     </button>
   </div>
 
-  <div *ngIf="isLoading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Loading drivers...</p>
+  <!-- Stats Grid -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-3">
+      <div class="premium-card stat-card stat-card-primary p-3 d-flex align-items-center gap-3">
+        <div class="stat-icon-small bg-soft-primary">
+          <i class="bi bi-people-fill text-primary"></i>
+        </div>
+        <div>
+          <p class="text-muted-custom text-xs fw-bold text-uppercase mb-0 ls-1">Total Fleet</p>
+          <h4 class="fw-extrabold mb-0">{{stats.total}}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="premium-card stat-card stat-card-success p-3 d-flex align-items-center gap-3">
+        <div class="stat-icon-small bg-soft-success">
+          <i class="bi bi-person-check-fill text-success"></i>
+        </div>
+        <div>
+          <p class="text-muted-custom text-xs fw-bold text-uppercase mb-0 ls-1">Active Drivers</p>
+          <h4 class="fw-extrabold mb-0">{{stats.active}}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="premium-card stat-card stat-card-info p-3 d-flex align-items-center gap-3">
+        <div class="stat-icon-small bg-soft-info">
+          <i class="bi bi-truck text-info"></i>
+        </div>
+        <div>
+          <p class="text-muted-custom text-xs fw-bold text-uppercase mb-0 ls-1">On Trip</p>
+          <h4 class="fw-extrabold mb-0">{{stats.onTrip}}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="premium-card stat-card stat-card-warning p-3 d-flex align-items-center gap-3">
+        <div class="stat-icon-small bg-soft-warning">
+          <i class="bi bi-star-fill text-warning"></i>
+        </div>
+        <div>
+          <p class="text-muted-custom text-xs fw-bold text-uppercase mb-0 ls-1">Avg. Rating</p>
+          <h4 class="fw-extrabold mb-0">{{stats.avgRating}}</h4>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div *ngIf="!isLoading && drivers.length === 0" class="empty-state">
-    <i class="fas fa-id-card empty-icon"></i>
-    <h3>No Drivers Found</h3>
-    <p>You haven't added any drivers yet.</p>
-  </div>
+  <!-- Main Table Card -->
+  <div class="premium-card">
+    <!--<div class="premium-card-header border-bottom">
+      <div class="row align-items-center g-3">
+        <div class="col-md-4">
+          <div class="search-box position-relative">
+            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+            <input type="text" class="form-control ps-5 py-2 shadow-none" 
+                   placeholder="Search name, city..." 
+                   [(ngModel)]="searchQuery" 
+                   (input)="onSearchChange()">
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="d-flex justify-content-md-end gap-2">
+            <select class="form-select w-auto py-2 shadow-none" 
+                    [(ngModel)]="selectedFilter" 
+                    (change)="onFilterChange($event)">
+              <option value="all">All Status</option>
+              <option value="online">Online Only</option>
+              <option value="offline">Offline Only</option>
+            </select>
+            <button class="btn btn-white btn-icon-premium" (click)="loadInitialData()" [disabled]="loading">
+              <i class="bi bi-arrow-clockwise" [class.spinner-border-sm]="loading"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>-->
 
-  <div *ngIf="!isLoading && drivers.length > 0" class="drivers-grid">
-    <div *ngFor="let driver of drivers" class="driver-card">
-      <div class="driver-header">
-        <div class="driver-info">
-          <div class="avatar">
-            <i class="fas fa-user"></i>
-          </div>
-          <div>
-            <h3>{{ driver.driverName }}</h3>
-            <span class="city"><i class="fas fa-map-marker-alt"></i> {{ driver.driverCity }}</span>
-          </div>
-        </div>
-        <span class="badge" [ngClass]="getStatusBadgeClass(driver.status)">
-          {{ DriverStatusEnum[driver.status] }}
-        </span>
-      </div>
-      
-      <div class="driver-stats">
-        <div class="stat">
-          <span class="label">Vehicle</span>
-          <span class="value"><i class="fas" [ngClass]="getVehicleIcon(driver.vehicleType)"></i> {{ VehicleTypeEnum[driver.vehicleType] }}</span>
-        </div>
-        <div class="stat">
-          <span class="label">Active</span>
-          <span class="value">{{ driver.numberOfActiveShipments }}</span>
-        </div>
-        <div class="stat">
-          <span class="label">Delivered</span>
-          <span class="value">{{ driver.numberOfDeliveredShipments }}</span>
-        </div>
-      </div>
-      
-      <div class="driver-actions">
-        <button class="action-btn outline" (click)="openStatusModal(driver)">
-          Update Status
-        </button>
-      </div>
+    <div class="table-responsive">
+      <table class="table custom-table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="ps-4">Driver</th>
+            <th>Location</th>
+            <th>Vehicle</th>
+            <th>Status</th>
+            <th>Rating</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let driver of filteredDrivers">
+            <td class="ps-4">
+              <div class="d-flex align-items-center gap-3">
+                <div class="driver-avatar-small bg-soft-primary text-primary fw-bold">
+                  {{getInitials(driver.driverName)}}
+                </div>
+                <div>
+                  <div class="fw-bold text-dark">{{driver.driverName}}</div>
+                  <div class="text-muted small">{{driver.driverPhone || 'No Phone'}}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <i class="bi bi-geo-alt text-muted"></i>
+                <span>{{driver.driverCity}}</span>
+              </div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark fw-medium border">
+                  {{getVehicleTypeName(driver.vehicleType)}}
+                </span>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusBadgeClass(driver.status)">
+                <span class="status-dot"></span>
+                {{getStatusName(driver.status)}}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center text-warning gap-1">
+                <i class="bi bi-star-fill small"></i>
+                <span class="fw-bold text-dark">{{stats.avgRating}}</span>
+              </div>
+            </td>
+            <td class="text-end pe-4">
+              <div class="d-flex justify-content-end gap-2">
+                <button class="btn btn-icon-premium" (click)="openUpdateModal(driver)" title="Update Status">
+                  <i class="bi bi-pencil-square text-primary"></i>
+                </button>
+                <button class="btn btn-icon-premium" (click)="confirmDelete(driver)" title="Remove Driver">
+                  <i class="bi bi-trash3 text-danger"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <tr *ngIf="filteredDrivers.length === 0 && !loading">
+            <td colspan="6" class="text-center py-5">
+              <div class="py-4">
+                <i class="bi bi-person-x display-4 text-muted mb-3 d-block"></i>
+                <p class="text-muted">No drivers found matching your criteria</p>
+                <button class="btn btn-outline-primary btn-sm" (click)="searchQuery=''; selectedFilter='all'; applyFilters()">
+                  Clear all filters
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="loading">
+            <td colspan="6" class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
 
-<!-- Create Modal -->
-<div class="modal-overlay" *ngIf="showCreateModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Add New Driver</h3>
-      <button class="close-btn" (click)="closeCreateModal()"><i class="fas fa-times"></i></button>
+<!-- Register Modal Overlay -->
+<div class="modal-overlay" *ngIf="isRegisterModalOpen" (click)="closeRegisterModal()">
+  <div class="modal-card wide-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header-premium">
+      <h4 class="fw-bold mb-0">Register New Driver</h4>
+      <button class="btn-close-premium" (click)="closeRegisterModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
-    <div class="modal-body">
-      <form (ngSubmit)="createDriver()" #createForm="ngForm">
-        <div class="form-row">
-          <div class="form-group half">
-            <label>First Name *</label>
-            <input type="text" [(ngModel)]="newDriver.firstName" name="firstName" required class="form-control">
+    
+    <div class="p-4 p-md-5">
+      <form (ngSubmit)="onRegisterDriver()" #regForm="ngForm">
+        <div class="row g-4">
+          <!-- Profile Photo & Basic Info -->
+          <div class="col-md-4 text-center">
+            <div class="driver-avatar-placeholder mx-auto mb-3">
+              <img *ngIf="previewImage" [src]="previewImage" class="img-fluid rounded-4 shadow">
+              <div *ngIf="!previewImage" class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                <i class="bi bi-camera display-6 mb-2"></i>
+                <span class="small fw-bold">Add Photo</span>
+              </div>
+            </div>
+            <input type="file" #fileInput hidden (change)="onFileSelected($event)" accept="image/*">
+            <button type="button" class="btn btn-white btn-sm" (click)="fileInput.click()">
+              Choose Image
+            </button>
           </div>
-          <div class="form-group half">
-            <label>Last Name *</label>
-            <input type="text" [(ngModel)]="newDriver.lastName" name="lastName" required class="form-control">
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group half">
-            <label>City *</label>
-            <input type="text" [(ngModel)]="newDriver.city" name="city" required class="form-control">
-          </div>
-          <div class="form-group half">
-            <label>State *</label>
-            <input type="text" [(ngModel)]="newDriver.state" name="state" required class="form-control">
-          </div>
-        </div>
 
-        <div class="form-row">
-          <div class="form-group half">
-            <label>Street *</label>
-            <input type="text" [(ngModel)]="newDriver.street" name="street" required class="form-control">
+          <div class="col-md-8">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-bold small text-uppercase">Full Name</label>
+                <input type="text" class="form-control premium-input" placeholder="e.g. John Doe" 
+                       name="name" [(ngModel)]="newDriver.name" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small text-uppercase">Phone Number</label>
+                <input type="tel" class="form-control premium-input" placeholder="+20 123 456 789" 
+                       name="phone" [(ngModel)]="newDriver.phoneNumber" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small text-uppercase">National ID</label>
+                <input type="text" class="form-control premium-input" placeholder="14-digit ID" 
+                       name="nationalId" [(ngModel)]="newDriver.nationalId" required>
+              </div>
+            </div>
           </div>
-          <div class="form-group half">
-            <label>Building Number *</label>
-            <input type="text" [(ngModel)]="newDriver.buildingNumber" name="buildingNumber" required class="form-control">
-          </div>
-        </div>
 
-        <div class="form-row">
-          <div class="form-group half">
-            <label>Vehicle Type *</label>
-            <select [(ngModel)]="newDriver.vehicleType" name="vehicle" class="form-control">
-              <option [ngValue]="VehicleTypeEnum.Bicycle">Bicycle</option>
-              <option [ngValue]="VehicleTypeEnum.Motorcycle">Motorcycle</option>
-              <option [ngValue]="VehicleTypeEnum.Car">Car</option>
-              <option [ngValue]="VehicleTypeEnum.Van">Van</option>
-              <option [ngValue]="VehicleTypeEnum.Truck">Truck</option>
+          <div class="col-12">
+            <div class="section-divider my-2">Vehicle Information</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold small text-uppercase">Vehicle Type</label>
+            <select class="form-select premium-input" name="vType" [(ngModel)]="newDriver.vehicleType">
+              <option [value]="DeliveryVehicleType.Motorcycle">Motorcycle</option>
+              <option [value]="DeliveryVehicleType.Car">Car</option>
+              <option [value]="DeliveryVehicleType.Van">Van</option>
+              <option [value]="DeliveryVehicleType.Bicycle">Bicycle</option>
             </select>
           </div>
-          <div class="form-group half">
-            <label>Email</label>
-            <input type="email" [(ngModel)]="newDriver.email" name="email" class="form-control">
+          <div class="col-md-6">
+            <label class="form-label fw-bold small text-uppercase">Plate Number</label>
+            <input type="text" class="form-control premium-input" placeholder="e.g. ABC 123" 
+                   name="plate" [(ngModel)]="newDriver.vehiclePlateNumber">
           </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group half">
-            <label>Phone Number</label>
-            <input type="text" [(ngModel)]="newDriver.phoneNumber" name="phone" class="form-control">
+
+          <div class="col-12">
+            <div class="section-divider my-2">Location Details</div>
           </div>
-          <div class="form-group half">
-            <label>National ID</label>
-            <input type="text" [(ngModel)]="newDriver.nationalId" name="nationalId" class="form-control">
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold small text-uppercase">City</label>
+            <input type="text" class="form-control premium-input" placeholder="e.g. Cairo" 
+                   name="city" [(ngModel)]="newDriver.city">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold small text-uppercase">State</label>
+            <input type="text" class="form-control premium-input" placeholder="e.g. Giza" 
+                   name="state" [(ngModel)]="newDriver.state">
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group half">
-            <label>Password</label>
-            <input type="password" [(ngModel)]="newDriver.password" name="password" class="form-control">
-          </div>
-          <div class="form-group half">
-            <label>Confirm Password</label>
-            <input type="password" [(ngModel)]="newDriver.confirmPassword" name="confirmPassword" class="form-control">
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn-cancel" (click)="closeCreateModal()">Cancel</button>
-          <button type="submit" class="primary-btn" [disabled]="!createForm.form.valid">Create Driver</button>
+        <div class="mt-5 d-flex gap-3 justify-content-end">
+          <button type="button" class="btn btn-white px-4" (click)="closeRegisterModal()">Cancel</button>
+          <button type="submit" class="btn btn-premium px-5" [disabled]="!regForm.valid || isSubmitting">
+            <span *ngIf="!isSubmitting">Complete Registration</span>
+            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          </button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- Status Modal -->
-<div class="modal-overlay" *ngIf="showStatusModal">
-  <div class="modal-content small-modal">
-    <div class="modal-header">
-      <h3>Update Status</h3>
-      <button class="close-btn" (click)="closeStatusModal()"><i class="fas fa-times"></i></button>
+<!-- Update Status Modal Overlay -->
+<div class="modal-overlay" *ngIf="isUpdateModalOpen" (click)="closeUpdateModal()">
+  <div class="modal-card small-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header-premium">
+      <h4 class="fw-bold mb-0">Update Status</h4>
+      <button class="btn-close-premium" (click)="closeUpdateModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
-    <div class="modal-body">
-      <p>Select new status for <strong>{{ selectedDriver?.driverName }}</strong></p>
-      
-      <div class="form-group">
-        <label>Status</label>
-        <select [(ngModel)]="newStatus" class="form-control">
-          <option [ngValue]="DriverStatusEnum.Available">Available</option>
-          <option [ngValue]="DriverStatusEnum.Busy">Busy</option>
-          <option [ngValue]="DriverStatusEnum.Offline">Offline</option>
-        </select>
+    
+    <div class="p-4" *ngIf="selectedDriver">
+      <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-light rounded-4">
+        <div class="driver-avatar-small bg-soft-primary text-primary fw-bold">
+          {{getInitials(selectedDriver.driverName)}}
+        </div>
+        <div>
+          <div class="fw-bold text-dark">{{selectedDriver.driverName}}</div>
+          <div class="text-muted small">Current: {{getStatusName(selectedDriver.status)}}</div>
+        </div>
       </div>
 
-      <div class="modal-actions">
-        <button type="button" class="btn-cancel" (click)="closeStatusModal()">Cancel</button>
-        <button type="button" class="primary-btn" (click)="updateDriverStatus()">Save Changes</button>
+      <div class="mb-4">
+        <label class="form-label fw-bold small text-uppercase mb-3 d-block text-center">Select New Status</label>
+        <div class="status-options-grid d-flex flex-column gap-2">
+          <label class="status-option-label">
+            <input type="radio" name="status" [value]="DriverStatus.Available" [(ngModel)]="selectedDriver.status" class="btn-check">
+            <div class="status-option p-3 rounded-4 d-flex align-items-center gap-3 cursor-pointer border"
+                 [class.active]="selectedDriver.status === DriverStatus.Available">
+              <div class="status-dot-large bg-success"></div>
+              <div>
+                <div class="fw-bold">Available (Online)</div>
+                <div class="text-muted small">Visible for new shipments</div>
+              </div>
+              <i class="bi bi-check-circle-fill ms-auto text-success fs-4" *ngIf="selectedDriver.status === DriverStatus.Available"></i>
+            </div>
+          </label>
+
+          <label class="status-option-label">
+            <input type="radio" name="status" [value]="DriverStatus.NotAvailable" [(ngModel)]="selectedDriver.status" class="btn-check">
+            <div class="status-option p-3 rounded-4 d-flex align-items-center gap-3 cursor-pointer border"
+                 [class.active]="selectedDriver.status === DriverStatus.NotAvailable">
+              <div class="status-dot-large bg-secondary"></div>
+              <div>
+                <div class="fw-bold">Busy / Offline</div>
+                <div class="text-muted small">Not visible for new shipments</div>
+              </div>
+              <i class="bi bi-check-circle-fill ms-auto text-secondary fs-4" *ngIf="selectedDriver.status === DriverStatus.NotAvailable"></i>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="d-grid mt-4">
+        <button class="btn btn-premium py-3" (click)="onUpdateStatus()" [disabled]="isSubmitting">
+          <span *ngIf="!isSubmitting">Save Changes</span>
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+        </button>
       </div>
     </div>
   </div>

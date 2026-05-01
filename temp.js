@@ -5,7 +5,7 @@ https.get('https://wear-cast.runasp.net/openapi/v1.json', (res) => {
   res.on('data', (chunk) => {
     data += chunk;
   });
-  
+
   res.on('end', () => {
     try {
       const swagger = JSON.parse(data);

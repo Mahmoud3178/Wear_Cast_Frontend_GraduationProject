@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ShippingService } from '../../../core/services/shipping.service';
 import { DriverService } from '../../../core/services/driver.service';
 import { Shipment, ShipmentDetails, ShipmentStatus } from '../../../core/models/shipment.model';
-import { Driver } from '../../../core/models/driver.model';
+import { Driver, DriverStatus, DeliveryVehicleType } from '../../../core/models/driver.model';
 
 @Component({
   selector: 'app-shipments',
@@ -24,6 +24,7 @@ export class ShipmentsComponent implements OnInit {
   allShipments: Shipment[] = [];
   filteredShipments: Shipment[] = [];
   drivers: Driver[] = [];
+  availableDrivers: Driver[] = [];
   isLoading = true;
 
   // View Details Modal
@@ -45,7 +46,7 @@ export class ShipmentsComponent implements OnInit {
     this.loadDrivers();
   }
 
-  loadShipments() {
+  public loadShipments() {
     this.isLoading = true;
     this.shippingService.getAllShipments().subscribe({
       next: (data) => {
@@ -60,30 +61,35 @@ export class ShipmentsComponent implements OnInit {
     });
   }
 
-  loadDrivers() {
+  public loadDrivers() {
     this.driverService.getAllDrivers().subscribe({
       next: (data) => {
         this.drivers = data;
+        // Filter only available drivers for the assignment dropdown
+        this.availableDrivers = data.filter(d => {
+          const status = this.getNumericStatus(d.status, DriverStatus);
+          return status === DriverStatus.Available;
+        });
       },
       error: (err) => console.error('Failed to load drivers', err)
     });
   }
 
-  filterShipments() {
+  public filterShipments() {
     this.filteredShipments = this.allShipments.filter(s => {
-      const idMatch = s.id.toString().includes(this.searchTerm);
-      const destMatch = s.deliveryCity.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
-                        s.deliveryStreet.toLowerCase().includes(this.searchTerm.toLowerCase());
-      const driverMatch = s.driverName?.toLowerCase().includes(this.searchTerm.toLowerCase()) || false;
-      
-      const matchesSearch = idMatch || destMatch || driverMatch;
-      const matchesStatus = this.statusFilter === 'All' || s.shipmentStatus === this.statusFilter;
+      const matchesSearch = !this.searchTerm || 
+        s.id.toString().toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        (s.customerName && s.customerName.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
+        (s.deliveryCity && s.deliveryCity.toLowerCase().includes(this.searchTerm.toLowerCase()));
+
+      const currentStatus = this.getNumericStatus(s.shipmentStatus, ShipmentStatus);
+      const matchesStatus = this.statusFilter === 'All' || currentStatus === this.statusFilter;
       
       return matchesSearch && matchesStatus;
     });
   }
 
-  openDetailsModal(shipment: Shipment) {
+  public openDetailsModal(shipment: Shipment) {
     this.showDetailsModal = true;
     this.isLoadingDetails = true;
     this.shippingService.getShipmentById(shipment.id).subscribe({
@@ -98,24 +104,24 @@ export class ShipmentsComponent implements OnInit {
     });
   }
 
-  closeDetailsModal() {
+  public closeDetailsModal() {
     this.showDetailsModal = false;
     this.selectedShipmentDetails = null;
   }
 
-  openAssignModal(shipment: Shipment) {
+  public openAssignModal(shipment: Shipment) {
     this.selectedShipmentForAssign = shipment;
     this.selectedDriverId = null;
     this.showAssignModal = true;
   }
 
-  closeAssignModal() {
+  public closeAssignModal() {
     this.showAssignModal = false;
     this.selectedShipmentForAssign = null;
     this.selectedDriverId = null;
   }
 
-  assignDriver() {
+  public assignDriver() {
     if (!this.selectedShipmentForAssign || !this.selectedDriverId) return;
 
     this.shippingService.assignDriver({
@@ -125,22 +131,68 @@ export class ShipmentsComponent implements OnInit {
       next: () => {
         this.closeAssignModal();
         this.loadShipments();
+        this.loadDrivers(); // Refresh drivers list to update availability
       },
       error: (err) => {
         console.error('Failed to assign driver', err);
-        alert('Failed to assign driver.');
+        const errorMessage = err.error?.message || err.error || 'Failed to assign driver. Please ensure the driver is available.';
+        alert(errorMessage);
       }
     });
   }
 
-  getStatusName(status: ShipmentStatus): string {
-    switch (status) {
+  public getStatusName(status: any): string {
+    const s = this.getNumericStatus(status, ShipmentStatus);
+    switch (s) {
       case ShipmentStatus.Pending: return 'Pending';
-      case ShipmentStatus.ReadyForPickup: return 'Ready For Pickup';
-      case ShipmentStatus.InTransit: return 'In Transit';
+      case ShipmentStatus.Unassigned: return 'Unassigned';
+      case ShipmentStatus.Assigned: return 'Assigned';
+      case ShipmentStatus.PickingUp: return 'Picking Up';
+      case ShipmentStatus.OutForDelivery: return 'Out for Delivery';
       case ShipmentStatus.Delivered: return 'Delivered';
-      case ShipmentStatus.Cancelled: return 'Cancelled';
       default: return 'Unknown';
     }
+  }
+
+  public getVehicleTypeName(type: any): string {
+    const t = this.getNumericStatus(type, DeliveryVehicleType);
+    switch (t) {
+      case DeliveryVehicleType.Bicycle: return 'Bicycle';
+      case DeliveryVehicleType.Motorcycle: return 'Motorcycle';
+      case DeliveryVehicleType.Car: return 'Car';
+      case DeliveryVehicleType.Van: return 'Van';
+      default: return 'Vehicle';
+    }
+  }
+
+  public getStatusBadgeClass(status: any): string {
+    const s = this.getNumericStatus(status, ShipmentStatus);
+    switch (s) {
+      case ShipmentStatus.Unassigned: return 'status-unassigned';
+      case ShipmentStatus.Assigned: return 'status-assigned';
+      case ShipmentStatus.PickingUp:
+      case ShipmentStatus.OutForDelivery: return 'status-transit';
+      case ShipmentStatus.Delivered: return 'status-delivered';
+      default: return 'status-unknown';
+    }
+  }
+
+  public isStepActive(currentStatus: any, stepValue: number): boolean {
+    const s = this.getNumericStatus(currentStatus, ShipmentStatus);
+    return s >= stepValue;
+  }
+
+  public getNumericStatus(status: any, enumObj: any): number {
+    if (status === null || status === undefined) return -1;
+    if (typeof status === 'number') return status;
+    if (typeof status === 'string') {
+      if (!isNaN(Number(status))) return Number(status);
+      return enumObj[status as keyof typeof enumObj] as unknown as number;
+    }
+    return -1;
+  }
+
+  public openCreateShipmentModal() {
+    alert('Note: Shipments are automatically generated when a customer completes a payment via Stripe. Manual shipment creation is currently disabled to ensure sync with the order system.');
   }
 }

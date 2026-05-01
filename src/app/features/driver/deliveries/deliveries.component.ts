@@ -19,13 +19,13 @@ export class DeliveriesComponent implements OnInit {
   error = signal<string | null>(null);
 
   // Status mapping
-  ShipmentStatus = ShipmentStatus;
+  ShipmentStatusEnum = ShipmentStatus;
 
   ngOnInit(): void {
     this.loadDeliveries();
   }
 
-  loadDeliveries() {
+  public loadDeliveries() {
     this.isLoading.set(true);
     this.error.set(null);
     this.driverService.getAllDriverShipments().subscribe({
@@ -34,7 +34,7 @@ export class DeliveriesComponent implements OnInit {
         const mappedData = data.map(d => ({ ...d, isExpanded: false }));
         // Sort: Active ones first
         mappedData.sort((a, b) => {
-           const activeStatuses = [ShipmentStatus.InTransit, ShipmentStatus.ReadyForPickup];
+           const activeStatuses = [ShipmentStatus.OutForDelivery, ShipmentStatus.PickingUp, ShipmentStatus.Assigned];
            const aActive = activeStatuses.includes(a.shipmentStatus) ? -1 : 1;
            const bActive = activeStatuses.includes(b.shipmentStatus) ? -1 : 1;
            return aActive - bActive;
@@ -50,11 +50,11 @@ export class DeliveriesComponent implements OnInit {
     });
   }
 
-  toggleExpand(delivery: any) {
+  public toggleExpand(delivery: any) {
     delivery.isExpanded = !delivery.isExpanded;
   }
 
-  updateStatus(delivery: DriverShipment, newStatus: ShipmentStatus) {
+  public updateStatus(delivery: DriverShipment, newStatus: ShipmentStatus) {
     const request: UpdateShipmentStatusRequest = {
       shipmentId: delivery.id,
       newStatus: newStatus
@@ -77,13 +77,14 @@ export class DeliveriesComponent implements OnInit {
     });
   }
 
-  getStatusText(status: ShipmentStatus): string {
+  public getStatusText(status: ShipmentStatus): string {
     switch (status) {
       case ShipmentStatus.Pending: return 'Pending';
-      case ShipmentStatus.ReadyForPickup: return 'Ready for Pickup';
-      case ShipmentStatus.InTransit: return 'In Transit';
+      case ShipmentStatus.Unassigned: return 'Unassigned';
+      case ShipmentStatus.Assigned: return 'Assigned';
+      case ShipmentStatus.PickingUp: return 'Picking Up';
+      case ShipmentStatus.OutForDelivery: return 'Out For Delivery';
       case ShipmentStatus.Delivered: return 'Delivered';
-      case ShipmentStatus.Cancelled: return 'Cancelled';
       default: return 'Unknown';
     }
   }

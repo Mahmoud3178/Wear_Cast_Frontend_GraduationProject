@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { DriverService } from '../../../core/services/driver.service';
 import { DriverShipment } from '../../../core/models/shipment.model';
 import { inject } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-driver-dashboard',
@@ -14,15 +15,25 @@ import { inject } from '@angular/core';
 })
 export class DashboardComponent implements OnInit {
   private driverService = inject(DriverService);
+  private authService = inject(AuthService);
 
   driverStats: any[] = [];
   currentRoute: DriverShipment | null = null;
   isLoading = true;
+  driverName = 'Driver';
 
   constructor() { }
 
   ngOnInit(): void {
+    this.setDriverName();
     this.loadDashboardData();
+  }
+
+  setDriverName() {
+    const profile = this.authService.getCustomerProfile();
+    if (profile && profile.firstName) {
+      this.driverName = profile.firstName;
+    }
   }
 
   loadDashboardData() {
@@ -50,11 +61,12 @@ export class DashboardComponent implements OnInit {
   getStatusName(status: number | undefined): string {
     if (status === undefined) return 'Unknown';
     switch (status) {
-      case 0: return 'Pending';
-      case 1: return 'Ready For Pickup';
-      case 2: return 'In Transit';
-      case 3: return 'Delivered';
-      case 4: return 'Cancelled';
+      case 1: return 'Pending';
+      case 2: return 'Unassigned';
+      case 3: return 'Assigned';
+      case 4: return 'Picking Up';
+      case 5: return 'Out For Delivery';
+      case 6: return 'Delivered';
       default: return 'Unknown';
     }
   }

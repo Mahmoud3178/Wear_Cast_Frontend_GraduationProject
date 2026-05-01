@@ -1,9 +1,10 @@
 export enum ShipmentStatus {
-  Pending = 0,
-  ReadyForPickup = 1,
-  InTransit = 2,
-  Delivered = 3,
-  Cancelled = 4
+  Pending = 1,
+  Unassigned = 2,
+  Assigned = 3,
+  PickingUp = 4,
+  OutForDelivery = 5,
+  Delivered = 6
 }
 
 export interface Address {

@@ -1,184 +1,233 @@
-<div class="profile-container">
-  <div class="header-section">
-    <div>
-      <h2>Profile Settings</h2>
-      <p class="subtitle">Manage your company and manager profiles</p>
+<div class="profile-page-container p-4">
+  <!-- Page Header -->
+  <div class="header-section mb-5 animate-fade-in">
+    <div class="d-flex justify-content-between align-items-end">
+      <div>
+        <nav aria-label="breadcrumb" class="mb-2">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="#" class="text-slate-500 text-decoration-none small fw-bold">DASHBOARD</a></li>
+            <li class="breadcrumb-item active text-primary small fw-bold" aria-current="page">COMPANY PROFILE</li>
+          </ol>
+        </nav>
+        <h2 class="fw-bold text-slate-900 mb-1 tracking-tight">System Configuration</h2>
+        <p class="text-slate-500 mb-0">Manage your organization's identity and administrative credentials.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline-slate rounded-pill px-4 py-2 fw-bold transition-all">
+          <i class="bi bi-download me-2"></i>Export Profile
+        </button>
+      </div>
     </div>
   </div>
 
-  <div class="profile-grid">
-    <!-- Company Profile Card -->
-    <div class="profile-card">
-      <div class="card-header">
-        <div class="header-title">
-          <i class="fas fa-building"></i>
-          <h3>Company Profile</h3>
+  <!-- Loading State -->
+  <div *ngIf="isLoadingCompany || isLoadingManager" class="loading-overlay d-flex flex-column align-items-center justify-content-center p-5">
+    <div class="spinner-premium mb-3"></div>
+    <p class="text-slate-500 fw-medium">Retrieving secure data...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoadingCompany && !isLoadingManager" class="content-grid animate-fade-in">
+    <div class="row g-4">
+      <!-- Left Column: Company Details -->
+      <div class="col-xl-8">
+        <div class="premium-card shadow-premium h-100">
+          <div class="card-header-premium p-4 d-flex justify-content-between align-items-center border-bottom border-slate-100">
+            <div class="d-flex align-items-center gap-3">
+              <div class="icon-box-refined bg-primary-soft text-primary">
+                <i class="bi bi-briefcase-fill fs-5"></i>
+              </div>
+              <div>
+                <h5 class="mb-0 fw-bold text-slate-900">Organization Identity</h5>
+                <p class="mb-0 text-xs text-slate-500 fw-medium uppercase-tracking">Public & Legal Details</p>
+              </div>
+            </div>
+            <button class="btn btn-edit-premium" (click)="toggleEditCompany()">
+              <i class="bi" [class.bi-pencil-square]="!isEditingCompany" [class.bi-x-lg]="isEditingCompany"></i>
+              <span>{{ isEditingCompany ? 'Discard Changes' : 'Modify Information' }}</span>
+            </button>
+          </div>
+
+          <div class="card-body p-4 p-md-5">
+            <!-- Branding Section -->
+            <div class="branding-header mb-5 d-flex flex-column flex-md-row align-items-center gap-5">
+              <div class="logo-uploader-container">
+                <div class="logo-frame shadow-lg">
+                  <img *ngIf="company?.profileImageUrl" [src]="company?.profileImageUrl" alt="Logo" class="logo-preview">
+                  <div *ngIf="!company?.profileImageUrl" class="logo-placeholder bg-slate-50">
+                    <i class="bi bi-image text-slate-300 fs-1"></i>
+                  </div>
+                  <label for="logoUpload" class="uploader-overlay">
+                    <i class="bi bi-camera-fill text-white fs-4"></i>
+                    <span class="text-white text-xs fw-bold mt-2">CHANGE LOGO</span>
+                  </label>
+                  <input type="file" id="logoUpload" class="d-none" (change)="onImageSelected($event)" accept="image/*">
+                </div>
+              </div>
+              <div class="text-center text-md-start">
+                <h4 class="fw-bold text-slate-900 mb-2">{{ company?.name }}</h4>
+                <div class="d-flex flex-wrap justify-content-center justify-content-md-start gap-2 mb-3">
+                  <span class="badge-premium bg-success-soft text-success">Verified Partner</span>
+                  <span class="badge-premium bg-primary-soft text-primary">Premium Logistics</span>
+                </div>
+                <p class="text-slate-500 text-sm max-w-400">Your logo is used for internal dashboards, invoices, and public shipping manifests.</p>
+              </div>
+            </div>
+
+            <form #companyFormRef="ngForm" (ngSubmit)="saveCompany()">
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>Corporate Name</label>
+                    <input type="text" name="name" [(ngModel)]="companyForm.name" [readonly]="!isEditingCompany" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>Business Email</label>
+                    <input type="email" name="email" [(ngModel)]="companyForm.email" [readonly]="!isEditingCompany" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>Official Contact</label>
+                    <input type="text" name="phoneNumber" [(ngModel)]="companyForm.phoneNumber" [readonly]="!isEditingCompany" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>Base Delivery Fee ($)</label>
+                    <input type="number" name="deliveryFee" [(ngModel)]="companyForm.deliveryFee" [readonly]="!isEditingCompany" required>
+                  </div>
+                </div>
+                
+                <div class="col-12 mt-5 mb-2">
+                  <div class="section-divider">
+                    <span class="bg-white px-3 text-slate-400 text-xs fw-bold uppercase-tracking">Legal & Registration</span>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>Commercial Register Number</label>
+                    <input type="text" name="commercialRegisterNumber" [(ngModel)]="companyForm.commercialRegisterNumber" [readonly]="!isEditingCompany" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>Tax Identification Number</label>
+                    <input type="text" name="taxIdNumber" [(ngModel)]="companyForm.taxIdNumber" [readonly]="!isEditingCompany" required>
+                  </div>
+                </div>
+                
+                <div class="col-12 mt-5 mb-2">
+                  <div class="section-divider">
+                    <span class="bg-white px-3 text-slate-400 text-xs fw-bold uppercase-tracking">Headquarters Location</span>
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>Province / State</label>
+                    <input type="text" name="state" [(ngModel)]="companyForm.address.state" [readonly]="!isEditingCompany">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>City</label>
+                    <input type="text" name="city" [(ngModel)]="companyForm.address.city" [readonly]="!isEditingCompany">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>Street Address</label>
+                    <input type="text" name="street" [(ngModel)]="companyForm.address.street" [readonly]="!isEditingCompany">
+                  </div>
+                </div>
+
+                <div *ngIf="isEditingCompany" class="col-12 d-flex justify-content-end mt-5">
+                  <button type="submit" class="btn btn-save-premium">
+                    <i class="bi bi-check2-circle me-2"></i>Apply Changes
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
-        <button class="action-btn outline" (click)="toggleEditCompany()">
-          <i class="fas" [ngClass]="isEditingCompany ? 'fa-times' : 'fa-edit'"></i>
-          {{ isEditingCompany ? 'Cancel' : 'Edit' }}
-        </button>
       </div>
 
-      <div *ngIf="isLoadingCompany" class="loading-state">
-        <div class="spinner"></div>
-      </div>
-
-      <div *ngIf="!isLoadingCompany && company" class="card-body">
-        
-        <div class="profile-image-section">
-          <div class="image-wrapper">
-            <img *ngIf="company.profileImageUrl" [src]="company.profileImageUrl" alt="Company Logo" class="profile-img">
-            <div *ngIf="!company.profileImageUrl" class="image-placeholder">
-              <i class="fas fa-image"></i>
+      <!-- Right Column: Manager & Security -->
+      <div class="col-xl-4">
+        <!-- Manager Card -->
+        <div class="premium-card shadow-premium mb-4 overflow-hidden">
+          <div class="manager-header p-5 text-center position-relative">
+            <div class="manager-bg-decoration"></div>
+            <div class="avatar-manager-frame shadow-lg mx-auto mb-4">
+              <span class="display-6 fw-bold text-white">{{ manager?.firstName?.charAt(0) || 'M' }}</span>
+              <div class="status-badge-online"></div>
             </div>
+            <h4 class="fw-bold text-slate-900 mb-1">{{ manager?.firstName }} {{ manager?.lastName }}</h4>
+            <p class="text-primary text-xs fw-bold uppercase-tracking mb-0">Senior Operations Manager</p>
           </div>
-          <div class="image-upload" *ngIf="isEditingCompany">
-            <label for="companyImage" class="upload-btn">
-              <i class="fas fa-camera"></i> Change Logo
-            </label>
-            <input type="file" id="companyImage" (change)="onImageSelected($event)" accept="image/*" class="hidden-input">
+
+          <div class="card-body p-4 pt-0">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h6 class="text-slate-900 fw-bold mb-0">Personal Credentials</h6>
+              <button class="btn btn-link text-primary text-xs fw-bold p-0 text-decoration-none" (click)="toggleEditManager()">
+                {{ isEditingManager ? 'CANCEL' : 'MODIFY' }}
+              </button>
+            </div>
+
+            <form #managerFormRef="ngForm" (ngSubmit)="saveManager()">
+              <div class="form-stack">
+                <div class="form-field-premium mb-3" [class.is-editing]="isEditingManager">
+                  <label>First Name</label>
+                  <input type="text" name="firstName" [(ngModel)]="managerForm.firstName" [readonly]="!isEditingManager" required>
+                </div>
+                <div class="form-field-premium mb-3" [class.is-editing]="isEditingManager">
+                  <label>Last Name</label>
+                  <input type="text" name="lastName" [(ngModel)]="managerForm.lastName" [readonly]="!isEditingManager" required>
+                </div>
+                <div class="form-field-premium mb-3" [class.is-editing]="isEditingManager">
+                  <label>Direct Phone</label>
+                  <input type="text" name="mPhoneNumber" [(ngModel)]="managerForm.phoneNumber" [readonly]="!isEditingManager" required>
+                </div>
+                <div class="form-field-premium locked mb-4">
+                  <label>Email ID (Unchangeable)</label>
+                  <input type="email" [value]="manager?.email" readonly>
+                  <i class="bi bi-lock-fill text-slate-300"></i>
+                </div>
+
+                <div *ngIf="isEditingManager" class="d-grid mt-4">
+                  <button type="submit" class="btn btn-primary rounded-pill py-3 fw-bold shadow-primary transition-all">
+                    Update Administrative Account
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
 
-        <form *ngIf="isEditingCompany" (ngSubmit)="saveCompany()" #companyNgForm="ngForm">
-          <div class="form-group">
-            <label>Company Name</label>
-            <input type="text" [(ngModel)]="companyForm.name" name="cname" required class="form-control">
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" [(ngModel)]="companyForm.email" name="cemail" required class="form-control">
-          </div>
-          <div class="form-group">
-            <label>Phone Number</label>
-            <input type="text" [(ngModel)]="companyForm.phoneNumber" name="cphone" required class="form-control">
-          </div>
-
-          <div class="form-group">
-            <label>Commercial Register Number</label>
-            <input type="text" [(ngModel)]="companyForm.commercialRegisterNumber" name="cregnum" required class="form-control">
-          </div>
-          <div class="form-group">
-            <label>Tax ID Number</label>
-            <input type="text" [(ngModel)]="companyForm.taxIdNumber" name="ctaxnum" required class="form-control">
-          </div>
-          <div class="form-group">
-            <label>Description</label>
-            <textarea [(ngModel)]="companyForm.description" name="cdesc" required class="form-control"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Delivery Fee</label>
-            <input type="number" [(ngModel)]="companyForm.deliveryFee" name="cfee" required class="form-control">
-          </div>
-
-          <div class="form-row">
-            <div class="form-group half">
-              <label>State</label>
-              <input type="text" [(ngModel)]="companyForm.address.state" name="cstate" required class="form-control">
+        <!-- Security & Sessions -->
+        <div class="premium-card shadow-premium border-0 bg-slate-900 text-white p-5 position-relative overflow-hidden">
+          <div class="glass-decoration"></div>
+          <div class="position-relative z-index-1">
+            <div class="d-flex align-items-center gap-3 mb-4">
+              <div class="icon-box-refined bg-white bg-opacity-10 text-white shadow-none">
+                <i class="bi bi-shield-lock-fill fs-5"></i>
+              </div>
+              <h5 class="mb-0 fw-bold">Account Security</h5>
             </div>
-            <div class="form-group half">
-              <label>City</label>
-              <input type="text" [(ngModel)]="companyForm.address.city" name="ccity" required class="form-control">
+            <p class="text-slate-400 small mb-5">Your security is our priority. Last password change was 3 months ago. We recommend rotating keys every 90 days.</p>
+            
+            <div class="security-actions d-grid gap-3">
+              <button class="btn btn-white-glass rounded-pill py-2.5 fw-bold transition-all">
+                Change Secret Password
+              </button>
+              <button class="btn btn-outline-slate-dark rounded-pill py-2.5 fw-bold transition-all">
+                Setup 2FA Authentication
+              </button>
             </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group half">
-              <label>Street</label>
-              <input type="text" [(ngModel)]="companyForm.address.street" name="cstreet" required class="form-control">
-            </div>
-            <div class="form-group half">
-              <label>Building Number</label>
-              <input type="text" [(ngModel)]="companyForm.address.buildingNumber" name="cbuilding" required class="form-control">
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="primary-btn" [disabled]="!companyNgForm.form.valid">Save Changes</button>
-          </div>
-        </form>
-
-        <div *ngIf="!isEditingCompany" class="info-list">
-          <div class="info-item">
-            <span class="label">Company Name</span>
-            <span class="value">{{ company.name }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Email</span>
-            <span class="value">{{ company.email }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Phone Number</span>
-            <span class="value">{{ company.phoneNumber }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Address</span>
-            <span class="value">{{ company.address }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Managers Count</span>
-            <span class="value badge badge-secondary">{{ company.managersCount }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Manager Profile Card -->
-    <div class="profile-card">
-      <div class="card-header">
-        <div class="header-title">
-          <i class="fas fa-user-tie"></i>
-          <h3>Manager Profile</h3>
-        </div>
-        <button class="action-btn outline" (click)="toggleEditManager()">
-          <i class="fas" [ngClass]="isEditingManager ? 'fa-times' : 'fa-edit'"></i>
-          {{ isEditingManager ? 'Cancel' : 'Edit' }}
-        </button>
-      </div>
-
-      <div *ngIf="isLoadingManager" class="loading-state">
-        <div class="spinner"></div>
-      </div>
-
-      <div *ngIf="!isLoadingManager && manager" class="card-body">
-        
-        <form *ngIf="isEditingManager" (ngSubmit)="saveManager()" #managerNgForm="ngForm">
-          <div class="form-row">
-            <div class="form-group half">
-              <label>First Name</label>
-              <input type="text" [(ngModel)]="managerForm.firstName" name="mfirst" required class="form-control">
-            </div>
-            <div class="form-group half">
-              <label>Last Name</label>
-              <input type="text" [(ngModel)]="managerForm.lastName" name="mlast" required class="form-control">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Phone Number</label>
-            <input type="text" [(ngModel)]="managerForm.phoneNumber" name="mphone" required class="form-control">
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="primary-btn" [disabled]="!managerNgForm.form.valid">Save Changes</button>
-          </div>
-        </form>
-
-        <div *ngIf="!isEditingManager" class="info-list">
-          <div class="info-item">
-            <span class="label">First Name</span>
-            <span class="value">{{ manager.firstName }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Last Name</span>
-            <span class="value">{{ manager.lastName }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Email</span>
-            <span class="value">{{ manager.email }}</span>
-            <small class="hint-text">Email cannot be changed</small>
-          </div>
-          <div class="info-item">
-            <span class="label">Phone Number</span>
-            <span class="value">{{ manager.phoneNumber }}</span>
           </div>
         </div>
       </div>

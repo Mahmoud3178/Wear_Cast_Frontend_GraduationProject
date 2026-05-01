@@ -1,15 +1,13 @@
 export enum DriverStatus {
-  Available = 0,
-  Busy = 1,
-  Offline = 2
+  Available = 1,
+  NotAvailable = 2
 }
 
 export enum DeliveryVehicleType {
-  Car = 0,
-  Motorcycle = 1,
-  Bicycle = 2,
-  Van = 3,
-  Truck = 4
+  Bicycle = 1,
+  Motorcycle = 2,
+  Car = 3,
+  Van = 4
 }
 
 export interface Driver {
@@ -22,6 +20,9 @@ export interface Driver {
   numberOfAssignedShipments: number;
   numberOfActiveShipments: number;
   numberOfDeliveredShipments: number;
+  profileImageUrl?: string;
+  driverPhone?: string;
+  plateNumber?: string;
 }
 
 export interface DriverProfile {
