@@ -654,16 +654,17 @@ export const CUSTOMER_SHIPMENT_SORT_OPTIONS: ReadonlyArray<{
 
 /**
  * `ShipmentStatus` filter — must match backend enum; omit for all.
+ * Backend: Pending=1, Unassigned=2, Assigned=3, PickingUp=4, OutForDelivery=5, Delivered=6
  */
 export const CUSTOMER_SHIPMENT_STATUS_OPTIONS: ReadonlyArray<{
   label: string;
   value: number | null;
 }> = [
   { label: 'All statuses', value: null },
-  { label: 'Placed', value: 0 },
   { label: 'Pending', value: 1 },
-  { label: 'Processing', value: 2 },
-  { label: 'Shipped', value: 3 },
-  { label: 'Delivered', value: 4 },
-  { label: 'Cancelled', value: 5 }
+  { label: 'Unassigned', value: 2 },
+  { label: 'Assigned', value: 3 },
+  { label: 'PickingUp', value: 4 },
+  { label: 'OutForDelivery', value: 5 },
+  { label: 'Delivered', value: 6 }
 ];

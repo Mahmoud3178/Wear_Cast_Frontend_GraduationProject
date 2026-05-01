@@ -167,6 +167,7 @@ export interface FactoryOrderSummary {
   recipientPhoneNumber: string;
   totalAmount: number;
   itemsCount: number;
+  totalOrderItems?: number; // From GetAllByID API response
 }
 
 export interface FactoryOrderItem {
@@ -645,8 +646,14 @@ export class FactoryApiService {
             this.toNum(
               row?.itemsCount ??
                 row?.ItemsCount ??
+                row?.totalOrderItems ??
+                row?.TotalOrderItems ??
                 (Array.isArray(row?.items) ? row.items.length : null)
-            ) ?? 0
+            ) ?? 0,
+          totalOrderItems:
+            this.toNum(
+              row?.totalOrderItems ?? row?.TotalOrderItems
+            ) ?? undefined
         }));
       }),
       catchError(() => of([]))

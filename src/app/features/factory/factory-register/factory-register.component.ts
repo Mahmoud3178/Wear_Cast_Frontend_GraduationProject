@@ -80,7 +80,7 @@ export class FactoryRegisterComponent {
         if (email) {
           sessionStorage.setItem(pendingCustomerUserIdStorageKey(email), userManagerId);
         }
-        void this.router.navigate(['/confirm-email/customer'], {
+        void this.router.navigate(['/confirm-email/factory-manager'], {
           queryParams: {
             email,
             userId: userManagerId

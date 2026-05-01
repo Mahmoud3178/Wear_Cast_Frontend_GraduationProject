@@ -30,7 +30,7 @@
             {{ order.recipientName }} <span *ngIf="order.recipientPhoneNumber">· {{ order.recipientPhoneNumber }}</span>
           </div>
           <div class="small text-muted">
-            {{ order.createdOn | date: 'medium' }} · {{ (itemsByOrderId[order.id] ? itemsByOrderId[order.id].length : order.itemsCount) || 0 }} items
+            {{ order.createdOn | date: 'medium' }} · {{ order.totalOrderItems ?? order.itemsCount ?? 0 }} items
           </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
