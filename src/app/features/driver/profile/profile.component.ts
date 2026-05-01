@@ -38,30 +38,19 @@ export class DriverProfileComponent implements OnInit {
 
   loadProfile() {
     this.isLoading = true;
-    const userId = this.authService.getCurrentUserId();
-    // Assuming driver id is the same or we have an endpoint to get "my profile".
-    // For now, let's use the ID from token or a placeholder.
-    const driverId = userId ? parseInt(userId, 10) : 1; 
+    const driverId = this.authService.getDriverId();
+
+    if (!driverId) {
+      console.error('No Driver ID found in session');
+      this.isLoading = false;
+      return;
+    }
 
     this.driverService.getDriverById(driverId).subscribe({
       next: (data) => {
-        // Map Driver to DriverProfile temporarily or if backend returns full details
+        // Map Driver to DriverProfile
         this.profile = data as any as DriverProfile;
-        const names = this.profile.driverName ? this.profile.driverName.split(' ') : [''];
-        this.editForm = {
-          providedDriverId: this.profile.id,
-          firstName: names[0] || '',
-          lastName: names.slice(1).join(' ') || '',
-          vehicleType: this.profile.vehicleType,
-          phoneNumber: this.profile.phoneNumber || '',
-          nationalId: this.profile.nationalId || '',
-          address: {
-            state: '',
-            city: this.profile.driverCity || '',
-            street: '',
-            buildingNumber: ''
-          }
-        };
+        this.resetEditForm();
         this.isLoading = false;
       },
       error: (err) => {
@@ -74,22 +63,27 @@ export class DriverProfileComponent implements OnInit {
   toggleEdit() {
     this.isEditing = !this.isEditing;
     if (!this.isEditing && this.profile) {
-      const names = this.profile.driverName ? this.profile.driverName.split(' ') : [''];
-      this.editForm = {
-        providedDriverId: this.profile.id,
-        firstName: names[0] || '',
-        lastName: names.slice(1).join(' ') || '',
-        vehicleType: this.profile.vehicleType,
-        phoneNumber: this.profile.phoneNumber || '',
-        nationalId: this.profile.nationalId || '',
-        address: {
-          state: '',
-          city: this.profile.driverCity || '',
-          street: '',
-          buildingNumber: ''
-        }
-      };
+      this.resetEditForm();
     }
+  }
+
+  private resetEditForm() {
+    if (!this.profile) return;
+    const names = this.profile.driverName ? this.profile.driverName.split(' ') : [''];
+    this.editForm = {
+      providedDriverId: this.profile.id,
+      firstName: names[0] || '',
+      lastName: names.slice(1).join(' ') || '',
+      vehicleType: this.profile.vehicleType,
+      phoneNumber: this.profile.phoneNumber || '',
+      nationalId: this.profile.nationalId || '',
+      address: {
+        state: '',
+        city: this.profile.driverCity || '',
+        street: '',
+        buildingNumber: ''
+      }
+    };
   }
 
   saveProfile() {

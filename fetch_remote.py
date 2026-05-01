@@ -6,7 +6,7 @@ ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
-url = "https://wear-cast.runasp.net/swagger/v1/swagger.json"
+url = "http://localhost:5245/swagger/v1/swagger.json"
 try:
     req = urllib.request.Request(url)
     with urllib.request.urlopen(req, context=ctx) as response:

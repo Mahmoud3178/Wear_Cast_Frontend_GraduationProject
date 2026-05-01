@@ -1,18 +1,18 @@
 {
   "/api": {
-    "target": "https://wear-cast.runasp.net",
+    "target": "http://localhost:5245",
     "secure": true,
     "changeOrigin": true,
     "logLevel": "warn"
   },
   "/me": {
-    "target": "https://wear-cast.runasp.net",
+    "target": "http://localhost:5245",
     "secure": true,
     "changeOrigin": true,
     "logLevel": "warn"
   },
   "/uploads": {
-    "target": "https://wear-cast.runasp.net",
+    "target": "http://localhost:5245",
     "secure": true,
     "changeOrigin": true,
     "logLevel": "warn"

@@ -1,13 +1,173 @@
-/* Mobile-first layout optimizations */
-.driver-view {
-  max-width: 600px; /* Constrain width to simulate mobile/tablet feel on desktop */
+.dashboard-page-container {
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-.route-card {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+/* Premium Card & Effects */
+.premium-card {
+  background: white;
+  border-radius: 24px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.text-main {
-  color: var(--text-main);
+.shadow-premium {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 4px 10px -5px rgba(0, 0, 0, 0.02);
+}
+
+.premium-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+/* Stat Icon Boxes */
+.stat-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.bg-soft-0 { background-color: #eff6ff; color: #2563eb; }
+.bg-soft-1 { background-color: #f0fdf4; color: #16a34a; }
+.bg-soft-2 { background-color: #fffbeb; color: #d97706; }
+
+/* Icon Boxes */
+.icon-box-xs { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.icon-box-sm { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+.icon-box-md { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; }
+.icon-box-lg { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
+
+/* Soft Backgrounds */
+.bg-primary-soft { background-color: #eff6ff; }
+.bg-success-soft { background-color: #f0fdf4; }
+.bg-info-soft { background-color: #ecfeff; }
+.bg-warning-soft { background-color: #fffbeb; }
+
+/* Trend Badges */
+.trend-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.trend-up { background-color: #dcfce7; color: #15803d; }
+.trend-down { background-color: #fee2e2; color: #b91c1c; }
+
+/* Typography */
+.tracking-tight { letter-spacing: -0.025em; }
+.uppercase-tracking {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.7rem;
+}
+.text-xs { font-size: 0.75rem; }
+.text-sm { font-size: 0.875rem; }
+.text-slate-900 { color: #0f172a; }
+.text-slate-700 { color: #334155; }
+.text-slate-500 { color: #64748b; }
+.text-slate-400 { color: #94a3b8; }
+
+/* Buttons */
+.btn-primary-premium {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-primary-premium:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+  color: white;
+}
+
+.action-btn-premium {
+  background: white;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.3s;
+}
+
+.action-btn-premium:hover {
+  background: #f8fafc;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.05);
+  border-color: #2563eb;
+}
+
+/* Active Task Card */
+.active-task-card {
+  transition: all 0.4s;
+}
+.active-task-card:hover {
+  box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.25) !important;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 rgba(255, 255, 255, 0.4);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Decorations */
+.card-bg-decoration {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+/* Spinner */
+.spinner-premium {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f1f5f9;
+  border-top: 3px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

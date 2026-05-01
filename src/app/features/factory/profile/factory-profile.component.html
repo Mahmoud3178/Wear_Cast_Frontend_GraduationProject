@@ -34,11 +34,11 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="text-muted small">Phone</label>
-              <p class="mb-0">{{ managerProfile?.phoneNumber || 'Not set' }}</p>
+              <p class="mb-0">{{ managerProfile.phoneNumber || 'Not set' }}</p>
             </div>
-            <div class="col-md-6" *ngIf="managerProfile?.email">
+            <div class="col-md-6" *ngIf="managerProfile.email">
               <label class="text-muted small">Email</label>
-              <p class="mb-0">{{ managerProfile?.email }}</p>
+              <p class="mb-0">{{ managerProfile.email }}</p>
             </div>
           </div>
         </div>
@@ -72,35 +72,35 @@
           </div>
         </div>
         <div class="col-md-9">
-          <h2 class="h4 mb-3">{{ profile?.name }}</h2>
+          <h2 class="h4 mb-3">{{ profile.name }}</h2>
           <div class="row g-3">
             <div class="col-md-6">
               <label class="text-muted small">Phone</label>
-              <p class="mb-0">{{ profile?.phoneNumber || 'Not set' }}</p>
+              <p class="mb-0">{{ profile.phoneNumber || 'Not set' }}</p>
             </div>
-            <div class="col-md-6" *ngIf="profile?.taxIdNumber">
+            <div class="col-md-6" *ngIf="profile.taxIdNumber">
               <label class="text-muted small">Tax ID Number</label>
-              <p class="mb-0">{{ profile?.taxIdNumber }}</p>
+              <p class="mb-0">{{ profile.taxIdNumber }}</p>
             </div>
-            <div class="col-md-6" *ngIf="profile?.commercialRegisterNumber">
+            <div class="col-md-6" *ngIf="profile.commercialRegisterNumber">
               <label class="text-muted small">Commercial Register Number</label>
-              <p class="mb-0">{{ profile?.commercialRegisterNumber }}</p>
+              <p class="mb-0">{{ profile.commercialRegisterNumber }}</p>
             </div>
-            <div class="col-12" *ngIf="profile?.description">
+            <div class="col-12" *ngIf="profile.description">
               <label class="text-muted small">Description</label>
-              <p class="mb-0">{{ profile?.description }}</p>
+              <p class="mb-0">{{ profile.description }}</p>
             </div>
             <div class="col-12">
               <label class="text-muted small">Address</label>
-              <p class="mb-0" *ngIf="profile?.address?.street">
-                {{ profile?.address?.buildingNumber }} {{ profile?.address?.street }},
-                {{ profile?.address?.city }}, {{ profile?.address?.state }}, {{ profile?.address?.country }}
+              <p class="mb-0" *ngIf="profile.address?.street">
+                {{ profile.address?.buildingNumber }} {{ profile.address?.street }},
+                {{ profile.address?.city }}, {{ profile.address?.state }}, {{ profile.address?.country }}
               </p>
               <p class="mb-0" *ngIf="!profile?.address?.street">Not set</p>
             </div>
-            <div class="col-md-6" *ngIf="profile?.factoryId">
+            <div class="col-md-6" *ngIf="profile.factoryId">
               <label class="text-muted small">Factory ID</label>
-              <p class="mb-0">#{{ profile?.factoryId }}</p>
+              <p class="mb-0">#{{ profile.factoryId }}</p>
             </div>
           </div>
         </div>

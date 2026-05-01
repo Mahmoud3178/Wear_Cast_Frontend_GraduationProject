@@ -1,94 +1,101 @@
-<div class="container-fluid py-4 driver-view">
-  <!-- Header Profile Area -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center">
-      <div class="driver-avatar bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-        <i class="bi bi-person-fill fs-3"></i>
-      </div>
-      <div>
-        <h4 class="mb-0 fw-bold">Hello, {{ driverName }}!</h4>
-        <span class="text-muted-custom text-sm">Have a safe drive today.</span>
-      </div>
+<div class="dashboard-page-container animate-fade-in py-4">
+  <!-- Header Area -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 px-3 gap-3">
+    <div>
+      <h1 class="fw-bold tracking-tight text-slate-900 mb-1">Driver Dashboard</h1>
+      <p class="text-slate-500 mb-0">Welcome back, {{ driverName }}! Here's your delivery performance.</p>
     </div>
-    <button class="btn btn-light rounded-circle p-2 position-relative">
-      <i class="bi bi-bell fs-5"></i>
-      <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
-    </button>
+    <!-- Simplified Header: Removed today pill and sync button -->
   </div>
 
-  <!-- Stats -->
-  <div class="row g-3 mb-4">
-    <div class="col-4" *ngFor="let stat of driverStats">
-      <div class="premium-card text-center py-3 h-100">
-        <i class="bi {{ stat.icon }} fs-4 mb-2 {{ stat.colorClass }}"></i>
-        <h5 class="fw-bold mb-1">{{ stat.value }}</h5>
-        <span class="text-muted-custom text-sm" style="font-size: 0.7rem;">{{ stat.title }}</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Loading State -->
-  <div *ngIf="isLoading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="text-muted mt-2">Loading dashboard...</p>
-  </div>
-
-  <div *ngIf="!isLoading">
-    <!-- Current Route Card -->
-    <h5 class="fw-semibold mb-3">Current Route</h5>
-    <div class="premium-card mb-4 bg-primary text-white border-0 shadow-lg route-card" *ngIf="currentRoute">
-      <div class="premium-card-body">
-        <div class="d-flex justify-content-between align-items-start mb-3">
-          <span class="badge bg-white text-primary text-uppercase px-3 py-2 rounded-pill shadow-sm">
-            <i class="bi bi-geo-alt-fill me-1"></i> {{ getStatusName(currentRoute.shipmentStatus) }}
-          </span>
-          <div class="text-end">
-            <h4 class="mb-0 fw-bold">~15 mins</h4>
-            <span class="text-white-50 text-sm">ETA</span>
+  <!-- Stats Grid -->
+  <div class="row g-4 mb-5 px-3">
+    <div class="col-12 col-md-4" *ngFor="let stat of driverStats; let i = index">
+      <div class="premium-card p-4 h-100 shadow-premium border-0 position-relative overflow-hidden">
+        <div class="card-bg-decoration"></div>
+        <div class="d-flex justify-content-between align-items-start mb-3 position-relative">
+          <div class="stat-icon-box" [ngClass]="'bg-soft-' + i">
+            <i class="bi {{ stat.icon }}"></i>
           </div>
+          <!-- Removed Trend Badge -->
         </div>
-        
-        <h3 class="fw-bold mb-1">{{ currentRoute.deliveryCity }}</h3>
-        <p class="text-white-50 mb-4"><i class="bi bi-signpost me-2"></i>{{ currentRoute.deliveryStreet }}</p>
-        
-        <button class="btn btn-light w-100 fw-bold py-3 shadow-sm rounded-pill d-flex align-items-center justify-content-center gap-2">
-          <i class="bi bi-cursor-fill text-primary"></i>
-          <span class="text-primary">View Shipment Details</span>
+        <div class="position-relative">
+          <p class="uppercase-tracking text-slate-400 fw-bold mb-1">{{ stat.title }}</p>
+          <h2 class="fw-bold text-slate-900 mb-0">{{ stat.value }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-premium mx-auto mb-3"></div>
+    <p class="text-slate-500 fw-medium">Analyzing your delivery data...</p>
+  </div>
+
+  <div *ngIf="!isLoading" class="row g-4 px-3 mb-4">
+    <!-- Main Content: Charts & Quick Actions -->
+    <div class="col-12 col-lg-8">
+    <!-- Main Content Area -->
+    <div class="col-12 col-lg-8">
+      <div class="premium-card p-5 shadow-premium h-100 d-flex flex-column justify-content-center align-items-center text-center">
+        <div class="icon-box-xl bg-primary-soft text-primary rounded-circle mb-4">
+          <i class="bi bi-truck fs-1"></i>
+        </div>
+        <h3 class="fw-bold text-slate-900 mb-3">Ready for your next delivery?</h3>
+        <p class="text-slate-500 max-w-md mb-4">Check your assigned tasks and start delivering to our customers.</p>
+        <button routerLink="../deliveries" class="btn btn-primary-premium rounded-pill px-5 py-3 fw-bold shadow-lg">
+          View My Deliveries
         </button>
       </div>
     </div>
-    
-    <div class="premium-card mb-4 border-0 shadow-sm" *ngIf="!currentRoute">
-      <div class="premium-card-body text-center py-5">
-        <i class="bi bi-check2-circle text-success fs-1 mb-2"></i>
-        <h5 class="fw-bold">No Active Route</h5>
-        <p class="text-muted mb-0">You have completed all deliveries or don't have any assigned right now.</p>
-      </div>
     </div>
-  </div>
 
-  <!-- Quick Actions -->
-  <h5 class="fw-semibold mb-3">Quick Actions</h5>
-  <div class="row g-3">
-    <div class="col-6">
-      <button routerLink="../deliveries" class="btn premium-card w-100 py-3 text-start border-0">
-        <div class="d-flex flex-column align-items-center text-center gap-2">
-          <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle">
-            <i class="bi bi-box-seam fs-4"></i>
-          </div>
-          <span class="fw-medium text-main">View Deliveries</span>
+    <!-- Sidebar Content: Active Task -->
+    <div class="col-12 col-lg-4">
+      <div class="premium-card bg-primary text-white border-0 h-100 overflow-hidden position-relative shadow-lg active-task-card">
+        <!-- Background decoration -->
+        <div class="position-absolute top-0 end-0 p-3 opacity-10">
+          <i class="bi bi-truck-flatbed" style="font-size: 10rem !important;"></i>
         </div>
-      </button>
-    </div>
-    <div class="col-6">
-      <button class="btn premium-card w-100 py-3 text-start border-0">
-        <div class="d-flex flex-column align-items-center text-center gap-2">
-          <div class="bg-danger bg-opacity-10 text-danger p-3 rounded-circle">
-            <i class="bi bi-exclamation-triangle fs-4"></i>
+
+        <div class="p-4 position-relative z-1 d-flex flex-column h-100">
+          <div class="d-flex justify-content-between align-items-center mb-5">
+            <span class="badge bg-white bg-opacity-20 backdrop-blur rounded-pill px-3 py-2 fw-bold uppercase-tracking">Active Task</span>
+            <div class="text-end" *ngIf="currentRoute">
+              <h4 class="mb-0 fw-bold">In Transit</h4>
+              <small class="opacity-75 text-xs uppercase-tracking">Status</small>
+            </div>
           </div>
-          <span class="fw-medium text-main">Report Issue</span>
+
+          <div *ngIf="currentRoute" class="flex-grow-1">
+            <div class="mb-4">
+              <label class="text-xs uppercase-tracking opacity-75 d-block mb-2">Destination</label>
+              <h3 class="fw-bold mb-1">{{ currentRoute.deliveryCity }}</h3>
+              <p class="mb-0 opacity-75"><i class="bi bi-geo-alt me-1"></i> {{ currentRoute.deliveryStreet }}</p>
+            </div>
+
+            <div class="mb-5">
+              <label class="text-xs uppercase-tracking opacity-75 d-block mb-2">Current Status</label>
+              <div class="d-flex align-items-center gap-2 bg-white bg-opacity-10 p-3 rounded-4 border border-white border-opacity-10">
+                <span class="pulse-dot"></span>
+                <span class="fw-bold">{{ getStatusName(currentRoute.shipmentStatus) }}</span>
+              </div>
+            </div>
+
+            <button class="btn btn-light w-100 fw-bold py-3 rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2 mt-auto hover-scale">
+              <i class="bi bi-cursor-fill"></i> Start Navigation
+            </button>
+          </div>
+
+          <div *ngIf="!currentRoute" class="text-center py-5 my-auto">
+            <div class="icon-box-lg bg-white bg-opacity-10 rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center">
+              <i class="bi bi-check2-circle fs-1"></i>
+            </div>
+            <h4 class="fw-bold">All Caught Up!</h4>
+            <p class="opacity-75 text-sm mb-0">No active deliveries assigned at the moment.</p>
+          </div>
         </div>
-      </button>
+      </div>
     </div>
   </div>
 </div>

@@ -78,26 +78,30 @@ export class DriverService {
 
   // Dashboard calculations
   getDashboardStats(shipments: DriverShipment[]): DriverDashboardStats {
-    const today = new Date().toDateString();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const todayDeliveries = shipments.filter(s => {
-      const status = typeof s.shipmentStatus === 'string' ? ShipmentStatus[s.shipmentStatus as keyof typeof ShipmentStatus] : s.shipmentStatus;
-      return status === ShipmentStatus.Delivered && 
-             new Date(s.orderTime).toDateString() === today;
+      const orderDate = new Date(s.orderTime);
+      orderDate.setHours(0, 0, 0, 0);
+      return orderDate.getTime() === today.getTime();
     }).length;
 
     const completedDeliveries = shipments.filter(s => {
-      const status = typeof s.shipmentStatus === 'string' ? ShipmentStatus[s.shipmentStatus as keyof typeof ShipmentStatus] : s.shipmentStatus;
+      const status = typeof s.shipmentStatus === 'string' 
+        ? ShipmentStatus[s.shipmentStatus as keyof typeof ShipmentStatus] 
+        : s.shipmentStatus;
       return status === ShipmentStatus.Delivered;
     }).length;
     
-    // We don't have earnings in DTO, mock it based on completed
+    // We don't have earnings in DTO, estimating at $15.50 per successful delivery
     const totalEarnings = completedDeliveries * 15.5; 
 
     return {
       todayDeliveries,
       totalEarnings,
       completedDeliveries,
-      activeHours: '8h 30m' // Mocked for now
+      activeHours: '--' // Removing hardcoded fake value
     };
   }
 

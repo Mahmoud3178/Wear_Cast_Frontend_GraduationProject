@@ -1,0 +1,70 @@
+<div class="sidebar h-100 d-flex flex-column" [class.collapsed]="isCollapsed">
+  <!-- Sidebar Header -->
+  <div class="sidebar-header p-4 d-flex align-items-center gap-3">
+    <div class="logo-box bg-primary bg-gradient rounded-3 d-flex align-items-center justify-content-center shadow-lg" 
+         style="min-width: 42px; height: 42px;">
+      <i class="bi bi-person-badge-fill text-white fs-4"></i>
+    </div>
+    <div class="brand-text" *ngIf="!isCollapsed">
+      <h5 class="mb-0 fw-bold tracking-tight text-white">WearCast</h5>
+      <span class="text-primary fw-medium text-xs text-uppercase tracking-wider">Driver Hub</span>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="sidebar-nav flex-grow-1 px-3 py-2 custom-scrollbar">
+    <!-- Main Section -->
+    <div class="nav-section mb-4">
+      <p class="text-uppercase text-slate-500 fw-bold mb-2 px-3" 
+         style="font-size: 0.65rem; letter-spacing: 0.1em;" *ngIf="!isCollapsed">Main Menu</p>
+      <ul class="nav nav-pills flex-column gap-1">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 transition-all" 
+             routerLink="dashboard" routerLinkActive="active" [title]="isCollapsed ? 'Dashboard' : ''">
+            <div class="icon-wrapper d-flex align-items-center justify-content-center">
+              <i class="bi bi-grid-1x2-fill"></i>
+            </div>
+            <span class="fw-medium text-nowrap" *ngIf="!isCollapsed">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 transition-all" 
+             routerLink="deliveries" routerLinkActive="active" [title]="isCollapsed ? 'Deliveries' : ''">
+            <div class="icon-wrapper d-flex align-items-center justify-content-center">
+              <i class="bi bi-box-seam-fill"></i>
+            </div>
+            <span class="fw-medium text-nowrap" *ngIf="!isCollapsed">My Deliveries</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Account Section -->
+    <div class="nav-section mb-4">
+      <p class="text-uppercase text-slate-500 fw-bold mb-2 px-3" 
+         style="font-size: 0.65rem; letter-spacing: 0.1em;" *ngIf="!isCollapsed">Settings</p>
+      <ul class="nav nav-pills flex-column gap-1">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 transition-all" 
+             routerLink="profile" routerLinkActive="active" [title]="isCollapsed ? 'Profile' : ''">
+            <div class="icon-wrapper d-flex align-items-center justify-content-center">
+              <i class="bi bi-person-gear"></i>
+            </div>
+            <span class="fw-medium text-nowrap" *ngIf="!isCollapsed">Profile Settings</span>
+          </a>
+        </li>
+        <li class="nav-item mt-2">
+          <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 transition-all text-slate-400 logout-link" 
+             href="javascript:void(0)" (click)="logout()" [title]="isCollapsed ? 'Sign Out' : ''">
+             <div class="icon-wrapper d-flex align-items-center justify-content-center">
+               <i class="bi bi-box-arrow-left"></i>
+             </div>
+             <span class="fw-medium text-nowrap" *ngIf="!isCollapsed">Sign Out</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Removed Sidebar Footer for simplicity -->
+</div>

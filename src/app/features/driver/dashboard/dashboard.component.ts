@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { DriverService } from '../../../core/services/driver.service';
-import { DriverShipment } from '../../../core/models/shipment.model';
-import { inject } from '@angular/core';
+import { DriverShipment, ShipmentStatus } from '../../../core/models/shipment.model';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -14,6 +13,8 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
+
+
   private driverService = inject(DriverService);
   private authService = inject(AuthService);
 
@@ -21,6 +22,8 @@ export class DashboardComponent implements OnInit {
   currentRoute: DriverShipment | null = null;
   isLoading = true;
   driverName = 'Driver';
+  
+
 
   constructor() { }
 
@@ -28,6 +31,8 @@ export class DashboardComponent implements OnInit {
     this.setDriverName();
     this.loadDashboardData();
   }
+
+
 
   setDriverName() {
     const profile = this.authService.getCustomerProfile();
@@ -43,9 +48,30 @@ export class DashboardComponent implements OnInit {
         const stats = this.driverService.getDashboardStats(shipments);
         
         this.driverStats = [
-          { title: "Today's Deliveries", value: stats.todayDeliveries, icon: 'bi-box-seam', colorClass: 'text-success' },
-          { title: 'Completed', value: stats.completedDeliveries, icon: 'bi-check-circle', colorClass: 'text-primary' },
-          { title: 'Earnings', value: '$' + stats.totalEarnings.toFixed(2), icon: 'bi-wallet2', colorClass: 'text-warning' }
+          { 
+            title: "Today's Tasks", 
+            value: stats.todayDeliveries, 
+            icon: 'bi-box-seam', 
+            colorClass: 'text-primary',
+            trend: '+12%',
+            trendUp: true
+          },
+          { 
+            title: 'Successful Deliveries', 
+            value: stats.completedDeliveries, 
+            icon: 'bi-check2-all', 
+            colorClass: 'text-success',
+            trend: '+5%',
+            trendUp: true
+          },
+          { 
+            title: 'Total Earnings', 
+            value: '$' + stats.totalEarnings.toFixed(2), 
+            icon: 'bi-wallet2', 
+            colorClass: 'text-warning',
+            trend: '+8%',
+            trendUp: true
+          }
         ];
 
         this.currentRoute = this.driverService.getCurrentRoute(shipments);
@@ -57,6 +83,8 @@ export class DashboardComponent implements OnInit {
       }
     });
   }
+
+
 
   getStatusName(status: number | undefined): string {
     if (status === undefined) return 'Unknown';

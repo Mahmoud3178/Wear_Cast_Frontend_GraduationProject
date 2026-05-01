@@ -270,3 +270,52 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 1.875rem;
   color: var(--text-main);
 }
+
+/* Premium Form Floating Inputs */
+.form-floating.premium-form-floating > .form-control {
+  border-radius: 1rem;
+  border: 1.5px solid #e2e8f0;
+  padding: 1rem 0.75rem;
+  height: calc(3.5rem + 2px);
+  line-height: 1.25;
+  background-color: #ffffff;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-floating.premium-form-floating > label {
+  padding: 1rem 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-floating.premium-form-floating > .form-control:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  background-color: #fff;
+}
+
+.form-floating.premium-form-floating .form-control:focus ~ label,
+.form-floating.premium-form-floating .form-control:not(:placeholder-shown) ~ label {
+  color: #3b82f6;
+  opacity: 0.85;
+  transform: scale(0.85) translateY(-0.75rem) translateX(0.15rem);
+  font-weight: 700;
+}
+
+.form-floating.premium-form-floating > .form-control::placeholder {
+  color: transparent;
+}
+
+/* Error state for premium form floating */
+.form-floating.premium-form-floating > .form-control.is-invalid {
+  border-color: #ef4444;
+}
+
+.form-floating.premium-form-floating > .form-control.is-invalid:focus {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+.form-floating.premium-form-floating .form-control.is-invalid ~ label {
+  color: #ef4444;
+}

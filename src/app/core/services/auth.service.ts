@@ -10,6 +10,8 @@ const ROLE_CLAIM =
 
 const CUSTOMER_PROFILE_KEY = 'wearcast:customerProfile';
 export const FACTORY_ID_STORAGE_KEY = 'wearcast:factoryId';
+export const DRIVER_ID_STORAGE_KEY = 'wearcast:driverId';
+export const SHIPPING_COMPANY_ID_STORAGE_KEY = 'wearcast:shippingCompanyId';
 const FACTORY_PORTAL_ACCOUNT_TYPE_KEY = 'wearcast:factoryPortalAccountType';
 export type FactoryPortalAccountType = 'factory' | 'manager';
 
@@ -31,6 +33,8 @@ export interface AuthSession {
   role: string;
   /** Present for factory manager accounts when the API returns it. */
   factoryId?: number;
+  driverId?: number;
+  shippingCompanyId?: number;
 }
 
 interface ApiEnvelope<T = unknown> {
@@ -345,53 +349,67 @@ export class AuthService {
     localStorage.setItem('token', res.token);
     localStorage.setItem('refreshToken', res.refreshToken);
     localStorage.setItem('role', res.role);
-    const fid =
-      res.factoryId ?? this.extractFactoryIdFromSession(res.token);
-    if (fid != null) {
-      localStorage.setItem(FACTORY_ID_STORAGE_KEY, String(fid));
-    } else {
-      localStorage.removeItem(FACTORY_ID_STORAGE_KEY);
-    }
+
+    const fid = res.factoryId ?? this.extractFactoryIdFromSession(res.token);
+    if (fid != null) localStorage.setItem(FACTORY_ID_STORAGE_KEY, String(fid));
+    else localStorage.removeItem(FACTORY_ID_STORAGE_KEY);
+
+    const did = res.driverId ?? this.extractDriverIdFromSession(res.token);
+    if (did != null) localStorage.setItem(DRIVER_ID_STORAGE_KEY, String(did));
+    else localStorage.removeItem(DRIVER_ID_STORAGE_KEY);
+
+    const scid = res.shippingCompanyId ?? this.extractShippingCompanyIdFromSession(res.token);
+    if (scid != null) localStorage.setItem(SHIPPING_COMPANY_ID_STORAGE_KEY, String(scid));
+    else localStorage.removeItem(SHIPPING_COMPANY_ID_STORAGE_KEY);
+
     this.syncCustomerProfileFromCurrentToken();
   }
 
   getFactoryId(): number | null {
     const raw = localStorage.getItem(FACTORY_ID_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
+    if (!raw) return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  getDriverId(): number | null {
+    const raw = localStorage.getItem(DRIVER_ID_STORAGE_KEY);
+    if (!raw) return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  getShippingCompanyId(): number | null {
+    const raw = localStorage.getItem(SHIPPING_COMPANY_ID_STORAGE_KEY);
+    if (!raw) return null;
     const n = parseInt(raw, 10);
     return Number.isFinite(n) ? n : null;
   }
 
   private extractFactoryIdFromSession(token: string): number | null {
-    const fromJwt = this.pickFactoryIdFromPayload(this.decodeJwtPayload(token));
-    if (fromJwt != null) {
-      return fromJwt;
-    }
-    return null;
+    const payload = this.decodeJwtPayload(token);
+    return payload ? this.pickIdFromPayload(payload, ['factoryId', 'FactoryId', 'factory_id']) : null;
   }
 
-  private pickFactoryIdFromPayload(
-    payload: Record<string, unknown> | null
-  ): number | null {
-    if (!payload) {
-      return null;
-    }
-    const keys = [
-      'factoryId',
-      'FactoryId',
-      'factory_id',
-      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/factoryid'
+  private extractDriverIdFromSession(token: string): number | null {
+    const payload = this.decodeJwtPayload(token);
+    return payload ? this.pickIdFromPayload(payload, ['driverId', 'DriverId', 'driver_id']) : null;
+  }
+
+  private extractShippingCompanyIdFromSession(token: string): number | null {
+    const payload = this.decodeJwtPayload(token);
+    return payload ? this.pickIdFromPayload(payload, ['shippingCompanyId', 'ShippingCompanyId', 'shipping_company_id']) : null;
+  }
+
+  private pickIdFromPayload(payload: Record<string, unknown>, keys: string[]): number | null {
+    const claimKeys = [
+      ...keys,
+      ...keys.map(k => `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/${k.toLowerCase()}`)
     ];
-    for (const k of keys) {
+    for (const k of claimKeys) {
       const v = payload[k];
-      if (typeof v === 'number' && Number.isFinite(v)) {
-        return v;
-      }
-      if (typeof v === 'string' && /^\d+$/.test(v)) {
-        return parseInt(v, 10);
-      }
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      if (typeof v === 'string' && /^\d+$/.test(v)) return parseInt(v, 10);
     }
     return null;
   }
@@ -516,6 +534,8 @@ export class AuthService {
     localStorage.removeItem('role');
     localStorage.removeItem(CUSTOMER_PROFILE_KEY);
     localStorage.removeItem(FACTORY_ID_STORAGE_KEY);
+    localStorage.removeItem(DRIVER_ID_STORAGE_KEY);
+    localStorage.removeItem(SHIPPING_COMPANY_ID_STORAGE_KEY);
     void this.router.navigate(['/login']);
   }
 
@@ -526,6 +546,8 @@ export class AuthService {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('role');
     localStorage.removeItem(FACTORY_ID_STORAGE_KEY);
+    localStorage.removeItem(DRIVER_ID_STORAGE_KEY);
+    localStorage.removeItem(SHIPPING_COMPANY_ID_STORAGE_KEY);
     localStorage.removeItem(FACTORY_PORTAL_ACCOUNT_TYPE_KEY);
     void this.router.navigate(['/factory/login']);
   }
@@ -653,18 +675,37 @@ export class AuthService {
     if (!role) {
       role = this.roleFromJwt(token) ?? undefined;
     }
-    let factoryId: number | undefined;
     const rawFid = data['factoryId'] ?? data['FactoryId'];
+    let factoryId: number | undefined;
     if (typeof rawFid === 'number' && Number.isFinite(rawFid)) {
       factoryId = rawFid;
     } else if (typeof rawFid === 'string' && /^\d+$/.test(rawFid)) {
       factoryId = parseInt(rawFid, 10);
     }
+
+    const rawDid = data['driverId'] ?? data['DriverId'];
+    let driverId: number | undefined;
+    if (typeof rawDid === 'number' && Number.isFinite(rawDid)) {
+      driverId = rawDid;
+    } else if (typeof rawDid === 'string' && /^\d+$/.test(rawDid)) {
+      driverId = parseInt(rawDid, 10);
+    }
+
+    const rawScid = data['shippingCompanyId'] ?? data['ShippingCompanyId'];
+    let shippingCompanyId: number | undefined;
+    if (typeof rawScid === 'number' && Number.isFinite(rawScid)) {
+      shippingCompanyId = rawScid;
+    } else if (typeof rawScid === 'string' && /^\d+$/.test(rawScid)) {
+      shippingCompanyId = parseInt(rawScid, 10);
+    }
+
     return {
       token,
       refreshToken,
       role: this.normalizeRole(role ?? 'CUSTOMER'),
-      factoryId
+      factoryId,
+      driverId,
+      shippingCompanyId
     };
   }
 

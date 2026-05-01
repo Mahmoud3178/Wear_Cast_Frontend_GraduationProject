@@ -1,27 +1,229 @@
-.driver-view {
-  max-width: 600px;
+.deliveries-page-container {
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-.cursor-pointer {
-  cursor: pointer;
+/* Premium Navigation Button */
+.btn-icon-premium {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  color: #64748b;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
 }
 
-.delivery-card {
-  transition: all 0.3s ease;
+.btn-icon-premium:hover {
+  background: #f8fafc;
+  color: #2563eb;
+  transform: translateX(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
-.expanded-content {
-  animation: slideDown 0.3s ease-out forwards;
+/* Badge Premium */
+.badge-premium {
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  font-size: 0.875rem;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Delivery Cards Stack */
+.delivery-stack {
+  perspective: 1000px;
+}
+
+.premium-card-delivery {
+  background: white;
+  border-radius: 24px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-card-delivery:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+.premium-card-delivery.is-expanded {
+  border-color: #2563eb;
+  box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.15);
+}
+
+.premium-card-delivery.active-trip {
+  border-left: 6px solid #2563eb;
+  background: linear-gradient(to right, #f8faff, #ffffff);
+}
+
+/* Status Badges */
+.status-badge-premium {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-delivered { background-color: #dcfce7; color: #15803d; }
+.status-pending { background-color: #fef3c7; color: #92400e; }
+.status-transit { background-color: #eff6ff; color: #1d4ed8; }
+.status-assigned { background-color: #f1f5f9; color: #475569; }
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Avatar Premium */
+.avatar-premium {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+
+/* Expansion Drawer */
+.expand-drawer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expand-drawer.show {
+  max-height: 500px;
+}
+
+/* Contact Pills */
+.contact-pill-premium {
+  background: #f8fafc;
+  color: #334155;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+}
+
+.contact-pill-premium:hover {
+  background: white;
+  border-color: #2563eb;
+  color: #2563eb;
+  transform: translateY(-2px);
+}
+
+.btn-icon-sm-premium {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.btn-icon-sm-premium:hover {
+  background: white;
+  color: #2563eb;
+  border-color: #2563eb;
+}
+
+/* Premium Buttons */
+.btn-primary-premium {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-primary-premium:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: scale(1.01);
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+  color: white;
+}
+
+.btn-success-premium {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-success-premium:hover {
+  transform: scale(1.01);
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+  color: white;
+}
+
+.btn-outline-premium {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-outline-premium:hover {
+  background: #f8fafc;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chevron-indicator {
+  transition: transform 0.3s ease;
+}
+
+.is-expanded .chevron-indicator {
+  transform: rotate(180deg);
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.text-xs { font-size: 0.75rem; }
+.text-sm { font-size: 0.875rem; }
+.uppercase-tracking {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.7rem;
+}
+
+/* Spinner */
+.spinner-premium {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f1f5f9;
+  border-top: 3px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
