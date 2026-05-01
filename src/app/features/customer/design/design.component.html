@@ -102,33 +102,135 @@
       </div>
 
       <div id="text-options-panel" class="text-options-panel hidden">
-        <h3 class="panel-title">Text options</h3>
-        <label class="option-row">
-          <span>Font</span>
-          <select id="text-font">
-            <option value="Arial">Arial</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Impact">Impact</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Verdana">Verdana</option>
-            <option value="Comic Sans MS">Comic Sans MS</option>
-            <option value="Courier New">Courier New</option>
-          </select>
-        </label>
-        <label class="option-row">
-          <span>Color</span>
-          <input type="color" id="text-color" value="#ffffff">
-          <span class="color-hex" id="text-color-hex">#ffffff</span>
-        </label>
-        <label class="option-row">
-          <span>Bend</span>
-          <input type="range" id="text-bend" min="-100" max="100" value="0">
-          <span class="bend-value" id="text-bend-value">0</span>
-        </label>
+        <div class="panel-header">
+          <h3 class="panel-title">Text properties</h3>
+          <p class="panel-subtitle">Customize your selected text element</p>
+        </div>
+
+        <div class="option-group">
+          <label class="option-label">Text Content</label>
+          <div class="input-wrapper">
+            <input type="text" id="text-content-input" class="modern-input" placeholder="Your text here">
+          </div>
+        </div>
+
+        <div class="option-row-grid">
+          <div class="option-group">
+            <label class="option-label">Font Family</label>
+            <select id="text-font" class="modern-select">
+              <option value="Arial">Arial</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Impact">Impact</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Comic Sans MS">Comic Sans MS</option>
+              <option value="Courier New">Courier New</option>
+              <option value="Poppins">Poppins</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Bebas Neue">Bebas Neue</option>
+              <option value="Raleway">Raleway</option>
+              <option value="Oswald">Oswald</option>
+              <option value="Playfair Display">Playfair Display</option>
+              <option value="Pacifico">Pacifico</option>
+              <option value="Lobster">Lobster</option>
+              <optgroup label="Arabic Fonts">
+                <option value="Cairo">Cairo (القاهرة)</option>
+                <option value="Tajawal">Tajawal (تجوال)</option>
+                <option value="Noto Kufi Arabic">Noto Kufi (كوفي)</option>
+                <option value="Noto Naskh Arabic">Noto Naskh (نسخ)</option>
+                <option value="Amiri">Amiri (أميري)</option>
+                <option value="El Messiri">El Messiri (المسيري)</option>
+                <option value="Changa">Changa (شانغا)</option>
+                <option value="Reem Kufi">Reem Kufi (ريم كوفي)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="option-group">
+            <label class="option-label">Alignment</label>
+            <div id="text-align-grid" class="modern-chip-grid align-grid">
+              <button type="button" class="modern-chip text-align-chip" data-align="left" title="Left"><i class="fa-solid fa-align-left"></i></button>
+              <button type="button" class="modern-chip text-align-chip" data-align="center" title="Center"><i class="fa-solid fa-align-center"></i></button>
+              <button type="button" class="modern-chip text-align-chip" data-align="right" title="Right"><i class="fa-solid fa-align-right"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="option-row-grid">
+          <div class="option-group">
+            <label class="option-label">Text Color</label>
+            <div class="color-picker-wrap">
+              <input type="color" id="text-color" value="#ffffff">
+              <span class="color-value" id="text-color-hex">#ffffff</span>
+            </div>
+          </div>
+          <div class="option-group">
+            <label class="option-label">Outline Color</label>
+            <div class="color-picker-wrap">
+              <input type="color" id="text-stroke-color" value="#000000">
+              <span class="color-value" id="text-stroke-color-hex">#000000</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <div class="label-with-value">
+            <label class="option-label">Outline Width</label>
+            <span class="badge-value" id="text-stroke-width-value">0</span>
+          </div>
+          <input type="range" id="text-stroke-width" class="modern-range" min="0" max="4" step="0.2" value="0">
+        </div>
+
+        <div class="option-group">
+          <label class="option-label">Transformation</label>
+          <div id="text-shape-grid" class="modern-chip-grid shape-grid">
+            <button type="button" class="modern-chip text-shape-chip active" data-shape="normal">None</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="curve">Curve</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="arch">Arch</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="bridge">Bridge</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="valley">Valley</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="pinch">Pinch</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="bulge">Bulge</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="perspective">Perspective</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="pointed">Pointed</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="downward">Downward</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="upward">Upward</button>
+            <button type="button" class="modern-chip text-shape-chip" data-shape="cone">Cone</button>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <div class="label-with-value">
+            <label class="option-label">Bend Intensity</label>
+            <span class="badge-value" id="text-bend-value">0</span>
+          </div>
+          <input type="range" id="text-bend" class="modern-range" min="-100" max="100" value="0">
+        </div>
       </div>
 
-      <div class="selected-element-actions">
-        <button type="button" class="btn delete-btn hidden" id="delete-selected-btn">Remove selected</button>
+      <div id="element-actions-panel" class="element-actions-panel hidden">
+        <div class="panel-header">
+          <h3 class="panel-title">Element actions</h3>
+          <p class="panel-subtitle">Modify the selected item</p>
+        </div>
+        <div class="option-group">
+          <label class="option-label">Arrangement</label>
+          <div class="modern-chip-grid action-grid">
+            <button type="button" class="modern-chip action-chip" id="duplicate-btn" title="Duplicate"><i class="fa-solid fa-copy"></i> Duplicate</button>
+            <button type="button" class="modern-chip action-chip" id="flip-h-btn" title="Flip Horizontal"><i class="fa-solid fa-arrows-left-right"></i> Flip H</button>
+            <button type="button" class="modern-chip action-chip" id="flip-v-btn" title="Flip Vertical"><i class="fa-solid fa-arrows-up-down"></i> Flip V</button>
+          </div>
+        </div>
+        <div class="option-group">
+          <label class="option-label">Layering</label>
+          <div class="modern-chip-grid action-grid">
+            <button type="button" class="modern-chip action-chip" id="bring-front-btn" title="Bring to Front"><i class="fa-solid fa-layer-group"></i> To Front</button>
+            <button type="button" class="modern-chip action-chip" id="send-back-btn" title="Send to Back"><i class="fa-solid fa-layer-group fa-rotate-180"></i> To Back</button>
+            <button type="button" class="modern-chip action-chip" id="bring-forward-btn" title="Bring Forward"><i class="fa-solid fa-arrow-up"></i> Forward</button>
+            <button type="button" class="modern-chip action-chip" id="send-backward-btn" title="Send Backward"><i class="fa-solid fa-arrow-down"></i> Backward</button>
+          </div>
+        </div>
+        <button type="button" class="btn delete-btn" id="delete-selected-btn">Remove selected</button>
       </div>
 
       <button type="button" class="cta-btn">Choose size &amp; quantity</button>
@@ -272,10 +374,37 @@
         <div *ngIf="!p.imageUrl" class="no-img">No Image</div>
         <h4 class="h6 mb-1 text-truncate text-white">{{ p.name }}</h4>
         <p class="small text-muted mb-0" *ngIf="p.price">${{ p.price }}</p>
+        <p class="small text-muted mb-0">Audience: {{ p.targetAudienceLabel || 'All' }}</p>
         <p class="small text-muted mb-0">
           ★ {{ (p.averageRating ?? 0) | number:'1.1-1' }} · {{ p.reviewCount ?? 0 }} reviews
         </p>
       </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div *ngIf="totalPages > 1" class="d-flex justify-content-center align-items-center gap-2 mt-4">
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-light"
+        (click)="prevPage()"
+        [disabled]="searchParams.PageIndex === 1 || loadingProducts"
+      >
+        <i class="fa-solid fa-chevron-left"></i> Prev
+      </button>
+      <span class="text-white-50 small">
+        Page {{ searchParams.PageIndex }} of {{ totalPages }}
+      </span>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-light"
+        (click)="nextPage()"
+        [disabled]="searchParams.PageIndex === totalPages || loadingProducts"
+      >
+        Next <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+    <div *ngIf="totalProducts > 0" class="text-center text-white-50 small mt-2">
+      Showing {{ catalogSearchResults.length }} of {{ totalProducts }} products
     </div>
   </div>
 </div>

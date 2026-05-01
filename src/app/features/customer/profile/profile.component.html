@@ -244,14 +244,26 @@
                 </section>
 
                 <section class="shipment-detail-block">
-                  <h4 class="shipment-detail-heading">Timeline</h4>
-                  <ul class="shipment-timeline">
-                    <li *ngFor="let step of d.timeline" [class.shipment-timeline--muted]="!step.at">
-                      <span class="shipment-timeline-label">{{ step.label }}</span>
-                      <span class="shipment-timeline-date" *ngIf="step.at">{{ step.at | date:'medium' }}</span>
-                      <span class="shipment-timeline-date shipment-timeline--muted" *ngIf="!step.at">—</span>
-                    </li>
-                  </ul>
+                  <h4 class="shipment-detail-heading">Delivery Progress</h4>
+                  <div class="shipment-progress-bar">
+                    <div
+                      class="progress-step"
+                      *ngFor="let step of d.timeline; let i = index; let last = last"
+                      [class.completed]="step.at"
+                      [class.active]="step.at && (!d.timeline[i+1] || !d.timeline[i+1].at)"
+                    >
+                      <div class="step-icon">
+                        <i class="fa-solid fa-check" *ngIf="step.at"></i>
+                        <i class="fa-regular fa-circle" *ngIf="!step.at"></i>
+                      </div>
+                      <div class="step-line" *ngIf="!last"></div>
+                      <div class="step-label">
+                        <p class="name">{{ step.label }}</p>
+                        <p class="date" *ngIf="step.at">{{ step.at | date:'MMM d, h:mm a' }}</p>
+                        <p class="date" *ngIf="!step.at">—</p>
+                      </div>
+                    </div>
+                  </div>
                 </section>
 
                 <section class="shipment-detail-block" *ngIf="d.orderLines.length > 0">
@@ -264,12 +276,7 @@
                       <div class="shipment-order-line__thumb shipment-order-line__thumb--empty" *ngIf="!line.imageUrl" aria-hidden="true"></div>
                       <div class="shipment-order-line__body">
                         <p class="shipment-order-line__title">
-                          <button
-                            type="button"
-                            class="btn btn-link p-0 text-start"
-                            (click)="openShipmentItem(line)"
-                            [disabled]="line.kind === 'fixed' ? !line.productId : !line.designedProductId"
-                          >
+                          <button type="button" class="btn btn-link p-0 text-start" (click)="openShipmentItem(line)">
                             {{ line.title }}
                           </button>
                         </p>
@@ -330,4 +337,71 @@
 
 </main>
 <app-customer-footer></app-customer-footer>
+</div>
+
+<div class="shipment-item-modal-backdrop" *ngIf="selectedOrderLine as line" (click)="closeShipmentItemModal()">
+  <div class="shipment-item-modal" (click)="$event.stopPropagation()">
+    <div class="shipment-item-modal__header">
+      <div>
+        <h3 class="mb-0">Item details</h3>
+        <p class="shipment-item-modal__subtitle mb-0">Full product and price breakdown</p>
+      </div>
+      <button type="button" class="ghost-btn" (click)="closeShipmentItemModal()">Close</button>
+    </div>
+
+    <div class="shipment-item-modal__content">
+      <div class="shipment-item-modal__image-wrap">
+        <img *ngIf="selectedOrderImageUrl as currentImage; else noImage" [src]="currentImage" [alt]="line.title" />
+        <ng-template #noImage>
+          <div class="shipment-item-modal__no-image">No image</div>
+        </ng-template>
+        <div class="shipment-item-modal__gallery-controls" *ngIf="line.galleryImageUrls.length > 1">
+          <button type="button" class="ghost-btn" (click)="prevOrderImage()">Previous</button>
+          <span>{{ selectedOrderGalleryIndex + 1 }} / {{ line.galleryImageUrls.length }}</span>
+          <button type="button" class="ghost-btn" (click)="nextOrderImage()">Next</button>
+        </div>
+        <div class="shipment-item-modal__thumbs" *ngIf="line.galleryImageUrls.length > 1">
+          <button
+            type="button"
+            class="shipment-item-modal__thumb-btn"
+            *ngFor="let thumb of line.galleryImageUrls; let i = index"
+            [class.shipment-item-modal__thumb-btn--active]="i === selectedOrderGalleryIndex"
+            (click)="setOrderImage(i)"
+          >
+            <img [src]="thumb" [alt]="line.title + ' view ' + (i + 1)" />
+          </button>
+        </div>
+      </div>
+
+      <div class="shipment-item-modal__details">
+        <h4 class="shipment-item-modal__title">{{ line.title }}</h4>
+        <div class="shipment-item-modal__badges">
+          <span class="badge">{{ line.kind === 'designed' ? 'Designed item' : 'Fixed item' }}</span>
+          <span class="badge" *ngIf="line.colorName">{{ line.colorName }}</span>
+        </div>
+        <div class="shipment-item-modal__stats">
+          <div>
+            <label>Quantity</label>
+            <p>{{ line.quantity }}</p>
+          </div>
+          <div *ngIf="line.unitPrice != null">
+            <label>Unit price</label>
+            <p>EGP {{ line.unitPrice | number:'1.2-2' }}</p>
+          </div>
+          <div *ngIf="line.lineTotal != null">
+            <label>Total</label>
+            <p>EGP {{ line.lineTotal | number:'1.2-2' }}</p>
+          </div>
+        </div>
+        <div class="shipment-item-modal__sizes" *ngIf="line.subtitle">
+          <label>Sizes</label>
+          <p>{{ formatSizeLabel(line.subtitle) }}</p>
+        </div>
+        <div class="shipment-item-modal__note">
+          <span>Need a quick check?</span>
+          <strong>{{ line.galleryImageUrls.length > 1 ? 'Use the thumbnails to switch views.' : 'Single view image is available for this item.' }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

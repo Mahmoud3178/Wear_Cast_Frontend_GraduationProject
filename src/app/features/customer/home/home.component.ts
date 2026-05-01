@@ -75,7 +75,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
       label: 'Mugs & Drinkwear',
       image: '/assets/mug.webp',
       link: '/customer/category',
-      blobClasses: ['wc-blob', 'wc-blob--purple', 'wc-blob--circle']
+      blobClasses: ['wc-blob', 'wc-blob--indigo', 'wc-blob--circle']
     },
     {
       label: 'Caps & Hats',
@@ -124,6 +124,25 @@ export class HomeComponent implements OnInit, AfterViewInit {
     } else {
       queueMicrotask(() => this.playHomePromoVideo());
     }
+    this.initScrollReveal();
+  }
+
+  private initScrollReveal(): void {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('wc-reveal--active');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    const sections = document.querySelectorAll('.wc-section, .wc-parallax, .wc-video-promo, .wc-products-hero, .wc-showcase-card, .wc-parallax-card');
+    sections.forEach(s => {
+      s.classList.add('wc-reveal');
+      observer.observe(s);
+    });
   }
 
   private loadNewArrivals(): void {

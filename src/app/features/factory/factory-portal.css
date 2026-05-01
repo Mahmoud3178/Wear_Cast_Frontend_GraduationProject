@@ -15,29 +15,59 @@
 .wc-factory-brand {
   color: #f8fafc;
   letter-spacing: -0.02em;
+  position: relative;
+  padding-left: 0.5rem;
+}
+
+.wc-factory-brand::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 70%;
+  background: linear-gradient(180deg, var(--wc-factory-accent), rgba(56, 189, 248, 0.3));
+  border-radius: 2px;
 }
 
 .wc-factory-brand small {
   color: #94a3b8;
   font-weight: 400;
   font-size: 0.75rem;
+  letter-spacing: 0.05em;
 }
 
 .wc-factory-header .nav-pill {
   color: #e2e8f0;
   border: 1px solid transparent;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .wc-factory-header .nav-pill:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .wc-factory-header .nav-pill.active {
   background: var(--wc-factory-accent-dim);
   border-color: rgba(56, 189, 248, 0.45);
   color: #f0f9ff;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.wc-factory-header .nav-pill i {
+  font-size: 0.9em;
+  transition: transform 0.2s ease;
+}
+
+.wc-factory-header .nav-pill:hover i {
+  transform: scale(1.1);
 }
 
 .wc-factory-main {
@@ -46,10 +76,17 @@
 }
 
 .wc-factory-card {
-  border-radius: 14px !important;
+  border-radius: 16px !important;
   border: 1px solid rgba(15, 23, 42, 0.06) !important;
   box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06) !important;
   overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: slideInUp 0.5s ease-out;
+}
+
+.wc-factory-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.1) !important;
 }
 
 .wc-factory-card .card-header {
@@ -71,14 +108,31 @@
 }
 
 .wc-factory-dash-tile {
-  border-radius: 14px !important;
+  border-radius: 16px !important;
   border: 1px solid rgba(15, 23, 42, 0.06) !important;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.wc-factory-dash-tile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.5s ease;
+}
+
+.wc-factory-dash-tile:hover::before {
+  left: 100%;
 }
 
 .wc-factory-dash-tile:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.1) !important;
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12) !important;
 }
 
 .wc-factory-auth-panel {
@@ -93,4 +147,63 @@
 
 .wc-factory-auth-bg .wc-factory-auth-panel {
   background: #fff;
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.6); }
+}
+
+/* Badge enhancements */
+.badge.rounded-pill {
+  transition: all 0.2s ease;
+}
+
+.badge.rounded-pill:hover {
+  transform: scale(1.05);
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* List group item animations */
+.list-group-item {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.list-group-item:hover {
+  background-color: rgba(56, 189, 248, 0.03);
+}
+
+/* Icon spin animation for refresh */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
 }

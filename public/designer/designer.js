@@ -97,6 +97,7 @@
 
   var productImage, productStage, productTitleEl, productPriceEl, uploadInput, textModal, textInput, textCancel, textAdd;
   var colorNameEl, colorSwatches, textOptionsPanel, textFontSelect, textColorInput, textColorHex, textBendSlider, textBendValue;
+  var textStrokeColorInput, textStrokeColorHex, textStrokeWidthSlider, textStrokeWidthValue, textShapeGrid, textAlignGrid, textContentInput;
   var saveModal, saveNameInput, saveCancel, saveConfirm, loadModal, savedListEl, loadCloseBtn;
   var productDetailsModal, productDetailsOpenBtn, productDetailsCloseBtn;
   var productsModal, productsModalClose;
@@ -114,6 +115,20 @@
   var viewUndoStacks = {};
   var viewRedoStacks = {};
   var VIEW_KEYS = ['front', 'back', 'right', 'left'];
+  var TEXT_SHAPE_BEND_MAP = {
+    normal: 0,
+    curve: 35,
+    arch: 60,
+    bridge: -30,
+    valley: -60,
+    pinch: 85,
+    bulge: 50,
+    perspective: 20,
+    pointed: 75,
+    downward: -35,
+    upward: 35,
+    cone: 95
+  };
 
   /** Last fetch from GET /api/design-assets (client-side search filter). */
   var lastDesignAssetRows = [];
@@ -287,6 +302,8 @@
     if (!obj) return;
     var deleteBtn = document.getElementById('delete-selected-btn');
     if (deleteBtn) deleteBtn.classList.remove('hidden');
+    var actionsPanel = document.getElementById('element-actions-panel');
+    if (actionsPanel) actionsPanel.classList.remove('hidden');
     if (isTextOrCurvedText(obj)) {
       textOptionsPanel.classList.remove('hidden');
       syncTextOptionsFromObject(obj);
@@ -299,6 +316,8 @@
     textOptionsPanel.classList.add('hidden');
     var deleteBtn = document.getElementById('delete-selected-btn');
     if (deleteBtn) deleteBtn.classList.add('hidden');
+    var actionsPanel = document.getElementById('element-actions-panel');
+    if (actionsPanel) actionsPanel.classList.add('hidden');
   }
 
   function removeSelectedObject() {
@@ -313,6 +332,72 @@
     }
   }
 
+  function duplicateSelectedObject() {
+    if (!canvas) return;
+    var active = canvas.getActiveObject();
+    if (!active) return;
+    active.clone(function(cloned) {
+      cloned.set({
+        left: (active.left || 0) + 20,
+        top: (active.top || 0) + 20,
+        evented: true,
+        selectable: true
+      });
+      canvas.add(cloned);
+      canvas.setActiveObject(cloned);
+      canvas.renderAll();
+      saveState();
+    });
+  }
+
+  function flipHorizontal() {
+    var obj = canvas.getActiveObject();
+    if (!obj) return;
+    obj.set('scaleX', obj.scaleX === -1 ? 1 : -1);
+    canvas.renderAll();
+    saveState();
+  }
+
+  function flipVertical() {
+    var obj = canvas.getActiveObject();
+    if (!obj) return;
+    obj.set('scaleY', obj.scaleY === -1 ? 1 : -1);
+    canvas.renderAll();
+    saveState();
+  }
+
+  function bringForward() {
+    var obj = canvas.getActiveObject();
+    if (!obj) return;
+    canvas.bringForward(obj);
+    canvas.renderAll();
+    saveState();
+  }
+
+  function sendBackward() {
+    var obj = canvas.getActiveObject();
+    if (!obj) return;
+    canvas.sendBackward(obj);
+    canvas.renderAll();
+    saveState();
+  }
+
+  function bringToFront() {
+    var obj = canvas.getActiveObject();
+    if (!obj) return;
+    canvas.bringToFront(obj);
+    canvas.renderAll();
+    saveState();
+  }
+
+  function sendToBack() {
+    var obj = canvas.getActiveObject();
+    if (!obj) return;
+    canvas.sendToBack(obj);
+    canvas.renderAll();
+    saveState();
+  }
+
   function isTextOrCurvedText(obj) {
     return (obj.type === 'i-text' || obj.type === 'text') || (obj.type === 'group' && obj.textSource);
   }
@@ -322,7 +407,11 @@
       return {
         fontFamily: obj.fontFamily || 'Arial',
         fill: obj.fill || '#ffffff',
-        bend: 0
+        bend: 0,
+        stroke: obj.stroke || '#000000',
+        strokeWidth: typeof obj.strokeWidth === 'number' ? obj.strokeWidth : 0,
+        textShape: 'normal',
+        textAlign: obj.textAlign || 'left'
       };
     }
     if (obj.type === 'group' && obj.textSource) {
@@ -330,7 +419,11 @@
       return {
         fontFamily: first ? first.fontFamily : 'Arial',
         fill: first ? first.fill : '#ffffff',
-        bend: typeof obj.textBend === 'number' ? obj.textBend : 0
+        bend: typeof obj.textBend === 'number' ? obj.textBend : 0,
+        stroke: first && first.stroke ? first.stroke : '#000000',
+        strokeWidth: first && typeof first.strokeWidth === 'number' ? first.strokeWidth : 0,
+        textShape: obj.textShape || 'curve',
+        textAlign: obj.textAlign || 'center'
       };
     }
     return null;
@@ -342,36 +435,148 @@
     textFontSelect.value = opts.fontFamily;
     textColorInput.value = opts.fill;
     textColorHex.textContent = opts.fill;
+    if (textStrokeColorInput) textStrokeColorInput.value = opts.stroke || '#000000';
+    if (textStrokeColorHex) textStrokeColorHex.textContent = opts.stroke || '#000000';
+    if (textStrokeWidthSlider) textStrokeWidthSlider.value = String(opts.strokeWidth || 0);
+    if (textStrokeWidthValue) textStrokeWidthValue.textContent = Number(opts.strokeWidth || 0).toFixed(1).replace(/\.0$/, '');
+    setActiveShapeChip(opts.textShape || 'normal');
+    setActiveAlignChip(opts.textAlign || 'left');
     textBendSlider.value = opts.bend;
     textBendValue.textContent = opts.bend;
+    if (textContentInput) {
+      if (obj.type === 'i-text' || obj.type === 'text') {
+        textContentInput.value = obj.text || '';
+      } else if (obj.type === 'group' && obj.textSource) {
+        textContentInput.value = obj.textSource || '';
+      }
+    }
+  }
+
+  function getSelectedShapeName() {
+    if (!textShapeGrid) return 'normal';
+    var active = textShapeGrid.querySelector('.text-shape-chip.active');
+    return active ? active.getAttribute('data-shape') || 'normal' : 'normal';
+  }
+
+  function setActiveShapeChip(shape) {
+    if (!textShapeGrid) return;
+    textShapeGrid.querySelectorAll('.text-shape-chip').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-shape') === shape);
+    });
+  }
+
+  function getSelectedAlignName() {
+    if (!textAlignGrid) return 'left';
+    var active = textAlignGrid.querySelector('.text-align-chip.active');
+    return active ? active.getAttribute('data-align') || 'left' : 'left';
+  }
+
+  function setActiveAlignChip(align) {
+    if (!textAlignGrid) return;
+    textAlignGrid.querySelectorAll('.text-align-chip').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-align') === align);
+    });
   }
 
   function createCurvedTextGroup(str, options) {
     const fontFamily = options.fontFamily || 'Arial';
     const fontSize = options.fontSize || 28;
     const fill = options.fill || '#ffffff';
+    const stroke = options.stroke || '#000000';
+    const strokeWidth = typeof options.strokeWidth === 'number' ? options.strokeWidth : 0;
     const bend = options.bend || 0;
+    const textAlign = options.textAlign || 'center';
+    const textShape = options.textShape || 'curve';
     const chars = str.split('');
     if (chars.length === 0) return null;
-    const radius = Math.max(80, chars.length * 12);
-    const totalAngle = (bend / 100) * Math.PI;
-    const startAngle = Math.PI / 2 + totalAngle / 2;
-    const step = chars.length === 1 ? 0 : totalAngle / (chars.length - 1);
+    var absBend = Math.max(0, Math.min(100, Math.abs(bend)));
+    var sign = bend >= 0 ? 1 : -1;
+    var bendFactor = absBend / 100;
+    var span = Math.max(130, chars.length * (fontSize * 0.55));
+    var radius = Math.max(90, chars.length * (fontSize * 0.45));
+    var totalAngle = (0.35 + bendFactor * 1.25) * Math.PI * sign;
+    var startAngle = Math.PI / 2 + totalAngle / 2;
+    var step = chars.length === 1 ? 0 : totalAngle / (chars.length - 1);
     const texts = [];
     for (let i = 0; i < chars.length; i++) {
-      const angle = startAngle - i * step;
-      const x = Math.cos(angle) * radius;
-      const y = -Math.sin(angle) * radius;
-      const t = new fabric.Text(chars[i], {
+      var ratio = chars.length === 1 ? 0.5 : i / (chars.length - 1);
+      var centered = ratio - 0.5;
+      var angle = startAngle - i * step;
+      var x = centered * span;
+      var y = 0;
+      var rotation = 0;
+      var scaleX = 1;
+      var scaleY = 1;
+
+      switch (textShape) {
+        case 'curve':
+          x = Math.cos(angle) * radius;
+          y = -Math.sin(angle) * radius;
+          rotation = (angle - Math.PI / 2) * 180 / Math.PI;
+          break;
+        case 'arch':
+          x = Math.cos(angle) * radius;
+          y = -Math.sin(angle) * radius;
+          rotation = 0;
+          break;
+        case 'bridge':
+          // Flat bottom, arched top
+          scaleY = 1 + (0.25 - Math.pow(centered, 2)) * 3 * bendFactor;
+          y = - (scaleY - 1) * fontSize / 2;
+          break;
+        case 'valley':
+          // Flat top, dipped bottom
+          scaleY = 1 + (0.25 - Math.pow(centered, 2)) * 3 * bendFactor;
+          y = (scaleY - 1) * fontSize / 2;
+          break;
+        case 'pinch':
+          // Pinched in middle
+          scaleY = 1 - (0.25 - Math.pow(centered, 2)) * 2 * bendFactor;
+          break;
+        case 'bulge':
+          // Bulged in middle
+          scaleY = 1 + (0.25 - Math.pow(centered, 2)) * 3 * bendFactor;
+          break;
+        case 'perspective':
+          // Big in middle, smaller at edges
+          scaleX = 1 + (0.25 - Math.pow(centered, 2)) * 2.5 * bendFactor;
+          scaleY = 1 + (0.25 - Math.pow(centered, 2)) * 2.5 * bendFactor;
+          break;
+        case 'pointed':
+          // Triangle like shape
+          scaleY = 1 + (0.5 - Math.abs(centered)) * 3 * bendFactor;
+          break;
+        case 'downward':
+          // Slope down
+          y = (centered + 0.5) * 60 * bendFactor;
+          break;
+        case 'upward':
+          // Slope up
+          y = -(centered + 0.5) * 60 * bendFactor;
+          break;
+        case 'cone':
+          // Perspective effect: big to small
+          scaleY = 1 - centered * 2 * bendFactor;
+          break;
+        default:
+          break;
+      }
+
+      const txt = new fabric.Text(chars[i], {
         fontFamily: fontFamily,
         fontSize: fontSize,
         fill: fill,
+        stroke: stroke,
+        strokeWidth: strokeWidth,
         originX: 'center',
         originY: 'center',
         left: x,
         top: y,
+        angle: rotation,
+        scaleX: scaleX,
+        scaleY: scaleY
       });
-      texts.push(t);
+      texts.push(txt);
     }
     const group = new fabric.Group(texts, {
       originX: 'center',
@@ -381,15 +586,76 @@
     });
     group.textSource = str;
     group.textBend = bend;
+    group.textShape = textShape;
+    group.textAlign = textAlign;
     group.fontFamily = fontFamily;
     group.fontSize = fontSize;
     group.fill = fill;
+    group.stroke = stroke;
+    group.strokeWidth = strokeWidth;
     return group;
   }
 
-  function applyBendToSelection(bend) {
+  function parseBend(value) {
+    var n = parseInt(value, 10);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(-100, Math.min(100, n));
+  }
+
+  function shapeToBend(shape) {
+    if (!shape || !Object.prototype.hasOwnProperty.call(TEXT_SHAPE_BEND_MAP, shape)) {
+      return 0;
+    }
+    return TEXT_SHAPE_BEND_MAP[shape];
+  }
+
+  function convertGroupToIText(group, options) {
+    if (!group || group.type !== 'group' || !group.textSource) return null;
+    var txt = new fabric.IText(group.textSource || 'Your text', {
+      left: group.left,
+      top: group.top,
+      originX: group.originX || 'center',
+      originY: group.originY || 'center',
+      fontFamily: options.fontFamily || group.fontFamily || 'Arial',
+      fontSize: options.fontSize || group.fontSize || 28,
+      fill: options.fill || group.fill || '#ffffff',
+      stroke: options.stroke || group.stroke || '#000000',
+      strokeWidth: typeof options.strokeWidth === 'number' ? options.strokeWidth : (group.strokeWidth || 0),
+      textAlign: options.textAlign || group.textAlign || 'left'
+    });
+    return txt;
+  }
+
+  function applyBendToSelection(bend, shapeName) {
     const obj = canvas.getActiveObject();
     if (!obj) return;
+    var resolvedBend = parseBend(bend);
+    var resolvedShape = shapeName || getSelectedShapeName();
+    if (resolvedShape === 'normal') {
+      if (obj.type === 'group' && obj.textSource) {
+        var plain = convertGroupToIText(obj, {
+          fontFamily: obj.fontFamily,
+          fontSize: obj.fontSize,
+          fill: obj.fill,
+          stroke: obj.stroke,
+          strokeWidth: obj.strokeWidth,
+          textAlign: obj.textAlign || 'left'
+        });
+        if (plain) {
+          canvas.remove(obj);
+          canvas.add(plain);
+          canvas.setActiveObject(plain);
+          canvas.renderAll();
+          saveState();
+          syncTextOptionsFromObject(plain);
+          setActiveShapeChip('normal');
+        }
+      } else if (obj.type === 'i-text' || obj.type === 'text') {
+        syncTextOptionsFromObject(obj);
+        setActiveShapeChip('normal');
+      }
+      return;
+    }
     if (obj.type === 'i-text' || obj.type === 'text') {
       const str = obj.text;
       const left = obj.left + (obj.width * (obj.originX === 'center' ? 0.5 : 0));
@@ -398,7 +664,11 @@
         fontFamily: obj.fontFamily,
         fontSize: obj.fontSize,
         fill: obj.fill,
-        bend: bend,
+        stroke: obj.stroke,
+        strokeWidth: typeof obj.strokeWidth === 'number' ? obj.strokeWidth : 0,
+        textAlign: obj.textAlign || 'center',
+        bend: resolvedBend,
+        textShape: resolvedShape,
         left: left,
         top: top
       });
@@ -408,6 +678,7 @@
         canvas.setActiveObject(group);
         canvas.renderAll();
         saveState();
+        setActiveShapeChip(resolvedShape);
       }
       return;
     }
@@ -418,7 +689,11 @@
         fontFamily: obj.fontFamily,
         fontSize: obj.fontSize,
         fill: obj.fill,
-        bend: bend,
+        stroke: obj.stroke,
+        strokeWidth: typeof obj.strokeWidth === 'number' ? obj.strokeWidth : 0,
+        textAlign: obj.textAlign || 'center',
+        bend: resolvedBend,
+        textShape: resolvedShape,
         left: left,
         top: top
       });
@@ -428,6 +703,7 @@
         canvas.setActiveObject(group);
         canvas.renderAll();
         saveState();
+        setActiveShapeChip(resolvedShape);
       }
     }
   }
@@ -435,18 +711,24 @@
   function applyFontToSelection(fontFamily) {
     const obj = canvas.getActiveObject();
     if (!obj) return;
+
+    // Web fonts might take a moment to load and render in canvas.
+    function updateFont(o) {
+      o.set('fontFamily', fontFamily);
+    }
+
     if (obj.type === 'i-text' || obj.type === 'text') {
-      obj.set('fontFamily', fontFamily);
-      canvas.renderAll();
-      saveState();
-      return;
-    }
-    if (obj.type === 'group' && obj.textSource) {
+      updateFont(obj);
+    } else if (obj.type === 'group' && obj.textSource) {
       obj.fontFamily = fontFamily;
-      obj.getObjects().forEach(function (o) { o.set('fontFamily', fontFamily); });
-      canvas.renderAll();
-      saveState();
+      obj.getObjects().forEach(updateFont);
     }
+    canvas.renderAll();
+    saveState();
+
+    // Re-render after delays to ensure fonts that are being downloaded apply
+    setTimeout(() => { canvas.renderAll(); }, 300);
+    setTimeout(() => { canvas.renderAll(); }, 800);
   }
 
   function applyColorToSelection(fill) {
@@ -466,9 +748,77 @@
     }
   }
 
+  function applyStrokeToSelection(stroke, strokeWidth) {
+    const obj = canvas.getActiveObject();
+    if (!obj) return;
+    var width = Math.max(0, Math.min(4, Number(strokeWidth) || 0));
+    if (obj.type === 'i-text' || obj.type === 'text') {
+      obj.set('stroke', stroke);
+      obj.set('strokeWidth', width);
+      canvas.renderAll();
+      saveState();
+      return;
+    }
+    if (obj.type === 'group' && obj.textSource) {
+      obj.stroke = stroke;
+      obj.strokeWidth = width;
+      obj.getObjects().forEach(function (o) {
+        o.set('stroke', stroke);
+        o.set('strokeWidth', width);
+      });
+      canvas.renderAll();
+      saveState();
+    }
+  }
+
+  function applyTextAlignToSelection(textAlign) {
+    const obj = canvas.getActiveObject();
+    if (!obj) return;
+    if (obj.type === 'i-text' || obj.type === 'text') {
+      obj.set('textAlign', textAlign || 'left');
+      canvas.renderAll();
+      saveState();
+      return;
+    }
+    if (obj.type === 'group' && obj.textSource) {
+      obj.textAlign = textAlign || 'center';
+      canvas.renderAll();
+      saveState();
+    }
+  }
+
+  function applyShapeToSelection(shapeName) {
+    const shape = shapeName || 'normal';
+    const bend = shapeToBend(shape);
+    setActiveShapeChip(shape);
+    if (textBendSlider) textBendSlider.value = String(bend);
+    if (textBendValue) textBendValue.textContent = String(bend);
+    applyBendToSelection(bend, shape);
+  }
+
+  if (textBendSlider) {
+    textBendSlider.addEventListener('input', function () {
+      if (textBendValue) textBendValue.textContent = this.value;
+      applyBendToSelection(this.value);
+    });
+  }
+
+
   function saveState() {
     if (!canvas) return;
-    var json = canvas.toJSON(['selectable', 'evented']);
+    var json = canvas.toJSON([
+      'selectable',
+      'evented',
+      'textSource',
+      'textBend',
+      'textShape',
+      'textAlign',
+      'fontFamily',
+      'fontSize',
+      'fill',
+      'stroke',
+      'strokeWidth'
+    ]);
     if (undoStack.length >= MAX_UNDO) undoStack.shift();
     undoStack.push(JSON.stringify(json));
     redoStack.length = 0;
@@ -478,7 +828,19 @@
   function saveCurrentViewToStore() {
     if (!canvas) return;
     viewDesigns[currentProduct] = viewDesigns[currentProduct] || {};
-    viewDesigns[currentProduct][currentView] = canvas.toJSON(['selectable', 'evented']);
+    viewDesigns[currentProduct][currentView] = canvas.toJSON([
+      'selectable',
+      'evented',
+      'textSource',
+      'textBend',
+      'textShape',
+      'textAlign',
+      'fontFamily',
+      'fontSize',
+      'fill',
+      'stroke',
+      'strokeWidth'
+    ]);
     viewUndoStacks[currentProduct] = viewUndoStacks[currentProduct] || {};
     viewRedoStacks[currentProduct] = viewRedoStacks[currentProduct] || {};
     viewUndoStacks[currentProduct][currentView] = undoStack.slice();
@@ -530,20 +892,22 @@
       closeDesignsPanel();
     }
 
-    // Try CORS-safe load first for export compatibility, then fallback without
-    // crossOrigin because some production media hosts reject anonymous CORS.
+    // Try without crossOrigin first so production hosts that do not send
+    // CORS headers can still render stickers in the editor.
     fabric.Image.fromURL(url, function (img) {
       if (img) {
         mountSticker(img);
         return;
       }
+      // Fallback to anonymous CORS for hosts that allow it, which keeps
+      // canvas export safer when possible.
       fabric.Image.fromURL(url, function (fallbackImg) {
         if (!fallbackImg) {
           return;
         }
         mountSticker(fallbackImg);
-      });
-    }, { crossOrigin: 'anonymous' });
+      }, { crossOrigin: 'anonymous' });
+    });
   }
 
   function openDesignsPanel() {
@@ -681,6 +1045,11 @@
   }
 
   function openTextModal() {
+    console.log('[WearCast] opening text modal');
+    if (!textInput || !textModal) {
+      console.warn('[WearCast] textInput or textModal missing');
+      return;
+    }
     textInput.value = 'Your text';
     textModal.classList.remove('hidden');
     textInput.focus();
@@ -691,6 +1060,11 @@
   }
 
   function addText(str) {
+    console.log('[WearCast] addText called with:', str);
+    if (!canvas) {
+      console.error('[WearCast] canvas not initialized');
+      return;
+    }
     const dim = getStageDimensions();
     const text = new fabric.IText(str || 'Your text', {
       left: dim.width / 2 - 60,
@@ -698,6 +1072,9 @@
       fontFamily: textFontSelect.value || 'Arial',
       fontSize: 28,
       fill: textColorInput.value || '#ffffff',
+      stroke: (textStrokeColorInput && textStrokeColorInput.value) || '#000000',
+      strokeWidth: parseInt((textStrokeWidthSlider && textStrokeWidthSlider.value) || '0', 10) || 0,
+      textAlign: getSelectedAlignName(),
       originX: 'center',
       originY: 'center',
     });
@@ -1676,8 +2053,15 @@
     textFontSelect = document.getElementById('text-font');
     textColorInput = document.getElementById('text-color');
     textColorHex = document.getElementById('text-color-hex');
+    textStrokeColorInput = document.getElementById('text-stroke-color');
+    textStrokeColorHex = document.getElementById('text-stroke-color-hex');
+    textStrokeWidthSlider = document.getElementById('text-stroke-width');
+    textStrokeWidthValue = document.getElementById('text-stroke-width-value');
+    textShapeGrid = document.getElementById('text-shape-grid');
+    textAlignGrid = document.getElementById('text-align-grid');
     textBendSlider = document.getElementById('text-bend');
     textBendValue = document.getElementById('text-bend-value');
+    textContentInput = document.getElementById('text-content-input');
     saveModal = document.getElementById('save-modal');
     saveNameInput = document.getElementById('save-name-input');
     saveCancel = document.getElementById('save-cancel');
@@ -1704,7 +2088,14 @@
     sizeQtyModalConfirm = document.getElementById('size-qty-modal-confirm');
 
     if (!productImage || !uploadInput || !textInput || !saveModal || !saveConfirm || !savedListEl) {
-      console.error('Required DOM elements missing for designer');
+      console.error('Required DOM elements missing for designer', {
+        productImage: !!productImage,
+        uploadInput: !!uploadInput,
+        textInput: !!textInput,
+        saveModal: !!saveModal,
+        saveConfirm: !!saveConfirm,
+        savedListEl: !!savedListEl
+      });
       return;
     }
 
@@ -1755,11 +2146,80 @@
       textColorHex.textContent = v;
       applyColorToSelection(v);
     });
+    if (textStrokeColorInput) {
+      textStrokeColorInput.addEventListener('input', function () {
+        var v = this.value;
+        if (textStrokeColorHex) textStrokeColorHex.textContent = v;
+        var width = parseFloat((textStrokeWidthSlider && textStrokeWidthSlider.value) || '0') || 0;
+        applyStrokeToSelection(v, width);
+      });
+    }
+    if (textStrokeWidthSlider) {
+      textStrokeWidthSlider.addEventListener('input', function () {
+        var width = parseFloat(this.value) || 0;
+        if (textStrokeWidthValue) textStrokeWidthValue.textContent = width.toFixed(1).replace(/\.0$/, '');
+        var stroke = (textStrokeColorInput && textStrokeColorInput.value) || '#000000';
+        applyStrokeToSelection(stroke, width);
+      });
+    }
+    if (textShapeGrid) {
+      textShapeGrid.addEventListener('click', function (e) {
+        var btn = e.target.closest('.text-shape-chip');
+        if (!btn) return;
+        applyShapeToSelection(btn.getAttribute('data-shape') || 'normal');
+      });
+    }
+    if (textAlignGrid) {
+      textAlignGrid.addEventListener('click', function (e) {
+        var btn = e.target.closest('.text-align-chip');
+        if (btn) {
+          var align = btn.getAttribute('data-align');
+          applyTextAlignToSelection(align);
+          setActiveAlignChip(align);
+        }
+      });
+    }
     textBendSlider.addEventListener('input', function () {
       var v = parseInt(this.value, 10);
       textBendValue.textContent = v;
-      applyBendToSelection(v);
+      applyBendToSelection(v, getSelectedShapeName());
     });
+
+    if (textContentInput) {
+      textContentInput.addEventListener('input', function () {
+        const obj = canvas.getActiveObject();
+        if (!obj) return;
+        const newText = this.value || ' ';
+
+        if (obj.type === 'i-text' || obj.type === 'text') {
+          obj.set('text', newText);
+          canvas.renderAll();
+          saveState();
+        } else if (obj.type === 'group' && obj.textSource) {
+          const left = obj.left;
+          const top = obj.top;
+          const group = createCurvedTextGroup(newText, {
+            fontFamily: obj.fontFamily,
+            fontSize: obj.fontSize,
+            fill: obj.fill,
+            stroke: obj.stroke,
+            strokeWidth: typeof obj.strokeWidth === 'number' ? obj.strokeWidth : 0,
+            textAlign: obj.textAlign || 'center',
+            bend: obj.textBend,
+            textShape: obj.textShape || 'curve',
+            left: left,
+            top: top
+          });
+          if (group) {
+            canvas.remove(obj);
+            canvas.add(group);
+            canvas.setActiveObject(group);
+            canvas.renderAll();
+            saveState();
+          }
+        }
+      });
+    }
 
     document.getElementById('undo-btn').addEventListener('click', undo);
     document.getElementById('redo-btn').addEventListener('click', redo);
@@ -1767,10 +2227,39 @@
     var deleteBtn = document.getElementById('delete-selected-btn');
     if (deleteBtn) deleteBtn.addEventListener('click', removeSelectedObject);
 
+    var dupBtn = document.getElementById('duplicate-btn');
+    if (dupBtn) dupBtn.addEventListener('click', duplicateSelectedObject);
+    var flipHBtn = document.getElementById('flip-h-btn');
+    if (flipHBtn) flipHBtn.addEventListener('click', flipHorizontal);
+    var flipVBtn = document.getElementById('flip-v-btn');
+    if (flipVBtn) flipVBtn.addEventListener('click', flipVertical);
+    var bringFrontBtn = document.getElementById('bring-front-btn');
+    if (bringFrontBtn) bringFrontBtn.addEventListener('click', bringToFront);
+    var sendBackBtn = document.getElementById('send-back-btn');
+    if (sendBackBtn) sendBackBtn.addEventListener('click', sendToBack);
+    var bringFwdBtn = document.getElementById('bring-forward-btn');
+    if (bringFwdBtn) bringFwdBtn.addEventListener('click', bringForward);
+    var sendBwdBtn = document.getElementById('send-backward-btn');
+    if (sendBwdBtn) sendBwdBtn.addEventListener('click', sendBackward);
+
     document.addEventListener('keydown', function (e) {
-      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
       var tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : '';
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      // Undo: Ctrl+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        return;
+      }
+      // Redo: Ctrl+Y or Ctrl+Shift+Z
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
       e.preventDefault();
       removeSelectedObject();
     });
@@ -1886,10 +2375,31 @@
     initCanvas();
     var firstProductKey = Object.keys(PRODUCTS)[0] || '';
     if (!firstProductKey) {
-      if (productTitleEl) {
-        productTitleEl.textContent = 'No factory products yet';
-      }
-      return;
+      PRODUCTS['default-hoodie'] = {
+        title: 'Classic Hoodie',
+        description: 'A comfortable classic hoodie perfect for custom designs.',
+        price: 0,
+        images: function () {
+          return {
+            black: {
+              front: 'assets/hoodie-front.jpg',
+              back: 'assets/hoodie-back.jpg',
+              left: 'assets/hoodie-left.JPG',
+              right: 'assets/hoodie-right.jpg'
+            }
+          };
+        },
+        sizes: [
+          { label: 'XS' },
+          { label: 'S' },
+          { label: 'M' },
+          { label: 'L' },
+          { label: 'XL' },
+          { label: '2XL' }
+        ]
+      };
+      firstProductKey = 'default-hoodie';
+      rebuildProductListFromProducts();
     }
     setProduct(firstProductKey);
     if (hasFactoryCatalogProducts()) {
@@ -1911,6 +2421,14 @@
     window.wearcastOpenProductsModal = openProductsModal;
     window.wearcastCloseProductsModal = closeProductsModal;
     window.wearcastGetProducts = function () { return PRODUCTS; };
+    window.wearcastLoadDesignById = loadDesignById;
+    window.wearcastDuplicateSelected = duplicateSelectedObject;
+    window.wearcastFlipHorizontal = flipHorizontal;
+    window.wearcastFlipVertical = flipVertical;
+    window.wearcastBringForward = bringForward;
+    window.wearcastSendBackward = sendBackward;
+    window.wearcastBringToFront = bringToFront;
+    window.wearcastSendToBack = sendToBack;
   }
 
 })();

@@ -51,8 +51,10 @@ export class CustomerDesignComponent implements AfterViewInit {
     MinPrice: '',
     MaxPrice: '',
     PageIndex: 1,
-    PageSize: 50
+    PageSize: 8
   };
+  totalProducts = 0;
+  totalPages = 1;
 
   // Reviews
   selectedProductId: number | null = null;
@@ -98,6 +100,7 @@ export class CustomerDesignComponent implements AfterViewInit {
         pageIndex?: number,
         pageSize?: number
       ) => Promise<DesignAssetRow[]>;
+      wearcastLoadDesignById?: (id: number) => void;
       wearcastOnProductChanged?: (baseProductId: number) => void;
     };
 
@@ -195,6 +198,9 @@ export class CustomerDesignComponent implements AfterViewInit {
     const extraIds = this.parseDesignedProductIds(
       this.route.snapshot.queryParamMap.get('designedProductIds')
     );
+    const draftDesignId = this.parsePositiveInt(
+      this.route.snapshot.queryParamMap.get('designId')
+    );
     this.catalog.loadDesignerBootstrap(token, { extraProductIds: extraIds }).subscribe({
       next: boot => {
         const w = window as unknown as {
@@ -210,11 +216,17 @@ export class CustomerDesignComponent implements AfterViewInit {
           };
         }
         this.runDesigner();
+        if (draftDesignId != null) {
+          setTimeout(() => this.loadDraftDesign(draftDesignId), 700);
+        }
         // Small delay to let the designer finish init, then search + sync images
         setTimeout(() => this.searchCatalog(), 300);
       },
       error: () => {
         this.runDesigner();
+        if (draftDesignId != null) {
+          setTimeout(() => this.loadDraftDesign(draftDesignId), 700);
+        }
         setTimeout(() => this.searchCatalog(), 300);
       }
     });
@@ -260,13 +272,19 @@ export class CustomerDesignComponent implements AfterViewInit {
     this.http.get<any>(url, { params }).subscribe({
       next: (res) => {
         this.loadingProducts = false;
+        // Handle paginated response: { data: { items, totalCount, totalPages, pageIndex, pageSize } }
         let arr = res;
+        let responseData = res;
         if (arr && typeof arr === 'object' && 'data' in arr) {
-          arr = arr.data;
+          responseData = arr.data;
+          arr = responseData.items || responseData;
         }
         if (arr && typeof arr === 'object' && 'items' in arr) {
           arr = arr.items;
         }
+        // Update pagination info
+        this.totalProducts = responseData?.totalCount || (Array.isArray(arr) ? arr.length : 0);
+        this.totalPages = responseData?.totalPages || Math.ceil(this.totalProducts / this.searchParams.PageSize) || 1;
         this.catalogSearchResults = (Array.isArray(arr) ? arr : (Array.isArray(res?.data) ? res.data : [])).map((item: any) => {
           let o = item || {};
           const nested = o.product || o.Product || o.designedProduct || o.DesignedProduct || {};
@@ -317,7 +335,16 @@ export class CustomerDesignComponent implements AfterViewInit {
               o.RatingsCount ??
               o.totalReviews ??
               o.TotalReviews ??
-              0
+              0,
+            targetAudienceLabel:
+              this.getTargetAudienceLabel(
+                o.targetAudienceName ??
+                  o.TargetAudienceName ??
+                  o.targetAudience ??
+                  o.TargetAudience ??
+                  o.targetAudiences ??
+                  o.TargetAudiences
+              )
           };
         });
         const validIds = new Set(
@@ -343,6 +370,27 @@ export class CustomerDesignComponent implements AfterViewInit {
         console.error('Failed to load catalog products', err);
       }
     });
+  }
+
+  // Pagination methods
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages || page === this.searchParams.PageIndex) return;
+    this.searchParams.PageIndex = page;
+    this.searchCatalog();
+  }
+
+  nextPage(): void {
+    if (this.searchParams.PageIndex < this.totalPages) {
+      this.searchParams.PageIndex++;
+      this.searchCatalog();
+    }
+  }
+
+  prevPage(): void {
+    if (this.searchParams.PageIndex > 1) {
+      this.searchParams.PageIndex--;
+      this.searchCatalog();
+    }
   }
 
   selectCatalogProduct(item: any): void {
@@ -410,7 +458,11 @@ export class CustomerDesignComponent implements AfterViewInit {
       },
       error: (e: any) => {
         this.reviewSubmitting = false;
-        this.reviewError = e?.error?.message || e?.error?.detail || 'Failed to submit review.';
+        // Handle API error structure: { isSuccess, statusCode, error: { code, description } }
+        const apiErrorDesc = e?.error?.error?.description;
+        const apiErrorDetail = e?.error?.detail;
+        const apiErrorMessage = e?.error?.message;
+        this.reviewError = apiErrorDesc || apiErrorDetail || apiErrorMessage || 'Failed to submit review.';
       }
     });
   }
@@ -528,5 +580,50 @@ export class CustomerDesignComponent implements AfterViewInit {
     } else {
       console.error('Wearcast designer script not loaded.');
     }
+  }
+
+  private parsePositiveInt(raw: string | null): number | null {
+    if (!raw?.trim()) {
+      return null;
+    }
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+
+  private loadDraftDesign(designId: number): void {
+    const w = window as Window & {
+      wearcastLoadDesignById?: (id: number) => void;
+    };
+    if (typeof w.wearcastLoadDesignById === 'function') {
+      w.wearcastLoadDesignById(designId);
+    }
+  }
+
+  private getTargetAudienceLabel(value: unknown): string {
+    const map: Record<number, string> = {
+      1: 'Men',
+      2: 'Women',
+      3: 'Unisex',
+      4: 'Kids',
+      8: 'Babies'
+    };
+    if (Array.isArray(value)) {
+      const labels = value
+        .map(v => this.getTargetAudienceLabel(v))
+        .filter(Boolean)
+        .filter(v => v !== 'All');
+      return labels.length ? [...new Set(labels)].join(', ') : 'All';
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return 'All';
+      const maybeNum = Number(trimmed);
+      if (!Number.isNaN(maybeNum) && map[maybeNum]) return map[maybeNum];
+      return trimmed;
+    }
+    if (typeof value === 'number' && map[value]) {
+      return map[value];
+    }
+    return 'All';
   }
 }

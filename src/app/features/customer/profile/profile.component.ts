@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
 import {
@@ -85,6 +85,8 @@ export class ProfileComponent implements OnInit {
   expandedShipmentId: number | null = null;
   shipmentDetailLoading = false;
   shipmentDetail: CustomerShipmentDetailVm | null = null;
+  selectedOrderLine: CustomerShipmentDetailVm['orderLines'][number] | null = null;
+  selectedOrderGalleryIndex = 0;
 
   infoForm = {
     firstName: '',
@@ -109,8 +111,7 @@ export class ProfileComponent implements OnInit {
   constructor(
     private readonly auth: AuthService,
     private readonly profileService: CustomerProfileService,
-    private readonly customerShipmentsService: CustomerShipmentsService,
-    private readonly router: Router
+    private readonly customerShipmentsService: CustomerShipmentsService
   ) {}
 
   ngOnInit(): void {
@@ -305,13 +306,12 @@ export class ProfileComponent implements OnInit {
   getShipmentBadgeClass(status: number | null): string {
     if (status == null) return 'badge-secondary';
     const map: Record<number, string> = {
-      0: 'badge-warning',
       1: 'badge-warning',
-      2: 'badge-info',
-      3: 'badge-primary',
-      4: 'badge-success',
-      5: 'badge-danger',
-      6: 'badge-secondary'
+      2: 'badge-warning',
+      3: 'badge-info',
+      4: 'badge-primary',
+      5: 'badge-primary',
+      6: 'badge-success'
     };
     return map[status] ?? 'badge-secondary';
   }
@@ -328,17 +328,45 @@ export class ProfileComponent implements OnInit {
   }
 
   openShipmentItem(line: CustomerShipmentDetailVm['orderLines'][number]): void {
-    if (line.kind === 'designed') {
-      if (line.designedProductId != null && line.designedProductId > 0) {
-        void this.router.navigate(['/customer/design'], {
-          queryParams: { designedProductIds: line.designedProductId }
-        });
-      }
-      return;
-    }
-    if (line.productId != null && line.productId > 0) {
-      void this.router.navigate(['/customer/product', line.productId]);
-    }
+    this.selectedOrderLine = line;
+    this.selectedOrderGalleryIndex = 0;
+  }
+
+  closeShipmentItemModal(): void {
+    this.selectedOrderLine = null;
+    this.selectedOrderGalleryIndex = 0;
+  }
+
+  nextOrderImage(): void {
+    const total = this.selectedOrderLine?.galleryImageUrls.length ?? 0;
+    if (total <= 1) return;
+    this.selectedOrderGalleryIndex = (this.selectedOrderGalleryIndex + 1) % total;
+  }
+
+  prevOrderImage(): void {
+    const total = this.selectedOrderLine?.galleryImageUrls.length ?? 0;
+    if (total <= 1) return;
+    this.selectedOrderGalleryIndex =
+      (this.selectedOrderGalleryIndex - 1 + total) % total;
+  }
+
+  get selectedOrderImageUrl(): string | null {
+    if (!this.selectedOrderLine?.galleryImageUrls.length) return null;
+    return this.selectedOrderLine.galleryImageUrls[
+      Math.max(
+        0,
+        Math.min(
+          this.selectedOrderGalleryIndex,
+          this.selectedOrderLine.galleryImageUrls.length - 1
+        )
+      )
+    ];
+  }
+
+  setOrderImage(index: number): void {
+    const total = this.selectedOrderLine?.galleryImageUrls.length ?? 0;
+    if (index < 0 || index >= total) return;
+    this.selectedOrderGalleryIndex = index;
   }
 
   get displayName(): string {

@@ -57,6 +57,12 @@ export interface CustomerShipmentOrderLineVm {
   productId: number | null;
   designedProductId: number | null;
   customerDesignId: number | null;
+  colorName: string | null;
+  frontImageUrl: string | null;
+  backImageUrl: string | null;
+  rightImageUrl: string | null;
+  leftImageUrl: string | null;
+  galleryImageUrls: string[];
   title: string;
   subtitle: string;
   quantity: number;
@@ -279,7 +285,7 @@ function normalizeShipmentDetail(
     { label: 'Ordered', at: pickIso(raw, ['orderedAt', 'OrderedAt']) },
     {
       label: 'Ready for pickup',
-      at: pickIso(raw, ['readyForPickUpAt', 'ReadyForPickUpAt'])
+      at: pickIso(raw, ['readyForPickupAt', 'ReadyForPickupAt', 'readyForPickUpAt', 'ReadyForPickUpAt'])
     },
     { label: 'Trip started', at: pickIso(raw, ['tripStartedAt', 'TripStartedAt']) },
     {
@@ -492,6 +498,31 @@ function mapShipmentOrderLine(entry: unknown): CustomerShipmentOrderLineVm | nul
     ]) ||
     pickStr(o, ['imageUrl', 'ImageUrl']) ||
     null;
+  const frontImageUrl =
+    pickStr(src, ['frontImageUrl', 'FrontImageUrl']) ||
+    pickStr(o, ['frontImageUrl', 'FrontImageUrl']) ||
+    null;
+  const backImageUrl =
+    pickStr(src, ['backImageUrl', 'BackImageUrl']) ||
+    pickStr(o, ['backImageUrl', 'BackImageUrl']) ||
+    null;
+  const rightImageUrl =
+    pickStr(src, ['rightImageUrl', 'RightImageUrl']) ||
+    pickStr(o, ['rightImageUrl', 'RightImageUrl']) ||
+    null;
+  const leftImageUrl =
+    pickStr(src, ['leftImageUrl', 'LeftImageUrl']) ||
+    pickStr(o, ['leftImageUrl', 'LeftImageUrl']) ||
+    null;
+  const colorName =
+    pickStr(src, ['colorName', 'ColorName']) || pickStr(o, ['colorName', 'ColorName']) || null;
+  const galleryImageUrls = [
+    frontImageUrl,
+    backImageUrl,
+    rightImageUrl,
+    leftImageUrl,
+    imageUrl
+  ].filter((u, idx, arr): u is string => !!u && arr.indexOf(u) === idx);
   const sizesRaw = src['sizes'] ?? src['Sizes'] ?? o['sizes'] ?? o['Sizes'];
   const sizesLabel = buildSizesLabel(sizesRaw);
   const productId =
@@ -509,6 +540,12 @@ function mapShipmentOrderLine(entry: unknown): CustomerShipmentOrderLineVm | nul
     productId: productId ?? null,
     designedProductId: designedProductId ?? null,
     customerDesignId: customerDesignId ?? null,
+    colorName: colorName || null,
+    frontImageUrl: frontImageUrl || null,
+    backImageUrl: backImageUrl || null,
+    rightImageUrl: rightImageUrl || null,
+    leftImageUrl: leftImageUrl || null,
+    galleryImageUrls,
     title,
     subtitle: sizesLabel || subtitle,
     quantity: Math.max(1, quantity),
@@ -623,10 +660,10 @@ export const CUSTOMER_SHIPMENT_STATUS_OPTIONS: ReadonlyArray<{
   value: number | null;
 }> = [
   { label: 'All statuses', value: null },
-  { label: 'Placed', value: 0 },
   { label: 'Pending', value: 1 },
-  { label: 'Processing', value: 2 },
-  { label: 'Shipped', value: 3 },
-  { label: 'Delivered', value: 4 },
-  { label: 'Cancelled', value: 5 }
+  { label: 'Unassigned', value: 2 },
+  { label: 'Assigned', value: 3 },
+  { label: 'PickingUp', value: 4 },
+  { label: 'OutForDelivery', value: 5 },
+  { label: 'Delivered', value: 6 }
 ];

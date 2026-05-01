@@ -156,7 +156,7 @@ export interface UpdateFactoryManagerProfileRequest {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  providedManagerId: number;
+  providedManagerId?: number;
 }
 
 export interface FactoryOrderSummary {
@@ -170,12 +170,22 @@ export interface FactoryOrderSummary {
 }
 
 export interface FactoryOrderItem {
+  kind: 'fixed' | 'designed';
+  designedProductId?: number;
+  customerDesignId?: number;
   productName: string;
+  colorName?: string;
   imageUrl: string | null;
+  frontImageUrl?: string | null;
+  backImageUrl?: string | null;
+  rightImageUrl?: string | null;
+  leftImageUrl?: string | null;
+  galleryImageUrls: string[];
   quantity: number;
   unitPrice: number;
   totalPrice: number;
   size: string;
+  raw?: Record<string, unknown>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -648,31 +658,141 @@ export class FactoryApiService {
     const url = `${this.base}/api/Orders/${orderId}/items`;
     return this.http.get<unknown>(url).pipe(
       map(res => {
-        const payload = this.unwrapPayload<any>(res);
-        const list = payload?.items ?? payload?.data ?? payload ?? [];
-        if (!Array.isArray(list)) return [];
-        return list.map((row: any) => ({
-          productName:
-            this.pickString(row ?? {}, [
-              'productName',
-              'ProductName',
-              'name',
-              'Name'
-            ]) || 'Item',
-          imageUrl:
-            this.pickString(row ?? {}, ['imageUrl', 'ImageUrl', 'productImage', 'ProductImage']) ||
-            null,
-          quantity: this.toNum(row?.quantity ?? row?.Quantity) ?? 0,
-          unitPrice: this.toNum(row?.unitPrice ?? row?.UnitPrice ?? row?.price ?? row?.Price) ?? 0,
-          totalPrice:
-            this.toNum(row?.totalPrice ?? row?.TotalPrice) ??
-            (this.toNum(row?.quantity ?? row?.Quantity) ?? 0) *
-              (this.toNum(row?.unitPrice ?? row?.UnitPrice ?? row?.price ?? row?.Price) ?? 0),
-          size: this.pickString(row ?? {}, ['size', 'Size']) || '-'
-        }));
+        const payload = this.unwrapPayload<any>(res) ?? res;
+        const rawRows = this.extractOrderItemRows(payload);
+        if (!rawRows.length) return [];
+        return rawRows.map((row: any) => {
+          const o = (row ?? {}) as Record<string, unknown>;
+          const designedProductId = this.toNum(o['designedProductId'] ?? o['DesignedProductId']);
+          const customerDesignId = this.toNum(o['customerDesignId'] ?? o['CustomerDesignId']);
+          const frontImageUrl =
+            this.pickString(o, ['frontImageUrl', 'FrontImageUrl']) || null;
+          const backImageUrl =
+            this.pickString(o, ['backImageUrl', 'BackImageUrl']) || null;
+          const rightImageUrl =
+            this.pickString(o, ['rightImageUrl', 'RightImageUrl']) || null;
+          const leftImageUrl =
+            this.pickString(o, ['leftImageUrl', 'LeftImageUrl']) || null;
+          const imageUrl =
+            this.pickString(o, [
+              'imageUrl',
+              'ImageUrl',
+              'productImage',
+              'ProductImage',
+              'frontImageUrl',
+              'FrontImageUrl'
+            ]) || null;
+          const galleryImageUrls = [
+            frontImageUrl,
+            backImageUrl,
+            rightImageUrl,
+            leftImageUrl,
+            imageUrl
+          ].filter((u, i, arr): u is string => !!u && arr.indexOf(u) === i);
+          const sizes = Array.isArray(o['sizes'] ?? o['Sizes']) ? (o['sizes'] ?? o['Sizes']) as any[] : [];
+          const size = sizes.length
+            ? sizes
+                .map(s => {
+                  const name = this.pickString(s ?? {}, ['sizeName', 'SizeName', 'size', 'Size']).replace(/^_/, '');
+                  const qty = this.toNum((s ?? {})['quantity'] ?? (s ?? {})['Quantity']) ?? 0;
+                  return name ? `${name}${qty > 0 ? ` x${qty}` : ''}` : '';
+                })
+                .filter(Boolean)
+                .join(', ')
+            : this.pickString(o, ['size', 'Size']) || '-';
+          const quantity = this.toNum(o['totalQuantity'] ?? o['TotalQuantity'] ?? o['quantity'] ?? o['Quantity']) ?? 0;
+          const unitPrice = this.toNum(o['unitPrice'] ?? o['UnitPrice'] ?? o['price'] ?? o['Price']) ?? 0;
+          const totalPrice =
+            this.toNum(o['totalPrice'] ?? o['TotalPrice']) ??
+            quantity * unitPrice;
+          return {
+            kind: designedProductId != null || customerDesignId != null ? 'designed' : 'fixed',
+            designedProductId: designedProductId ?? undefined,
+            customerDesignId: customerDesignId ?? undefined,
+            productName:
+              this.pickString(o, ['productName', 'ProductName', 'name', 'Name']) || 'Item',
+            colorName: this.pickString(o, ['colorName', 'ColorName']) || undefined,
+            imageUrl,
+            frontImageUrl,
+            backImageUrl,
+            rightImageUrl,
+            leftImageUrl,
+            galleryImageUrls,
+            quantity,
+            unitPrice,
+            totalPrice,
+            size,
+            raw: o
+          } as FactoryOrderItem;
+        });
       }),
       catchError(() => of([]))
     );
+  }
+
+  private extractOrderItemRows(payload: unknown): any[] {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+    if (!payload || typeof payload !== 'object') {
+      return [];
+    }
+    const p = payload as Record<string, unknown>;
+    const directList =
+      p['items'] ?? p['Items'] ?? p['records'] ?? p['Records'] ?? p['data'] ?? p['Data'];
+    const aggregated: any[] = [];
+    if (Array.isArray(directList) && directList.length > 0) {
+      aggregated.push(...directList);
+    }
+    if (directList && typeof directList === 'object') {
+      const inner = directList as Record<string, unknown>;
+      const nestedList =
+        inner['items'] ?? inner['Items'] ?? inner['records'] ?? inner['Records'] ?? inner['data'] ?? inner['Data'];
+      if (Array.isArray(nestedList) && nestedList.length > 0) {
+        aggregated.push(...nestedList);
+      }
+    }
+    const grouped = this.extractGroupedItems(p);
+    const unique = [...aggregated, ...grouped];
+    return unique.filter(row => !!row && typeof row === 'object');
+  }
+
+  private extractGroupedItems(box: Record<string, unknown>): any[] {
+    const out: any[] = [];
+    const pushFrom = (value: unknown) => {
+      if (Array.isArray(value)) {
+        out.push(...value);
+        return;
+      }
+      if (value && typeof value === 'object') {
+        const o = value as Record<string, unknown>;
+        const nested = o['items'] ?? o['Items'] ?? o['records'] ?? o['Records'] ?? o['data'] ?? o['Data'];
+        if (Array.isArray(nested)) {
+          out.push(...nested);
+        }
+      }
+    };
+
+    pushFrom(box['fixedItems']);
+    pushFrom(box['FixedItems']);
+    pushFrom(box['designedItems']);
+    pushFrom(box['DesignedItems']);
+
+    const rootItems = box['items'] ?? box['Items'];
+    if (rootItems && typeof rootItems === 'object' && !Array.isArray(rootItems)) {
+      const rootObj = rootItems as Record<string, unknown>;
+      pushFrom(rootObj['fixedItems'] ?? rootObj['FixedItems']);
+      pushFrom(rootObj['designedItems'] ?? rootObj['DesignedItems']);
+    }
+
+    const rootData = box['data'] ?? box['Data'];
+    if (rootData && typeof rootData === 'object' && !Array.isArray(rootData)) {
+      const rootDataObj = rootData as Record<string, unknown>;
+      pushFrom(rootDataObj['fixedItems'] ?? rootDataObj['FixedItems']);
+      pushFrom(rootDataObj['designedItems'] ?? rootDataObj['DesignedItems']);
+    }
+
+    return out;
   }
 
   addProductSize(

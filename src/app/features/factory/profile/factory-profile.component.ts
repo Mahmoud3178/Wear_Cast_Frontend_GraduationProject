@@ -7,7 +7,6 @@ import {
   FactoryManager,
   FactoryManagerProfile
 } from '../../../core/services/factory-api.service';
-import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-factory-profile',
@@ -26,11 +25,10 @@ export class FactoryProfileComponent implements OnInit {
 
   // Edit form
   isEditing = false;
-  isManagerAccount = false;
-  editForm = {
+  editingType: 'factory' | 'manager' | null = null;
+  factoryEditForm = {
     name: '',
-    firstName: '',
-    lastName: '',
+    email: '',
     description: '',
     taxIdNumber: '',
     commercialRegisterNumber: '',
@@ -43,55 +41,58 @@ export class FactoryProfileComponent implements OnInit {
     },
     phoneNumber: ''
   };
+  managerEditForm = {
+    firstName: '',
+    lastName: '',
+    phoneNumber: ''
+  };
 
   constructor(
-    private readonly factoryApi: FactoryApiService,
-    private readonly auth: AuthService
+    private readonly factoryApi: FactoryApiService
   ) {}
 
   ngOnInit(): void {
-    this.isManagerAccount = this.auth.getFactoryPortalAccountType() === 'manager';
     this.loadProfile();
   }
 
   loadProfile(): void {
     this.loading = true;
     this.errorMsg = '';
+    let pending = 2;
+    const finishOne = () => {
+      pending -= 1;
+      if (pending <= 0) {
+        this.loading = false;
+      }
+    };
     const handleFactorySuccess = (fp: FactoryProfile) => {
       this.profile = fp;
       this.loadManagers();
+      finishOne();
     };
     const handleManagerSuccess = (mp: FactoryManagerProfile) => {
       this.managerProfile = mp;
       const firstName = (mp.firstName || '').trim();
       const lastName = (mp.lastName || '').trim();
-      const fullName = (mp.name || '').trim();
-      this.editForm = {
-        name: fullName || `${firstName} ${lastName}`.trim(),
-        firstName,
-        lastName,
-        description: '',
-        taxIdNumber: '',
-        commercialRegisterNumber: '',
-        address: {
-          country: '',
-          state: '',
-          city: '',
-          street: '',
-          buildingNumber: ''
-        },
-        phoneNumber: mp.phoneNumber || ''
-      };
-      this.loading = false;
+      this.managerEditForm = { firstName, lastName, phoneNumber: mp.phoneNumber || '' };
+      finishOne();
     };
     const handleError = (err: Error) => {
       this.errorMsg = err.message || 'Failed to load factory profile.';
-      this.loading = false;
+      finishOne();
     };
     this.factoryApi.getFactoryManagerProfile().subscribe({
       next: profile => handleManagerSuccess(profile),
       error: () => {
-        // keep factory profile visible even if manager profile is unavailable
+        // Keep page usable even when manager profile endpoint is unavailable.
+        this.managerProfile = this.managerProfile ?? {
+          firstName: '',
+          lastName: '',
+          name: '',
+          email: '',
+          phoneNumber: ''
+        };
+        finishOne();
       }
     });
     this.factoryApi.getFactoryProfile().subscribe({
@@ -112,51 +113,48 @@ export class FactoryProfileComponent implements OnInit {
   }
 
   startEdit(): void {
+    this.startEditFactory();
+  }
+
+  startEditFactory(): void {
+    if (!this.profile) return;
     this.isEditing = true;
+    this.editingType = 'factory';
     this.successMsg = '';
     this.errorMsg = '';
+    this.factoryEditForm = {
+      name: this.profile.name || '',
+      email: this.profile.email || '',
+      description: this.profile.description || '',
+      taxIdNumber: this.profile.taxIdNumber || '',
+      commercialRegisterNumber: this.profile.commercialRegisterNumber || '',
+      address: {
+        country: this.profile.address?.country || '',
+        state: this.profile.address?.state || '',
+        city: this.profile.address?.city || '',
+        street: this.profile.address?.street || '',
+        buildingNumber: this.profile.address?.buildingNumber || ''
+      },
+      phoneNumber: this.profile.phoneNumber || ''
+    };
+  }
+
+  startEditManager(): void {
+    if (!this.managerProfile) return;
+    this.isEditing = true;
+    this.editingType = 'manager';
+    this.successMsg = '';
+    this.errorMsg = '';
+    this.managerEditForm = {
+      firstName: (this.managerProfile.firstName || '').trim(),
+      lastName: (this.managerProfile.lastName || '').trim(),
+      phoneNumber: this.managerProfile.phoneNumber || ''
+    };
   }
 
   cancelEdit(): void {
     this.isEditing = false;
-    if (this.isManagerAccount && this.managerProfile) {
-      const mp = this.managerProfile;
-      this.editForm = {
-        name: mp.name || `${mp.firstName || ''} ${mp.lastName || ''}`.trim(),
-        firstName: (mp.firstName || '').trim(),
-        lastName: (mp.lastName || '').trim(),
-        description: '',
-        taxIdNumber: '',
-        commercialRegisterNumber: '',
-        address: {
-          country: '',
-          state: '',
-          city: '',
-          street: '',
-          buildingNumber: ''
-        },
-        phoneNumber: mp.phoneNumber || ''
-      };
-      return;
-    }
-    if (this.profile) {
-      this.editForm = {
-        name: this.profile.name || '',
-        firstName: '',
-        lastName: '',
-        description: this.profile.description || '',
-        taxIdNumber: this.profile.taxIdNumber || '',
-        commercialRegisterNumber: this.profile.commercialRegisterNumber || '',
-        address: {
-          country: this.profile.address?.country || '',
-          state: this.profile.address?.state || '',
-          city: this.profile.address?.city || '',
-          street: this.profile.address?.street || '',
-          buildingNumber: this.profile.address?.buildingNumber || ''
-        },
-        phoneNumber: this.profile.phoneNumber || ''
-      };
-    }
+    this.editingType = null;
   }
 
   saveProfile(): void {
@@ -174,44 +172,43 @@ export class FactoryProfileComponent implements OnInit {
       this.saving = false;
       this.errorMsg = err.message || 'Failed to update profile.';
     };
-    if (this.isManagerAccount) {
-      const firstName = this.editForm.firstName.trim();
-      const lastName = this.editForm.lastName.trim();
+    if (this.editingType === 'factory') {
+      this.factoryApi.updateFactoryProfile({
+        name: this.factoryEditForm.name.trim(),
+        email: this.factoryEditForm.email.trim(),
+        description: this.factoryEditForm.description.trim(),
+        taxIdNumber: this.factoryEditForm.taxIdNumber.trim(),
+        commercialRegisterNumber: this.factoryEditForm.commercialRegisterNumber.trim(),
+        address: {
+          country: this.factoryEditForm.address.country.trim(),
+          state: this.factoryEditForm.address.state.trim(),
+          city: this.factoryEditForm.address.city.trim(),
+          street: this.factoryEditForm.address.street.trim(),
+          buildingNumber: this.factoryEditForm.address.buildingNumber.trim()
+        },
+        phoneNumber: this.factoryEditForm.phoneNumber.trim()
+      }).subscribe({
+        next: onSuccess,
+        error: onError
+      });
+    } else if (this.editingType === 'manager') {
+      const firstName = this.managerEditForm.firstName.trim();
+      const lastName = this.managerEditForm.lastName.trim();
       this.factoryApi.updateFactoryManagerProfile({
         firstName,
         lastName,
-        phoneNumber: this.editForm.phoneNumber.trim(),
-        providedManagerId: this.getProvidedManagerId()
+        phoneNumber: this.managerEditForm.phoneNumber.trim()
       }).subscribe({
         next: onSuccess,
         error: onError
       });
     } else {
-      this.factoryApi.updateFactoryProfile({
-        name: this.editForm.name.trim(),
-        description: this.editForm.description.trim(),
-        taxIdNumber: this.editForm.taxIdNumber.trim(),
-        commercialRegisterNumber: this.editForm.commercialRegisterNumber.trim(),
-        address: {
-          country: this.editForm.address.country.trim(),
-          state: this.editForm.address.state.trim(),
-          city: this.editForm.address.city.trim(),
-          street: this.editForm.address.street.trim(),
-          buildingNumber: this.editForm.address.buildingNumber.trim()
-        },
-        phoneNumber: this.editForm.phoneNumber.trim()
-      }).subscribe({
-        next: onSuccess,
-        error: onError
-      });
+      this.saving = false;
+      this.errorMsg = 'Choose what to edit first.';
     }
   }
 
   onImageSelected(event: Event): void {
-    if (this.isManagerAccount) {
-      this.errorMsg = 'Profile image change is available for the factory account only.';
-      return;
-    }
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
@@ -225,33 +222,5 @@ export class FactoryProfileComponent implements OnInit {
         this.errorMsg = err.message || 'Failed to update profile image.';
       }
     });
-  }
-
-  private getProvidedManagerId(): number {
-    const token = this.auth.getToken();
-    if (!token) return 0;
-    try {
-      const payloadRaw = token.split('.')[1];
-      if (!payloadRaw) return 0;
-      const base64 = payloadRaw.replace(/-/g, '+').replace(/_/g, '/');
-      const json = atob(base64 + '==='.slice((base64.length + 3) % 4));
-      const payload = JSON.parse(json) as Record<string, unknown>;
-      const idCandidate =
-        payload['providedManagerId'] ??
-        payload['managerId'] ??
-        payload['id'] ??
-        payload['nameid'] ??
-        payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
-      if (typeof idCandidate === 'number' && Number.isFinite(idCandidate)) {
-        return Math.max(0, Math.floor(idCandidate));
-      }
-      if (typeof idCandidate === 'string') {
-        const parsed = parseInt(idCandidate, 10);
-        return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
-      }
-      return 0;
-    } catch {
-      return 0;
-    }
   }
 }

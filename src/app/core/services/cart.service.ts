@@ -129,6 +129,15 @@ export class CartService {
     return this.http.delete(`${this.base}/DeleteCartItem/${cartItemId}`);
   }
 
+  /** PUT /api/Cart/UpdateItemQuantity */
+  updateItemQuantity(cartItemId: number, size: number, newQuantity: number): Observable<unknown> {
+    return this.http.put(`${this.base}/UpdateItemQuantity`, {
+      cartItemId,
+      size,
+      newQuantity
+    });
+  }
+
   /** POST /api/Cart/AddOrUpdateFixedColorToCart */
   addOrUpdateFixed(req: AddOrUpdateFixedColorToCartRequest): Observable<unknown> {
     const first = req.sizes?.[0];

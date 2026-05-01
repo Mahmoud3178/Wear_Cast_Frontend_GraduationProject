@@ -126,8 +126,8 @@ export class CartComponent implements OnInit {
           const cartItemId = f.cartItemId || f.CartItemId;
           const productId = f.productId || f.ProductId;
 
-          // API may return a flat { size, quantity } OR a grouped { sizes: [{size,quantity}] }
-          const sizesArray: { size: any; quantity: number }[] = Array.isArray(f.sizes ?? f.Sizes)
+          // API may return a flat { size, quantity } OR a grouped { sizes: [{size,quantityInCart}] }
+          const sizesArray: { size: any; quantity?: number; quantityInCart?: number; QuantityInCart?: number }[] = Array.isArray(f.sizes ?? f.Sizes)
             ? (f.sizes ?? f.Sizes)
             : [{
                 size: f.size ?? f.Size ?? f.sizeId ?? f.SizeId,
@@ -140,16 +140,19 @@ export class CartComponent implements OnInit {
               }];
 
           const sizesList = sizesArray
-            .filter(s => s.quantity > 0 || s.size != null)
+            .filter(s => (s.quantity ?? s.quantityInCart ?? s.QuantityInCart ?? 0) > 0 || s.size != null)
             .map((s) => {
               const sVal = mapSize(s.size) || '';
               const sizeEnum = this.sizeToEnum(sVal || String(s.size ?? ''));
-              const qty = this.asPositiveInt(s.quantity ?? 1, 1);
+              const qty = this.asPositiveInt(
+                s.quantity ?? s.quantityInCart ?? s.QuantityInCart ?? 1,
+                1
+              );
               return { sizeLabel: sVal || String(s.size ?? ''), quantity: qty, sizeEnum };
             });
 
           const metaParts = [colorName].filter(Boolean);
-          
+
           return {
             cartItemId,
             name: productName,
@@ -295,11 +298,12 @@ export class CartComponent implements OnInit {
 
     const actualSizeEnum = targetSizeEnum;
 
-    const req$ = item.type === 'fixed' && item.colorId != null
-      ? this.cartService.addOrUpdateFixed({
-          colorId: item.colorId,
-          sizes: [{ size: actualSizeEnum, quantity: Math.max(0, nextQty) }]
-        })
+    const req$ = item.type === 'fixed' && item.cartItemId != null
+      ? this.cartService.updateItemQuantity(
+          item.cartItemId,
+          actualSizeEnum,
+          Math.max(0, nextQty)
+        )
       : item.type === 'design' && item.designId != null
         ? this.cartService.addOrUpdateDesigned({ designId: item.designId, size: actualSizeEnum, quantity: delta })
         : of(null);
@@ -407,7 +411,7 @@ export class CartComponent implements OnInit {
 
   openSizeDetails(item: CartItemView): void {
     if (item.type !== 'fixed' || !item.productId) return;
-    
+
     this.showProductDetailsModal = true;
     this.detailsModalLoading = true;
     this.activeProductDetails = null;
