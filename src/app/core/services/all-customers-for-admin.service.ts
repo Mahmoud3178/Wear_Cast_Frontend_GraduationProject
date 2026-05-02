@@ -11,6 +11,7 @@ export class AllCustomersForAdminService {
 
   constructor(private http: HttpClient) {}
 
+  // ================= GET ALL =================
   getAllCustomers(pageIndex = 1, pageSize = 5, searchTerm = '') {
 
     let params = new HttpParams()
@@ -24,23 +25,28 @@ export class AllCustomersForAdminService {
     return this.http.get(`${this.baseUrl}/api/admin/customers/all`, { params });
   }
 
+  // ================= GET BY ID =================
   getCustomerById(id: number) {
     return this.http.get(`${this.baseUrl}/api/customers/profile`, {
       params: { ProvidedCustomerId: id }
     });
   }
 
+  // ================= UPDATE =================
 updateCustomer(id: number, body: any) {
   return this.http.put(`${this.baseUrl}/api/customers/profile`, {
-    ...body,
-    providedCustomerId: id
+    providedCustomerId: id,
+    ...body
   });
 }
-deleteCustomer(id: number) {
-  return this.http.delete(`${this.baseUrl}/api/admin/customers/profile`, {
-    params: { ProvidedCustomerId: id }
+
+  // ================= DELETE ================= ✅ FIXED
+deleteCustomer(id: number, body: any) {
+  return this.http.delete(`${this.baseUrl}/api/customers/${id}`, {
+    body
   });
 }
+  // ================= IMAGE =================
 
   updateCustomerImage(id: number, file: File) {
     const formData = new FormData();
@@ -50,7 +56,13 @@ deleteCustomer(id: number) {
     return this.http.put(`${this.baseUrl}/api/customers/profile-image`, formData);
   }
 
-  // 🚀 OPTIONAL: Orders (لو موجود endpoint)
+  deleteCustomerImage(id: number) {
+    return this.http.delete(`${this.baseUrl}/api/customers/profile-image`, {
+      params: { ProvidedCustomerId: id }
+    });
+  }
+
+  // ================= ORDERS =================
   getCustomerOrders(id: number) {
     return this.http.get(`${this.baseUrl}/api/customers/orders`, {
       params: { customerId: id }

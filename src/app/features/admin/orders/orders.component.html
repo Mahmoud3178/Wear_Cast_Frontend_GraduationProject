@@ -1,192 +1,79 @@
 <div class="container-fluid p-4">
 
-  <!-- 🔝 SEARCH + FILTERS -->
-  <div class="card shadow-sm border-0 mb-4">
+  <!-- SEARCH + FILTER -->
+  <div class="card shadow-sm mb-3">
     <div class="card-body">
 
-      <div class="row g-3 align-items-center">
+      <div class="d-flex gap-2">
 
-        <!-- 🔍 Search -->
-        <div class="col-12 col-lg-6">
-          <div class="input-group shadow-sm">
-            <span class="input-group-text bg-white border-end-0">
-              <i class="bi bi-search"></i>
-            </span>
+        <input class="form-control"
+               placeholder="Search..."
+               [(ngModel)]="searchTerm"
+               (input)="onSearch()">
 
-            <input type="text"
-                   class="form-control border-start-0"
-                   placeholder="Search by Order ID, Customer..."
-                   [(ngModel)]="searchTerm"
-                   (input)="onSearch()" />
-          </div>
-        </div>
+        <button class="btn btn-outline-primary"
+                (click)="setStatus(null)">
+          All
+        </button>
 
-        <!-- 🎯 Filters -->
-        <div class="col-12 col-lg-6">
+        <button class="btn btn-outline-success"
+                (click)="setStatus('Paid')">
+          Paid
+        </button>
 
-          <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+        <button class="btn btn-outline-warning"
+                (click)="setStatus('Ready')">
+          Ready
+        </button>
 
-            <button class="btn btn-sm btn-outline-secondary"
-                    [class.active]="selectedStatus === null"
-                    (click)="setStatus(null)">
-              All
-            </button>
-
-            <button class="btn btn-sm btn-outline-primary"
-                    [class.active]="selectedStatus === 'Paid'"
-                    (click)="setStatus('Paid')">
-              Paid
-            </button>
-
-            <button class="btn btn-sm btn-outline-warning"
-                    [class.active]="selectedStatus === 'Ready'"
-                    (click)="setStatus('Ready')">
-              Ready
-            </button>
-
-            <button class="btn btn-sm btn-outline-danger"
-                    [class.active]="selectedStatus === 'Cancelled'"
-                    (click)="setStatus('Cancelled')">
-              Cancelled
-            </button>
-
-          </div>
-
-        </div>
+        <button class="btn btn-outline-danger"
+                (click)="setStatus('Cancelled')">
+          Cancelled
+        </button>
 
       </div>
 
     </div>
   </div>
 
-  <div class="row">
+  <!-- TABLE -->
+  <table class="table table-hover">
 
-    <!-- 🟦 TABLE -->
-    <div class="col-12">
-      <h4 class="fw-bold mb-3">Manage Orders</h4>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Customer</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Items</th>
+      </tr>
+    </thead>
 
-      <div class="card shadow-sm border-0">
-        <div class="card-body p-0">
+    <tbody>
 
-          <table class="table table-hover mb-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>orderType</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Items</th>
-              </tr>
-            </thead>
+      <tr *ngFor="let order of orders"
+          (click)="openDetails(order.id)"
+          style="cursor:pointer">
 
-            <tbody>
-<tr *ngFor="let order of orders"
-    (click)="openDetails(order)"
-    data-bs-toggle="offcanvas"
-    data-bs-target="#orderDetails">
-
-  <td>#{{order.id}}</td>
-
-  <td>{{order.recipientName}}</td>
-
-  <td>{{order.orderType}}</td>
-
-  <td>${{order.totalAmount}}</td>
-
-  <td>
-    <span class="badge"
-      [ngClass]="{
-        'bg-success': order.status === 'Paid',
-        'bg-warning': order.status === 'Ready'
-      }">
-      {{order.status}}
-    </span>
-  </td>
-
-  <td>{{order.items?.length || 0}}</td>
-</tr>
-            </tbody>
-
-          </table>
-
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- 🟨 OFFCANVAS -->
-<div class="offcanvas offcanvas-end shadow"
-     tabindex="-1"
-     id="orderDetails">
-
-  <div class="offcanvas-header border-bottom">
-    <h5 class="fw-bold">{{selectedOrder?.id}}</h5>
-    <button type="button"
-            class="btn-close"
-            data-bs-dismiss="offcanvas"></button>
-  </div>
-
-  <div class="offcanvas-body" *ngIf="selectedOrder">
+        <td>#{{order.id}}</td>
+        <td>{{order.recipientName}}</td>
+        <td>{{order.orderType}}</td>
+     <td>{{order.totalAmount}} LE</td>
 
 
+        <td>
+          <span class="badge bg-success">{{order.status}}</span>
+        </td>
+       <td>
+  <span class="badge bg-dark">
+    {{ order.itemsCount || 0 }}
+  </span>
+</td>
+      </tr>
 
-    <!-- Items -->
-    <h6 class="fw-bold mb-3">Order Items</h6>
+    </tbody>
 
-    <div *ngFor="let item of selectedOrder.items"
-         class="d-flex justify-content-between align-items-center border rounded p-2 mb-2">
+  </table>
 
-      <span>{{item.name}}</span>
-      <span class="fw-semibold">${{item.totalAmount}}</span>
-    </div>
-
-    <div class="fw-bold text-end mb-4">
-      Total: ${{selectedOrder.totalAmount}}
-    </div>
-
-    <hr>
-
-    <!-- Customer Info -->
-    <h6 class="fw-bold mb-3">Customer Information</h6>
-<p><b>Name:</b> {{selectedOrder.recipientName}}</p>
-
-<p><b>Email:</b> {{selectedOrder.recipientEmail}}</p>
-
-<p><b>Phone:</b> {{selectedOrder.recipientPhoneNumber}}</p>
-
-    <!-- Buttons -->
-    <div class="d-flex justify-content-end gap-2 mt-4">
-      <button class="btn btn-light border"
-              data-bs-dismiss="offcanvas">
-        Cancel
-      </button>
-
- <button class="btn btn-primary" (click)="updateOrder()">
-  Update Order
-</button>
-    </div>
-
-    <hr>
-
-<!-- 🚚 Shipping & Payment -->
-<h6 class="fw-bold mb-3">Shipping & Payment</h6>
-
-<div class="mb-3">
-  <p class="mb-1 text-muted">Shipping Address</p>
-  <p class="fw-semibold mb-0">
-    {{selectedOrder.shippingAddress}}
-  </p>
-</div>
-
-<div>
-  <p class="mb-1 text-muted">Payment Method</p>
-  <p class="fw-semibold mb-0">
-    {{selectedOrder.paymentMethod}}
-  </p>
-</div>
-
-  </div>
 </div>

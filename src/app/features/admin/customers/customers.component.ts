@@ -23,7 +23,9 @@ export class CustomersComponent {
 
   customers: any[] = [];
   isLoading = false;
-
+showDeleteBox = false;
+deleteReason = '';
+selectedCustomerId!: number;
   currentPage = 1;
   pageSize = 5;
   totalCount = 0;
@@ -61,7 +63,35 @@ export class CustomersComponent {
       error: () => this.isLoading = false
     });
   }
+openDelete(id: number) {
+  this.selectedCustomerId = id;
+  this.deleteReason = '';
+  this.showDeleteBox = true;
+}
+cancelDelete() {
+  this.showDeleteBox = false;
+  this.deleteReason = '';
+}
+confirmDelete() {
 
+  if (!this.deleteReason || this.deleteReason.trim() === '') {
+    alert('Please enter delete reason');
+    return;
+  }
+
+  const body = {
+    reason: this.deleteReason
+  };
+
+  this.customerService.deleteCustomer(this.selectedCustomerId, body)
+    .subscribe({
+      next: () => {
+        this.showDeleteBox = false;
+        this.loadCustomers();
+      },
+      error: (err) => alert(err.error?.title || 'Delete failed')
+    });
+}
   onSearch() {
     this.currentPage = 1;
     this.loadCustomers();
@@ -109,11 +139,18 @@ export class CustomersComponent {
     }
   }
 
-  deleteCustomer(id: number) {
-    if (!confirm('Delete customer?')) return;
+deleteCustomer(id: number) {
 
-    this.customerService.deleteCustomer(id).subscribe({
-      next: () => this.loadCustomers()
-    });
-  }
+  const reason = prompt('Enter delete reason:');
+
+  if (!reason || reason.trim() === '') return;
+
+  const body = {
+    reason: reason
+  };
+
+  this.customerService.deleteCustomer(id, body).subscribe({
+    next: () => this.loadCustomers()
+  });
+}
 }

@@ -105,23 +105,23 @@ mapOrder(o: any) {
   return {
     id: o.id,
     recipientName: o.recipientName || '',
-    recipientEmail: o.recipientEmail || '',   // ❗ لو موجود في API لاحقًا
+    recipientEmail: o.recipientEmail || '',
     recipientPhoneNumber: o.recipientPhoneNumber || '',
     totalAmount: o.totalAmount || 0,
     status: o.status || 'Unknown',
     createdOn: o.createdOn,
 
-    orderType: o.orderType,
+    orderType: o.orderType || 'Unknown',
 
     shippingAddress: o.shippingAddress
       ? `${o.shippingAddress.street}, ${o.shippingAddress.city}, ${o.shippingAddress.state}`
       : '',
 
-    items: []
+    // ✅ الحل هنا
+    itemsCount: o.totalOrderItems || 0
   };
 }
-    // 🔹 Get All Orders (Admin)
-getAllOrders(pageNumber = 1, pageSize = 10, statusFilter?: number) {
+ getAllOrders(pageNumber = 1, pageSize = 10, statusFilter?: number) {
   let params = new HttpParams()
     .set('pageNumber', pageNumber)
     .set('pageSize', pageSize);
@@ -137,8 +137,8 @@ getAllOrders(pageNumber = 1, pageSize = 10, statusFilter?: number) {
     })
   });
 }
-  // 🔹 Get Order Items (Details)
-getOrderItems(orderId: number) {
+
+getOrderById(orderId: number) {
   return this.http.get(`${this.orderUrl}/${orderId}/items`, {
     headers: new HttpHeaders({
       Authorization: `Bearer ${this.getToken()}`

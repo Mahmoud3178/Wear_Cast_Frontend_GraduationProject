@@ -1,56 +1,100 @@
 <div class="container-fluid p-4">
 
-  <!-- Header -->
+  <!-- HEADER -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h3 class="fw-bold">Admins List</h3>
       <p class="text-muted">Manage platform administrators</p>
     </div>
 
-    <button class="btn btn-primary" (click)="goToAdd()">
+    <button class="btn btn-primary" (click)="toggleAdd()">
       + Add New Admin
     </button>
   </div>
 
-  <!-- Table -->
+  <!-- TABLE -->
   <div class="card shadow-sm">
-    <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th></th>
+        </tr>
+      </thead>
 
-      <table class="table table-hover mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th></th>
-          </tr>
-        </thead>
+      <tbody>
+        <tr *ngFor="let admin of admins">
 
-        <tbody>
-          <tr *ngFor="let admin of admins"
-              (click)="goToDetails(admin.id)"
-              style="cursor:pointer">
+          <td>{{admin.fullName}}</td>
+          <td>{{admin.email}}</td>
+          <td>{{admin.role}}</td>
 
-            <td>{{admin.name}}</td>
-            <td>{{admin.email}}</td>
-            <td>
-              <span class="badge bg-info text-dark">
-                {{admin.role}}
-              </span>
-            </td>
+          <td class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary"
+                    (click)="goToDetails(admin.id)">
+              Details
+            </button>
 
-            <td>
-              <button class="btn btn-sm btn-outline-primary">
-                Show Details
-              </button>
-            </td>
+            <button class="btn btn-sm btn-danger"
+                    [disabled]="admin.role === 'SuperAdmin'"
+                    (click)="deleteAdmin(admin.id)">
+              Delete
+            </button>
+          </td>
 
-          </tr>
-        </tbody>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-      </table>
+</div>
 
+<!-- DRAWER -->
+<div class="drawer" [class.open]="showAdd">
+
+  <div class="drawer-content">
+
+    <h5 class="mb-3">Add Admin</h5>
+
+    <input class="form-control mb-2" placeholder="First Name"
+           [(ngModel)]="newAdmin.firstName">
+
+    <input class="form-control mb-2" placeholder="Last Name"
+           [(ngModel)]="newAdmin.lastName">
+
+    <input class="form-control mb-2" placeholder="Email"
+           [(ngModel)]="newAdmin.email">
+
+    <input class="form-control mb-2" placeholder="Phone"
+           [(ngModel)]="newAdmin.phoneNumber">
+
+    <input type="password" class="form-control mb-2"
+           placeholder="Password"
+           [(ngModel)]="newAdmin.password">
+
+    <input type="password" class="form-control mb-2"
+           placeholder="Confirm Password"
+           [(ngModel)]="newAdmin.confirmPassword">
+
+    <select class="form-control mb-3"
+            [(ngModel)]="newAdmin.role">
+
+      <option value="">Select Role</option>
+      <option>SuperAdmin</option>
+      <option>OperationsAdmin</option>
+      <option>CustomerServiceAdmin</option>
+      <option>VendorAdmin</option>
+      <option>CatalogAdmin</option>
+
+    </select>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-success w-100" (click)="addAdmin()">Save</button>
+      <button class="btn btn-secondary w-100" (click)="toggleAdd()">Cancel</button>
     </div>
+
   </div>
 
 </div>

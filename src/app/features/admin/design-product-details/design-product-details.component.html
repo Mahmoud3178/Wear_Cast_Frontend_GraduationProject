@@ -13,32 +13,37 @@
       <div class="col-md-6">
 
         <!-- MAIN IMAGE -->
-        <img class="img-fluid rounded shadow-sm mb-3"
-             [src]="getImage(currentImage)"
-             style="height:400px;object-fit:cover;width:100%">
+      <div class="main-image-box">
+  <img
+    [src]="getImage(currentImage)"
+    class="main-image">
+</div>
 
         <!-- THUMBNAILS -->
-        <div class="d-flex gap-2 flex-wrap">
+   <div class="d-flex gap-3 mt-3 flex-wrap justify-content-center align-items-start">
 
-          <!-- main -->
-          <img
-            [src]="getImage(selectedColor?.mainImageUrl)"
-            (click)="changeImage(selectedColor?.mainImageUrl)"
-            class="thumb-img">
+  <!-- main -->
+  <div class="text-center">
+    <img
+      [src]="getImage(selectedColor?.mainImageUrl)"
+      (click)="changeImage(selectedColor?.mainImageUrl)"
+      class="thumb-img">
+    <small class="d-block text-muted">Main</small>
+  </div>
 
-          <!-- images -->
-          <div *ngFor="let img of selectedColor?.images">
-            <img
-              [src]="getImage(img.imageUrl)"
-              (click)="changeImage(img.imageUrl)"
-              class="thumb-img">
+  <!-- images -->
+  <div *ngFor="let img of selectedColor?.images" class="text-center">
+    <img
+      [src]="getImage(img.imageUrl)"
+      (click)="changeImage(img.imageUrl)"
+      class="thumb-img">
 
-            <small class="d-block text-center text-muted">
-              {{ img.viewSide }}
-            </small>
-          </div>
+    <small class="d-block text-muted">
+      {{ img.viewSide }}
+    </small>
+  </div>
 
-        </div>
+</div>
 
       </div>
 

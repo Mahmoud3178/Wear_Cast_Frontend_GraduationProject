@@ -15,10 +15,11 @@ export class DeliveryCompanyComponent implements OnInit {
   company: any;
   loading = true;
   editMode = false;
-
+  showCompanyModal = false;
   selectedFile!: File;
 
   form: any = {
+    // Company
     name: '',
     email: '',
     phoneNumber: '',
@@ -29,7 +30,15 @@ export class DeliveryCompanyComponent implements OnInit {
     state: '',
     city: '',
     street: '',
-    buildingNumber: ''
+    buildingNumber: '',
+
+    // Manager (REQUIRED)
+    managerEmail: '',
+    managerFirstName: '',
+    managerLastName: '',
+    managerPhone: '',
+    password: '',
+    confirmPassword: ''
   };
 
   constructor(private service: ShippingCompanyForAdminService) {}
@@ -89,8 +98,78 @@ loadCompany(id: number) {
       this.loadCompany(this.company.id);
     });
   }
+ addCompany() {
 
-  deleteCompany() {
-    alert('Delete API not ready yet 🚧');
+  const formData = new FormData();
+
+  // ================= Manager =================
+  formData.append('ManagerEmail', this.form.managerEmail);
+  formData.append('ManagerFirstName', this.form.managerFirstName);
+  formData.append('ManagerLastName', this.form.managerLastName);
+  formData.append('ManagerPhoneNumber', this.form.managerPhone);
+  formData.append('ManagerPassword', this.form.password);
+  formData.append('ManagerConfirmPassword', this.form.confirmPassword);
+
+  // ================= Company =================
+  formData.append('CompanyName', this.form.name);
+  formData.append('CompanyEmail', this.form.email);
+  formData.append('CompanyPhoneNumber', this.form.phoneNumber);
+
+  // 🔥 REQUIRED FIXES (المهمين اللي كانوا ناقصين)
+  formData.append('Description', this.form.description || '');
+  formData.append('TaxIdNumber', this.form.taxIdNumber || '');
+  formData.append('CommercialRegisterNumber', this.form.commercialRegisterNumber || '');
+  formData.append('CompanyState', this.form.state || '');
+
+  // address
+  formData.append('CompanyCity', this.form.city || '');
+  formData.append('CompanyStreet', this.form.street || '');
+  formData.append('CompanyBuildingNumber', this.form.buildingNumber || '');
+
+  // optional
+  formData.append('DeliveryFee', this.form.deliveryFee?.toString() || '0');
+
+  // logo (IMPORTANT)
+  if (this.selectedFile) {
+    formData.append('CompanyLogo', this.selectedFile);
   }
+
+  this.service.createCompany(formData).subscribe({
+    next: () => {
+      this.closeAddModal();
+      this.loadCompany(1);
+      alert('Company created successfully');
+    },
+    error: (err) => {
+      console.error(err);
+      alert('Error creating company');
+    }
+  });
+}
+
+    openCompanyModal() {
+    this.showCompanyModal = true;
+  }
+
+  closeAddModal() {
+    this.showCompanyModal = false;
+  }
+
+deleteCompany() {
+  if (!this.company?.id) return;
+
+  const reason = prompt('Enter reason for deleting company:');
+  if (!reason) return;
+
+  this.service.deleteCompany(this.company.id, reason).subscribe({
+    next: () => {
+      alert('Company deleted successfully');
+      this.company = null;
+    },
+    error: (err) => {
+      console.error(err);
+      alert('Delete failed');
+    }
+  });
+}
 }

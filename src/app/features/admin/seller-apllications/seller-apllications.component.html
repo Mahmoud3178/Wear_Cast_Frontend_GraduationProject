@@ -1,7 +1,48 @@
 <div class="container mt-4">
 
   <h3>Seller Applications</h3>
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
 
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+      <!-- 🔍 SEARCH (شمال) -->
+      <div style="flex:1; max-width:300px;">
+        <input class="form-control"
+               placeholder="Search by name or email..."
+               [(ngModel)]="searchTerm"
+               (input)="onSearch()">
+      </div>
+
+      <!-- 🎯 FILTER (يمين) -->
+      <div class="d-flex gap-2 flex-wrap">
+
+        <button class="btn btn-outline-primary"
+                (click)="setStatus(null)">
+          All
+        </button>
+
+        <button class="btn btn-outline-warning"
+                (click)="setStatus('Pending')">
+          Pending
+        </button>
+
+        <button class="btn btn-outline-success"
+                (click)="setStatus('Approved')">
+          Approved
+        </button>
+
+        <button class="btn btn-outline-danger"
+                (click)="setStatus('Rejected')">
+          Rejected
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
   <!-- TABLE -->
   <table class="table table-hover mt-3">
     <thead>
@@ -14,7 +55,7 @@
     </thead>
 
     <tbody>
-      <tr *ngFor="let app of applications"
+      <tr *ngFor="let app of filteredApplications"
           (click)="open(app)"
           style="cursor:pointer">
 

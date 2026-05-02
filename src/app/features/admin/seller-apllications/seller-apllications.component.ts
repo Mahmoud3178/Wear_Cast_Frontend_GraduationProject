@@ -11,14 +11,17 @@ import { SellerApllicationsService } from '../../../core/services/seller-apllica
   styleUrl: './seller-apllications.component.css'
 })
 export class SellerApllicationsComponent implements OnInit {
-
   applications: any[] = [];
+  filteredApplications: any[] = [];
+
   selectedApplication: any = null;
 
   showDrawer = false;
   rejectMode = false;
   rejectReason = '';
-
+  // 🔥 جديد
+  searchTerm: string = '';
+  selectedStatus: string | null = null;
   constructor(private service: SellerApllicationsService) {}
 
   ngOnInit() {
@@ -29,9 +32,32 @@ export class SellerApllicationsComponent implements OnInit {
   load() {
     this.service.getAll().subscribe((res: any) => {
       this.applications = res?.items || res?.data?.items || [];
+
+         this.applyFilters();
     });
   }
+applyFilters() {
+    this.filteredApplications = this.applications.filter(app => {
 
+      const matchStatus =
+        !this.selectedStatus || app.status === this.selectedStatus;
+
+      const matchSearch =
+        !this.searchTerm ||
+        app.sellerName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        app.sellerEmail?.toLowerCase().includes(this.searchTerm.toLowerCase());
+
+      return matchStatus && matchSearch;
+    });
+  }
+   onSearch() {
+    this.applyFilters();
+  }
+
+  setStatus(status: string | null) {
+    this.selectedStatus = status;
+    this.applyFilters();
+  }
   // 🔹 OPEN DETAILS
   open(app: any) {
     this.service.getById(app.id).subscribe((res: any) => {

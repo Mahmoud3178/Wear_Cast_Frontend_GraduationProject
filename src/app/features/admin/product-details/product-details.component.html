@@ -15,20 +15,23 @@
         <!-- MAIN IMAGE -->
         <div class="position-relative">
 
-          <img class="img-fluid rounded shadow-sm"
-               [src]="getImage(currentImage)"
-               style="height:400px;object-fit:cover;width:100%">
+<div class="main-image-box position-relative">
 
-          <!-- PREV -->
-          <button class="nav-btn left" (click)="prevImage()">‹</button>
+  <img
+    [src]="getImage(currentImage)"
+    class="main-image">
 
-          <!-- NEXT -->
-          <button class="nav-btn right" (click)="nextImage()">›</button>
+  <!-- arrows -->
+  <button class="nav-btn left" (click)="prevImage()">‹</button>
+  <button class="nav-btn right" (click)="nextImage()">›</button>
+
+</div>
+
 
         </div>
 
         <!-- THUMBNAILS -->
-        <div class="d-flex gap-2 mt-3 flex-wrap">
+       <div class="d-flex gap-2 mt-3 flex-wrap justify-content-center">
 
           <!-- main -->
           <img

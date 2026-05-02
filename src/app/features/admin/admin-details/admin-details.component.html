@@ -1,48 +1,43 @@
 <div class="container p-4">
 
-  <h3 class="fw-bold mb-4">Admin Details (ID: {{id}})</h3>
+  <h3 class="fw-bold mb-4">Admin Details</h3>
 
-  <div class="card shadow-sm p-4">
-
-    <h5 class="mb-3">Personal Information</h5>
+  <div class="card p-4 shadow-sm">
 
     <div class="row mb-3">
+
       <div class="col-md-6">
         <label>First Name</label>
-        <input class="form-control" value="Sarah">
+        <input class="form-control" [(ngModel)]="admin.firstName">
       </div>
 
       <div class="col-md-6">
         <label>Last Name</label>
-        <input class="form-control" value="Jenkins">
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <label>Email</label>
-        <input class="form-control" value="sarah@clothify.com">
+        <input class="form-control" [(ngModel)]="admin.lastName">
       </div>
 
-      <div class="col-md-6">
-        <label>Phone</label>
-        <input class="form-control" value="+1 555 123 4567">
-      </div>
     </div>
 
-    <hr>
-
-    <h5>Role</h5>
-    <select class="form-select mb-3">
-      <option>Manager</option>
-      <option>Moderator</option>
-      <option>Super Admin</option>
-    </select>
-
-    <div class="text-end">
-      <button class="btn btn-secondary me-2">Cancel</button>
-      <button class="btn btn-primary">Save</button>
+    <div class="mb-3">
+      <label>Email</label>
+      <input class="form-control" [(ngModel)]="admin.email">
     </div>
+<div class="mb-3">
+  <label>Phone</label>
+  <input class="form-control" [(ngModel)]="admin.phoneNumber">
+</div>
+    <div class="mb-3">
+      <label>Role</label>
+      <select class="form-control" [(ngModel)]="admin.role">
+        <option>SuperAdmin</option>
+        <option>Manager</option>
+        <option>Moderator</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary" (click)="update()">
+      Save Changes
+    </button>
 
   </div>
 

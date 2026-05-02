@@ -14,13 +14,14 @@ import { AllCustomersForAdminService } from '../../../core/services/all-customer
 export class CustomersDetailsComponent {
 
   customerId!: number;
-  customer: any;
+  customer: any = {};
   orders: any[] = [];
-  isLoading = false;
+  deleteReason: string = '';
+  selectedFile: File | null = null;
 
   constructor(
     private route: ActivatedRoute,
-    private customerService: AllCustomersForAdminService
+    private service: AllCustomersForAdminService
   ) {}
 
   ngOnInit() {
@@ -29,51 +30,98 @@ export class CustomersDetailsComponent {
   }
 
   loadCustomer() {
-    this.isLoading = true;
+    this.service.getCustomerById(this.customerId).subscribe((res: any) => {
 
-    this.customerService.getCustomerById(this.customerId).subscribe({
-      next: (res: any) => {
+      const c = res.data;
 
-        const c = res.data;
+this.customer = {
+  id: c.id,
+  firstName: c.firstName,
+  lastName: c.lastName,
+  phoneNumber: c.phoneNumber,
+  email: c.email,
+  imageurl: c.imageurl || 'https://i.pravatar.cc/100',  // ✅ هنا التعديل
+  city: c.address?.city || '',
+  state: c.address?.state || '',
+  street: c.address?.street || '',
+  buildingNumber: c.address?.buildingNumber || ''
+};
 
-        this.customer = {
-          id: c.id,
-          name: `${c.firstName ?? ''} ${c.lastName ?? ''}`.trim(),
-          phoneNumber: c.phoneNumber,
-
-          // ✅ FIX IMAGE
-          image: c.imageUrl || c.imageurl || 'https://i.pravatar.cc/100',
-
-          city: c.address?.city || '',
-          state: c.address?.state || '',
-          street: c.address?.street || '',
-          buildingNumber: c.address?.buildingNumber || ''
-        };
-
-        this.loadOrders();
-
-        this.isLoading = false;
-      },
-      error: () => this.isLoading = false
+      this.loadOrders();
     });
   }
+
+  // ================= UPDATE =================
+updateCustomer() {
+
+  const body = {
+    firstName: this.customer.firstName,
+    lastName: this.customer.lastName,
+    phoneNumber: this.customer.phoneNumber,
+    email: this.customer.email,
+
+    // 🔥 مهم جدًا
+    address: {
+      city: this.customer.city,
+      state: this.customer.state,
+      street: this.customer.street,
+      buildingNumber: this.customer.buildingNumber
+    }
+  };
+
+  this.service.updateCustomer(this.customerId, body)
+    .subscribe({
+      next: () => alert('Updated successfully'),
+      error: (err) => alert(err.error?.title || 'Update failed')
+    });
+}
+
+  // ================= IMAGE =================
+  onFileChange(event: any) {
+    this.selectedFile = event.target.files[0];
+  }
+
+  uploadImage() {
+    if (!this.selectedFile) return;
+
+    this.service.updateCustomerImage(this.customerId, this.selectedFile)
+      .subscribe(() => {
+        alert('Image updated');
+        this.loadCustomer();
+      });
+  }
+
+  deleteImage() {
+    this.service.deleteCustomerImage(this.customerId)
+      .subscribe(() => {
+        alert('Image deleted');
+        this.loadCustomer();
+      });
+  }
+
+  // ================= DELETE =================
+deleteCustomer() {
+  if (!confirm('Are you sure you want to delete this customer?')) return;
+
+  if (!this.deleteReason || this.deleteReason.trim() === '') {
+    alert('Please enter a reason for deletion');
+    return;
+  }
+
+  const body = {
+    reason: this.deleteReason
+  };
+
+  this.service.deleteCustomer(this.customerId, body)
+    .subscribe({
+      next: () => history.back(),
+      error: (err) => alert(err.error?.title || 'Delete failed')
+    });
+}
 
   loadOrders() {
-    this.customerService.getCustomerOrders(this.customerId).subscribe({
-      next: (res: any) => {
-        this.orders = res.data || [];
-      },
-      error: () => {
-        this.orders = [];
-      }
-    });
-  }
-
-  deleteCustomer() {
-    if (!confirm('Delete customer?')) return;
-
-    this.customerService.deleteCustomer(this.customerId).subscribe({
-      next: () => history.back()
+    this.service.getCustomerOrders(this.customerId).subscribe((res: any) => {
+      this.orders = res?.data || [];
     });
   }
 }

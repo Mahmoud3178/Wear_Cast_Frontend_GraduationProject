@@ -6,9 +6,60 @@
   border: 2px solid #ddd;
   cursor: pointer;
   transition: 0.3s;
+
 }
 
 .thumb-img:hover {
   border-color: #0d6efd;
   transform: scale(1.05);
+}
+.main-image-box {
+  width: 100%;
+  height: 400px;
+  background: #f8f9fa;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+.main-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* 🔥 أهم سطر */
+}
+.thumb-img {
+  width: 85px;
+  height: 85px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid #ddd;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.thumb-img:hover {
+  transform: scale(1.1);
+  border-color: #0d6efd;
+}
+.main-image-box {
+  width: 100%;
+  height: 500px; /* كبرناها */
+  background: #f8f9fa;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+.main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* ممكن تخليها cover لو عايز تملى */
 }

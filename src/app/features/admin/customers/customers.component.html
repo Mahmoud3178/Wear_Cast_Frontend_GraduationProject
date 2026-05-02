@@ -47,7 +47,22 @@
     </div>
 
   </div>
+<div *ngIf="showDeleteBox" class="alert alert-warning d-flex gap-2 align-items-center">
 
+  <input type="text"
+         class="form-control"
+         placeholder="Enter delete reason..."
+         [(ngModel)]="deleteReason">
+
+  <button class="btn btn-danger btn-sm" (click)="confirmDelete()">
+    Confirm
+  </button>
+
+  <button class="btn btn-secondary btn-sm" (click)="cancelDelete()">
+    Cancel
+  </button>
+
+</div>
   <!-- Table Card -->
   <div class="card border-0 shadow-sm">
 
@@ -100,10 +115,10 @@
       Edit
     </button>
 
-    <button class="btn btn-sm btn-danger"
-            (click)="$event.stopPropagation(); deleteCustomer(c.id)">
-      Delete
-    </button>
+<button class="btn btn-sm btn-danger"
+        (click)="$event.stopPropagation(); deleteCustomer(c.id)">
+  Delete
+</button>
 
   </td>
 

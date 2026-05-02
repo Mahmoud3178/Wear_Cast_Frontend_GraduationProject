@@ -31,8 +31,20 @@ export class FactoryForAdminService {
     return this.http.put(`${this.api}/factories/profile-image`, formData);
   }
 
-  // CREATE FACTORY (لو هتحتاجه)
-  createFactory(body: any): Observable<any> {
-    return this.http.post(`${this.api}/factories`, body);
-  }
+createFactory(formData: FormData) {
+  return this.http.post(
+    `${this.api}/factories`,
+    formData
+  );
+}
+  // DELETE FACTORY
+deleteFactory(id: number, reason: string) {
+  const body = {
+    reason: reason
+  };
+
+  return this.http.delete(`${this.api}/factories/${id}`, {
+    body
+  });
+}
 }

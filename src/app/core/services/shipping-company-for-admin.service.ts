@@ -31,4 +31,20 @@ export class ShippingCompanyForAdminService {
 
     return this.http.put(`${this.baseUrl}/api/shipping-companies/profile-image`, formData);
   }
+createCompany(formData: FormData) {
+  return this.http.post(
+    `${this.baseUrl}/api/shipping-companies`,
+    formData
+  );
+}
+  // DELETE SHIPPING COMPANY
+deleteCompany(id: number, reason: string) {
+  const body = {
+    reason: reason
+  };
+
+  return this.http.delete(`${this.baseUrl}/api/shipping-companies/${id}`, {
+    body
+  });
+}
 }

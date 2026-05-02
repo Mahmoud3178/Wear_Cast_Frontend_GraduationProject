@@ -109,6 +109,12 @@ export const ADMIN_ROUTES: Routes = [
       .then(m => m.OrdersComponent)
 },
 {
+  path: 'orders/:id',
+  loadComponent: () =>
+    import('./order-details/order-details.component')
+      .then(m => m.OrderDetailsComponent)
+},
+{
   path: 'delivery-company',
   loadComponent: () =>
     import('./delivery-company/delivery-company.component')

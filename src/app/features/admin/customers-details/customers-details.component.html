@@ -3,22 +3,45 @@
   <div class="d-flex justify-content-between mb-3">
     <h4>Customer Details</h4>
 
-    <button class="btn btn-danger"
-            (click)="deleteCustomer()">
-      Delete
-    </button>
+<div class="d-flex gap-2 align-items-center">
+
+  <input type="text"
+         class="form-control"
+         placeholder="Enter reason for delete..."
+         [(ngModel)]="deleteReason">
+
+  <button class="btn btn-danger" (click)="deleteCustomer()">
+    Delete
+  </button>
+
+</div>
   </div>
 
   <div class="card p-4 text-center shadow-sm">
 
-    <img [src]="customer?.image"
+    <img [src]="customer?.imageurl"
          class="rounded-circle mx-auto mb-3"
          width="120"
          height="120"
          style="object-fit:cover">
 
-    <h5>{{customer?.name}}</h5>
-    <p>{{customer?.phoneNumber}}</p>
+    <!-- IMAGE ACTIONS -->
+    <input type="file" class="form-control mb-2" (change)="onFileChange($event)">
+
+    <div class="d-flex gap-2 justify-content-center mb-3">
+      <button class="btn btn-primary btn-sm" (click)="uploadImage()">Upload</button>
+      <button class="btn btn-danger btn-sm" (click)="deleteImage()">Delete Image</button>
+    </div>
+
+    <!-- EDIT -->
+    <input class="form-control mb-2" [(ngModel)]="customer.firstName" placeholder="First Name">
+    <input class="form-control mb-2" [(ngModel)]="customer.lastName" placeholder="Last Name">
+    <input class="form-control mb-2" [(ngModel)]="customer.email" placeholder="Email">
+    <input class="form-control mb-2" [(ngModel)]="customer.phoneNumber" placeholder="Phone">
+
+    <button class="btn btn-success mt-2" (click)="updateCustomer()">
+      Save Changes
+    </button>
 
     <hr>
 
@@ -29,6 +52,7 @@
 
   </div>
 
+  <!-- ORDERS -->
   <div class="card mt-3 p-3">
 
     <h5>Orders</h5>
