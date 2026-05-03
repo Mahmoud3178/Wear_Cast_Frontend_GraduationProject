@@ -27,14 +27,19 @@ export class SellerApllicationsService {
   }
 
   // 🔹 Approve
-  approve(email: string): Observable<any> {
-    return this.http.put(`${this.api}/api/seller-applications/${email}/approve`, {});
-  }
+approve(email: string): Observable<any> {
+  return this.http.put(
+    `${this.api}/api/seller-applications/${encodeURIComponent(email)}/approve`,
+    {}
+  );
+}
 
-  // 🔹 Reject
-  reject(email: string, reason: string): Observable<any> {
-    return this.http.put(`${this.api}/api/seller-applications/${email}/reject`, {
+reject(email: string, reason: string): Observable<any> {
+  return this.http.put(
+    `${this.api}/api/seller-applications/${encodeURIComponent(email)}/reject`,
+    {
       reason: reason
-    });
-  }
+    }
+  );
+}
 }

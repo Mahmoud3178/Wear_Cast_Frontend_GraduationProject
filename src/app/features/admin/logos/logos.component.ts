@@ -22,13 +22,22 @@ export class LogosComponent implements OnInit {
   searchTerm: string = '';
   newCategoryName: string = '';
 
+  // 🔥 ADD LOGO MODEL
+  newLogo = {
+    name: '',
+    widthPx: 100,
+    heightPx: 100,
+    categoryId: 0,
+    image: null as File | null
+  };
+
   constructor(private service: AdminLogosService) {}
 
   ngOnInit() {
     this.loadCategories();
   }
 
-  // 🔹 Load Categories
+  // ================= LOAD =================
   loadCategories() {
     this.service.getCategories().subscribe({
       next: (res: any) => {
@@ -39,7 +48,6 @@ export class LogosComponent implements OnInit {
     });
   }
 
-  // 🔹 Load Logos
   loadLogos() {
     this.service.getAssets(this.selectedCategory ?? undefined).subscribe({
       next: (res: any) => {
@@ -48,32 +56,58 @@ export class LogosComponent implements OnInit {
     });
   }
 
-  // 🔹 Change Category
   onCategoryChange() {
     this.loadLogos();
   }
 
-  // 🔹 Add Category
+  // ================= CATEGORY =================
   addCategory() {
-
     if (!this.newCategoryName.trim()) return;
 
-    const body = {
-      name: this.newCategoryName
-    };
-
-    this.service.addCategory(body).subscribe({
+    this.service.addCategory({ name: this.newCategoryName }).subscribe({
       next: () => {
         this.newCategoryName = '';
         this.loadCategories();
-
-        const modal = document.getElementById('addCategoryModal');
-        modal?.querySelector('.btn-close')?.dispatchEvent(new Event('click'));
       }
     });
   }
 
-  // 🔹 Open Logo
+  // ================= ADD LOGO =================
+  onCreateFileChange(event: any) {
+    const file = event.target.files[0];
+    if (file) this.newLogo.image = file;
+  }
+
+  createLogo() {
+
+    const formData = new FormData();
+
+    formData.append('Name', this.newLogo.name || '');
+    formData.append('WidthPx', String(this.newLogo.widthPx || 0));
+    formData.append('HeightPx', String(this.newLogo.heightPx || 0));
+    formData.append('CategoryId', String(this.newLogo.categoryId || 0));
+
+    if (this.newLogo.image) {
+      formData.append('Image', this.newLogo.image);
+    }
+
+    this.service.createLogo(formData).subscribe({
+      next: () => {
+        this.loadLogos();
+
+        // reset
+        this.newLogo = {
+          name: '',
+          widthPx: 100,
+          heightPx: 100,
+          categoryId: 0,
+          image: null
+        };
+      }
+    });
+  }
+
+  // ================= OPEN =================
   openLogo(logo: any) {
     this.selectedLogo = {
       ...logo,
@@ -81,46 +115,54 @@ export class LogosComponent implements OnInit {
       heightPx: logo.heightPx || 100
     };
   }
-  closePanel() {
-  const panel = document.getElementById('logoPanel');
 
-  if (panel) {
-    const bsOffcanvas = (window as any).bootstrap?.Offcanvas.getInstance(panel);
-    bsOffcanvas?.hide();
+  closePanel() {
+    const panel = document.getElementById('logoPanel');
+    const bs = (window as any).bootstrap?.Offcanvas.getInstance(panel!);
+    bs?.hide();
+    this.selectedLogo = null;
   }
 
-  this.selectedLogo = null;
-}
-deleteLogo(id: number) {
+  // ================= DELETE =================
+  deleteLogo(id: number) {
+    if (!confirm('Delete this logo?')) return;
 
-  if (!confirm('Are you sure you want to delete this logo?')) return;
+    this.service.deleteLogo(id).subscribe({
+      next: () => {
+        this.logos = this.logos.filter(l => l.id !== id);
+        this.closePanel();
+      }
+    });
+  }
 
-  this.service.deleteLogo(id).subscribe({
-    next: () => {
-      this.logos = this.logos.filter(l => l.id !== id);
-      this.closePanel(); // 👈 مهم
+  // ================= UPDATE =================
+  onLogoFileChange(event: any) {
+    const file = event.target.files[0];
+    if (file) this.selectedLogo.newImage = file;
+  }
+
+  updateLogo() {
+
+    const formData = new FormData();
+
+    formData.append('Name', this.selectedLogo.name || '');
+    formData.append('WidthPx', String(this.selectedLogo.widthPx || 0));
+    formData.append('HeightPx', String(this.selectedLogo.heightPx || 0));
+    formData.append('CategoryId', String(this.selectedLogo.categoryId || 0));
+
+    if (this.selectedLogo.newImage) {
+      formData.append('Image', this.selectedLogo.newImage);
     }
-  });
-}
-  // 🔹 Update
-updateLogo() {
-  if (!this.selectedLogo) return;
 
-  const formData = new FormData();
-  formData.append('Name', this.selectedLogo.name || '');
-  formData.append('WidthPx', this.selectedLogo.widthPx || 0);
-  formData.append('HeightPx', this.selectedLogo.heightPx || 0);
-  formData.append('CategoryId', this.selectedLogo.categoryId?.toString());
+    this.service.updateLogo(this.selectedLogo.id, formData).subscribe({
+      next: () => {
+        this.loadLogos();
+        this.closePanel();
+      }
+    });
+  }
 
-  this.service.updateLogo(this.selectedLogo.id, formData).subscribe({
-    next: () => {
-      this.loadLogos();
-      this.closePanel(); // 👈 مهم
-    }
-  });
-}
-
-  // 🔹 Filter Search
+  // ================= SEARCH =================
   get filteredLogos() {
     return this.logos.filter(l =>
       l.name?.toLowerCase().includes(this.searchTerm.toLowerCase())

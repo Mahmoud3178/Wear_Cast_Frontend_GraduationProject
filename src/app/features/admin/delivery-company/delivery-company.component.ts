@@ -80,13 +80,37 @@ loadCompany(id: number) {
     this.editMode = !this.editMode;
   }
 
-  save() {
-    this.service.updateCompanyProfile(this.form).subscribe(() => {
+save() {
+
+  const body = {
+    providedCompanyId: this.company?.id, // 🔥 الاسم الصح
+
+    name: this.form.name,
+    email: this.form.email,
+    phoneNumber: this.form.phoneNumber,
+    commercialRegisterNumber: this.form.commercialRegisterNumber,
+    taxIdNumber: this.form.taxIdNumber,
+    description: this.form.description,
+    deliveryFee: this.form.deliveryFee,
+
+    address: {
+      state: this.form.state,
+      city: this.form.city,
+      street: this.form.street,
+      buildingNumber: this.form.buildingNumber
+    }
+  };
+
+  console.log(body);
+
+  this.service.updateCompanyProfile(body).subscribe({
+    next: () => {
       this.editMode = false;
       this.loadCompany(this.company.id);
-    });
-  }
-
+    },
+    error: (err) => console.error(err)
+  });
+}
   onFileChange(event: any) {
     this.selectedFile = event.target.files[0];
   }

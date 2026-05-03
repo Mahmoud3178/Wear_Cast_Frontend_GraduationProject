@@ -66,10 +66,10 @@ export class FactoryComponent implements OnInit {
           commercialRegisterNumber: this.factory?.commercialRegisterNumber,
           taxIdNumber: this.factory?.taxIdNumber,
           description: this.factory?.description,
-          state: this.factory?.state,
-          city: this.factory?.city,
-          street: this.factory?.street,
-          buildingNumber: this.factory?.buildingNumber,
+      state: this.factory?.address?.state,
+  city: this.factory?.address?.city,
+  street: this.factory?.address?.street,
+  buildingNumber: this.factory?.address?.buildingNumber,
 
           managerEmail: '',
           managerFirstName: '',
@@ -149,13 +149,36 @@ export class FactoryComponent implements OnInit {
     this.editMode = !this.editMode;
   }
 
-  save() {
-    this.service.updateFactoryProfile(this.form).subscribe(() => {
+save() {
+
+  const body = {
+    providedFactoryId: this.factory?.id, // 🔥 مهم جدا
+
+    name: this.form.name,
+    email: this.form.email,
+    phoneNumber: this.form.phoneNumber,
+    commercialRegisterNumber: this.form.commercialRegisterNumber,
+    taxIdNumber: this.form.taxIdNumber,
+    description: this.form.description,
+
+    address: {
+      state: this.form.state,
+      city: this.form.city,
+      street: this.form.street,
+      buildingNumber: this.form.buildingNumber
+    }
+  };
+
+  console.log(body);
+
+  this.service.updateFactoryProfile(body).subscribe({
+    next: () => {
       this.editMode = false;
       this.loadFactory(this.factory.id);
-    });
-  }
-
+    },
+    error: (err) => console.error(err)
+  });
+}
   uploadLogo() {
     if (!this.selectedFile) return;
 

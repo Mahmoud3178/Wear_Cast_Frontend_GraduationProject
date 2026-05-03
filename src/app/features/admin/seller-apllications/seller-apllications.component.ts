@@ -11,6 +11,7 @@ import { SellerApllicationsService } from '../../../core/services/seller-apllica
   styleUrl: './seller-apllications.component.css'
 })
 export class SellerApllicationsComponent implements OnInit {
+
   applications: any[] = [];
   filteredApplications: any[] = [];
 
@@ -19,24 +20,25 @@ export class SellerApllicationsComponent implements OnInit {
   showDrawer = false;
   rejectMode = false;
   rejectReason = '';
-  // 🔥 جديد
+
   searchTerm: string = '';
   selectedStatus: string | null = null;
+
   constructor(private service: SellerApllicationsService) {}
 
   ngOnInit() {
     this.load();
   }
 
-  // 🔹 GET ALL
+  // ================= LOAD =================
   load() {
     this.service.getAll().subscribe((res: any) => {
       this.applications = res?.items || res?.data?.items || [];
-
-         this.applyFilters();
+      this.applyFilters();
     });
   }
-applyFilters() {
+
+  applyFilters() {
     this.filteredApplications = this.applications.filter(app => {
 
       const matchStatus =
@@ -50,7 +52,8 @@ applyFilters() {
       return matchStatus && matchSearch;
     });
   }
-   onSearch() {
+
+  onSearch() {
     this.applyFilters();
   }
 
@@ -58,17 +61,14 @@ applyFilters() {
     this.selectedStatus = status;
     this.applyFilters();
   }
-  // 🔹 OPEN DETAILS
+
+  // ================= OPEN DETAILS =================
   open(app: any) {
     this.service.getById(app.id).subscribe((res: any) => {
-
       this.selectedApplication = res?.data || res;
-
       this.showDrawer = true;
       this.rejectMode = false;
       this.rejectReason = '';
-
-      console.log('DETAILS 👉', this.selectedApplication);
     });
   }
 
@@ -76,48 +76,47 @@ applyFilters() {
     this.showDrawer = false;
   }
 
-  // 🔹 APPROVE
-  approve() {
-    const email = this.selectedApplication?.sellerEmail;
+  // ================= APPROVE (Seller + Manager) =================
+approve() {
 
-    if (!email) {
-      alert('Email not found ❌');
-      return;
-    }
+  const email = this.selectedApplication?.managerEmail;
 
-    this.service.approve(email).subscribe({
-      next: () => {
-        this.close();
-        this.load();
-      },
-      error: (err) => {
-        alert(err?.error?.error?.description || 'Error ❌');
-      }
-    });
+  if (!email) {
+    alert('Manager email not found ❌');
+    return;
   }
 
-  // 🔹 ENABLE REJECT
+  this.service.approve(email).subscribe({
+    next: () => {
+      this.close();
+      this.load();
+    },
+    error: (err) => {
+      alert(err?.error?.error?.description || 'Error ❌');
+    }
+  });
+}
+
+reject() {
+
+  const email = this.selectedApplication?.managerEmail;
+
+  if (!email) {
+    alert('Manager email not found ❌');
+    return;
+  }
+
+  this.service.reject(email, this.rejectReason).subscribe({
+    next: () => {
+      this.close();
+      this.load();
+    },
+    error: (err) => {
+      alert(err?.error?.error?.description || 'Error ❌');
+    }
+  });
+}
   enableReject() {
     this.rejectMode = true;
-  }
-
-  // 🔹 REJECT
-  reject() {
-    const email = this.selectedApplication?.sellerEmail;
-
-    if (!email) {
-      alert('Email not found ❌');
-      return;
-    }
-
-    this.service.reject(email, this.rejectReason).subscribe({
-      next: () => {
-        this.close();
-        this.load();
-      },
-      error: (err) => {
-        alert(err?.error?.error?.description || 'Error ❌');
-      }
-    });
   }
 }

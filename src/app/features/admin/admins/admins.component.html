@@ -59,24 +59,24 @@
     <h5 class="mb-3">Add Admin</h5>
 
     <input class="form-control mb-2" placeholder="First Name"
-           [(ngModel)]="newAdmin.firstName">
+           [(ngModel)]="newAdmin.firstName" autocomplete="off">
 
     <input class="form-control mb-2" placeholder="Last Name"
-           [(ngModel)]="newAdmin.lastName">
+           [(ngModel)]="newAdmin.lastName" autocomplete="off">
 
     <input class="form-control mb-2" placeholder="Email"
-           [(ngModel)]="newAdmin.email">
+           [(ngModel)]="newAdmin.email" autocomplete="off">
 
     <input class="form-control mb-2" placeholder="Phone"
-           [(ngModel)]="newAdmin.phoneNumber">
+           [(ngModel)]="newAdmin.phoneNumber" autocomplete="off">
 
     <input type="password" class="form-control mb-2"
            placeholder="Password"
-           [(ngModel)]="newAdmin.password">
+           [(ngModel)]="newAdmin.password" autocomplete="off">
 
     <input type="password" class="form-control mb-2"
            placeholder="Confirm Password"
-           [(ngModel)]="newAdmin.confirmPassword">
+           [(ngModel)]="newAdmin.confirmPassword" autocomplete="off">
 
     <select class="form-control mb-3"
             [(ngModel)]="newAdmin.role">

@@ -80,26 +80,11 @@
 
 </div>
 
-<!-- SIDE DRAWER -->
 <div class="drawer" [class.open]="showDrawer">
 
   <div *ngIf="selectedApplication">
 
-    <h5 class="mb-2">{{ selectedApplication.sellerName }}</h5>
-
-    <!-- ✅ EMAIL من API الصح -->
-    <p><strong>Email:</strong> {{ selectedApplication.sellerEmail }}</p>
-
-    <p><strong>Manager:</strong>
-      {{ selectedApplication.managerFirstName }}
-      {{ selectedApplication.managerLastName }}
-    </p>
-
-    <p><strong>City:</strong> {{ selectedApplication.sellerAddress?.city }}</p>
-
-    <p><strong>Phone:</strong> {{ selectedApplication.sellerPhoneNumber }}</p>
-
-    <hr>
+    <h4 class="mb-3">{{ selectedApplication.sellerName }}</h4>
 
     <!-- STATUS -->
     <span class="badge mb-3"
@@ -111,26 +96,68 @@
       {{ selectedApplication.status }}
     </span>
 
-    <!-- APPROVE -->
+    <hr>
+
+    <!-- SELLER -->
+    <h6>Seller Info</h6>
+
+    <p><b>Name:</b> {{ selectedApplication.sellerName }}</p>
+    <p><b>Email:</b> {{ selectedApplication.sellerEmail }}</p>
+    <p><b>Phone:</b> {{ selectedApplication.sellerPhoneNumber }}</p>
+
+    <hr>
+
+    <!-- MANAGER -->
+    <h6>Manager Info</h6>
+
+    <p><b>Name:</b>
+      {{ selectedApplication.managerFirstName }}
+      {{ selectedApplication.managerLastName }}
+    </p>
+
+    <p><b>Email:</b> {{ selectedApplication.managerEmail }}</p>
+    <p><b>Phone:</b> {{ selectedApplication.managerPhoneNumber }}</p>
+
+    <hr>
+
+    <!-- COMPANY -->
+    <h6>Company Info</h6>
+
+    <p><b>Commercial:</b> {{ selectedApplication.commercialRegisterNumber }}</p>
+    <p><b>Tax ID:</b> {{ selectedApplication.taxIdNumber }}</p>
+    <p><b>Description:</b> {{ selectedApplication.description }}</p>
+
+    <hr>
+
+    <!-- ADDRESS -->
+    <h6>Address</h6>
+
+    <p>
+      {{ selectedApplication.sellerAddress?.state }},
+      {{ selectedApplication.sellerAddress?.city }},
+      {{ selectedApplication.sellerAddress?.street }},
+      {{ selectedApplication.sellerAddress?.buildingNumber }}
+    </p>
+
+    <hr>
+
+    <!-- ACTIONS -->
     <button class="btn btn-success w-100 mb-2"
             (click)="approve()"
             [disabled]="selectedApplication.status !== 'Pending'">
       Approve
     </button>
 
-    <!-- REJECT -->
     <button class="btn btn-danger w-100 mb-2"
             (click)="enableReject()"
             [disabled]="selectedApplication.status !== 'Pending'">
       Reject
     </button>
 
-    <!-- REJECT REASON -->
     <div *ngIf="rejectMode">
       <textarea class="form-control mb-2"
                 placeholder="Reason..."
-                [(ngModel)]="rejectReason">
-      </textarea>
+                [(ngModel)]="rejectReason"></textarea>
 
       <button class="btn btn-danger w-100"
               (click)="reject()">

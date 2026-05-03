@@ -15,72 +15,79 @@ export class AddLogosComponent implements OnInit {
 
   logoName = '';
   categoryId: number | null = null;
+
+  widthPx: number = 100;   // 🔥 NEW
+  heightPx: number = 100;  // 🔥 NEW
+
   file: File | null = null;
 
   categories: any[] = [];
 
-  constructor(private service: AdminLogosService, private router: Router) {}
+  constructor(
+    private service: AdminLogosService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
     this.loadCategories();
   }
 
-  // 🔹 Get categories from API
-loadCategories() {
-  this.service.getCategories().subscribe({
-    next: (res: any) => {
-      this.categories = res?.data || [];  // ✅ المهم هنا
+  loadCategories() {
+    this.service.getCategories().subscribe({
+      next: (res: any) => {
+        this.categories = res?.data || [];
+      },
+      error: (err) => console.error(err)
+    });
+  }
 
-      console.log('categories:', this.categories);
-    },
-    error: (err) => console.error(err)
-  });
-}
-
-  // 🔹 File select
   onFileSelect(event: any) {
     this.file = event.target.files[0];
   }
 
-  // 🔹 Upload logo
   upload() {
 
     if (!this.file || !this.logoName || !this.categoryId) {
-      alert('❌ Please fill all fields');
+      alert('❌ Please fill all required fields');
       return;
     }
 
     const formData = new FormData();
+
     formData.append('Name', this.logoName);
     formData.append('Image', this.file);
-    formData.append('CategoryId', this.categoryId.toString());
 
-    // optional sizes (لو مش عندك سيبهم)
-    formData.append('WidthPx', '300');
-    formData.append('HeightPx', '300');
+    formData.append('CategoryId', String(this.categoryId));
 
-this.service.createLogo(formData).subscribe({
-  next: () => {
-    alert('✅ Logo uploaded successfully');
+    // 🔥 IMPORTANT FIELDS
+    formData.append('WidthPx', String(this.widthPx || 0));
+    formData.append('HeightPx', String(this.heightPx || 0));
 
-    // reset form
-    this.logoName = '';
-    this.categoryId = null;
-    this.file = null;
+    this.service.createLogo(formData).subscribe({
+      next: () => {
+        alert('✅ Logo uploaded successfully');
 
-    // 🔥 هنا التحويل
-    this.router.navigate(['/admin/logos']);
-  },
-  error: (err) => {
-    console.error(err);
-    alert('❌ Upload failed');
-  }
-});
+        // reset
+        this.logoName = '';
+        this.categoryId = null;
+        this.file = null;
+        this.widthPx = 100;
+        this.heightPx = 100;
+
+        this.router.navigate(['/admin/logos']);
+      },
+      error: (err) => {
+        console.error(err);
+        alert('❌ Upload failed');
+      }
+    });
   }
 
   cancel() {
     this.logoName = '';
     this.categoryId = null;
     this.file = null;
+    this.widthPx = 100;
+    this.heightPx = 100;
   }
 }
