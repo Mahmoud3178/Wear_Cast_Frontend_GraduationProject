@@ -122,31 +122,51 @@
 
         <hr>
 
-        <!-- SIZE DETAILS -->
-        <div class="mt-3">
-          <h6>Size Details</h6>
+   <!-- SIZE DETAILS + CATEGORY -->
+<div class="mt-3">
 
-          <table class="table table-sm table-bordered w-auto">
-            <thead>
-              <tr>
-                <th>Size</th>
-                <th>A</th>
-                <th>B</th>
-                <th>C</th>
-              </tr>
-            </thead>
+  <h6>Size Details</h6>
 
-            <tbody>
-              <tr *ngFor="let s of product.sizeDetails">
-                <td>{{ s.size }}</td>
-                <td>{{ s.a }}</td>
-                <td>{{ s.b }}</td>
-                <td>{{ s.c }}</td>
-              </tr>
-            </tbody>
-          </table>
+  <div class="d-flex flex-wrap gap-4 align-items-start">
 
-        </div>
+    <!-- TABLE -->
+    <table class="table table-sm table-bordered w-auto mb-0">
+      <thead>
+        <tr>
+          <th>Size</th>
+          <th>A</th>
+          <th>B</th>
+          <th>C</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let s of product.sizeDetails">
+          <td>{{ s.size }}</td>
+          <td>{{ s.a }}</td>
+          <td>{{ s.b }}</td>
+          <td>{{ s.c }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 🔥 CATEGORY CARD -->
+    <div class="category-card d-flex align-items-center gap-3">
+
+      <img
+        [src]="product.category?.imageUrl"
+        class="category-img">
+
+      <div>
+        <small class="text-muted">Category</small>
+        <div class="fw-bold">{{ product.category?.name }}</div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 
       </div>
 

@@ -1,7 +1,7 @@
 <div class="container py-4" *ngIf="order">
 
   <!-- HEADER -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold">Order #{{order.id}}</h3>
 
     <span class="badge bg-primary fs-6">
@@ -9,24 +9,43 @@
     </span>
   </div>
 
+  <!-- 💰 MONEY CARDS -->
+  <div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+      <div class="card shadow-sm p-3 border-start border-4 border-success">
+        <small class="text-muted">Total Amount</small>
+        <h4 class="fw-bold text-success">{{order.totalAmount}} LE</h4>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm p-3 border-start border-4 border-warning">
+        <small class="text-muted">Platform Commission 💰</small>
+        <h4 class="fw-bold text-warning">{{order.commission}} LE</h4>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm p-3 border-start border-4 border-primary">
+        <small class="text-muted">Seller Payout</small>
+        <h4 class="fw-bold text-primary">{{order.payout}} LE</h4>
+      </div>
+    </div>
+
+  </div>
+
   <!-- ORDER INFO -->
   <div class="row g-3 mb-3">
 
     <div class="col-md-4">
       <div class="card p-3 shadow-sm">
-        <h6>Total</h6>
-        <h4>{{order.totalAmount}} LE</h4>
-      </div>
-    </div>
-
-    <div class="col-md-4">
-      <div class="card p-3 shadow-sm">
         <h6>Type</h6>
-<h5>
-  <span *ngIf="order.items?.length">Fixed</span>
-  <span *ngIf="order.items?.length && order.designedItems?.length"> + </span>
-  <span *ngIf="order.designedItems?.length">Designed</span>
-</h5>
+        <h5>
+          <span *ngIf="order.items?.length">Fixed</span>
+          <span *ngIf="order.items?.length && order.designedItems?.length"> + </span>
+          <span *ngIf="order.designedItems?.length">Designed</span>
+        </h5>
       </div>
     </div>
 
@@ -41,16 +60,14 @@
 
   <!-- CUSTOMER -->
   <div class="card p-3 mb-3 shadow-sm">
-    <h5 class="mb-2">Customer Info</h5>
-
+    <h5>Customer Info</h5>
     <p><b>Name:</b> {{order.recipientName}}</p>
     <p><b>Phone:</b> {{order.recipientPhoneNumber}}</p>
   </div>
 
   <!-- SHIPPING -->
   <div class="card p-3 mb-3 shadow-sm">
-    <h5 class="mb-2">Shipping Address</h5>
-
+    <h5>Shipping Address</h5>
     <p>
       {{order.shippingAddress?.street}},
       {{order.shippingAddress?.city}},
@@ -59,60 +76,85 @@
     </p>
   </div>
 
- <div class="card p-3 mb-3 shadow-sm" *ngIf="order.items?.length">
-  <h5>Fixed Items</h5>
+  <!-- 🔥 PICKUP ADDRESS -->
+  <div class="card p-3 mb-3 shadow-sm">
+    <h5>Pickup Address</h5>
+    <p>
+      {{order.pickUpAddress?.street}},
+      {{order.pickUpAddress?.city}},
+      {{order.pickUpAddress?.state}},
+      {{order.pickUpAddress?.buildingNumber}}
+    </p>
+  </div>
 
-  <div *ngFor="let item of order.items" class="border rounded p-2 mb-2">
+  <!-- ================= FIXED ITEMS ================= -->
+  <div class="card p-3 mb-3 shadow-sm" *ngIf="order.items?.length">
+    <h5>Fixed Items</h5>
 
-    <div class="d-flex justify-content-between align-items-center">
+    <div *ngFor="let item of order.items" class="border rounded p-3 mb-2">
 
-      <div>
-        <h6 class="mb-1">{{item.productName}}</h6>
-        <small class="text-muted">{{item.colorName}}</small>
+      <div class="d-flex justify-content-between">
+
+        <div>
+          <h6>{{item.productName}}</h6>
+          <small class="text-muted">{{item.colorName}}</small>
+        </div>
+
+        <div class="text-end">
+          <div class="fw-bold">{{item.totalQuantity}} pcs</div>
+          <div class="text-success">{{item.totalPrice}} LE</div>
+        </div>
+
       </div>
 
-      <div class="text-end">
-        <div class="fw-bold">{{item.totalQuantity}} pcs</div>
-        <div class="text-success">{{item.totalPrice}} LE</div>
+      <img [src]="item.imageUrl"
+           class="rounded border mt-2"
+           width="90">
+
+    </div>
+  </div>
+
+  <!-- ================= DESIGNED ITEMS ================= -->
+  <div class="card p-3 mb-3 shadow-sm">
+    <h5>Designed Items</h5>
+
+    <div *ngFor="let item of order.designedItems"
+         class="border rounded p-3 mb-3">
+
+      <!-- HEADER -->
+      <div class="d-flex justify-content-between">
+
+        <div>
+          <h6>{{item.productName}}</h6>
+          <small class="text-muted">{{item.colorName}}</small>
+        </div>
+
+        <div class="text-end">
+          <div class="fw-bold">{{item.totalQuantity}} pcs</div>
+          <div class="text-success">{{item.totalPrice}} LE</div>
+        </div>
+
+      </div>
+
+      <!-- 🔥 SIZES (الشكل الجديد الجامد) -->
+      <div class="mt-2">
+        <span class="badge bg-dark p-2">
+          {{item.sizesFormatted}}
+        </span>
+      </div>
+
+      <!-- IMAGES -->
+      <div class="d-flex gap-2 mt-3 flex-wrap">
+
+        <img [src]="item.frontImageUrl" class="rounded border" width="80">
+        <img [src]="item.backImageUrl" class="rounded border" width="80">
+        <img [src]="item.rightImageUrl" class="rounded border" width="80">
+        <img [src]="item.leftImageUrl" class="rounded border" width="80">
+
       </div>
 
     </div>
 
-    <!-- صورة -->
-    <img [src]="item.imageUrl"
-         class="rounded border mt-2"
-         width="80">
-
   </div>
-</div>
-
- <div class="card p-3 mb-3 shadow-sm"
-     *ngFor="let item of order.designedItems">
-
-  <div class="d-flex justify-content-between align-items-center">
-
-    <div>
-      <h6 class="mb-1">{{item.productName}}</h6>
-      <small class="text-muted">{{item.colorName}}</small>
-    </div>
-
-    <div class="text-end">
-      <div class="fw-bold">{{item.totalQuantity}} pcs</div>
-      <div class="text-success">{{item.totalPrice}} LE</div>
-    </div>
-
-  </div>
-
-  <!-- images -->
-  <div class="d-flex gap-2 mt-3 flex-wrap">
-
-    <img [src]="item.frontImageUrl" class="rounded border" width="80">
-    <img [src]="item.backImageUrl" class="rounded border" width="80">
-    <img [src]="item.rightImageUrl" class="rounded border" width="80">
-    <img [src]="item.leftImageUrl" class="rounded border" width="80">
-
-  </div>
-
-</div>
 
 </div>

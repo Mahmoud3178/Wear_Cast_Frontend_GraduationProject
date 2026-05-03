@@ -1,0 +1,52 @@
+<div class="container-fluid p-4">
+
+  <h3 class="fw-bold mb-4">Shipments</h3>
+
+  <div class="card shadow-sm">
+    <table class="table table-hover mb-0">
+
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Customer</th>
+          <th>Status</th>
+          <th>Price</th>
+          <th>Orders</th>
+          <th>City</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let s of shipments"
+            (click)="goToDetails(s.id)"
+            style="cursor:pointer">
+
+          <td>{{s.id}}</td>
+          <td>{{s.customerName}}</td>
+          <td>
+            <span class="badge bg-warning">
+              {{s.shipmentStatus}}
+            </span>
+          </td>
+          <td>{{s.price}}</td>
+          <td>{{s.numberOfOrders}}</td>
+          <td>{{s.deliveryCity}}</td>
+          <td>{{s.orderTime | date}}</td>
+
+        </tr>
+      </tbody>
+
+    </table>
+  </div>
+
+  <!-- PAGINATION -->
+  <div class="d-flex justify-content-center mt-3 gap-2">
+    <button class="btn btn-outline-dark" (click)="prev()">Prev</button>
+    <span class="align-self-center">
+      Page {{pageIndex}} / {{totalPages}}
+    </span>
+    <button class="btn btn-outline-dark" (click)="next()">Next</button>
+  </div>
+
+</div>

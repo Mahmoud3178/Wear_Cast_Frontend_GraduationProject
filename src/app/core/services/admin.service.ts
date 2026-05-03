@@ -107,17 +107,21 @@ mapOrder(o: any) {
     recipientName: o.recipientName || '',
     recipientEmail: o.recipientEmail || '',
     recipientPhoneNumber: o.recipientPhoneNumber || '',
+
     totalAmount: o.totalAmount || 0,
     status: o.status || 'Unknown',
     createdOn: o.createdOn,
 
     orderType: o.orderType || 'Unknown',
 
+    // 🔥 FIX
+    vendorName: o.vendorName || 'N/A',
+    vendorPhoneNumber: o.vendorPhoneNumber || '',
+
     shippingAddress: o.shippingAddress
       ? `${o.shippingAddress.street}, ${o.shippingAddress.city}, ${o.shippingAddress.state}`
       : '',
 
-    // ✅ الحل هنا
     itemsCount: o.totalOrderItems || 0
   };
 }

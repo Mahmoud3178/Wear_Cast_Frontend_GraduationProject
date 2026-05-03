@@ -10,7 +10,6 @@ import { AdminService } from '../../../core/services/admin.service';
   templateUrl: './order-details.component.html',
   styleUrl: './order-details.component.css'
 })
-
 export class OrderDetailsComponent {
 
   order: any;
@@ -25,27 +24,39 @@ export class OrderDetailsComponent {
     this.loadOrder(id);
   }
 
-loadOrder(id: number) {
-  this.adminService.getOrderById(id).subscribe({
-    next: (res: any) => {
+  loadOrder(id: number) {
+    this.adminService.getOrderById(id).subscribe({
+      next: (res: any) => {
 
-      const data = res?.data ?? res;
+        const data = res?.data ?? res;
 
-      this.order = {
-        ...data,
+        this.order = {
+          ...data,
 
-        // 👇 fallback مهم جدًا
-        orderType: data.orderType || 'Unknown',
+          // 🔥 fallback
+          orderType: data.orderType || 'Unknown',
 
-        items: data.items || [],
+          items: data.items || [],
 
-        designedItems: (data.designedItems || []).map((x: any) => ({
-          ...x,
-          type: x.orderItemType || 'Unknown'   // 🔥 هنا الحل
-        }))
-      };
+          designedItems: (data.designedItems || []).map((x: any) => ({
+            ...x,
+            type: x.orderItemType || 'Unknown',
 
-    }
-  });
-}
+            // 🔥 مهم لعرض المقاسات بشكل كويس
+            sizesFormatted: this.formatSizes(x.sizes)
+          }))
+        };
+
+      }
+    });
+  }
+
+  // 🔥 تحويل المقاسات لشكل جميل
+  formatSizes(sizes: any[]): string {
+    if (!sizes || !sizes.length) return '';
+
+    return sizes
+      .map(s => `${s.quantity} × ${s.sizeName.replace('_','')}`)
+      .join(' , ');
+  }
 }

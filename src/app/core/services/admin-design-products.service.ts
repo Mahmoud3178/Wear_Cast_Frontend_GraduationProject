@@ -44,4 +44,30 @@ export class AdminDesignProductsService {
       { params }
     );
   }
+  // 🔹 Get Reviews
+getReviews(productId: number, pageIndex = 1, pageSize = 5) {
+  return this.http.get(
+    `${this.base}/api/designed-products/${productId}/reviews`,
+    {
+      params: new HttpParams()
+        .set('pageIndex', pageIndex)
+        .set('pageSize', pageSize)
+    }
+  );
+}
+
+// 🔹 Add Review
+addReview(productId: number, body: any) {
+  return this.http.post(
+    `${this.base}/api/designed-products/${productId}/reviews`,
+    body
+  );
+}
+
+// 🔹 Delete Review
+deleteReview(reviewId: number) {
+  return this.http.delete(
+    `${this.base}/api/designed-product-reviews/${reviewId}`
+  );
+}
 }

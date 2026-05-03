@@ -14,9 +14,16 @@ import { AdminService } from '../../../core/services/admin.service';
 export class OrdersComponent implements OnInit {
 
   orders: any[] = [];
+  filteredOrders: any[] = [];
   allOrders: any[] = [];
+
   searchTerm: string = '';
   selectedStatus: string | null = null;
+
+  // 🔥 Pagination
+  pageSize = 5;
+  currentPage = 1;
+  totalPages = 1;
 
   constructor(
     private adminService: AdminService,
@@ -27,24 +34,26 @@ export class OrdersComponent implements OnInit {
     this.loadOrders();
   }
 
-loadOrders() {
-  this.adminService.getAllOrders().subscribe({
-    next: (res: any) => {
+  loadOrders() {
+    this.adminService.getAllOrders().subscribe({
+      next: (res: any) => {
 
-      const data = res?.items || [];
+        const data = res?.items || [];
 
-      this.allOrders = data.map((o: any) =>
-        this.adminService.mapOrder(o)
-      );
+        this.allOrders = data.map((o: any) =>
+          this.adminService.mapOrder(o)
+        );
 
-      this.applyFilters();
-      this.orders = [...this.allOrders];
-    },
-    error: (err) => console.error(err)
-  });
-}
+        this.applyFilters();
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
+  // ================= FILTER =================
   applyFilters() {
-    this.orders = this.allOrders.filter(o => {
+
+    this.filteredOrders = this.allOrders.filter(o => {
 
       const matchStatus =
         !this.selectedStatus || o.status === this.selectedStatus;
@@ -52,12 +61,34 @@ loadOrders() {
       const matchSearch =
         !this.searchTerm ||
         o.id.toString().includes(this.searchTerm) ||
-        o.recipientName?.toLowerCase().includes(this.searchTerm.toLowerCase());
+        o.recipientName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        o.vendorName?.toLowerCase().includes(this.searchTerm.toLowerCase());
 
       return matchStatus && matchSearch;
     });
+
+    this.totalPages = Math.ceil(this.filteredOrders.length / this.pageSize);
+
+    this.currentPage = 1;
+    this.updatePage();
   }
 
+  // ================= PAGINATION =================
+  updatePage() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+
+    this.orders = this.filteredOrders.slice(start, end);
+  }
+
+  changePage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+
+    this.currentPage = page;
+    this.updatePage(); // ✅ مش applyFilters
+  }
+
+  // ================= UI =================
   onSearch() {
     this.applyFilters();
   }

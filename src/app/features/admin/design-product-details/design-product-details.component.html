@@ -12,38 +12,29 @@
       <!-- ================= IMAGE GALLERY ================= -->
       <div class="col-md-6">
 
-        <!-- MAIN IMAGE -->
-      <div class="main-image-box">
-  <img
-    [src]="getImage(currentImage)"
-    class="main-image">
-</div>
+        <div class="main-image-box">
+          <img [src]="getImage(currentImage)" class="main-image">
+        </div>
 
-        <!-- THUMBNAILS -->
-   <div class="d-flex gap-3 mt-3 flex-wrap justify-content-center align-items-start">
+        <div class="d-flex gap-3 mt-3 flex-wrap justify-content-center">
 
-  <!-- main -->
-  <div class="text-center">
-    <img
-      [src]="getImage(selectedColor?.mainImageUrl)"
-      (click)="changeImage(selectedColor?.mainImageUrl)"
-      class="thumb-img">
-    <small class="d-block text-muted">Main</small>
-  </div>
+          <!-- main -->
+          <div class="text-center">
+            <img
+              [src]="getImage(selectedColor?.mainImageUrl)"
+              (click)="changeImage(selectedColor?.mainImageUrl)"
+              class="thumb-img">
+          </div>
 
-  <!-- images -->
-  <div *ngFor="let img of selectedColor?.images" class="text-center">
-    <img
-      [src]="getImage(img.imageUrl)"
-      (click)="changeImage(img.imageUrl)"
-      class="thumb-img">
+          <!-- images -->
+          <div *ngFor="let img of selectedColor?.images" class="text-center">
+            <img
+              [src]="getImage(img.imageUrl)"
+              (click)="changeImage(img.imageUrl)"
+              class="thumb-img">
+          </div>
 
-    <small class="d-block text-muted">
-      {{ img.viewSide }}
-    </small>
-  </div>
-
-</div>
+        </div>
 
       </div>
 
@@ -52,19 +43,11 @@
 
         <h2 class="fw-bold">{{ product.name }}</h2>
 
-        <p class="text-muted">
-          {{ product.description }}
-        </p>
-
-        <!-- CATEGORY -->
-        <div class="mb-2">
-          <strong>Category:</strong>
-          {{ product.category?.name }}
-        </div>
+        <p class="text-muted">{{ product.description }}</p>
 
         <!-- PRICE -->
-        <h4 class="text-success">
-          ${{ product.price }}
+        <h4 class="text-success mb-2">
+          {{ product.price }} LE
         </h4>
 
         <!-- SALES -->
@@ -72,26 +55,29 @@
           Sold: {{ product.salesCount }}
         </div>
 
-        <!-- ⭐ RATING -->
-        <div class="mt-2 d-flex align-items-center">
+        <!-- ⭐ RATING (🔥 FIXED) -->
+        <div class="mb-3 d-flex align-items-center">
 
-          <div class="text-warning me-2">
+          <div class="text-warning">
 
+            <!-- full -->
             <i class="bi bi-star-fill"
                *ngFor="let s of [].constructor(Math.floor(product.averageRating || 0))">
             </i>
 
+            <!-- half -->
             <i class="bi bi-star-half"
                *ngIf="(product.averageRating || 0) % 1 >= 0.5">
             </i>
 
+            <!-- empty -->
             <i class="bi bi-star"
                *ngFor="let s of [].constructor(5 - Math.ceil(product.averageRating || 0))">
             </i>
 
           </div>
 
-          <small class="text-muted">
+          <small class="text-muted ms-2">
             {{ product.averageRating || 0 }}
             ({{ product.reviewCount || 0 }} reviews)
           </small>
@@ -108,12 +94,8 @@
 
             <div *ngFor="let c of product.colors"
                  (click)="changeColor(c)"
-                 style="cursor:pointer">
-
-              <div [style.background]="c.hexCode"
-                   style="width:30px;height:30px;border-radius:50%;border:2px solid #ddd">
-              </div>
-
+                 class="color-circle"
+                 [style.background]="c.hexCode">
             </div>
 
           </div>
@@ -139,29 +121,93 @@
           </p>
         </div>
 
-        <!-- SIZES -->
-        <div class="mt-3">
-          <h6>Available Sizes</h6>
+    <!-- 🔥 SIZES + CATEGORY جنب بعض -->
+<div class="mt-4">
 
-          <table class="table table-sm table-bordered w-auto">
-            <thead>
-              <tr>
-                <th>Size</th>
-                <th>A</th>
-                <th>B</th>
-                <th>C</th>
-              </tr>
-            </thead>
+  <div class="row align-items-start">
 
-            <tbody>
-              <tr *ngFor="let s of product.sizeDetails">
-                <td>{{ s.size }}</td>
-                <td>{{ s.a }}</td>
-                <td>{{ s.b }}</td>
-                <td>{{ s.c || '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
+    <!-- SIZES -->
+    <div class="col-md-7">
+
+      <h6>Available Sizes</h6>
+
+      <table class="table table-sm table-bordered">
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let s of product.sizeDetails">
+            <td>{{ s.size }}</td>
+            <td>{{ s.a }}</td>
+            <td>{{ s.b }}</td>
+            <td>{{ s.c || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+
+    <!-- CATEGORY -->
+    <div class="col-md-5">
+
+      <h6>Category</h6>
+
+      <div class="category-card d-flex align-items-center gap-3">
+
+        <img [src]="product.category?.imageUrl"
+             class="category-img">
+
+        <div>
+          <div class="fw-bold">{{ product.category?.name }}</div>
+          <small class="text-muted">Product Category</small>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= REVIEWS ================= -->
+    <div class="mt-5">
+
+      <h4 class="mb-3">Reviews</h4>
+
+      <!-- ❌ NO REVIEWS -->
+      <div *ngIf="!reviews?.length" class="text-center text-muted py-4">
+        <i class="bi bi-chat-square-text fs-3"></i>
+        <p class="mt-2">No reviews yet</p>
+      </div>
+
+      <!-- ✅ LIST -->
+      <div *ngFor="let r of reviews" class="card p-3 mb-2 shadow-sm">
+
+        <div class="d-flex justify-content-between">
+
+          <div>
+
+            <!-- stars -->
+            <div class="text-warning mb-1">
+              <i class="bi bi-star-fill"
+                 *ngFor="let s of [].constructor(r.rating)">
+              </i>
+            </div>
+
+            <p class="mb-0">{{ r.comment }}</p>
+
+          </div>
 
         </div>
 

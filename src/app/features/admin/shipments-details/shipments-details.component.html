@@ -1,0 +1,25 @@
+<div class="container p-4" *ngIf="shipment">
+
+  <h3 class="fw-bold mb-3">Shipment #{{shipment.id}}</h3>
+
+  <div class="card p-3 shadow-sm mb-3">
+
+    <p><strong>Status:</strong> {{shipment.shipmentStatus}}</p>
+    <p><strong>Price:</strong> {{shipment.price}}</p>
+    <p><strong>Customer:</strong> {{shipment.customerName}}</p>
+    <p><strong>Phone:</strong> {{shipment.customerPhoneNumber}}</p>
+
+    <hr>
+
+    <h5>Address</h5>
+    <p>{{shipment.deliveryAddress.state}}</p>
+    <p>{{shipment.deliveryAddress.city}}</p>
+    <p>{{shipment.deliveryAddress.street}}</p>
+
+  </div>
+
+  <button class="btn btn-primary" (click)="goToItems()">
+    View Items
+  </button>
+
+</div>

@@ -63,3 +63,66 @@
   height: 100%;
   object-fit: contain; /* ممكن تخليها cover لو عايز تملى */
 }
+.main-image {
+  width: 100%;
+  height: 400px;
+  object-fit: contain;
+}
+
+.thumb-img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.color-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  cursor: pointer;
+}
+.main-image {
+  width: 100%;
+  height: 400px;
+  object-fit: contain;
+}
+
+.thumb-img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.thumb-img:hover {
+  transform: scale(1.05);
+}
+
+.color-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  cursor: pointer;
+}
+
+.category-card {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.category-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}

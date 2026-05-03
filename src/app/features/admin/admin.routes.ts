@@ -157,6 +157,24 @@ export const ADMIN_ROUTES: Routes = [
     import('./admin-details/admin-details.component')
       .then(m => m.AdminDetailsComponent)
 },
+{
+  path: 'shipments',
+  loadComponent: () =>
+    import('./shipments/shipments.component')
+      .then(m => m.ShipmentsComponent)
+},
+{
+  path: 'shipments/:id',
+  loadComponent: () =>
+    import('./shipments-details/shipments-details.component')
+      .then(m => m.ShipmentsDetailsComponent)
+},
+{
+  path: 'shipments/:id/items',
+  loadComponent: () =>
+    import('./shipments-details-items/shipments-details-items.component')
+      .then(m => m.ShipmentsDetailsItemsComponent)
+},
       {
         path: '',
         redirectTo: 'dashboard',

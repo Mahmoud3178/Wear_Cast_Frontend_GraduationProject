@@ -1,79 +1,131 @@
 <div class="container-fluid p-4">
 
-  <!-- SEARCH + FILTER -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
+  <!-- SEARCH -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body d-flex flex-wrap gap-2">
 
-      <div class="d-flex gap-2">
+      <input class="form-control flex-grow-1"
+             placeholder="Search by customer or vendor..."
+             [(ngModel)]="searchTerm"
+             (input)="onSearch()">
 
-        <input class="form-control"
-               placeholder="Search..."
-               [(ngModel)]="searchTerm"
-               (input)="onSearch()">
-
-        <button class="btn btn-outline-primary"
-                (click)="setStatus(null)">
-          All
-        </button>
-
-        <button class="btn btn-outline-success"
-                (click)="setStatus('Paid')">
-          Paid
-        </button>
-
-        <button class="btn btn-outline-warning"
-                (click)="setStatus('Ready')">
-          Ready
-        </button>
-
-        <button class="btn btn-outline-danger"
-                (click)="setStatus('Cancelled')">
-          Cancelled
-        </button>
-
-      </div>
+      <button class="btn btn-outline-primary" (click)="setStatus(null)">All</button>
+      <button class="btn btn-outline-success" (click)="setStatus('Paid')">Paid</button>
+      <button class="btn btn-outline-warning" (click)="setStatus('Ready')">Ready</button>
+      <button class="btn btn-outline-danger" (click)="setStatus('Cancelled')">Cancelled</button>
 
     </div>
   </div>
 
   <!-- TABLE -->
-  <table class="table table-hover">
+  <div class="card shadow-sm">
+    <div class="table-responsive">
 
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Customer</th>
-        <th>Type</th>
-        <th>Amount</th>
-        <th>Status</th>
-        <th>Items</th>
-      </tr>
-    </thead>
+      <table class="table table-hover align-middle mb-0">
 
-    <tbody>
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Customer</th>
+            <th>Vendor</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Items</th>
+          </tr>
+        </thead>
 
-      <tr *ngFor="let order of orders"
-          (click)="openDetails(order.id)"
-          style="cursor:pointer">
+        <tbody>
 
-        <td>#{{order.id}}</td>
-        <td>{{order.recipientName}}</td>
-        <td>{{order.orderType}}</td>
-     <td>{{order.totalAmount}} LE</td>
+          <tr *ngFor="let order of orders"
+              (click)="openDetails(order.id)"
+              style="cursor:pointer">
 
+            <td class="fw-bold">#{{order.id}}</td>
 
-        <td>
-          <span class="badge bg-success">{{order.status}}</span>
-        </td>
-       <td>
-  <span class="badge bg-dark">
-    {{ order.itemsCount || 0 }}
-  </span>
-</td>
-      </tr>
+            <td>
+              <div class="fw-semibold">{{order.recipientName}}</div>
+              <small class="text-muted">{{order.recipientPhoneNumber}}</small>
+            </td>
 
-    </tbody>
+            <td>
+              <div class="fw-semibold text-primary">
+                {{order.vendorName}}
+              </div>
+              <small class="text-muted">
+                {{order.vendorPhoneNumber}}
+              </small>
+            </td>
 
-  </table>
+            <td>
+              <span class="badge bg-info text-dark">
+                {{order.orderType}}
+              </span>
+            </td>
+
+            <td class="fw-bold text-success">
+              {{order.totalAmount}} LE
+            </td>
+
+            <td>
+              <span class="badge"
+                    [ngClass]="{
+                      'bg-success': order.status === 'Paid',
+                      'bg-warning text-dark': order.status === 'Ready',
+                      'bg-danger': order.status === 'Cancelled'
+                    }">
+                {{order.status}}
+              </span>
+            </td>
+
+            <td>
+              <span class="badge bg-dark">
+                {{order.itemsCount}}
+              </span>
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+  </div>
+
+  <!-- PAGINATION -->
+  <div class="d-flex justify-content-center mt-4"
+       *ngIf="totalPages > 1">
+
+    <ul class="pagination">
+
+      <li class="page-item" [class.disabled]="currentPage === 1">
+        <button class="page-link"
+                (click)="changePage(currentPage - 1)">
+          «
+        </button>
+      </li>
+
+      <li class="page-item"
+          *ngFor="let p of [].constructor(totalPages); let i = index"
+          [class.active]="currentPage === i + 1">
+
+        <button class="page-link"
+                (click)="changePage(i + 1)">
+          {{ i + 1 }}
+        </button>
+
+      </li>
+
+      <li class="page-item" [class.disabled]="currentPage === totalPages">
+        <button class="page-link"
+                (click)="changePage(currentPage + 1)">
+          »
+        </button>
+      </li>
+
+    </ul>
+
+  </div>
 
 </div>
