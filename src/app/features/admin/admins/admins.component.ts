@@ -17,10 +17,10 @@ export class AdminsComponent implements OnInit {
   showAdd = false;
 
   roleMap: any = {
-    SuperAdmin: 0,
+    SuperAdmin: 16,
     OperationsAdmin: 1,
-    CustomerServiceAdmin: 2,
-    VendorAdmin: 3,
+    CustomerServiceAdmin: 8,
+    VendorAdmin: 2,
     CatalogAdmin: 4
   };
 
