@@ -20,7 +20,7 @@ import {
   CUSTOMER_SHIPMENT_STATUS_OPTIONS
 } from '../../../core/services/customer-shipments.service';
 
-type ProfileTab = 'info' | 'addresses' | 'orders' | 'security';
+type ProfileTab = 'info' | 'addresses' | 'orders' | 'wallet' | 'security';
 
 @Component({
   selector: 'app-profile',
@@ -46,6 +46,13 @@ export class ProfileComponent implements OnInit {
   errorMessage = '';
 
   profileImageUrl: string | null = null;
+  imageUploading = false;
+  imageDeleting = false;
+
+  walletBalance: number | null = null;
+  walletLoading = false;
+  walletLoadedOnce = false;
+  walletError = '';
 
   editModeInfo = false;
   editModeAddress = false;
@@ -107,6 +114,9 @@ export class ProfileComponent implements OnInit {
     newPassword: '',
     confirmNewPassword: ''
   };
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private readonly auth: AuthService,
@@ -152,7 +162,16 @@ export class ProfileComponent implements OnInit {
             phoneNumber: data.phoneNumber || this.profile?.phoneNumber || ''
           };
 
-          this.profileImageUrl = data.profileImageUrl || data.ProfileImageUrl || data.imageUrl || data.ImageUrl || data.profileImage || data.ProfileImage || null;
+          this.profileImageUrl =
+            data.profileImageUrl ||
+            data.ProfileImageUrl ||
+            data.imageUrl ||
+            data.ImageUrl ||
+            data.imageurl ||
+            data.Imageurl ||
+            data.profileImage ||
+            data.ProfileImage ||
+            null;
           
           if (data.address) {
             this.addressForm = {
@@ -219,6 +238,81 @@ export class ProfileComponent implements OnInit {
     if (tab === 'orders' && !this.shipmentsLoadedOnce && !this.shipmentsLoading) {
       this.loadShipments(true);
     }
+    if (tab === 'wallet' && !this.walletLoadedOnce && !this.walletLoading) {
+      this.loadWallet();
+    }
+  }
+
+  onProfileImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.imageUploading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.profileService.updateProfileImage(file, this.customerNumericId).subscribe({
+      next: () => {
+        this.imageUploading = false;
+        this.successMessage = 'Profile image updated successfully!';
+        this.loadProfileDetails();
+        setTimeout(() => (this.successMessage = ''), 3000);
+      },
+      error: (err) => {
+        this.imageUploading = false;
+        this.errorMessage =
+          err?.error?.error?.description ||
+          err?.error?.message ||
+          'Failed to update profile image.';
+      }
+    });
+    input.value = '';
+  }
+
+  deleteProfileImage(): void {
+    if (!this.profileImageUrl || this.imageDeleting) return;
+    this.imageDeleting = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.profileService.deleteProfileImage(this.customerNumericId).subscribe({
+      next: () => {
+        this.imageDeleting = false;
+        this.profileImageUrl = null;
+        this.successMessage = 'Profile image deleted successfully!';
+        setTimeout(() => (this.successMessage = ''), 3000);
+      },
+      error: (err) => {
+        this.imageDeleting = false;
+        this.errorMessage =
+          err?.error?.error?.description ||
+          err?.error?.message ||
+          'Failed to delete profile image.';
+      }
+    });
+  }
+
+  loadWallet(): void {
+    this.walletLoading = true;
+    this.walletError = '';
+    this.profileService.getWallet().subscribe({
+      next: (res) => {
+        const data = res?.data ?? res;
+        const rawBalance = data?.balance ?? data?.Balance;
+        if (typeof rawBalance === 'number') {
+          this.walletBalance = rawBalance;
+        } else if (typeof rawBalance === 'string' && /^-?\d+(\.\d+)?$/.test(rawBalance)) {
+          this.walletBalance = parseFloat(rawBalance);
+        } else {
+          this.walletBalance = null;
+        }
+        this.walletLoading = false;
+        this.walletLoadedOnce = true;
+      },
+      error: () => {
+        this.walletLoading = false;
+        this.walletLoadedOnce = true;
+        this.walletError = 'Could not load wallet balance. Please try again.';
+      }
+    });
   }
 
   loadShipments(resetPage: boolean): void {

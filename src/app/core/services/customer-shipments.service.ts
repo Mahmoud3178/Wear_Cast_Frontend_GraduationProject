@@ -4,6 +4,7 @@ import { Observable, of, forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
+import { normalizeWearCastApiDateToIso } from '../utils/api-date';
 
 /** Query params for GET /api/CustomerShipments (integers must match backend enums). */
 export interface CustomerShipmentListQuery {
@@ -77,6 +78,8 @@ export interface CustomerShipmentDetailVm {
   price: number;
   shipmentStatus: number | null;
   orderedAt: string | null;
+  /** Pickup / drop-off PIN or OTP shown when the carrier assigns delivery. */
+  deliveryCode: string | null;
   deliveryAddress: CustomerShipmentAddressVm | null;
   driverName: string | null;
   driverPhoneNumber: string | null;
@@ -243,7 +246,7 @@ function mapShipmentRow(r: unknown): CustomerShipmentRow | null {
     ]) ?? 0;
   const status = pickNum(o, ['status', 'Status', 'shipmentStatus', 'ShipmentStatus']);
   const createdAt =
-    pickStr(o, [
+    pickDateIso(o, [
       'orderedAt',
       'OrderedAt',
       'createdAt',
@@ -275,7 +278,19 @@ function normalizeShipmentDetail(
     pickFloat(raw, ['price', 'Price', 'totalPrice', 'TotalPrice', 'total', 'Total']) ?? 0;
   const shipmentStatus = pickNum(raw, ['shipmentStatus', 'ShipmentStatus', 'status', 'Status']);
   const orderedAt =
-    pickStr(raw, ['orderedAt', 'OrderedAt', 'createdAt', 'CreatedAt']) || null;
+    pickDateIso(raw, ['orderedAt', 'OrderedAt', 'createdAt', 'CreatedAt']) || null;
+  const deliveryCodeRaw = pickStr(raw, [
+    'deliveryCode',
+    'DeliveryCode',
+    'delivery_code',
+    'otp',
+    'Otp',
+    'pickupCode',
+    'PickupCode',
+    'pin',
+    'Pin'
+  ]);
+  const deliveryCode = deliveryCodeRaw ? deliveryCodeRaw : null;
   const deliveryAddress = parseDeliveryAddressVm(raw);
   const driverName = pickStr(raw, ['driverName', 'DriverName']) || null;
   const driverPhone =
@@ -307,6 +322,7 @@ function normalizeShipmentDetail(
     price,
     shipmentStatus: shipmentStatus ?? null,
     orderedAt,
+    deliveryCode,
     deliveryAddress,
     driverName: driverName || null,
     driverPhoneNumber: driverPhone || null,
@@ -411,6 +427,7 @@ function mergeShipmentItemsIntoFallback(
     price: shipmentRow?.total ?? totalFromItems,
     shipmentStatus: shipmentRow?.status ?? null,
     orderedAt: shipmentRow?.createdAt ?? null,
+    deliveryCode: null,
     deliveryAddress: null,
     driverName: null,
     driverPhoneNumber: null,
@@ -426,8 +443,18 @@ function mergeShipmentItemsIntoFallback(
 }
 
 function pickIso(o: Record<string, unknown>, keys: string[]): string | null {
-  const s = pickStr(o, keys);
-  return s || null;
+  return pickDateIso(o, keys);
+}
+
+function pickDateIso(o: Record<string, unknown>, keys: string[]): string | null {
+  for (const k of keys) {
+    if (!(k in o)) continue;
+    const v = o[k];
+    if (v == null) continue;
+    const iso = normalizeWearCastApiDateToIso(v);
+    if (iso) return iso;
+  }
+  return null;
 }
 
 function parseDeliveryAddressVm(
@@ -631,6 +658,7 @@ function pickFloat(o: Record<string, unknown>, keys: string[]): number | null {
 function pickStr(o: Record<string, unknown>, keys: string[]): string {
   for (const k of keys) {
     const v = o[k];
+    if (typeof v === 'number' && Number.isFinite(v)) return String(Math.trunc(v));
     if (typeof v === 'string' && v.trim()) return v.trim();
   }
   return '';

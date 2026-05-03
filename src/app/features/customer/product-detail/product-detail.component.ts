@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +12,10 @@ import {
 } from '../../../core/services/fixed-product.service';
 import { CartService, SizeQuantityItem } from '../../../core/services/cart.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { FavouritesService, FavouriteItem } from '../../../core/services/favourites.service';
+import { FavouritesService } from '../../../core/services/favourites.service';
+import { TryOnService } from '../../../core/services/try-on.service';
+import { environment } from '../../../../environments/environment';
+import { parseWearCastApiDate } from '../../../core/utils/api-date';
 
 /** Size string → backend enum integer (public enum Size in backend) */
 const SIZE_MAP: Record<string, number> = {
@@ -46,12 +49,13 @@ export interface SizeRow {
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.css'
 })
-export class ProductDetailComponent implements OnInit {
+export class ProductDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly fixedProductService = inject(FixedProductService);
   private readonly cartService = inject(CartService);
   private readonly auth = inject(AuthService);
   private readonly favouritesService = inject(FavouritesService);
+  private readonly tryOnService = inject(TryOnService);
 
   // ── product state ──────────────────────────────────────────────
   loading = true;
@@ -85,6 +89,23 @@ export class ProductDetailComponent implements OnInit {
 
   // ── review state removed — backend only supports designed-product reviews ──
   isAuthenticated = false;
+
+  // ── virtual try-on ─────────────────────────────────────────────
+  showTryOnModal = false;
+  tryOnPersonFile: File | null = null;
+  tryOnBusy = false;
+  tryOnError = '';
+  tryOnProgress: number | null = null;
+  tryOnStatusMessage = '';
+  tryOnResultUrl: string | null = null;
+  /** Fires once after ETA, then `/result/{task}` is fetched. */
+  private tryOnResultDelayTimeout: ReturnType<typeof setTimeout> | null = null;
+  /** When true, result callbacks no-op (success, error, or modal closed). */
+  private tryOnPipelineDone = false;
+  /** Ensures `/result/{task}` is invoked at most once for this run. */
+  private tryOnResultFetched = false;
+  /** `blob:` URL from try-on PNG response — revoked on modal close / new run. */
+  private tryOnResultBlobRevokeUrl: string | null = null;
 
   ngOnInit(): void {
     this.isAuthenticated = !!this.auth.getToken();
@@ -121,6 +142,11 @@ export class ProductDetailComponent implements OnInit {
           'Could not load this product. If the problem continues, try signing out and opening the page again.';
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.clearTryOnPipeline();
+    this.tryOnRevokeResultBlobUrl();
   }
 
   selectColor(colorId: number): void {
@@ -244,7 +270,9 @@ export class ProductDetailComponent implements OnInit {
 
   formatDate(d: string): string {
     if (!d) return '';
-    return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const parsed = parseWearCastApiDate(d);
+    if (!parsed) return d;
+    return parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
   // ── Size Table Modal ───────────────────────────────────────────
@@ -321,4 +349,241 @@ export class ProductDetailComponent implements OnInit {
       }
     });
   }
+
+  // ── Virtual try-on ─────────────────────────────────────────────
+
+  canTryOn(): boolean {
+    return !!(
+      this.colorDetail &&
+      !this.colorDetailLoading &&
+      this.colorDetail.imageUrl &&
+      String(this.colorDetail.imageUrl).trim()
+    );
+  }
+
+  openTryOnModal(): void {
+    this.tryOnRevokeResultBlobUrl();
+    this.tryOnPersonFile = null;
+    this.tryOnError = '';
+    this.tryOnProgress = null;
+    this.tryOnStatusMessage = '';
+    this.tryOnResultUrl = null;
+    this.tryOnBusy = false;
+    this.tryOnResultFetched = false;
+    this.clearTryOnPipeline();
+    this.tryOnPipelineDone = false;
+    this.showTryOnModal = true;
+  }
+
+  closeTryOnModal(): void {
+    this.showTryOnModal = false;
+    this.clearTryOnPipeline();
+    this.tryOnBusy = false;
+    this.tryOnPipelineDone = true;
+    this.tryOnRevokeResultBlobUrl();
+  }
+
+  onTryOnPersonSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    this.tryOnPersonFile = file && file.type.startsWith('image/') ? file : null;
+    if (file && !this.tryOnPersonFile) {
+      this.tryOnError = 'Please choose an image file (JPG, PNG, etc.).';
+    } else {
+      this.tryOnError = '';
+    }
+  }
+
+  startVirtualTryOn(): void {
+    if (!this.canTryOn() || !this.colorDetail) {
+      this.tryOnError = 'Select a color with a product photo first.';
+      return;
+    }
+    if (!this.tryOnPersonFile) {
+      this.tryOnError = 'Upload a photo of yourself.';
+      return;
+    }
+    this.tryOnBusy = true;
+    this.tryOnError = '';
+    this.tryOnResultUrl = null;
+    this.tryOnProgress = null;
+    this.tryOnStatusMessage = 'Loading garment photo…';
+    this.tryOnRevokeResultBlobUrl();
+    this.tryOnResultFetched = false;
+    this.tryOnPipelineDone = false;
+    this.clearTryOnPipeline();
+
+    this.fetchGarmentBlob(this.colorDetail.imageUrl)
+      .then(garmentBlob => {
+        const ext = guessExtFromUrl(this.colorDetail!.imageUrl);
+        this.tryOnService
+          .startTryOn(this.tryOnPersonFile!, garmentBlob, `garment.${ext}`)
+          .subscribe({
+            next: start => {
+              this.scheduleTryOnResultAfterEta(start.taskId, start.estimatedSeconds);
+            },
+            error: (e: Error) => {
+              this.tryOnBusy = false;
+              this.tryOnError = e?.message || 'Try-on could not be started.';
+            }
+          });
+      })
+      .catch((e: Error) => {
+        this.tryOnBusy = false;
+        this.tryOnError =
+          e?.message ||
+          'Could not load the garment image. If this persists, the image host may block browser requests.';
+      });
+  }
+
+  /** Cancel the ETA wait timer; does not revoke blob previews. */
+  private clearTryOnPipeline(): void {
+    if (this.tryOnResultDelayTimeout != null) {
+      clearTimeout(this.tryOnResultDelayTimeout);
+      this.tryOnResultDelayTimeout = null;
+    }
+  }
+
+  private tryOnRevokeResultBlobUrl(): void {
+    if (this.tryOnResultBlobRevokeUrl) {
+      try {
+        URL.revokeObjectURL(this.tryOnResultBlobRevokeUrl);
+      } catch {
+        /* ignore */
+      }
+      this.tryOnResultBlobRevokeUrl = null;
+    }
+  }
+
+  private tryOnFinalizeSuccess(imageUrl: string): void {
+    if (this.tryOnPipelineDone) return;
+    this.tryOnPipelineDone = true;
+    this.clearTryOnPipeline();
+    this.tryOnBusy = false;
+    this.tryOnRevokeResultBlobUrl();
+    if (imageUrl.startsWith('blob:')) {
+      this.tryOnResultBlobRevokeUrl = imageUrl;
+    }
+    this.tryOnResultUrl = imageUrl;
+    this.tryOnStatusMessage = 'Done!';
+    this.tryOnProgress = 100;
+    this.tryOnError = '';
+  }
+
+  private tryOnFinalizeError(message: string): void {
+    if (this.tryOnPipelineDone) return;
+    this.tryOnPipelineDone = true;
+    this.clearTryOnPipeline();
+    this.tryOnBusy = false;
+    this.tryOnError = message;
+    this.tryOnProgress = null;
+  }
+
+  /**
+   * Waits until the server's estimated runtime (plus a short buffer), then calls
+   * GET /result/{task_id} exactly once — no `/stream` polling.
+   */
+  private scheduleTryOnResultAfterEta(taskId: string, estimatedSeconds: number | null): void {
+    this.clearTryOnPipeline();
+    this.tryOnResultFetched = false;
+    if (this.tryOnPipelineDone) return;
+
+    this.tryOnProgress = null;
+    const etaSec = Math.max(1, estimatedSeconds ?? 90);
+    this.tryOnStatusMessage = `Processing… (~${etaSec}s estimated)`;
+
+    // Wait full ETA plus a small slack so the worker usually finishes before we hit /result once.
+    const waitMs = Math.min(Math.max(etaSec * 1000 + 3000, 8000), 900_000);
+    this.tryOnResultDelayTimeout = window.setTimeout(() => {
+      if (this.tryOnPipelineDone || this.tryOnResultFetched) return;
+      this.tryOnStatusMessage = 'Loading result…';
+      this.fetchTryOnResultSingle(taskId);
+    }, waitMs);
+  }
+
+  /** One GET /result call; clears ETA timer first. */
+  private fetchTryOnResultSingle(taskId: string): void {
+    if (this.tryOnPipelineDone || this.tryOnResultFetched) return;
+    this.tryOnResultFetched = true;
+    this.clearTryOnPipeline();
+
+    this.tryOnService.getResultOnce(taskId).subscribe({
+      next: res => {
+        if (this.tryOnPipelineDone) return;
+        const url = res.imageUrl ?? null;
+        if (url) {
+          this.tryOnFinalizeSuccess(url);
+        } else {
+          this.tryOnFinalizeError(
+            'Try-on finished but the service did not return an image. Check the /result response format.'
+          );
+        }
+      },
+      error: (err: unknown) => {
+        if (this.tryOnPipelineDone) return;
+        const msg = err instanceof Error ? err.message : 'Could not load try-on result.';
+        this.tryOnFinalizeError(msg);
+      }
+    });
+  }
+
+  private resolveProductImageUrl(raw: string): string {
+    const u = raw.trim();
+    if (!u) return '';
+    if (u.startsWith('data:')) return u;
+    if (/^https?:\/\//i.test(u)) return u;
+    if (u.startsWith('//')) {
+      return `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}${u}`;
+    }
+    const base = environment.apiUrl.replace(/\/$/, '');
+    const path = u.startsWith('/') ? u : `/${u}`;
+    return base ? `${base}${path}` : path;
+  }
+
+  /**
+   * URL for fetch() of garment bytes. In dev, API often returns absolute https://wear-cast.runasp.net/uploads/...
+   * Direct fetch from localhost is CORS-blocked; strip host so the request goes to /uploads/... on the dev
+   * server and is proxied (see proxy.conf.json).
+   */
+  private resolveGarmentFetchUrl(raw: string): string {
+    const u = raw.trim();
+    if (!u) return '';
+    if (u.startsWith('data:')) return u;
+
+    const apiBase = environment.apiUrl.replace(/\/$/, '');
+    if (!apiBase) {
+      try {
+        const abs = u.startsWith('//')
+          ? `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}${u}`
+          : u;
+        if (/^https?:\/\//i.test(abs)) {
+          const parsed = new URL(abs);
+          if (parsed.hostname.toLowerCase() === 'wear-cast.runasp.net') {
+            return parsed.pathname + parsed.search;
+          }
+        }
+      } catch {
+        /* use default resolution */
+      }
+    }
+
+    return this.resolveProductImageUrl(raw);
+  }
+
+  private async fetchGarmentBlob(imageUrl: string): Promise<Blob> {
+    const url = this.resolveGarmentFetchUrl(imageUrl);
+    const res = await fetch(url, { credentials: 'omit' });
+    if (!res.ok) {
+      throw new Error(`Garment image HTTP ${res.status}`);
+    }
+    return res.blob();
+  }
+}
+
+function guessExtFromUrl(url: string): string {
+  const lower = url.split('?')[0].toLowerCase();
+  if (lower.endsWith('.png')) return 'png';
+  if (lower.endsWith('.webp')) return 'webp';
+  if (lower.endsWith('.gif')) return 'gif';
+  return 'jpg';
 }

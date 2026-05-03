@@ -11,9 +11,83 @@
     </div>
   </div>
 
+  <form class="card wc-factory-card border-0 mb-4 p-3 p-md-4" (submit)="applyFiltersSubmit($event)">
+    <div class="row g-2 align-items-end">
+      <div class="col-lg-4">
+        <label class="form-label small text-muted mb-1">Search</label>
+        <input type="search" name="search" class="form-control form-control-sm" placeholder="Product name…" [(ngModel)]="filters.searchTerm" />
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <label class="form-label small text-muted mb-1">Category</label>
+        <select name="category" class="form-select form-select-sm" [(ngModel)]="filters.categoryId">
+          <option [ngValue]="null">All</option>
+          <option *ngFor="let c of categories" [ngValue]="c.id ?? c.Id">{{ (c.name || c.Name) || ('#' + (c.id ?? c.Id)) }}</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <label class="form-label small text-muted mb-1">Min price</label>
+        <input type="number" step="0.01" min="0" name="minP" class="form-control form-control-sm" [(ngModel)]="filters.minPrice" />
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <label class="form-label small text-muted mb-1">Max price</label>
+        <input type="number" step="0.01" min="0" name="maxP" class="form-control form-control-sm" [(ngModel)]="filters.maxPrice" />
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <label class="form-label small text-muted mb-1">Dress style</label>
+        <select name="dress" class="form-select form-select-sm" [(ngModel)]="filters.dressStyle">
+          <option [ngValue]="null">Any</option>
+          <option *ngFor="let o of dressStyles" [ngValue]="o.value">{{ o.label }}</option>
+        </select>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <label class="form-label small text-muted mb-1">Audience</label>
+        <select name="audience" class="form-select form-select-sm" [(ngModel)]="filters.targetAudiences">
+          <option [ngValue]="null">Any</option>
+          <option *ngFor="let o of audiences" [ngValue]="o.value">{{ o.label }}</option>
+        </select>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <label class="form-label small text-muted mb-1">Sort by</label>
+        <select name="sort" class="form-select form-select-sm" [(ngModel)]="filters.sortBy">
+          <option *ngFor="let o of sortOptions" [ngValue]="o.value">{{ o.label }}</option>
+        </select>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <label class="form-label small text-muted mb-1">Per page</label>
+        <select name="ps" class="form-select form-select-sm" [(ngModel)]="filters.pageSize">
+          <option [ngValue]="6">6</option>
+          <option [ngValue]="12">12</option>
+          <option [ngValue]="24">24</option>
+          <option [ngValue]="48">48</option>
+        </select>
+      </div>
+      <div class="col-12 col-lg-auto ms-lg-auto d-flex gap-2 flex-wrap">
+        <button type="submit" class="btn btn-dark btn-sm rounded-pill px-3">
+          Apply filters
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" (click)="clearFilters()" [disabled]="loading">
+          Clear
+        </button>
+      </div>
+    </div>
+    <p class="small text-muted mb-0 mt-3" *ngIf="pageMeta">
+      Showing page {{ filters.pageIndex }} of {{ pageMeta.pages > 0 ? pageMeta.pages : '?' }} ·
+      {{ pageMeta.records }} product(s)
+    </p>
+  </form>
+
   <div *ngIf="loadError" class="alert alert-danger py-2 small">{{ loadError }}</div>
   <div *ngIf="deleteError" class="alert alert-danger py-2 small">{{ deleteError }}</div>
   <div *ngIf="loading" class="text-muted small mb-2">Loading products from server…</div>
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" *ngIf="items.length && pageMeta">
+    <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3" (click)="goPrevPage()" [disabled]="!canPrevCatalogPage">
+      Previous
+    </button>
+    <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3" (click)="goNextPage()" [disabled]="!canNextCatalogPage">
+      Next
+    </button>
+  </div>
 
   <ul class="list-group wc-factory-card border-0" *ngIf="items.length; else empty">
     <li
@@ -27,7 +101,7 @@
           [alt]="item.name"
           class="rounded"
           style="width: 64px; height: 64px; object-fit: cover;"
-        >
+        />
         <div
           *ngIf="!item.mainImageUrl"
           class="bg-light rounded d-flex align-items-center justify-content-center text-muted"
@@ -73,8 +147,10 @@
   </ul>
   <ng-template #empty>
     <div class="alert alert-light border rounded-3" *ngIf="!loading && !loadError">
-      <p class="mb-1">No products found on the server.</p>
-      <p class="small text-muted mb-0">Create a new product using the wizard, or check that you're signed in with the correct factory account.</p>
+      <p class="mb-1">No products match your filters.</p>
+      <p class="small text-muted mb-0">
+        Adjust filters or create a new product with the wizard. Ensure you’re signed in with the correct factory account.
+      </p>
     </div>
   </ng-template>
 </div>

@@ -46,6 +46,57 @@
     <button type="button" class="btn-close ms-auto btn-close-sm" (click)="errorMsg = ''"></button>
   </div>
 
+  <div class="card wc-factory-card border-0 mb-4">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2 px-4 py-3">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-people-fill text-primary"></i>
+        <span class="fw-semibold">All managers</span>
+      </div>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-dark rounded-pill"
+        (click)="loadManagers()"
+        [disabled]="loadingManagers"
+      >
+        <i class="bi bi-arrow-clockwise me-1" [class.spin]="loadingManagers"></i>
+        Refresh
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <div *ngIf="managersLoadError" class="alert alert-warning py-2 small mb-0 rounded-0 border-0 border-bottom">
+        {{ managersLoadError }}
+      </div>
+      <div *ngIf="loadingManagers && !managers.length" class="p-4 text-muted small">Loading managers…</div>
+      <div *ngIf="!loadingManagers && !managers.length && !managersLoadError" class="p-4 text-muted small">
+        No managers returned yet. Create one below or refresh after the backend assigns accounts.
+      </div>
+      <div class="table-responsive" *ngIf="managers.length">
+        <table class="table table-hover align-middle mb-0 small">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col" class="d-none d-md-table-cell">Phone</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of managers">
+              <td class="fw-medium">{{ m.name }}</td>
+              <td><a class="link-dark text-decoration-none" [href]="'mailto:' + m.email">{{ m.email }}</a></td>
+              <td class="d-none d-md-table-cell text-muted">{{ m.phoneNumber || '—' }}</td>
+              <td>
+                <span class="badge rounded-pill" [class.bg-success-subtle]="m.isActive" [class.text-success]="m.isActive" [class.bg-secondary-subtle]="!m.isActive" [class.text-secondary]="!m.isActive">
+                  {{ m.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="row g-4">
     <!-- Create Manager Form -->
     <div class="col-lg-12">

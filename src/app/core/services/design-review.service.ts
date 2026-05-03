@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { normalizeWearCastApiDateToIso } from '../utils/api-date';
 
 export interface DesignReview {
   reviewId: number;
@@ -35,14 +36,23 @@ export class DesignReviewService {
           rows = rows.items ?? rows.data ?? rows.results ?? rows.reviews ?? rows.list ?? [];
         }
         if (!Array.isArray(rows)) return [];
-        return rows.map((r: any) => ({
-          reviewId: r.reviewId || r.id || r.reviewID || r.Id || r.ID,
-          reviewerName: r.reviewerName || r.reviewer || r.customerName || r.userName || r.user || 'Customer',
-          rating: r.rating || r.Rate || r.rate || r.Rating || 0,
-          comment: r.comment || r.Comment || r.body || r.Body || r.text || r.Text || '',
-          createdAt: r.createdAt || r.CreatedAt || r.created || r.date || '',
-          isOwn: false
-        } as DesignReview));
+        return rows.map((r: any) => {
+          const rawDate =
+            r.createdAt ?? r.CreatedAt ?? r.created ?? r.date ?? r.Date;
+          const createdAt =
+            normalizeWearCastApiDateToIso(rawDate) ||
+            (typeof rawDate === 'string' ? rawDate : '') ||
+            '';
+          return {
+            reviewId: r.reviewId || r.id || r.reviewID || r.Id || r.ID,
+            reviewerName:
+              r.reviewerName || r.reviewer || r.customerName || r.userName || r.user || 'Customer',
+            rating: r.rating || r.Rate || r.rate || r.Rating || 0,
+            comment: r.comment || r.Comment || r.body || r.Body || r.text || r.Text || '',
+            createdAt,
+            isOwn: false
+          } as DesignReview;
+        });
       }),
       catchError(() => of([]))
     );
@@ -58,12 +68,18 @@ export class DesignReviewService {
         if (!r || typeof r !== 'object') return null;
         const hasContent = (r.rating && r.rating > 0) || (r.comment && String(r.comment).trim());
         if (!hasContent) return null;
+        const rawMy =
+          r.createdAt ?? r.CreatedAt ?? r.date ?? r.Date;
+        const createdAtMy =
+          normalizeWearCastApiDateToIso(rawMy) ||
+          (typeof rawMy === 'string' ? rawMy : '') ||
+          '';
         return {
           reviewId: r.reviewId || r.id || r.reviewID || r.ID,
           reviewerName: r.reviewerName || r.reviewer || r.customerName || r.userName || 'Me',
           rating: r.rating || r.Rate || r.rate || 0,
           comment: r.comment || r.Comment || r.body || r.Body || '',
-          createdAt: r.createdAt || r.CreatedAt || r.date || '',
+          createdAt: createdAtMy,
           isOwn: true
         } as DesignReview;
       }),

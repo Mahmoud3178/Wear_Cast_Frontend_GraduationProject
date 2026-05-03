@@ -59,6 +59,36 @@
   color: #6b7280;
 }
 
+.avatar-upload-btn {
+  display: inline-block;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  padding: 4px 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #374151;
+  background: #fff;
+  cursor: pointer;
+}
+
+.avatar-delete-btn {
+  display: inline-block;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  padding: 4px 10px;
+  margin-left: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #b91c1c;
+  background: #fff1f2;
+  cursor: pointer;
+}
+
+.avatar-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .profile-nav {
   margin-top: 16px;
   display: flex;
@@ -94,6 +124,28 @@
   border: 1px solid #e5e7eb;
   padding: 18px 20px 20px;
   font-size: 13px;
+}
+
+.wallet-balance-box {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 12px 14px;
+  display: inline-block;
+}
+
+.wallet-balance-box label {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.wallet-balance-box p {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .card-header {
@@ -226,6 +278,25 @@
   border: 1px solid #e5e7eb;
   padding: 8px 12px;
   font-size: 13px;
+}
+
+.password-field-wrap {
+  display: flex;
+  gap: 8px;
+}
+
+.password-field-wrap .form-control {
+  flex: 1 1 auto;
+}
+
+.password-visibility-btn {
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 12px;
+  color: #374151;
+  padding: 8px 12px;
+  white-space: nowrap;
 }
 
 .requirements {
@@ -370,6 +441,20 @@
   gap: 16px;
   margin-top: 16px;
   flex-wrap: wrap;
+}
+
+.shipment-row {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.shipment-row:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+  transform: translateY(-1px);
+}
+
+.shipment-address {
+  margin-top: 4px;
 }
 
 .shipment-detail-panel {
@@ -798,5 +883,90 @@
   
   .step-label {
     min-width: auto;
+  }
+}
+
+@media (max-width: 1024px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 20px 14px 28px;
+  }
+
+  .profile-sidebar {
+    padding: 14px;
+  }
+
+  .profile-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .profile-nav button {
+    text-align: center;
+    flex: 1 1 170px;
+  }
+
+  .info-grid,
+  .address-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 14px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .shipment-filters__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shipment-filters__actions {
+    width: 100%;
+  }
+
+  .shipment-filters__actions .primary-btn,
+  .shipment-filters__actions .ghost-btn {
+    width: 100%;
+  }
+
+  .order-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .order-row-main {
+    align-items: flex-start;
+  }
+
+  .order-meta {
+    text-align: left !important;
+  }
+
+  .shipment-order-line {
+    grid-template-columns: 40px 1fr;
+    gap: 10px;
+  }
+
+  .shipment-order-line__prices {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .shipment-item-modal {
+    padding: 12px;
+  }
+
+  .shipment-item-modal__content {
+    grid-template-columns: 1fr;
   }
 }

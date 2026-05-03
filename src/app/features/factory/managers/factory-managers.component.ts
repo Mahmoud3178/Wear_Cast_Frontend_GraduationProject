@@ -1,8 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { FactoryApiService } from '../../../core/services/factory-api.service';
+import {
+  FactoryApiService,
+  type FactoryManager
+} from '../../../core/services/factory-api.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 interface ManagerFormData {
@@ -20,7 +23,7 @@ interface ManagerFormData {
   imports: [NgIf, NgFor, FormsModule, RouterLink],
   templateUrl: './factory-managers.component.html'
 })
-export class FactoryManagersComponent {
+export class FactoryManagersComponent implements OnInit {
   form: ManagerFormData = {
     email: '',
     firstName: '',
@@ -44,10 +47,33 @@ export class FactoryManagersComponent {
   showPassword = false;
   showConfirm = false;
 
+  managers: FactoryManager[] = [];
+  loadingManagers = false;
+  managersLoadError = '';
+
   constructor(
     private readonly factoryApi: FactoryApiService,
     private readonly auth: AuthService
   ) {}
+
+  ngOnInit(): void {
+    this.loadManagers();
+  }
+
+  loadManagers(): void {
+    this.loadingManagers = true;
+    this.managersLoadError = '';
+    this.factoryApi.getAllFactoryManagers().subscribe({
+      next: rows => {
+        this.managers = rows;
+        this.loadingManagers = false;
+      },
+      error: () => {
+        this.managersLoadError = 'Could not load managers.';
+        this.loadingManagers = false;
+      }
+    });
+  }
 
   toggleShowPassword(): void {
     this.showPassword = !this.showPassword;
@@ -112,6 +138,7 @@ export class FactoryManagersComponent {
             res.message || 'Factory manager created successfully!';
           this.lastCreatedEmail = this.form.email.trim();
           this.lastCreatedUserId = res.userId || '';
+          this.loadManagers();
           this.createdManagers.push({
             email: this.form.email.trim(),
             name: `${this.form.firstName.trim()} ${this.form.lastName.trim()}`

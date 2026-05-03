@@ -86,6 +86,10 @@ export class CustomerDesignComponent implements AfterViewInit {
       __WEARCAST_SAVE_CUSTOMER_DESIGN__?: (
         body: AddCustomerDesignRequest
       ) => Promise<number | null>;
+      __WEARCAST_UPDATE_CUSTOMER_DESIGN__?: (
+        id: number,
+        body: AddCustomerDesignRequest
+      ) => Promise<void>;
       __WEARCAST_ADD_DESIGNED_TO_CART__?: (
         items: AddOrUpdateDesignedToCartRequest[]
       ) => Promise<void>;
@@ -147,6 +151,31 @@ export class CustomerDesignComponent implements AfterViewInit {
         return firstValueFrom(this.customerDesign.saveDesign(request));
       };
 
+      w.__WEARCAST_UPDATE_CUSTOMER_DESIGN__ = async (id: number, body) => {
+        const raw = body as AddCustomerDesignRequest & Record<string, unknown>;
+        const name =
+          typeof raw.name === 'string' && raw.name.trim()
+            ? raw.name.trim()
+            : 'My design';
+        const ac = raw.assetCount;
+        const assetCount =
+          typeof ac === 'number' && Number.isFinite(ac)
+            ? Math.max(0, Math.floor(ac))
+            : 0;
+        const request: AddCustomerDesignRequest = {
+          name,
+          assetCount,
+          productId: body.productId,
+          productColorId: body.productColorId,
+          viewDesignsJson: body.viewDesignsJson,
+          frontImage: raw.frontImage as AddCustomerDesignRequest['frontImage'],
+          backImage: raw.backImage as AddCustomerDesignRequest['backImage'],
+          leftImage: raw.leftImage as AddCustomerDesignRequest['leftImage'],
+          rightImage: raw.rightImage as AddCustomerDesignRequest['rightImage']
+        };
+        await firstValueFrom(this.customerDesign.updateDesign(id, request));
+      };
+
       w.__WEARCAST_ADD_DESIGNED_TO_CART__ = async (
         items: AddOrUpdateDesignedToCartRequest[]
       ) => {
@@ -179,6 +208,7 @@ export class CustomerDesignComponent implements AfterViewInit {
       };
     } else {
       delete w.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
+      delete w.__WEARCAST_UPDATE_CUSTOMER_DESIGN__;
       delete w.__WEARCAST_ADD_DESIGNED_TO_CART__;
       delete w.__WEARCAST_LIST_CUSTOMER_DESIGNS__;
       delete w.__WEARCAST_GET_CUSTOMER_DESIGN__;

@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../../../environments/environment';
@@ -10,7 +10,8 @@ import { CustomerFooterComponent } from '../shared/customer-footer/customer-foot
 import {
   CartService,
   CartFixedItem,
-  CartDesignItem
+  CartDesignItem,
+  SizeQuantityItem
 } from '../../../core/services/cart.service';
 import { FixedProductService } from '../../../core/services/fixed-product.service';
 
@@ -298,15 +299,45 @@ export class CartComponent implements OnInit {
 
     const actualSizeEnum = targetSizeEnum;
 
-    const req$ = item.type === 'fixed' && item.cartItemId != null
-      ? this.cartService.updateItemQuantity(
-          item.cartItemId,
-          actualSizeEnum,
-          Math.max(0, nextQty)
-        )
-      : item.type === 'design' && item.designId != null
-        ? this.cartService.addOrUpdateDesigned({ designId: item.designId, size: actualSizeEnum, quantity: delta })
-        : of(null);
+    const rebuildFixedSizes = (): SizeQuantityItem[] | null => {
+      if (!item.sizes?.length || item.colorId == null) return null;
+      return item.sizes
+        .map(s => ({
+          size: s.sizeEnum,
+          quantity:
+            s.sizeEnum === actualSizeEnum ? Math.max(0, nextQty) : s.quantity
+        }))
+        .filter(s => s.quantity > 0);
+    };
+
+    const fixedSizesPayload = rebuildFixedSizes();
+
+    let req$: Observable<unknown>;
+    if (item.type === 'fixed' && item.colorId != null && fixedSizesPayload !== null) {
+      req$ =
+        fixedSizesPayload.length === 0
+          ? item.cartItemId != null
+            ? this.cartService.deleteItem(item.cartItemId)
+            : of(null)
+          : this.cartService.addOrUpdateFixed({
+              colorId: item.colorId,
+              sizes: fixedSizesPayload
+            });
+    } else if (item.type === 'fixed' && item.cartItemId != null && fixedSizesPayload === null) {
+      req$ = this.cartService.updateItemQuantity(
+        item.cartItemId,
+        actualSizeEnum,
+        Math.max(0, nextQty)
+      );
+    } else if (item.type === 'design' && item.designId != null) {
+      req$ = this.cartService.addOrUpdateDesigned({
+        designId: item.designId,
+        size: actualSizeEnum,
+        quantity: delta
+      });
+    } else {
+      req$ = of(null);
+    }
 
     req$.subscribe({
       next: () => {

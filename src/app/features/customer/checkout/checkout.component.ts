@@ -165,8 +165,19 @@ export class CheckoutComponent implements OnInit {
       this.errorMessage.set('Please fill in all required shipping fields.');
       return;
     }
+    if (this.submitting()) {
+      return;
+    }
     this.submitting.set(true);
     this.errorMessage.set(null);
+
+    const summary = {
+      at: new Date().toISOString(),
+      lineCount: this.cartItems().length,
+      totalQty: this.totalQuantity(),
+      subtotal: this.subtotal()
+    };
+    console.log('[WearCast] Checkout start', summary);
 
     this.checkoutService.createCheckoutSession({
       shippingInfo: this.shippingForm

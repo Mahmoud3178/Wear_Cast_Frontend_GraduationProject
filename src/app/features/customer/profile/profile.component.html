@@ -8,6 +8,20 @@
         <ng-container *ngIf="profile as p; else guestSidebar">
           <img *ngIf="profileImageUrl" [src]="profileImageUrl" class="avatar-circle border-0 object-fit-cover" alt="Profile Image">
           <div *ngIf="!profileImageUrl" class="avatar-circle">{{ avatarLetter }}</div>
+          <label class="avatar-upload-btn" *ngIf="profile">
+            <input type="file" accept="image/*" hidden (change)="onProfileImageSelected($event)" />
+            <span *ngIf="!imageUploading">Change image</span>
+            <span *ngIf="imageUploading">Uploading…</span>
+          </label>
+          <button
+            type="button"
+            class="avatar-delete-btn"
+            *ngIf="profileImageUrl"
+            (click)="deleteProfileImage()"
+            [disabled]="imageDeleting"
+          >
+            {{ imageDeleting ? 'Deleting…' : 'Delete image' }}
+          </button>
           <h2>{{ displayName }}</h2>
           <p>{{ p.email || '—' }}</p>
         </ng-container>
@@ -25,6 +39,7 @@
         <button [class.active]="activeTab === 'info'" (click)="setTab('info')">Personal Information</button>
         <button [class.active]="activeTab === 'addresses'" (click)="setTab('addresses')">Addresses</button>
         <button [class.active]="activeTab === 'orders'" (click)="setTab('orders')">Orders</button>
+        <button [class.active]="activeTab === 'wallet'" (click)="setTab('wallet')">Wallet</button>
         <button [class.active]="activeTab === 'security'" (click)="setTab('security')">Security Settings</button>
       </nav>
     </aside>
@@ -122,6 +137,23 @@
 
 
 
+      <div *ngIf="activeTab === 'wallet'" class="card">
+        <header class="card-header">
+          <h1>Wallet</h1>
+          <button type="button" class="primary-btn" (click)="loadWallet()" [disabled]="walletLoading">
+            Refresh
+          </button>
+        </header>
+        <div class="card-body">
+          <div *ngIf="walletError" class="alert alert-danger">{{ walletError }}</div>
+          <div *ngIf="walletLoading" class="text-muted">Loading wallet…</div>
+          <div *ngIf="!walletLoading && !walletError" class="wallet-balance-box">
+            <label>Current Balance</label>
+            <p>EGP {{ (walletBalance ?? 0) | number:'1.2-2' }}</p>
+          </div>
+        </div>
+      </div>
+
       <div *ngIf="activeTab === 'orders'" class="card">
         <header class="card-header">
           <h1>My shipments</h1>
@@ -186,7 +218,6 @@
           <article *ngFor="let s of shipments" class="order-row shipment-row">
             <button type="button" class="order-row-toggle" (click)="toggleShipmentDetails(s)">
               <div class="order-row-main">
-                <div class="order-thumb order-thumb--empty shipment-thumb" aria-hidden="true"></div>
                 <div class="text-start">
                   <p class="order-id">Shipment #{{ s.id }}</p>
                   <p class="order-date" *ngIf="s.createdAt">{{ s.createdAt | date:'medium' }}</p>
@@ -241,6 +272,12 @@
                     <span *ngIf="d.driverName && d.driverPhoneNumber"> · </span>
                     <span *ngIf="d.driverPhoneNumber">{{ d.driverPhoneNumber }}</span>
                   </p>
+                </section>
+
+                <section class="shipment-detail-block" *ngIf="d.deliveryCode">
+                  <h4 class="shipment-detail-heading">Delivery code</h4>
+                  <p class="shipment-detail-value font-monospace mb-0">{{ d.deliveryCode }}</p>
+                  <p class="small text-muted mb-0">Show this code to the driver or at pickup if requested.</p>
                 </section>
 
                 <section class="shipment-detail-block">
@@ -312,15 +349,30 @@
         <div class="card-body security-form" (keyup.enter)="updatePassword()">
           <div class="field">
             <label>Current Password *</label>
-            <input type="password" class="form-control" [(ngModel)]="passwordForm.currentPassword" />
+            <div class="password-field-wrap">
+              <input [type]="showCurrentPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="passwordForm.currentPassword" />
+              <button type="button" class="password-visibility-btn" (click)="showCurrentPassword = !showCurrentPassword">
+                {{ showCurrentPassword ? 'Hide' : 'Show' }}
+              </button>
+            </div>
           </div>
           <div class="field">
             <label>New Password *</label>
-            <input type="password" class="form-control" [(ngModel)]="passwordForm.newPassword" />
+            <div class="password-field-wrap">
+              <input [type]="showNewPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="passwordForm.newPassword" />
+              <button type="button" class="password-visibility-btn" (click)="showNewPassword = !showNewPassword">
+                {{ showNewPassword ? 'Hide' : 'Show' }}
+              </button>
+            </div>
           </div>
           <div class="field">
             <label>Confirm New Password *</label>
-            <input type="password" class="form-control" [(ngModel)]="passwordForm.confirmNewPassword" />
+            <div class="password-field-wrap">
+              <input [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="passwordForm.confirmNewPassword" />
+              <button type="button" class="password-visibility-btn" (click)="showConfirmPassword = !showConfirmPassword">
+                {{ showConfirmPassword ? 'Hide' : 'Show' }}
+              </button>
+            </div>
           </div>
           <ul class="requirements">
             <li>At least 8 characters long</li>

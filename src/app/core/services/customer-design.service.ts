@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { normalizeWearCastApiDateToIso } from '../utils/api-date';
 
 export interface AddCustomerDesignRequest {
   /** Display name for the design (API `Name`). */
@@ -46,19 +47,16 @@ interface ApiEnvelope<T = unknown> {
 export class CustomerDesignService {
   private readonly base = environment.apiUrl;
 
+  /** 1×1 PNG — server always receives four multipart parts when a side is missing. */
+  private static readonly placeholderViewPngDataUrl =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
   constructor(private readonly http: HttpClient) {}
 
-  /** POST /api/customers/me/designs — creates a draft with customer artwork on a designed product color.
-   *  Now accepts 4 view images (front, back, left, right) to attach to the draft.
-   *  Returns created design id when the API sends one.
-   */
-  saveDesign(body: AddCustomerDesignRequest): Observable<number | null> {
-    const url = `${this.base}/api/customers/me/designs`;
-    const fd = new FormData();
+  private appendDesignDraftFormFields(fd: FormData, body: AddCustomerDesignRequest): void {
     const name = (body.name && String(body.name).trim()) || 'My design';
     const assetCount = Number.isFinite(body.assetCount) ? Math.max(0, Math.floor(body.assetCount)) : 0;
 
-    // Send both cases — .NET [FromForm] can be case-sensitive depending on config
     fd.append('Name', name);
     fd.append('name', name);
     fd.append('AssetCount', String(assetCount));
@@ -70,19 +68,68 @@ export class CustomerDesignService {
     fd.append('ViewDesignsJson', body.viewDesignsJson);
     fd.append('viewDesignsJson', body.viewDesignsJson);
 
-    // One file part per side (PascalCase) — duplicate keys can confuse some servers
-    if (body.frontImage) {
-      this.appendImageToFormData(fd, 'FrontImage', body.frontImage);
+    this.appendImageToFormData(
+      fd,
+      'FrontImage',
+      body.frontImage ?? CustomerDesignService.placeholderViewPngDataUrl
+    );
+    this.appendImageToFormData(
+      fd,
+      'BackImage',
+      body.backImage ?? CustomerDesignService.placeholderViewPngDataUrl
+    );
+    this.appendImageToFormData(
+      fd,
+      'LeftImage',
+      body.leftImage ?? CustomerDesignService.placeholderViewPngDataUrl
+    );
+    this.appendImageToFormData(
+      fd,
+      'RightImage',
+      body.rightImage ?? CustomerDesignService.placeholderViewPngDataUrl
+    );
+  }
+
+  private mapDesignHttpError(err: unknown): Observable<never> {
+    if (err instanceof HttpErrorResponse) {
+      const b = err.error as ApiEnvelope | Record<string, unknown> | string | null;
+      if (typeof b === 'string' && b.trim()) {
+        return throwError(() => new Error(b.trim()));
+      }
+      if (b && typeof b === 'object' && 'isSuccess' in b && !(b as ApiEnvelope).isSuccess) {
+        const e = (b as ApiEnvelope).error?.description;
+        return throwError(() => new Error(e || err.message || `HTTP ${err.status}`));
+      }
+      if (b && typeof b === 'object') {
+        const o = b as Record<string, unknown>;
+        const detail = o['detail'];
+        if (typeof detail === 'string' && detail.trim()) {
+          return throwError(() => new Error(detail.trim()));
+        }
+        const title = o['title'];
+        if (typeof title === 'string' && title.trim()) {
+          return throwError(() => new Error(title.trim()));
+        }
+        const msg = o['message'];
+        if (typeof msg === 'string' && msg.trim()) {
+          return throwError(() => new Error(msg.trim()));
+        }
+      }
+      return throwError(() => new Error(err.message || `HTTP ${err.status}`));
     }
-    if (body.backImage) {
-      this.appendImageToFormData(fd, 'BackImage', body.backImage);
-    }
-    if (body.leftImage) {
-      this.appendImageToFormData(fd, 'LeftImage', body.leftImage);
-    }
-    if (body.rightImage) {
-      this.appendImageToFormData(fd, 'RightImage', body.rightImage);
-    }
+    return throwError(() => (err instanceof Error ? err : new Error(String(err))));
+  }
+
+  /** POST /api/customers/me/designs — creates a draft with customer artwork on a designed product color.
+   *  Now accepts 4 view images (front, back, left, right) to attach to the draft.
+   *  Returns created design id when the API sends one.
+   */
+  saveDesign(body: AddCustomerDesignRequest): Observable<number | null> {
+    const url = `${this.base}/api/customers/me/designs`;
+    const fd = new FormData();
+    this.appendDesignDraftFormFields(fd, body);
+    const name = (body.name && String(body.name).trim()) || 'My design';
+    const assetCount = Number.isFinite(body.assetCount) ? Math.max(0, Math.floor(body.assetCount)) : 0;
 
     console.log('[WearCast] POST /api/customers/me/designs');
     console.log('[WearCast] Name:', name, 'AssetCount:', assetCount);
@@ -104,35 +151,30 @@ export class CustomerDesignService {
       }),
       catchError((err: unknown) => {
         console.error('[WearCast] saveDesign HTTP error:', err);
-        if (err instanceof HttpErrorResponse) {
-          const b = err.error as ApiEnvelope | Record<string, unknown> | string | null;
-          if (typeof b === 'string' && b.trim()) {
-            return throwError(() => new Error(b.trim()));
+        return this.mapDesignHttpError(err);
+      })
+    );
+  }
+
+  /** PUT /api/customers/me/designs/{id} — update an existing draft (same multipart shape as POST). */
+  updateDesign(id: number, body: AddCustomerDesignRequest): Observable<void> {
+    const url = `${this.base}/api/customers/me/designs/${id}`;
+    const fd = new FormData();
+    this.appendDesignDraftFormFields(fd, body);
+    console.log('[WearCast] PUT /api/customers/me/designs/' + id);
+
+    return this.http.put<unknown>(url, fd).pipe(
+      map(raw => {
+        if (raw && typeof raw === 'object' && 'isSuccess' in raw) {
+          const res = raw as ApiEnvelope;
+          if (!res.isSuccess) {
+            throw new Error(res.error?.description || 'Update design failed');
           }
-          if (b && typeof b === 'object' && 'isSuccess' in b && !(b as ApiEnvelope).isSuccess) {
-            const e = (b as ApiEnvelope).error?.description;
-            return throwError(() => new Error(e || err.message || `HTTP ${err.status}`));
-          }
-          if (b && typeof b === 'object') {
-            const o = b as Record<string, unknown>;
-            const detail = o['detail'];
-            if (typeof detail === 'string' && detail.trim()) {
-              return throwError(() => new Error(detail.trim()));
-            }
-            const title = o['title'];
-            if (typeof title === 'string' && title.trim()) {
-              return throwError(() => new Error(title.trim()));
-            }
-            const msg = o['message'];
-            if (typeof msg === 'string' && msg.trim()) {
-              return throwError(() => new Error(msg.trim()));
-            }
-          }
-          return throwError(() => new Error(err.message || `HTTP ${err.status}`));
         }
-        return throwError(() =>
-          err instanceof Error ? err : new Error(String(err))
-        );
+      }),
+      catchError((err: unknown) => {
+        console.error('[WearCast] updateDesign HTTP error:', err);
+        return this.mapDesignHttpError(err);
       })
     );
   }
@@ -328,14 +370,23 @@ function normalizeCustomerDesignList(root: unknown): CustomerDesignSummary[] {
       `Design ${id}`;
     const productId = pickNum(r, ['productId', 'ProductId', 'designedProductId', 'DesignedProductId']);
     const productColorId = pickNum(r, ['productColorId', 'ProductColorId', 'colorId', 'ColorId']);
-    const createdAt = pickStr(r, [
-      'createdAt',
-      'CreatedAt',
-      'createdOn',
-      'CreatedOn',
-      'dateCreated',
-      'DateCreated'
-    ]);
+    const createdRaw =
+      r['createdAt'] ??
+      r['CreatedAt'] ??
+      r['createdOn'] ??
+      r['CreatedOn'] ??
+      r['dateCreated'] ??
+      r['DateCreated'];
+    const createdAt =
+      normalizeWearCastApiDateToIso(createdRaw) ??
+      pickStr(r, [
+        'createdAt',
+        'CreatedAt',
+        'createdOn',
+        'CreatedOn',
+        'dateCreated',
+        'DateCreated'
+      ]);
     const previewUrl = pickPreviewUrl(r);
     out.push({
       id,

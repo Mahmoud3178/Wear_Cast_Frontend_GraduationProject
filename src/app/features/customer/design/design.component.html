@@ -412,6 +412,22 @@
 <div id="save-modal" class="modal hidden">
   <div class="modal-content">
     <h3>Save design</h3>
+    <p class="save-modal-hint text-muted small mb-2">Save as a new draft or overwrite a design from <strong>My saved designs</strong>.</p>
+    <div class="save-mode-group mb-3">
+      <label class="save-mode-option">
+        <input type="radio" name="save-mode" id="save-mode-new" value="new" checked>
+        <span>New draft</span>
+      </label>
+      <label class="save-mode-option">
+        <input type="radio" name="save-mode" id="save-mode-update" value="update">
+        <span>Update existing</span>
+      </label>
+    </div>
+    <label class="form-label small text-muted mb-1" for="save-existing-select">Draft to update</label>
+    <select id="save-existing-select" class="form-select form-select-sm mb-3" disabled aria-label="Choose saved design to update">
+      <option value="">Loading…</option>
+    </select>
+    <label class="form-label small text-muted mb-1" for="save-name-input">Name</label>
     <input type="text" id="save-name-input" placeholder="Design name">
     <div class="modal-actions">
       <button type="button" class="btn secondary" id="save-cancel">Cancel</button>

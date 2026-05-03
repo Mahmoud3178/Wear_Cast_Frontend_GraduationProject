@@ -4,6 +4,7 @@ import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
+import { normalizeWearCastApiDateToIso } from '../utils/api-date';
 
 /** Matches typical API `ViewSide` enum order used by WearCast. */
 export const VIEW_SIDE = {
@@ -152,6 +153,21 @@ export interface FactoryManagerProfile {
   imageUrl?: string;
 }
 
+export interface FactoryWalletTransaction {
+  type: string;
+  amount: number;
+  description: string;
+  referenceOrderId?: number | null;
+  senderName?: string;
+  senderEmail?: string;
+  createdOn: string;
+}
+
+export interface FactoryWalletSummary {
+  balance: number;
+  recentTransactions: FactoryWalletTransaction[];
+}
+
 export interface UpdateFactoryManagerProfileRequest {
   firstName: string;
   lastName: string;
@@ -187,6 +203,47 @@ export interface FactoryOrderItem {
   totalPrice: number;
   size: string;
   raw?: Record<string, unknown>;
+}
+
+/** Single row from GET `/api/factories/catalog/designed-products` */
+export interface FactoryDesignedCatalogItem {
+  id: number;
+  name: string;
+  price: number;
+  categoryName: string;
+  mainImageUrl: string | null;
+  targetAudienceLabel: string;
+  averageRating: number | null;
+  reviewCount: number;
+}
+
+/** Query params per Swagger `/api/factories/catalog/designed-products` */
+export interface FactoryDesignedCatalogQuery {
+  searchTerm?: string | null;
+  categoryId?: number | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  dressStyle?: number | null;
+  targetAudiences?: number | null;
+  sortBy?: number | null;
+  pageIndex?: number;
+  pageSize?: number;
+}
+
+export interface FactoryDesignedCatalogPage {
+  items: FactoryDesignedCatalogItem[];
+  pageIndex: number;
+  pageSize: number;
+  pages: number;
+  records: number;
+}
+
+export interface FactoryOrdersPage {
+  orders: FactoryOrderSummary[];
+  pageNumber: number;
+  pageSize: number;
+  totalRecords: number;
+  totalPages: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -293,48 +350,146 @@ export class FactoryApiService {
     );
   }
 
-  getDesignedProducts(): Observable<{
-    id: number;
-    name: string;
-    price: number;
-    categoryName: string;
-    mainImageUrl: string | null;
-    targetAudienceLabel: string;
-    averageRating: number | null;
-    reviewCount: number;
-  }[]> {
-    // Use factory catalog endpoint to get all products for this factory
+  /**
+   * GET `/api/factories/catalog/designed-products` — full query + paging (Swagger).
+   */
+  getDesignedProductsCatalog(
+    query: FactoryDesignedCatalogQuery = {}
+  ): Observable<FactoryDesignedCatalogPage> {
     const url = `${this.base}/api/factories/catalog/designed-products`;
-    return this.http.get<ApiEnvelope | unknown>(url).pipe(
+    let params = new HttpParams()
+      .set('PageIndex', String(query.pageIndex ?? 1))
+      .set('PageSize', String(query.pageSize ?? 12));
+    const st = query.searchTerm?.trim();
+    if (st) params = params.set('SearchTerm', st);
+    if (query.categoryId != null && query.categoryId > 0) {
+      params = params.set('CategoryId', String(query.categoryId));
+    }
+    if (query.minPrice != null && query.minPrice > 0) {
+      params = params.set('MinPrice', String(query.minPrice));
+    }
+    if (query.maxPrice != null && query.maxPrice > 0) {
+      params = params.set('MaxPrice', String(query.maxPrice));
+    }
+    if (query.dressStyle != null && Number.isFinite(query.dressStyle)) {
+      params = params.set('DressStyle', String(query.dressStyle));
+    }
+    if (query.targetAudiences != null && Number.isFinite(query.targetAudiences)) {
+      params = params.set('TargetAudiences', String(query.targetAudiences));
+    }
+    if (query.sortBy != null && Number.isFinite(query.sortBy)) {
+      params = params.set('SortBy', String(query.sortBy));
+    }
+
+    return this.http.get<ApiEnvelope | unknown>(url, { params }).pipe(
       map(res => {
-        const payload = this.unwrapPayload<any>(res);
-        // Handle paginated response: data.items array
-        const list = payload?.items ?? payload ?? [];
-        if (!Array.isArray(list)) return [];
-        return list.map((item: any) => {
-          const o = item || {};
-          const id = o.id ?? o.Id ?? o.designedProductId ?? o.DesignedProductId ?? o.productId ?? o.ProductId ?? 0;
-          const name = o.name ?? o.Name ?? o.productName ?? o.ProductName ?? o.title ?? o.Title ?? `Designed product #${id}`;
-          const price = o.price ?? o.Price ?? 0;
-          const categoryName = o.categoryName ?? o.CategoryName ?? '';
-          const mainImageUrl = o.mainImageUrl ?? o.MainImageUrl ?? null;
-          const targetAudienceLabel = this.targetAudienceLabelFromRow(o);
-          const averageRatingRaw = this.toNum(o.averageRating ?? o.AverageRating);
-          const reviewCountRaw = this.toNum(o.reviewCount ?? o.ReviewCount ?? o.ratingsCount ?? o.RatingsCount) ?? 0;
-          return {
-            id,
-            name,
-            price,
-            categoryName,
-            mainImageUrl,
-            targetAudienceLabel,
-            averageRating: averageRatingRaw != null ? Number(averageRatingRaw.toFixed(1)) : null,
-            reviewCount: Math.max(0, Math.floor(reviewCountRaw))
-          };
-        });
+        const payload = this.unwrapPayload<any>(res) ?? res ?? {};
+        const box = Array.isArray(payload) ? ({ items: payload } as Record<string, unknown>) : payload;
+        const list = (box.items ?? box.Items ?? box.data ?? []) as unknown;
+        const rows = Array.isArray(list) ? list : [];
+        const pi = Number(query.pageIndex ?? 1);
+        const ps = Number(query.pageSize ?? 12);
+        const items = rows
+          .map((row: unknown) => this.mapDesignedCatalogRow(row))
+          .filter((row): row is FactoryDesignedCatalogItem => row != null);
+
+        const pageIndexRaw = this.pickNumberFromUnknown(box as Record<string, unknown>, [
+          'pageIndex',
+          'PageIndex'
+        ]);
+        const pageSizeRaw = this.pickNumberFromUnknown(box as Record<string, unknown>, [
+          'pageSize',
+          'PageSize'
+        ]);
+        const pagesRaw = this.pickNumberFromUnknown(box as Record<string, unknown>, ['pages', 'Pages']);
+        const recordsRaw = this.pickNumberFromUnknown(box as Record<string, unknown>, [
+          'records',
+          'Records',
+          'totalCount',
+          'TotalCount',
+          'recordCount',
+          'RecordCount'
+        ]);
+
+        return {
+          items,
+          pageIndex: pageIndexRaw ?? pi,
+          pageSize: pageSizeRaw ?? ps,
+          pages: Math.max(pagesRaw ?? 0, 0),
+          records: recordsRaw ?? items.length
+        };
       }),
-      catchError(() => of([]))
+      catchError(() =>
+        of({
+          items: [],
+          pageIndex: query.pageIndex ?? 1,
+          pageSize: query.pageSize ?? 12,
+          pages: 0,
+          records: 0
+        })
+      )
     );
+  }
+
+  /** Back-compat: loads up to 500 templates for dashboards and simple lists. */
+  getDesignedProducts(): Observable<FactoryDesignedCatalogItem[]> {
+    return this.getDesignedProductsCatalog({ pageIndex: 1, pageSize: 500 }).pipe(
+      map(page => page.items)
+    );
+  }
+
+  private mapDesignedCatalogRow(item: unknown): FactoryDesignedCatalogItem | null {
+    if (!item || typeof item !== 'object') return null;
+    const o = item as Record<string, unknown>;
+    const id =
+      this.toNum(o['id'] ?? o['Id'] ?? o['designedProductId'] ?? o['DesignedProductId'] ?? o['productId'] ?? o['ProductId']) ??
+      0;
+    if (!id) return null;
+    const name =
+      this.pickString(o, [
+        'name',
+        'Name',
+        'productName',
+        'ProductName',
+        'title',
+        'Title'
+      ]) || `Designed product #${id}`;
+    const price = this.toNum(o['price'] ?? o['Price']) ?? 0;
+    const categoryName =
+      this.pickString(o, ['categoryName', 'CategoryName']) || '';
+    const mainImageUrl =
+      this.pickString(o, ['mainImageUrl', 'MainImageUrl']) || null;
+    const averageRatingRaw = this.toNum(o['averageRating'] ?? o['AverageRating']);
+    const reviewCountRaw = this.toNum(o['reviewCount'] ?? o['ReviewCount'] ?? o['ratingsCount'] ?? o['RatingsCount']) ?? 0;
+    const targetAudienceLabel = this.targetAudienceLabelFromRow(o);
+    return {
+      id,
+      name,
+      price,
+      categoryName,
+      mainImageUrl: mainImageUrl || null,
+      targetAudienceLabel,
+      averageRating: averageRatingRaw != null ? Number(averageRatingRaw.toFixed(1)) : null,
+      reviewCount: Math.max(0, Math.floor(reviewCountRaw))
+    };
+  }
+
+  /** First numeric candidate from object keys. */
+  private pickNumberFromUnknown(
+    obj: Record<string, unknown>,
+    keys: string[]
+  ): number | undefined {
+    for (const k of keys) {
+      const v = obj[k];
+      const n =
+        typeof v === 'number' && Number.isFinite(v)
+          ? v
+          : typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v.trim())
+            ? Number(v.trim())
+            : NaN;
+      if (Number.isFinite(n)) return n;
+    }
+    return undefined;
   }
 
   createDesignedProduct(
@@ -579,6 +734,110 @@ export class FactoryApiService {
     );
   }
 
+  /** GET /api/factory-managers/all — full list for factory admin UI */
+  getAllFactoryManagers(): Observable<FactoryManager[]> {
+    const url = `${this.base}/api/factory-managers/all`;
+    return this.http.get<unknown>(url).pipe(
+      map(res => this.normalizeFactoryManagerList(res)),
+      catchError(() => of([]))
+    );
+  }
+
+  private normalizeFactoryManagerList(res: unknown): FactoryManager[] {
+    const raw = this.unwrapPayload<unknown>(res as ApiEnvelope<unknown>) ?? res;
+    let rows: unknown[] = [];
+    if (Array.isArray(raw)) {
+      rows = raw;
+    } else if (raw && typeof raw === 'object') {
+      const o = raw as Record<string, unknown>;
+      const inner =
+        o['items'] ??
+        o['Items'] ??
+        o['data'] ??
+        o['Data'] ??
+        o['managers'] ??
+        o['Managers'];
+      if (Array.isArray(inner)) {
+        rows = inner;
+      } else if (inner && typeof inner === 'object') {
+        const nested = (inner as Record<string, unknown>)['items'] ?? (inner as Record<string, unknown>)['Items'];
+        if (Array.isArray(nested)) {
+          rows = nested;
+        }
+      }
+    }
+    const out: FactoryManager[] = [];
+    for (const row of rows) {
+      if (!row || typeof row !== 'object') continue;
+      const r = row as Record<string, unknown>;
+      const id =
+        this.toNum(r['id'] ?? r['Id'] ?? r['userId'] ?? r['UserId'] ?? r['managerId'] ?? r['ManagerId']) ?? 0;
+      const email = this.pickString(r, ['email', 'Email', 'userEmail', 'UserEmail']) || '';
+      const name =
+        this.pickString(r, ['name', 'Name', 'fullName', 'FullName']) ||
+        [this.pickString(r, ['firstName', 'FirstName']), this.pickString(r, ['lastName', 'LastName'])]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
+        email ||
+        `Manager #${id || out.length + 1}`;
+      const phoneNumber = this.pickString(r, ['phoneNumber', 'PhoneNumber', 'phone', 'Phone']) || undefined;
+      const activeRaw = r['isActive'] ?? r['IsActive'] ?? r['active'] ?? r['Active'];
+      const isActive = activeRaw === undefined || activeRaw === null ? true : Boolean(activeRaw);
+      if (!id && !email) continue;
+      out.push({
+        id: id || out.length + 1,
+        name,
+        email: email || '—',
+        phoneNumber,
+        isActive
+      });
+    }
+    return out;
+  }
+
+  /** GET /api/factories/wallet */
+  getFactoryWallet(): Observable<FactoryWalletSummary> {
+    const url = `${this.base}/api/factories/wallet`;
+    return this.http.get<unknown>(url).pipe(
+      map(res => {
+        const payload = this.unwrapPayload<any>(res) ?? {};
+        const balance =
+          this.toNum(payload?.balance ?? payload?.Balance) ?? 0;
+        const txRows = Array.isArray(payload?.recentTransactions ?? payload?.RecentTransactions)
+          ? (payload.recentTransactions ?? payload.RecentTransactions)
+          : [];
+        const recentTransactions: FactoryWalletTransaction[] = txRows.map((row: any) => {
+          const r = row ?? {};
+          const createdRaw =
+            r['createdOn'] ??
+            r['CreatedOn'] ??
+            r['createdAt'] ??
+            r['CreatedAt'];
+          const createdOn =
+            normalizeWearCastApiDateToIso(createdRaw) ||
+            this.pickString(r as Record<string, unknown>, ['createdOn', 'CreatedOn']) ||
+            '';
+          return {
+            type: this.pickString(r as Record<string, unknown>, ['type', 'Type']) || '—',
+            amount: this.toNum(r['amount'] ?? r['Amount']) ?? 0,
+            description:
+              this.pickString(r as Record<string, unknown>, ['description', 'Description']) || '—',
+            referenceOrderId:
+              this.toNum(r['referenceOrderId'] ?? r['ReferenceOrderId']) ?? null,
+            senderName:
+              this.pickString(r as Record<string, unknown>, ['senderName', 'SenderName']) || '',
+            senderEmail:
+              this.pickString(r as Record<string, unknown>, ['senderEmail', 'SenderEmail']) || '',
+            createdOn
+          };
+        });
+        return { balance, recentTransactions };
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
   /** GET /api/factory-managers/profile */
   getFactoryManagerProfile(): Observable<FactoryManagerProfile> {
     const url = `${this.base}/api/factory-managers/profile`;
@@ -609,11 +868,19 @@ export class FactoryApiService {
     );
   }
 
-  /** GET /api/Orders/GetAllByID — list orders for current factory account. */
+  /** GET /api/Orders/GetAllByID — flat list only (backward compatible). */
   getFactoryOrders(
     pageNumber = 1,
     pageSize = 50
   ): Observable<FactoryOrderSummary[]> {
+    return this.getFactoryOrdersPage(pageNumber, pageSize).pipe(map(p => p.orders));
+  }
+
+  /** Same endpoint with paging metadata when the envelope includes counts. */
+  getFactoryOrdersPage(
+    pageNumber = 1,
+    pageSize = 50
+  ): Observable<FactoryOrdersPage> {
     const url = `${this.base}/api/Orders/GetAllByID`;
     const factoryId = this.auth.getFactoryId();
     let params = new HttpParams()
@@ -625,39 +892,103 @@ export class FactoryApiService {
         .set('providedFactoryId', String(factoryId));
     }
     return this.http.get<unknown>(url, { params }).pipe(
-      map(res => {
-        const payload = this.unwrapPayload<any>(res);
-        const list = payload?.items ?? payload?.data ?? payload ?? [];
-        if (!Array.isArray(list)) return [];
-        return list.map((row: any) => ({
-          id: this.toNum(row?.id ?? row?.Id ?? row?.orderId ?? row?.OrderId) ?? 0,
-          status: this.pickString(row ?? {}, ['status', 'Status']) || 'Unknown',
-          createdOn:
-            this.pickString(row ?? {}, ['createdOn', 'CreatedOn', 'createdAt', 'CreatedAt']) || '',
-          recipientName:
-            this.pickString(row ?? {}, ['recipientName', 'RecipientName']) || 'Customer',
-          recipientPhoneNumber:
-            this.pickString(row ?? {}, ['recipientPhoneNumber', 'RecipientPhoneNumber']) || '',
-          totalAmount:
-            this.toNum(
-              row?.totalAmount ?? row?.TotalAmount ?? row?.amount ?? row?.Amount
-            ) ?? 0,
-          itemsCount:
-            this.toNum(
-              row?.itemsCount ??
-                row?.ItemsCount ??
-                row?.totalOrderItems ??
-                row?.TotalOrderItems ??
-                (Array.isArray(row?.items) ? row.items.length : null)
-            ) ?? 0,
-          totalOrderItems:
-            this.toNum(
-              row?.totalOrderItems ?? row?.TotalOrderItems
-            ) ?? undefined
-        }));
-      }),
-      catchError(() => of([]))
+      map(res => this.parseFactoryOrdersEnvelope(res, pageNumber, pageSize)),
+      catchError(() =>
+        of({
+          orders: [],
+          pageNumber,
+          pageSize,
+          totalRecords: 0,
+          totalPages: 1
+        })
+      )
     );
+  }
+
+  private parseFactoryOrdersEnvelope(
+    res: unknown,
+    pageNumber: number,
+    pageSize: number
+  ): FactoryOrdersPage {
+    const unpacked = this.unwrapPayload<any>(res) ?? res ?? {};
+    const obj: Record<string, unknown> =
+      typeof unpacked === 'object' &&
+      unpacked != null &&
+      !Array.isArray(unpacked)
+        ? (unpacked as Record<string, unknown>)
+        : {};
+    const listRaw = Array.isArray(unpacked)
+      ? unpacked
+      : obj['items'] ?? obj['Items'] ?? obj['data'] ?? [];
+    const list = Array.isArray(listRaw) ? listRaw : [];
+    const orders = list.map((row: Record<string, unknown>) =>
+      this.mapFactoryOrderSummaryRow(row)
+    );
+    const explicitRecords = this.pickNumberFromUnknown(obj, [
+      'records',
+      'Records',
+      'totalCount',
+      'TotalCount',
+      'recordCount',
+      'RecordCount'
+    ]);
+    let totalRecords: number;
+    if (explicitRecords != null && Number.isFinite(explicitRecords) && explicitRecords >= 0) {
+      totalRecords = explicitRecords;
+    } else if (orders.length < pageSize) {
+      totalRecords = (pageNumber - 1) * pageSize + orders.length;
+    } else {
+      totalRecords = pageNumber * pageSize + 1;
+    }
+    let totalPages =
+      this.pickNumberFromUnknown(obj, ['pages', 'Pages', 'totalPages', 'TotalPages']) ?? 0;
+    if (!totalPages || totalPages < 1) {
+      totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+    }
+    const pn =
+      this.pickNumberFromUnknown(obj, ['pageNumber', 'PageNumber']) ?? pageNumber;
+    const ps =
+      this.pickNumberFromUnknown(obj, ['pageSize', 'PageSize']) ?? pageSize;
+    return { orders, pageNumber: pn, pageSize: ps, totalRecords, totalPages };
+  }
+
+  private mapFactoryOrderSummaryRow(row?: Record<string, unknown>): FactoryOrderSummary {
+    const r = row ?? {};
+    const createdRaw =
+      r['createdOn'] ??
+      r['CreatedOn'] ??
+      r['createdAt'] ??
+      r['CreatedAt'];
+    const createdOn =
+      normalizeWearCastApiDateToIso(createdRaw) ||
+      this.pickString(r as Record<string, unknown>, [
+        'createdOn',
+        'CreatedOn',
+        'createdAt',
+        'CreatedAt'
+      ]) ||
+      '';
+    return {
+      id: this.toNum(r['id'] ?? r['Id'] ?? r['orderId'] ?? r['OrderId']) ?? 0,
+      status: this.pickString(r, ['status', 'Status']) || 'Unknown',
+      createdOn,
+      recipientName: this.pickString(r, ['recipientName', 'RecipientName']) || 'Customer',
+      recipientPhoneNumber:
+        this.pickString(r, ['recipientPhoneNumber', 'RecipientPhoneNumber']) || '',
+      totalAmount:
+        this.toNum(r['totalAmount'] ?? r['TotalAmount'] ?? r['amount'] ?? r['Amount']) ??
+        0,
+      itemsCount:
+        this.toNum(
+          r['itemsCount'] ??
+            r['ItemsCount'] ??
+            r['totalOrderItems'] ??
+            r['TotalOrderItems'] ??
+            (Array.isArray(r['items']) ? (r['items'] as unknown[]).length : null)
+        ) ?? 0,
+      totalOrderItems:
+        this.toNum(r['totalOrderItems'] ?? r['TotalOrderItems']) ?? undefined
+    };
   }
 
   /** GET /api/Orders/{orderId}/items — list order items. */
@@ -671,24 +1002,22 @@ export class FactoryApiService {
         return rawRows.map((row: any) => {
           const o = (row ?? {}) as Record<string, unknown>;
           const designedProductId = this.toNum(o['designedProductId'] ?? o['DesignedProductId']);
-          const customerDesignId = this.toNum(o['customerDesignId'] ?? o['CustomerDesignId']);
-          const frontImageUrl =
-            this.pickString(o, ['frontImageUrl', 'FrontImageUrl']) || null;
-          const backImageUrl =
-            this.pickString(o, ['backImageUrl', 'BackImageUrl']) || null;
-          const rightImageUrl =
-            this.pickString(o, ['rightImageUrl', 'RightImageUrl']) || null;
-          const leftImageUrl =
-            this.pickString(o, ['leftImageUrl', 'LeftImageUrl']) || null;
-          const imageUrl =
-            this.pickString(o, [
-              'imageUrl',
-              'ImageUrl',
-              'productImage',
-              'ProductImage',
-              'frontImageUrl',
-              'FrontImageUrl'
-            ]) || null;
+          const customerDesignId =
+            this.toNum(o['customerDesignId'] ?? o['CustomerDesignId']) ??
+            this.toNum(o['designId'] ?? o['DesignId'] ?? o['customerDesignID'] ?? o['CustomerDesignID']);
+          const orderItemType = this.pickString(o, ['orderItemType', 'OrderItemType']);
+          const isDesignedRow = /design/i.test(orderItemType);
+          const img = this.extractFactoryOrderItemImageUrls(o);
+          let frontImageUrl = img.frontImageUrl;
+          let backImageUrl = img.backImageUrl;
+          let rightImageUrl = img.rightImageUrl;
+          let leftImageUrl = img.leftImageUrl;
+          let imageUrl = img.primaryImageUrl;
+          frontImageUrl = this.resolveFactoryMediaUrl(frontImageUrl);
+          backImageUrl = this.resolveFactoryMediaUrl(backImageUrl);
+          rightImageUrl = this.resolveFactoryMediaUrl(rightImageUrl);
+          leftImageUrl = this.resolveFactoryMediaUrl(leftImageUrl);
+          imageUrl = this.resolveFactoryMediaUrl(imageUrl);
           const galleryImageUrls = [
             frontImageUrl,
             backImageUrl,
@@ -713,7 +1042,10 @@ export class FactoryApiService {
             this.toNum(o['totalPrice'] ?? o['TotalPrice']) ??
             quantity * unitPrice;
           return {
-            kind: designedProductId != null || customerDesignId != null ? 'designed' : 'fixed',
+            kind:
+              isDesignedRow || designedProductId != null || customerDesignId != null
+                ? 'designed'
+                : 'fixed',
             designedProductId: designedProductId ?? undefined,
             customerDesignId: customerDesignId ?? undefined,
             productName:
@@ -735,6 +1067,153 @@ export class FactoryApiService {
       }),
       catchError(() => of([]))
     );
+  }
+
+  /** Dev: strip absolute backend host so `/uploads/...` loads via Angular proxy. Prod: prefix relative paths with apiUrl. */
+  private resolveFactoryMediaUrl(raw: string | null | undefined): string | null {
+    if (raw == null) return null;
+    const u = String(raw).trim();
+    if (!u) return null;
+    if (u.startsWith('data:')) return u;
+    if (/^https?:\/\//i.test(u)) {
+      if (!this.base) {
+        try {
+          const urlObj = new URL(u);
+          return urlObj.pathname + urlObj.search;
+        } catch {
+          return u;
+        }
+      }
+      return u;
+    }
+    if (u.startsWith('//')) {
+      return `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}${u}`;
+    }
+    const base = this.base.replace(/\/$/, '');
+    const path = u.startsWith('/') ? u : `/${u}`;
+    return base ? `${base}${path}` : path;
+  }
+
+  private firstViewImageUrl(viewImages: unknown, side: string): string | null {
+    if (!Array.isArray(viewImages)) return null;
+    const want = side.toLowerCase();
+    let fallback: string | null = null;
+    for (const img of viewImages) {
+      if (!img || typeof img !== 'object') continue;
+      const ob = img as Record<string, unknown>;
+      const url =
+        this.pickString(ob, ['url', 'Url', 'imageUrl', 'ImageUrl', 'fileUrl', 'FileUrl']) || null;
+      if (!url) continue;
+      if (!fallback) fallback = url;
+      const sideRaw =
+        ob['side'] ?? ob['Side'] ?? ob['view'] ?? ob['View'] ?? ob['viewSide'] ?? ob['ViewSide'];
+      const s = String(sideRaw ?? '').toLowerCase();
+      if (want === 'front' && (!s || s === 'front' || s === '0' || s === '1')) {
+        return url;
+      }
+      if (want !== 'front' && s === want) {
+        return url;
+      }
+    }
+    return want === 'front' ? fallback : null;
+  }
+
+  private extractFactoryOrderItemImageUrls(o: Record<string, unknown>): {
+    frontImageUrl: string | null;
+    backImageUrl: string | null;
+    rightImageUrl: string | null;
+    leftImageUrl: string | null;
+    primaryImageUrl: string | null;
+  } {
+    const viewImages = o['viewImages'] ?? o['ViewImages'] ?? o['designImages'] ?? o['DesignImages'];
+
+    const nestedUrl = (key: string): string | null => {
+      const nested = o[key] ?? o[key.charAt(0).toUpperCase() + key.slice(1)];
+      if (!nested || typeof nested !== 'object' || Array.isArray(nested)) return null;
+      return (
+        this.pickString(nested as Record<string, unknown>, [
+          'url',
+          'Url',
+          'imageUrl',
+          'ImageUrl',
+          'fileUrl',
+          'FileUrl'
+        ]) || null
+      );
+    };
+
+    let frontImageUrl =
+      this.pickString(o, [
+        'frontImageUrl',
+        'FrontImageUrl',
+        'frontDesignImageUrl',
+        'FrontDesignImageUrl',
+        'frontViewImageUrl',
+        'FrontViewImageUrl'
+      ]) ||
+      nestedUrl('frontImage') ||
+      this.firstViewImageUrl(viewImages, 'front');
+
+    let backImageUrl =
+      this.pickString(o, ['backImageUrl', 'BackImageUrl', 'backDesignImageUrl', 'BackDesignImageUrl']) ||
+      nestedUrl('backImage') ||
+      this.firstViewImageUrl(viewImages, 'back');
+
+    let rightImageUrl =
+      this.pickString(o, ['rightImageUrl', 'RightImageUrl']) ||
+      nestedUrl('rightImage') ||
+      this.firstViewImageUrl(viewImages, 'right');
+
+    let leftImageUrl =
+      this.pickString(o, ['leftImageUrl', 'LeftImageUrl']) ||
+      nestedUrl('leftImage') ||
+      this.firstViewImageUrl(viewImages, 'left');
+
+    let primaryImageUrl =
+      this.pickString(o, [
+        'imageUrl',
+        'ImageUrl',
+        'thumbnailUrl',
+        'ThumbnailUrl',
+        'mainImageUrl',
+        'MainImageUrl',
+        'previewImageUrl',
+        'PreviewImageUrl',
+        'productImage',
+        'ProductImage'
+      ]) || null;
+
+    if (!primaryImageUrl) {
+      primaryImageUrl = frontImageUrl || backImageUrl || rightImageUrl || leftImageUrl;
+    }
+
+    const imagesArr = o['images'] ?? o['Images'];
+    if (Array.isArray(imagesArr) && !primaryImageUrl) {
+      for (const img of imagesArr) {
+        if (!img || typeof img !== 'object') continue;
+        const url =
+          this.pickString(img as Record<string, unknown>, [
+            'url',
+            'Url',
+            'imageUrl',
+            'ImageUrl',
+            'fileUrl',
+            'FileUrl'
+          ]) || null;
+        if (url) {
+          primaryImageUrl = url;
+          break;
+        }
+      }
+    }
+
+    return {
+      frontImageUrl: frontImageUrl || null,
+      backImageUrl: backImageUrl || null,
+      rightImageUrl: rightImageUrl || null,
+      leftImageUrl: leftImageUrl || null,
+      primaryImageUrl: primaryImageUrl || null
+    };
   }
 
   private extractOrderItemRows(payload: unknown): any[] {

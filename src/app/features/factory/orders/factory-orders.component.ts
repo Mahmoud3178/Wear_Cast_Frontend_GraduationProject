@@ -3,7 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import {
   FactoryApiService,
   FactoryOrderItem,
-  FactoryOrderSummary
+  FactoryOrderSummary,
+  FactoryOrdersPage
 } from '../../../core/services/factory-api.service';
 
 @Component({
@@ -14,6 +15,9 @@ import {
 })
 export class FactoryOrdersComponent implements OnInit {
   orders: FactoryOrderSummary[] = [];
+  ordersPageMeta: Omit<FactoryOrdersPage, 'orders'> | null = null;
+  pageNumber = 1;
+  readonly pageSize = 10;
   expandedOrderId: number | null = null;
   itemsByOrderId: Record<number, FactoryOrderItem[]> = {};
   loadingOrders = false;
@@ -34,9 +38,16 @@ export class FactoryOrdersComponent implements OnInit {
     this.loadingOrders = true;
     this.loadError = '';
     this.expandedOrderId = null;
-    this.factoryApi.getFactoryOrders().subscribe({
-      next: rows => {
-        this.orders = rows;
+    this.factoryApi.getFactoryOrdersPage(this.pageNumber, this.pageSize).subscribe({
+      next: page => {
+        this.orders = page.orders;
+        this.ordersPageMeta = {
+          pageNumber: page.pageNumber,
+          pageSize: page.pageSize,
+          totalRecords: page.totalRecords,
+          totalPages: page.totalPages
+        };
+        this.pageNumber = page.pageNumber;
         this.loadingOrders = false;
       },
       error: err => {
@@ -44,6 +55,33 @@ export class FactoryOrdersComponent implements OnInit {
         this.loadingOrders = false;
       }
     });
+  }
+
+  get canPrevOrdersPage(): boolean {
+    return !this.loadingOrders && this.pageNumber > 1;
+  }
+
+  get canNextOrdersPage(): boolean {
+    if (this.loadingOrders) return false;
+    const meta = this.ordersPageMeta;
+    const ps = meta?.pageSize ?? this.pageSize;
+    const tp = meta?.totalPages ?? 0;
+    if (tp > 0) {
+      return this.pageNumber < tp;
+    }
+    return this.orders.length >= ps;
+  }
+
+  goPrevOrders(): void {
+    if (!this.canPrevOrdersPage) return;
+    this.pageNumber -= 1;
+    this.loadOrders();
+  }
+
+  goNextOrders(): void {
+    if (!this.canNextOrdersPage) return;
+    this.pageNumber += 1;
+    this.loadOrders();
   }
 
   toggleItems(order: FactoryOrderSummary): void {

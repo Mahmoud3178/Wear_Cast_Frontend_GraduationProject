@@ -1,23 +1,27 @@
 import { Component, OnInit } from '@angular/core';
-import { NgIf, NgFor, NgClass } from '@angular/common';
+import { NgIf, NgFor, NgClass, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   FactoryApiService,
   FactoryProfile,
   FactoryManager,
-  FactoryManagerProfile
+  FactoryManagerProfile,
+  FactoryWalletSummary
 } from '../../../core/services/factory-api.service';
 
 @Component({
   selector: 'app-factory-profile',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, FormsModule],
+  imports: [NgIf, NgFor, NgClass, FormsModule, DecimalPipe, DatePipe],
   templateUrl: './factory-profile.component.html'
 })
 export class FactoryProfileComponent implements OnInit {
   profile: FactoryProfile | null = null;
   managerProfile: FactoryManagerProfile | null = null;
   managers: FactoryManager[] = [];
+  wallet: FactoryWalletSummary | null = null;
+  walletLoading = false;
+  walletError = '';
   loading = false;
   saving = false;
   errorMsg = '';
@@ -53,6 +57,7 @@ export class FactoryProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProfile();
+    this.loadWallet();
   }
 
   loadProfile(): void {
@@ -108,6 +113,21 @@ export class FactoryProfileComponent implements OnInit {
       },
       error: () => {
         // Silent fail - managers not critical
+      }
+    });
+  }
+
+  loadWallet(): void {
+    this.walletLoading = true;
+    this.walletError = '';
+    this.factoryApi.getFactoryWallet().subscribe({
+      next: wallet => {
+        this.wallet = wallet;
+        this.walletLoading = false;
+      },
+      error: (err: Error) => {
+        this.walletLoading = false;
+        this.walletError = err.message || 'Failed to load wallet.';
       }
     });
   }

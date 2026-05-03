@@ -115,6 +115,26 @@
   var viewUndoStacks = {};
   var viewRedoStacks = {};
   var VIEW_KEYS = ['front', 'back', 'right', 'left'];
+  /** Valid 1×1 PNG — ensures every view sends a file when export fails (blank garment / tainted canvas). */
+  var WEARCAST_PLACEHOLDER_VIEW_PNG =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+  function normalizeViewDataUrl(url) {
+    if (url && typeof url === 'string' && url.indexOf('data:image') === 0) {
+      return url;
+    }
+    return WEARCAST_PLACEHOLDER_VIEW_PNG;
+  }
+
+  function ensureFourViewImages(results) {
+    var out = results || {};
+    for (var i = 0; i < VIEW_KEYS.length; i++) {
+      var k = VIEW_KEYS[i];
+      out[k] = normalizeViewDataUrl(out[k]);
+    }
+    return out;
+  }
+
   var TEXT_SHAPE_BEND_MAP = {
     normal: 0,
     curve: 35,
@@ -1371,6 +1391,53 @@
     return n;
   }
 
+  function toggleSaveModeFields() {
+    var modeUpdate = document.getElementById('save-mode-update');
+    var sel = document.getElementById('save-existing-select');
+    var upd = modeUpdate && modeUpdate.checked;
+    if (sel) sel.disabled = !upd;
+  }
+
+  function refreshSaveModalDraftList() {
+    var sel = document.getElementById('save-existing-select');
+    if (!sel) return;
+    var fnList = window.__WEARCAST_LIST_CUSTOMER_DESIGNS__;
+    sel.innerHTML = '';
+    var opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.textContent = 'Select a draft…';
+    sel.appendChild(opt0);
+    sel.disabled = true;
+    if (typeof fnList !== 'function') {
+      opt0.textContent = 'Sign in to list drafts';
+      toggleSaveModeFields();
+      return;
+    }
+    fnList()
+      .then(function (list) {
+        sel.innerHTML = '';
+        var o = document.createElement('option');
+        o.value = '';
+        o.textContent = 'Select a draft…';
+        sel.appendChild(o);
+        (Array.isArray(list) ? list : []).forEach(function (item) {
+          var opt = document.createElement('option');
+          opt.value = String(item.id);
+          opt.textContent = (item.name || 'Untitled') + ' (#' + item.id + ')';
+          sel.appendChild(opt);
+        });
+        toggleSaveModeFields();
+      })
+      .catch(function () {
+        sel.innerHTML = '';
+        var o = document.createElement('option');
+        o.value = '';
+        o.textContent = 'Could not load drafts';
+        sel.appendChild(o);
+        toggleSaveModeFields();
+      });
+  }
+
   /**
    * Factory catalog templates: POST design to API when logged in.
    * Built-in templates (hoodie/tshirt/cap) cannot be saved (server-only).
@@ -1379,16 +1446,32 @@
   function saveDesign(name) {
     var p = PRODUCTS[currentProduct];
     var cat = p && p.wearcastCatalog;
-    var fn = window.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
-    if (cat && typeof fn === 'function') {
+    var fnNew = window.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
+    var fnUpd = window.__WEARCAST_UPDATE_CUSTOMER_DESIGN__;
+    if (cat && typeof fnNew === 'function') {
       var colorId = cat.colorIdsBySlug && cat.colorIdsBySlug[currentColor];
       if (!colorId) {
         alert('Could not match this color to the catalog. Pick another swatch or reload the design page.');
         return;
       }
+      var modeUpdate = document.getElementById('save-mode-update');
+      var existingSelect = document.getElementById('save-existing-select');
+      var doUpdate = modeUpdate && modeUpdate.checked;
+      var existingId = 0;
+      if (doUpdate) {
+        if (typeof fnUpd !== 'function') {
+          alert('Update is not available. Sign in as a customer and refresh the page.');
+          return;
+        }
+        existingId = parseInt(existingSelect && existingSelect.value, 10) || 0;
+        if (!existingId) {
+          alert('Choose which saved design to update.');
+          return;
+        }
+      }
       if (saveConfirm) saveConfirm.disabled = true;
-      // Generate 4-view composite images first, then POST to server
       generateAllViewImages(function(viewImages) {
+        viewImages = ensureFourViewImages(viewImages);
         var vd = viewDesigns[currentProduct];
         var designName = (name && String(name).trim()) || 'Untitled design';
         var payload = {
@@ -1402,18 +1485,40 @@
           leftImage: viewImages.left,
           rightImage: viewImages.right
         };
-        console.log('[WearCast] saveDesign payload:', payload);
-        fn(payload).then(function (designId) {
-          console.log('[WearCast] saveDesign success, designId:', designId);
+        console.log('[WearCast] saveDesign payload (update=' + doUpdate + '):', payload);
+
+        function finishOk() {
           if (saveModal) saveModal.classList.add('hidden');
-          alert('Design saved to your WearCast account.');
-        }).catch(function (err) {
+        }
+        function onErr(err) {
           var msg = (err && err.message) ? err.message : String(err);
           console.error('[WearCast] saveDesign error:', err);
           alert('Could not save to the server: ' + msg);
-        }).finally(function () {
-          if (saveConfirm) saveConfirm.disabled = false;
-        });
+        }
+
+        if (doUpdate) {
+          fnUpd(existingId, payload)
+            .then(function () {
+              console.log('[WearCast] updateDesign success, id:', existingId);
+              finishOk();
+              alert('Design updated in your WearCast account.');
+            })
+            .catch(onErr)
+            .finally(function () {
+              if (saveConfirm) saveConfirm.disabled = false;
+            });
+        } else {
+          fnNew(payload)
+            .then(function (designId) {
+              console.log('[WearCast] saveDesign success, designId:', designId);
+              finishOk();
+              alert('Design saved to your WearCast account.');
+            })
+            .catch(onErr)
+            .finally(function () {
+              if (saveConfirm) saveConfirm.disabled = false;
+            });
+        }
       });
       return;
     }
@@ -1467,6 +1572,15 @@
       });
   }
 
+  function formatSavedDesignDate(item) {
+    var raw = item && (item.createdAt || item.createdOn || item.created_at);
+    if (raw == null || raw === '') return '';
+    var s = String(raw).trim();
+    var m = /^\/Date\((-?\d+)\)\/$/.exec(s);
+    var d = m ? new Date(parseInt(m[1], 10)) : new Date(s);
+    return isNaN(d.getTime()) ? '' : d.toLocaleString();
+  }
+
   function renderSavedListFromArray(list) {
     if (!savedListEl) return;
     savedListEl.innerHTML = '';
@@ -1488,7 +1602,7 @@
         wrap.appendChild(im);
         div.appendChild(wrap);
       }
-      var date = item.createdAt ? new Date(item.createdAt).toLocaleString() : '';
+      var date = formatSavedDesignDate(item);
       var info = document.createElement('div');
       info.className = 'saved-item-info';
       var nameEl = document.createElement('div');
@@ -1543,6 +1657,9 @@
 
   function openSaveModal() {
     saveNameInput.value = '';
+    var modeNew = document.getElementById('save-mode-new');
+    if (modeNew) modeNew.checked = true;
+    refreshSaveModalDraftList();
     saveModal.classList.remove('hidden');
     saveNameInput.focus();
   }
@@ -1667,7 +1784,10 @@
    * maxDim: max width/height in pixels. quality: 0..1 for JPEG encoder.
    */
   function compressDataURL(dataUrl, maxDim, quality, cb) {
-    if (!dataUrl) { cb(null); return; }
+    if (!dataUrl) {
+      cb(WEARCAST_PLACEHOLDER_VIEW_PNG);
+      return;
+    }
     var img = new Image();
     img.onload = function() {
       var w = img.width, h = img.height;
@@ -1694,7 +1814,7 @@
    */
   function compositeStageToDataURL(cb) {
     if (!canvas) {
-      cb(null);
+      cb(WEARCAST_PLACEHOLDER_VIEW_PNG);
       return;
     }
     var w = canvas.getWidth();
@@ -1733,7 +1853,7 @@
       console.warn('WearCast: toDataURL failed', e3);
     }
     compressDataURL(raw, 1200, 0.85, function (compressed) {
-      cb(compressed || raw);
+      cb(compressed || raw || WEARCAST_PLACEHOLDER_VIEW_PNG);
     });
   }
 
@@ -1744,7 +1864,7 @@
    */
   function generateAllViewImages(callback) {
     if (!canvas) {
-      callback({ front: null, back: null, left: null, right: null });
+      callback(ensureFourViewImages({ front: null, back: null, left: null, right: null }));
       return;
     }
     saveCurrentViewToStore();
@@ -1758,11 +1878,11 @@
       document.querySelectorAll('.view-btn').forEach(function (btn) {
         btn.classList.toggle('active', btn.getAttribute('data-view') === currentView);
       });
-      setProductImage();
-      loadViewFromStore(savedView, function () {
+        setProductImage();
+        loadViewFromStore(savedView, function () {
         setProductImage();
         if (canvas) canvas.renderAll();
-        callback(results);
+        callback(ensureFourViewImages(results));
       });
     }
 
@@ -2301,6 +2421,10 @@
     document.getElementById('header-load-btn').addEventListener('click', openLoadModal);
 
     saveCancel.addEventListener('click', function () { saveModal.classList.add('hidden'); });
+    var saveModeNew = document.getElementById('save-mode-new');
+    var saveModeUpdate = document.getElementById('save-mode-update');
+    if (saveModeNew) saveModeNew.addEventListener('change', toggleSaveModeFields);
+    if (saveModeUpdate) saveModeUpdate.addEventListener('change', toggleSaveModeFields);
     saveConfirm.addEventListener('click', function () {
       var name = saveNameInput.value.trim() || 'Untitled design';
       saveDesign(name);

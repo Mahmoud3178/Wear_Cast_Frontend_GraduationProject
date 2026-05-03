@@ -25,6 +25,10 @@ export interface ChangePasswordRequest {
   confirmNewPassword?: string;
 }
 
+export interface CustomerWalletSummary {
+  balance: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CustomerProfileService {
   private readonly apiUrl = environment.apiUrl;
@@ -41,5 +45,26 @@ export class CustomerProfileService {
 
   changePassword(body: ChangePasswordRequest): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/me/change-password`, body);
+  }
+
+  updateProfileImage(file: File, providedCustomerId?: number | null): Observable<any> {
+    const formData = new FormData();
+    formData.append('NewImage', file);
+    if (providedCustomerId != null) {
+      formData.append('ProvidedCustomerId', String(providedCustomerId));
+    }
+    return this.http.put<any>(`${this.apiUrl}/api/customers/profile-image`, formData);
+  }
+
+  deleteProfileImage(providedCustomerId?: number | null): Observable<any> {
+    let url = `${this.apiUrl}/api/customers/profile-image`;
+    if (providedCustomerId != null) {
+      url += `?ProvidedCustomerId=${encodeURIComponent(String(providedCustomerId))}`;
+    }
+    return this.http.delete<any>(url);
+  }
+
+  getWallet(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/customers/wallet`);
   }
 }

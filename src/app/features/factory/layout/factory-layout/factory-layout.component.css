@@ -1,7 +1,52 @@
-/* Nav pills: base layout; colors from factory-portal.css (.wc-factory-header .nav-pill) */
-.factory-header .nav-pill {
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
+.factory-shell {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.wc-factory-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+/* Nav pills: base layout; colors from factory-portal.css (.wc-factory-sidebar .nav-pill) */
+.wc-factory-sidebar .nav-pill {
+  padding: 0.4rem 0.7rem;
+  border-radius: 10px;
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 0.82rem;
+}
+
+.wc-factory-main {
+  min-width: 0;
+}
+
+@media (max-width: 992px) {
+  .factory-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .wc-factory-sidebar {
+    gap: 0.35rem;
+    padding: 0.75rem;
+    border-right: none !important;
+    border-bottom: 1px solid var(--wc-factory-border);
+  }
+
+  .wc-factory-sidebar nav {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+  }
+
+  .wc-factory-sidebar .nav-pill {
+    width: auto;
+  }
+
+  .wc-factory-sidebar .btn {
+    margin-top: 0.4rem !important;
+    width: auto !important;
+    align-self: flex-start;
+  }
 }

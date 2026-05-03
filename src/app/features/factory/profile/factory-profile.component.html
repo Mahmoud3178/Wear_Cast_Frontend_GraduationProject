@@ -117,6 +117,45 @@
     </div>
   </div>
 
+  <div class="card wc-factory-card border-0 mb-4" *ngIf="!isEditing">
+    <div class="card-body p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="h5 mb-0">Wallet</h3>
+        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3" (click)="loadWallet()" [disabled]="walletLoading">
+          <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+        </button>
+      </div>
+
+      <div *ngIf="walletError" class="alert alert-danger py-2 small">{{ walletError }}</div>
+      <div *ngIf="walletLoading" class="text-muted small mb-2">Loading wallet...</div>
+
+      <ng-container *ngIf="!walletLoading && wallet as w">
+        <div class="border rounded-3 p-3 bg-light mb-3">
+          <span class="text-muted small d-block">Current balance</span>
+          <strong class="fs-4">EGP {{ w.balance | number:'1.2-2' }}</strong>
+        </div>
+
+        <h4 class="h6">Recent transactions</h4>
+        <div *ngIf="!w.recentTransactions.length" class="text-muted small">No transactions yet.</div>
+        <div class="list-group" *ngIf="w.recentTransactions.length">
+          <div class="list-group-item" *ngFor="let tx of w.recentTransactions">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+              <div>
+                <div class="fw-semibold">{{ tx.type }} · EGP {{ tx.amount | number:'1.2-2' }}</div>
+                <div class="small text-muted">{{ tx.description }}</div>
+                <div class="small text-muted" *ngIf="tx.referenceOrderId">Order #{{ tx.referenceOrderId }}</div>
+                <div class="small text-muted" *ngIf="tx.senderName || tx.senderEmail">
+                  {{ tx.senderName }}<span *ngIf="tx.senderName && tx.senderEmail"> · </span>{{ tx.senderEmail }}
+                </div>
+              </div>
+              <span class="small text-muted">{{ tx.createdOn | date:'medium' }}</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
   <!-- Profile Edit Mode -->
   <div class="card wc-factory-card border-0 mb-4" *ngIf="isEditing">
     <div class="card-body p-4">

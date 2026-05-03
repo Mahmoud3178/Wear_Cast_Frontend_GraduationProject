@@ -1,108 +1,131 @@
-<div class="vh-100 d-flex justify-content-center align-items-center bg-light">
+<div class="login-page-shell">
+  <app-customer-nav></app-customer-nav>
 
-  <div class="card shadow-lg p-4" style="width: 350px; border-radius: 15px;">
-
-    <!-- 🔹 Title -->
-    <div class="text-center mb-4">
-      <h3 class="fw-bold">Welcome Back 👋</h3>
-      <p class="text-muted">Login to your account</p>
-    </div>
-
-    <!-- 🔹 Form -->
-    <form (ngSubmit)="login()">
-
-      <div *ngIf="errorMessage" class="alert alert-danger py-2 small" role="alert">
-        {{ errorMessage }}
-      </div>
-
-      <div *ngIf="emailNotConfirmed" class="alert alert-light border py-2 small mb-3" role="status">
-        <p class="small text-muted mb-2">
-          Confirm your email with the code WearCast sent you, then try signing in again.
-        </p>
-        <a
-          class="btn btn-primary btn-sm w-100 mb-2"
-          [routerLink]="['/confirm-email/customer']"
-          [queryParams]="form.email ? { email: form.email } : {}">
-          Enter confirmation code
-        </a>
-        <button
-          type="button"
-          class="btn btn-outline-secondary btn-sm w-100"
-          [disabled]="resendSubmitting || !form.email"
-          (click)="resendConfirmation()">
-          {{ resendSubmitting ? 'Sending…' : 'Resend email' }}
-        </button>
-      </div>
-
-      <div *ngIf="resendInfoMessage" class="alert alert-info py-2 small mb-0" role="status">
-        {{ resendInfoMessage }}
-      </div>
-
-      <!-- Email -->
-      <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="email"
-               class="form-control"
-               placeholder="Enter your email"
-               [(ngModel)]="form.email"
-               name="email"
-               required>
-      </div>
-
-      <!-- Password -->
-      <div class="mb-3">
-        <label class="form-label">Password</label>
-        <div class="input-group">
-          <input [type]="showPassword ? 'text' : 'password'"
-                 class="form-control"
-                 placeholder="Enter your password"
-                 [(ngModel)]="form.password"
-                 name="password"
-                 required>
-          <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
-            <i class="bi" [class.bi-eye]="showPassword" [class.bi-eye-slash]="!showPassword"></i>
-          </button>
+  <main class="login-main">
+    <section class="login-panel">
+      <div class="login-panel__left">
+        <div class="login-panel__left-inner">
+          <h1>Welcome back to WearCast</h1>
+          <p class="login-panel__lead">
+            Sign in to shop, track shipments, manage your profile, and keep custom designs in sync.
+          </p>
+          <ul class="login-features" aria-label="What you can do after signing in">
+            <li>
+              <i class="bi bi-bag-check" aria-hidden="true"></i>
+              <span><strong>Checkout</strong> — saved addresses and faster reordering</span>
+            </li>
+            <li>
+              <i class="bi bi-truck" aria-hidden="true"></i>
+              <span><strong>Tracking</strong> — follow shipments in one place</span>
+            </li>
+            <li>
+              <i class="bi bi-palette" aria-hidden="true"></i>
+              <span><strong>Designs</strong> — drafts and saved artwork stay with your account</span>
+            </li>
+          </ul>
+          <div class="login-badges">
+            <span>Fast checkout</span>
+            <span>Shipment tracking</span>
+            <span>Saved designs</span>
+          </div>
         </div>
       </div>
 
-      <!-- Login Button -->
-      <button type="submit" class="btn btn-dark w-100 mb-3" [disabled]="submitting">
-        {{ submitting ? 'Signing in…' : 'Login' }}
-      </button>
+      <div class="login-card">
+        <div class="text-center mb-4">
+          <h2 class="h4 fw-bold mb-1">Sign in</h2>
+          <p class="text-muted small mb-0">Use your WearCast account email and password</p>
+        </div>
 
-    </form>
+        <form (ngSubmit)="login()">
+          <div *ngIf="errorMessage" class="alert alert-danger py-2 small" role="alert">
+            {{ errorMessage }}
+          </div>
 
-    <!-- 🔹 Register Links -->
-    <div class="text-center">
+          <div *ngIf="emailNotConfirmed" class="alert alert-light border py-2 small mb-3" role="status">
+            <p class="small text-muted mb-2">
+              Confirm your email with the code WearCast sent you, then try signing in again.
+            </p>
+            <a
+              class="btn btn-primary btn-sm w-100 mb-2"
+              [routerLink]="['/confirm-email/customer']"
+              [queryParams]="form.email ? { email: form.email } : {}">
+              Enter confirmation code
+            </a>
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm w-100"
+              [disabled]="resendSubmitting || !form.email"
+              (click)="resendConfirmation()">
+              {{ resendSubmitting ? 'Sending…' : 'Resend email' }}
+            </button>
+          </div>
 
-      <small>
-        Don't have an account?
-        <a routerLink="/customer/register" class="text-decoration-none">
-          Customer
-        </a>
-        |
-        <a routerLink="/seller/register" class="text-decoration-none">
-          Seller
-        </a>
-      </small>
+          <div *ngIf="resendInfoMessage" class="alert alert-info py-2 small mb-3" role="status">
+            {{ resendInfoMessage }}
+          </div>
 
-      <p class="text-center small mt-3 mb-0 text-muted">
-        <a
-          [routerLink]="['/confirm-email/customer']"
-          [queryParams]="form.email ? { email: form.email } : {}"
-          class="text-decoration-none">
-          Enter customer email code
-        </a>
-        <span class="mx-1">·</span>
-        <a routerLink="/confirm-email/seller" class="text-decoration-none">
-          Enter seller email code
-        </a>
-        <span class="mx-1">·</span>
-        <a routerLink="/factory/login" class="text-decoration-none">Factory</a>
-      </p>
+          <div class="mb-3">
+            <label class="form-label small fw-medium" for="login-email">Email</label>
+            <input
+              id="login-email"
+              type="email"
+              class="form-control"
+              placeholder="you@example.com"
+              [(ngModel)]="form.email"
+              name="email"
+              autocomplete="email"
+              required>
+          </div>
 
-    </div>
+          <div class="mb-3">
+            <label class="form-label small fw-medium" for="login-password">Password</label>
+            <div class="input-group">
+              <input
+                id="login-password"
+                [type]="showPassword ? 'text' : 'password'"
+                class="form-control"
+                placeholder="Your password"
+                [(ngModel)]="form.password"
+                name="password"
+                autocomplete="current-password"
+                required>
+              <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
+                <i class="bi" [class.bi-eye]="showPassword" [class.bi-eye-slash]="!showPassword"></i>
+              </button>
+            </div>
+          </div>
 
-  </div>
+          <button type="submit" class="btn btn-dark w-100 py-2 mb-3 rounded-3" [disabled]="submitting">
+            {{ submitting ? 'Signing in…' : 'Sign in' }}
+          </button>
+        </form>
 
+        <div class="login-card__footer">
+          <div class="login-footer-block">
+            <div class="login-footer-block__title">New here?</div>
+            <div class="login-footer-block__actions">
+              <a routerLink="/customer/register" class="btn btn-outline-dark btn-sm rounded-pill">Create customer account</a>
+              <a routerLink="/seller/register" class="btn btn-outline-secondary btn-sm rounded-pill">Seller registration</a>
+            </div>
+          </div>
+          <div class="login-footer-block">
+            <div class="login-footer-block__title">Confirm your email</div>
+            <div class="login-footer-block__links">
+              <a [routerLink]="['/confirm-email/customer']" [queryParams]="form.email ? { email: form.email } : {}">Customer code</a>
+              <a routerLink="/confirm-email/seller">Seller code</a>
+            </div>
+          </div>
+          <div class="login-footer-block login-footer-block--compact">
+            <a routerLink="/factory/login" class="login-footer-factory-link">
+              <i class="bi bi-building" aria-hidden="true"></i>
+              Factory &amp; manager sign-in
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <app-customer-footer></app-customer-footer>
 </div>

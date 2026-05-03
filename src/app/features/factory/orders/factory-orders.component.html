@@ -1,14 +1,38 @@
 <div class="container py-5">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-    <h1 class="wc-factory-page-title h3 fw-bold mb-0">Orders</h1>
-    <button
-      type="button"
-      class="btn btn-outline-dark btn-sm rounded-pill px-3"
-      (click)="loadOrders()"
-      [disabled]="loadingOrders"
-    >
-      <i class="bi bi-arrow-clockwise me-1" [class.spin]="loadingOrders"></i> Refresh
-    </button>
+    <div>
+      <h1 class="wc-factory-page-title h3 fw-bold mb-1">Orders</h1>
+      <p class="small text-muted mb-0" *ngIf="ordersPageMeta">
+        Page {{ ordersPageMeta.pageNumber }} of {{ ordersPageMeta.totalPages > 0 ? ordersPageMeta.totalPages : '?' }}
+        · {{ ordersPageMeta.totalRecords }} order(s)
+      </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
+      <button
+        type="button"
+        class="btn btn-outline-dark btn-sm rounded-pill px-3"
+        (click)="goPrevOrders()"
+        [disabled]="!canPrevOrdersPage"
+      >
+        Previous
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-dark btn-sm rounded-pill px-3"
+        (click)="goNextOrders()"
+        [disabled]="!canNextOrdersPage"
+      >
+        Next
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-dark btn-sm rounded-pill px-3"
+        (click)="loadOrders()"
+        [disabled]="loadingOrders"
+      >
+        <i class="bi bi-arrow-clockwise me-1" [class.spin]="loadingOrders"></i> Refresh
+      </button>
+    </div>
   </div>
 
   <div *ngIf="loadError" class="alert alert-danger py-2 small">{{ loadError }}</div>
@@ -109,6 +133,7 @@
                     >
                   </div>
                 </div>
+              </div>
               <!-- Design Inspection Section -->
               <div class="mt-4 p-4 bg-white border rounded-4 shadow-sm" *ngIf="item.kind === 'designed' && inspectedDesigns[item.customerDesignId || 0]">
                 <div class="d-flex align-items-center gap-2 mb-3 border-bottom pb-2">
@@ -167,56 +192,67 @@
     </div>
   </div>
 
-  <!-- Enhanced Image Preview Modal -->
-  <div class="modal-backdrop fade show" *ngIf="activeImageUrl" (click)="closeImageModal()" style="z-index: 1050; background-color: rgba(0,0,0,0.85);"></div>
-  <div class="modal fade show d-block" *ngIf="activeImageUrl" tabindex="-1" (click)="closeImageModal()" style="z-index: 1060;">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-      <div class="modal-content bg-transparent border-0 shadow-none">
-        <div class="modal-body p-0 text-center position-relative">
-          <!-- Close Button -->
-          <button type="button"
-                  class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3 bg-dark p-2 rounded-circle border border-white"
-                  (click)="closeImageModal()"></button>
+  <!-- Full-viewport lightbox (fixed to viewport; avoids Bootstrap modal + ancestor transform issues) -->
+  <div
+    class="wc-order-image-lightbox"
+    *ngIf="activeImageUrl"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Image preview"
+  >
+    <div class="wc-order-image-lightbox__backdrop" (click)="closeImageModal()"></div>
+    <div class="wc-order-image-lightbox__panel" (click)="$event.stopPropagation()">
+      <button
+        type="button"
+        class="wc-order-image-lightbox__close btn-close btn-close-white"
+        (click)="closeImageModal()"
+        aria-label="Close"
+      ></button>
 
-          <!-- Image Container -->
-          <div class="image-viewer-container d-flex align-items-center justify-content-center" style="min-height: 70vh;">
-            <!-- Navigation Previous -->
-            <button *ngIf="activeImageContext.length > 1"
-                    class="btn btn-dark rounded-circle position-absolute start-0 ms-3 z-3 shadow"
-                    style="width: 50px; height: 50px;"
-                    (click)="prevImage($event)">
-              <i class="bi bi-chevron-left h4 mb-0"></i>
-            </button>
+      <div class="wc-order-image-lightbox__stage">
+        <button
+          *ngIf="activeImageContext.length > 1"
+          type="button"
+          class="wc-order-image-lightbox__nav wc-order-image-lightbox__nav--prev btn btn-dark rounded-circle shadow"
+          (click)="prevImage($event)"
+        >
+          <i class="bi bi-chevron-left h4 mb-0"></i>
+        </button>
 
-            <img [src]="activeImageUrl"
-                 class="img-fluid rounded shadow-lg animate__animated animate__fadeIn animate__faster"
-                 style="max-height: 85vh; max-width: 90%; object-fit: contain;"
-                 (click)="$event.stopPropagation()">
+        <img
+          [src]="activeImageUrl"
+          class="wc-order-image-lightbox__img img-fluid rounded shadow-lg"
+          alt=""
+          (click)="$event.stopPropagation()"
+        >
 
-            <!-- Navigation Next -->
-            <button *ngIf="activeImageContext.length > 1"
-                    class="btn btn-dark rounded-circle position-absolute end-0 me-3 z-3 shadow"
-                    style="width: 50px; height: 50px;"
-                    (click)="nextImage($event)">
-              <i class="bi bi-chevron-right h4 mb-0"></i>
-            </button>
-          </div>
+        <button
+          *ngIf="activeImageContext.length > 1"
+          type="button"
+          class="wc-order-image-lightbox__nav wc-order-image-lightbox__nav--next btn btn-dark rounded-circle shadow"
+          (click)="nextImage($event)"
+        >
+          <i class="bi bi-chevron-right h4 mb-0"></i>
+        </button>
+      </div>
 
-          <!-- Bottom Actions -->
-          <div class="mt-4 d-flex justify-content-center gap-3 animate__animated animate__slideInUp">
-            <a [href]="activeImageUrl" target="_blank" class="btn btn-light rounded-pill px-4 py-2 fw-bold shadow" (click)="$event.stopPropagation()">
-              <i class="bi bi-box-arrow-up-right me-2"></i> Open Original
-            </a>
-            <button class="btn btn-outline-light rounded-pill px-4 py-2 fw-bold" (click)="closeImageModal()">
-              Close Preview
-            </button>
-          </div>
+      <div class="wc-order-image-lightbox__actions">
+        <a
+          [href]="activeImageUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-light rounded-pill px-4 py-2 fw-semibold shadow"
+          (click)="$event.stopPropagation()"
+        >
+          <i class="bi bi-box-arrow-up-right me-2"></i> Open original
+        </a>
+        <button type="button" class="btn btn-outline-light rounded-pill px-4 py-2 fw-semibold" (click)="closeImageModal()">
+          Close
+        </button>
+      </div>
 
-          <!-- Counter -->
-          <div *ngIf="activeImageContext.length > 1" class="mt-3 text-white-50 small">
-            {{ activeImageIndex + 1 }} / {{ activeImageContext.length }}
-          </div>
-        </div>
+      <div *ngIf="activeImageContext.length > 1" class="wc-order-image-lightbox__counter text-white-50 small">
+        {{ activeImageIndex + 1 }} / {{ activeImageContext.length }}
       </div>
     </div>
   </div>
@@ -235,5 +271,102 @@
   }
   .bg-primary-subtle {
     background-color: #e7f1ff !important;
+  }
+
+  .wc-order-image-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+
+  .wc-order-image-lightbox__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    cursor: pointer;
+  }
+
+  .wc-order-image-lightbox__panel {
+    position: relative;
+    z-index: 1;
+    max-width: min(96vw, 1200px);
+    width: 100%;
+    text-align: center;
+  }
+
+  .wc-order-image-lightbox__close {
+    position: absolute;
+    top: -0.25rem;
+    right: 0;
+    z-index: 2;
+    opacity: 0.9;
+  }
+
+  .wc-order-image-lightbox__stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: min(70vh, 600px);
+    padding: 2.5rem 3rem 1rem;
+  }
+
+  .wc-order-image-lightbox__img {
+    max-height: min(78vh, 820px);
+    max-width: 100%;
+    object-fit: contain;
+    vertical-align: middle;
+  }
+
+  .wc-order-image-lightbox__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wc-order-image-lightbox__nav--prev {
+    left: 0.25rem;
+  }
+
+  .wc-order-image-lightbox__nav--next {
+    right: 0.25rem;
+  }
+
+  .wc-order-image-lightbox__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
+  .wc-order-image-lightbox__counter {
+    margin-top: 0.75rem;
+  }
+
+  @media (max-width: 576px) {
+    .wc-order-image-lightbox__stage {
+      min-height: 50vh;
+      padding: 2rem 0.5rem 0.5rem;
+    }
+
+    .wc-order-image-lightbox__nav--prev {
+      left: 0;
+    }
+
+    .wc-order-image-lightbox__nav--next {
+      right: 0;
+    }
   }
 </style>

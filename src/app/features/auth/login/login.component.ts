@@ -3,12 +3,15 @@ import { NgIf } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CustomerNavComponent } from '../../customer/shared/customer-nav/customer-nav.component';
+import { CustomerFooterComponent } from '../../customer/shared/customer-footer/customer-footer.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterLink, NgIf],
-  templateUrl: './login.component.html'
+  imports: [FormsModule, RouterLink, NgIf, CustomerNavComponent, CustomerFooterComponent],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
 })
 export class LoginComponent implements OnInit {
   form = {

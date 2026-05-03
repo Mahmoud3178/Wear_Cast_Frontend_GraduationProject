@@ -16,5 +16,14 @@
     "secure": true,
     "changeOrigin": true,
     "logLevel": "warn"
+  },
+  "/tryon-service": {
+    "target": "https://typically-wheylike-magen.ngrok-free.dev",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/tryon-service": ""
+    },
+    "logLevel": "warn"
   }
 }
