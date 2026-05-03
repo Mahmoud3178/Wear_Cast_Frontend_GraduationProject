@@ -3,6 +3,10 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
+function cartHttpObservable<T>(obs: Observable<T>): Observable<T> {
+  return obs.pipe(catchError(err => throwError(() => new Error(cartHttpMessage(err)))));
+}
+
 // ────────────────────────────────────────────────────────
 //  Response models (inferred from swagger + API patterns)
 // ────────────────────────────────────────────────────────
@@ -68,6 +72,10 @@ function cartHttpMessage(err: unknown): string {
     const b = err.error;
     if (b && typeof b === 'object') {
       const o = b as Record<string, unknown>;
+      const description = o['description'];
+      if (typeof description === 'string' && description.trim()) {
+        return description.trim();
+      }
       const detail = o['detail'];
       if (typeof detail === 'string' && detail.trim()) {
         return detail.trim();
@@ -131,32 +139,43 @@ export class CartService {
 
   /** PUT /api/Cart/UpdateItemQuantity */
   updateItemQuantity(cartItemId: number, size: number, newQuantity: number): Observable<unknown> {
-    return this.http.put(`${this.base}/UpdateItemQuantity`, {
+    const body = {
       cartItemId,
+      CartItemId: cartItemId,
       size,
-      newQuantity
-    });
+      Size: size,
+      newQuantity,
+      NewQuantity: newQuantity
+    };
+    return cartHttpObservable(
+      this.http.put<unknown>(`${this.base}/UpdateItemQuantity`, body)
+    );
   }
 
-  /** POST /api/Cart/AddOrUpdateFixedColorToCart */
+  /** POST /api/Cart/AddOrUpdateFixedColorToCart — full `Sizes` list; avoid duplicating only `sizes[0]` at root when multiple lines (that misled the API). */
   addOrUpdateFixed(req: AddOrUpdateFixedColorToCartRequest): Observable<unknown> {
-    const first = req.sizes?.[0];
-    // Send both camelCase and PascalCase to handle different binder configs
-    const body = {
+    const sizes = (req.sizes ?? []).map(s => ({
+      size: s.size,
+      Size: s.size,
+      quantity: s.quantity,
+      Quantity: s.quantity
+    }));
+    const body: Record<string, unknown> = {
       colorId: req.colorId,
       ColorId: req.colorId,
-      size: first?.size,
-      Size: first?.size,
-      quantity: first?.quantity,
-      Quantity: first?.quantity,
-      sizes: req.sizes,
-      Sizes: req.sizes
+      sizes,
+      Sizes: sizes
     };
-    return this.http
-      .post(`${this.base}/AddOrUpdateFixedColorToCart`, body)
-      .pipe(
-        catchError(err => throwError(() => new Error(cartHttpMessage(err))))
-      );
+    if (sizes.length === 1) {
+      const only = sizes[0] as Record<string, unknown>;
+      body['size'] = only['size'];
+      body['Size'] = only['Size'];
+      body['quantity'] = only['quantity'];
+      body['Quantity'] = only['Quantity'];
+    }
+    return cartHttpObservable(
+      this.http.post<unknown>(`${this.base}/AddOrUpdateFixedColorToCart`, body)
+    );
   }
 
   /** POST /api/Cart/AddOrUpdateDesignedToCart — OpenAPI requires `sizes: [{ size, quantity }]`. */
@@ -174,11 +193,9 @@ export class CartService {
       sizes,
       Sizes: sizes
     };
-    return this.http
-      .post(`${this.base}/AddOrUpdateDesignedToCart`, body)
-      .pipe(
-        catchError(err => throwError(() => new Error(cartHttpMessage(err))))
-      );
+    return cartHttpObservable(
+      this.http.post<unknown>(`${this.base}/AddOrUpdateDesignedToCart`, body)
+    );
   }
 }
 

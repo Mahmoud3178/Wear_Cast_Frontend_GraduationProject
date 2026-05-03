@@ -22,6 +22,17 @@
       <button type="button" class="wc-btn-retry" (click)="ngOnInit()">Retry</button>
     </div>
 
+    <div
+      class="alert alert-warning wc-cart-qty-notice d-flex align-items-center justify-content-between gap-2 mx-0"
+      role="status"
+      *ngIf="!loading() && quantityNotice()"
+    >
+      <span>{{ quantityNotice() }}</span>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearQuantityNotice()">
+        Dismiss
+      </button>
+    </div>
+
     <!-- Empty State -->
     <div class="wc-cart-empty" *ngIf="!loading() && !error() && items().length === 0">
       <div class="wc-empty-icon" aria-hidden="true">🛒</div>

@@ -44,6 +44,8 @@ export class CartComponent implements OnInit {
   items = signal<CartItemView[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+  /** Quantity update API message (e.g. Cart.StockExceeded description). Cleared on reload. */
+  quantityNotice = signal<string | null>(null);
 
   // Size details modal
   showProductDetailsModal = false;
@@ -81,6 +83,10 @@ export class CartComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCart();
+  }
+
+  clearQuantityNotice(): void {
+    this.quantityNotice.set(null);
   }
 
   private loadCart(): void {
@@ -260,9 +266,9 @@ export class CartComponent implements OnInit {
 
   private getCurrentQty(item: CartItemView, sizeEnum?: number): number {
     if (sizeEnum != null) {
-      return item.sizes?.find(s => s.sizeEnum === sizeEnum)?.quantity ?? 1;
+      return item.sizes?.find(s => s.sizeEnum === sizeEnum)?.quantity ?? 0;
     }
-    return item.quantity ?? 1;
+    return item.quantity ?? 0;
   }
 
   /**
@@ -274,6 +280,7 @@ export class CartComponent implements OnInit {
     const currentQty = this.getCurrentQty(item, targetSizeEnum);
     const nextQty = currentQty + delta;
     if (delta === 0) return;
+    this.quantityNotice.set(null);
     // Optimistically update UI
     if (targetSizeEnum != null) {
       this.items.update(list => list.map(i => {
@@ -298,37 +305,48 @@ export class CartComponent implements OnInit {
     }
 
     const actualSizeEnum = targetSizeEnum;
+    const absNext = Math.max(0, nextQty);
 
-    const rebuildFixedSizes = (): SizeQuantityItem[] | null => {
+    /** Cart row state after this change — POST replaces quantities per size for this color. */
+    const rebuildFixedSizesPayload = (): SizeQuantityItem[] | null => {
       if (!item.sizes?.length || item.colorId == null) return null;
       return item.sizes
         .map(s => ({
           size: s.sizeEnum,
           quantity:
-            s.sizeEnum === actualSizeEnum ? Math.max(0, nextQty) : s.quantity
+            s.sizeEnum === actualSizeEnum ? absNext : s.quantity
         }))
         .filter(s => s.quantity > 0);
     };
 
-    const fixedSizesPayload = rebuildFixedSizes();
-
     let req$: Observable<unknown>;
-    if (item.type === 'fixed' && item.colorId != null && fixedSizesPayload !== null) {
-      req$ =
-        fixedSizesPayload.length === 0
-          ? item.cartItemId != null
-            ? this.cartService.deleteItem(item.cartItemId)
-            : of(null)
-          : this.cartService.addOrUpdateFixed({
-              colorId: item.colorId,
-              sizes: fixedSizesPayload
-            });
-    } else if (item.type === 'fixed' && item.cartItemId != null && fixedSizesPayload === null) {
-      req$ = this.cartService.updateItemQuantity(
-        item.cartItemId,
-        actualSizeEnum,
-        Math.max(0, nextQty)
-      );
+    if (item.type === 'fixed' && item.colorId != null) {
+      // Decrement: PUT adjusts one size without re-validating whole POST payload (avoids bogus StockExceeded on −).
+      if (
+        delta < 0 &&
+        item.cartItemId != null &&
+        actualSizeEnum != null
+      ) {
+        req$ = this.cartService.updateItemQuantity(
+          item.cartItemId,
+          actualSizeEnum,
+          absNext
+        );
+      } else {
+        const payload = rebuildFixedSizesPayload();
+        if (payload === null) {
+          req$ = of(null);
+        } else if (payload.length === 0 && item.cartItemId != null) {
+          req$ = this.cartService.deleteItem(item.cartItemId);
+        } else if (payload.length > 0) {
+          req$ = this.cartService.addOrUpdateFixed({
+            colorId: item.colorId,
+            sizes: payload
+          });
+        } else {
+          req$ = of(null);
+        }
+      }
     } else if (item.type === 'design' && item.designId != null) {
       req$ = this.cartService.addOrUpdateDesigned({
         designId: item.designId,
@@ -344,15 +362,21 @@ export class CartComponent implements OnInit {
         // Keep UI synced with server normalization and avoid stale optimistic state.
         this.loadCart();
       },
-      error: (err) => {
+      error: (err: unknown) => {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : typeof err === 'string'
+              ? err
+              : 'Could not update quantity.';
         console.error('Failed to update quantity', err, {
           type: item.type,
           colorId: item.colorId,
           designId: item.designId,
           size: actualSizeEnum,
-          sentQuantity: item.type === 'fixed' ? Math.max(0, nextQty) : delta
+          sentQuantity: item.type === 'fixed' ? absNext : delta
         });
-        // Rollback simple, just reload cart
+        this.quantityNotice.set(msg);
         this.loadCart();
       }
     });
