@@ -1,0 +1,455 @@
+/* WearCast Baby Blue theme — applies only when `body.wc-theme-baby-blue` (see AppComponent). */
+
+body.wc-theme-baby-blue {
+  --baby-primary: #6fafef;
+  --baby-primary-soft: #7dbbff;
+  --baby-primary-dark: #4c8fea;
+  --baby-primary-hover: #5b9eeb;
+  --baby-bg: #f8fcff;
+  --baby-bg-alt: #f5faff;
+  --baby-surface: #ffffff;
+  --baby-surface-tint: #eaf4ff;
+  --baby-border: #d7e6f7;
+  --baby-text: #17324d;
+  --baby-text-muted: #5f748c;
+  --baby-icon-muted: #8fa6bf;
+  --baby-shadow-soft: 0 4px 22px rgba(76, 143, 234, 0.09);
+  --baby-shadow-float: 0 12px 40px rgba(111, 174, 255, 0.12);
+
+  /* Align legacy tokens from styles.css on themed routes only */
+  --primary-color: var(--baby-primary-dark);
+  --primary-hover: #3a7fd4;
+  --secondary-color: var(--baby-surface-tint);
+  --accent-color: var(--baby-primary);
+  --bg-main: var(--baby-bg);
+  --bg-card: var(--baby-surface);
+  --text-main: var(--baby-text);
+  --text-muted: var(--baby-text-muted);
+  --border-color: var(--baby-border);
+  --info: var(--baby-primary-dark);
+  --shadow-sm: var(--baby-shadow-soft);
+  --shadow-md: var(--baby-shadow-float);
+
+  /* Bootstrap bridge */
+  --bs-primary: #6fafef;
+  --bs-primary-rgb: 111, 175, 239;
+  --bs-link-color: var(--baby-primary-dark);
+  --bs-link-hover-color: #356bb5;
+  --bs-focus-ring-color: rgba(111, 175, 239, 0.42);
+  --bs-body-bg: var(--baby-bg);
+  --bs-body-color: var(--baby-text);
+  --bs-border-color: var(--baby-border);
+  --bs-secondary-color: var(--baby-text-muted);
+  --bs-tertiary-bg: var(--baby-surface-tint);
+  --bs-emphasis-color: var(--baby-text);
+  background-color: var(--baby-bg) !important;
+  color: var(--baby-text);
+}
+
+/* ─── Customer navbar ─── */
+body.wc-theme-baby-blue .wc-nav {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border-bottom: 1px solid var(--baby-border);
+  box-shadow: 0 1px 3px rgba(76, 143, 234, 0.06);
+}
+
+body.wc-theme-baby-blue .wc-logo {
+  color: var(--baby-primary-dark);
+  letter-spacing: 0.1em;
+}
+
+body.wc-theme-baby-blue .wc-links a {
+  color: var(--baby-text-muted);
+}
+
+body.wc-theme-baby-blue .wc-links a:hover,
+body.wc-theme-baby-blue .wc-links a.active {
+  color: var(--baby-primary-dark);
+}
+
+body.wc-theme-baby-blue .wc-search input {
+  border-color: var(--baby-border);
+  background: var(--baby-surface);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .wc-search input::placeholder {
+  color: var(--baby-icon-muted);
+}
+
+body.wc-theme-baby-blue .wc-search input:focus {
+  border-color: var(--baby-primary);
+  box-shadow: 0 0 0 3px rgba(111, 175, 239, 0.22);
+}
+
+body.wc-theme-baby-blue .wc-icon-btn {
+  border-color: var(--baby-border);
+  background: var(--baby-surface-tint);
+  color: var(--baby-text-muted);
+}
+
+body.wc-theme-baby-blue .wc-icon-btn:hover {
+  background: rgba(111, 175, 239, 0.18);
+  border-color: rgba(111, 175, 239, 0.45);
+  color: var(--baby-primary-dark);
+}
+
+body.wc-theme-baby-blue .wc-nav-auth {
+  border-color: var(--baby-border);
+  background: var(--baby-surface);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .wc-nav-auth:hover {
+  background: var(--baby-surface-tint);
+  border-color: rgba(111, 175, 239, 0.5);
+  color: var(--baby-primary-dark);
+}
+
+body.wc-theme-baby-blue .wc-nav-auth--primary {
+  background: linear-gradient(135deg, var(--baby-primary) 0%, var(--baby-primary-dark) 100%);
+  border-color: transparent;
+  color: #fff;
+}
+
+body.wc-theme-baby-blue .wc-nav-auth--primary:hover {
+  filter: brightness(1.06);
+  color: #fff;
+}
+
+/* ─── Customer footer (light iced surface) ─── */
+body.wc-theme-baby-blue .wc-footer {
+  background: linear-gradient(180deg, #eaf4ff 0%, #e0eef9 100%);
+  color: var(--baby-text);
+  border-top: 1px solid var(--baby-border);
+  margin-top: 48px;
+}
+
+body.wc-theme-baby-blue .wc-footer-logo {
+  color: var(--baby-primary-dark);
+}
+
+body.wc-theme-baby-blue .wc-footer-tagline {
+  color: var(--baby-text-muted);
+}
+
+body.wc-theme-baby-blue .wc-footer-col a {
+  color: #3d5a73;
+}
+
+body.wc-theme-baby-blue .wc-footer-bottom,
+body.wc-theme-baby-blue .wc-footer-bottom-links a {
+  color: var(--baby-text-muted);
+}
+
+body.wc-theme-baby-blue .wc-footer-col h3 {
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .wc-footer-col a:hover {
+  color: var(--baby-primary-dark);
+}
+
+body.wc-theme-baby-blue .wc-footer-bottom-links a:hover {
+  color: #17324d;
+}
+
+body.wc-theme-baby-blue .wc-footer-divider {
+  border-top-color: var(--baby-border);
+}
+
+body.wc-theme-baby-blue .wc-footer-social a {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--baby-primary-dark);
+  border: 1px solid var(--baby-border);
+}
+
+body.wc-theme-baby-blue .wc-footer-social a:hover {
+  background: var(--baby-surface);
+  color: var(--baby-primary-dark);
+}
+
+/* ─── Hoodie designer: inherit tokens on host ─── */
+body.wc-theme-baby-blue app-customer-design {
+  --bg-deep: var(--baby-bg-alt);
+  --bg-surface: var(--baby-surface);
+  --bg-surface-hover: var(--baby-surface-tint);
+  --bg-canvas: #f0f7fe;
+  --border-color: #c8dbf0;
+  --border-light: rgba(215, 230, 247, 0.9);
+  --text-main: var(--baby-text);
+  --text-muted: var(--baby-text-muted);
+  --accent-primary: var(--baby-primary-dark);
+  --accent-primary-hover: var(--baby-primary-hover);
+  --accent-glow: rgba(111, 175, 239, 0.35);
+  --shadow-sm: var(--baby-shadow-soft);
+  --shadow-md: var(--baby-shadow-float);
+}
+
+body.wc-theme-baby-blue app-customer-design .header {
+  background: linear-gradient(180deg, #ffffff 0%, #fafdff 100%);
+  border-bottom: 1px solid var(--baby-border);
+  box-shadow: 0 2px 12px rgba(76, 143, 234, 0.07);
+}
+
+body.wc-theme-baby-blue app-customer-design .logo {
+  background: linear-gradient(to right, var(--baby-primary-dark), var(--baby-primary-soft));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.wc-theme-baby-blue app-customer-design .icon-btn:hover {
+  background: var(--baby-surface-tint);
+  color: var(--baby-primary-dark);
+  box-shadow: 0 0 0 1px rgba(111, 175, 239, 0.25);
+}
+
+body.wc-theme-baby-blue app-customer-design .canvas-area {
+  background-color: var(--baby-bg-alt);
+  background-image: radial-gradient(rgba(200, 219, 240, 0.55) 1px, transparent 1px);
+}
+
+/* Preserve editor preview focal area */
+body.wc-theme-baby-blue app-customer-design .product-stage,
+body.wc-theme-baby-blue app-customer-design .product-stage .product-image,
+body.wc-theme-baby-blue app-customer-design #design-canvas {
+  /* inherits existing component styling */
+}
+
+body.wc-theme-baby-blue app-customer-design .canvas-wrap {
+  background: var(--baby-surface);
+  box-shadow: var(--baby-shadow-float), 0 0 0 1px var(--baby-border);
+}
+
+body.wc-theme-baby-blue app-customer-design .view-btn.active {
+  background: linear-gradient(135deg, var(--baby-primary) 0%, var(--baby-primary-dark) 100%);
+  color: #fff;
+}
+
+body.wc-theme-baby-blue app-customer-design .designs-backdrop {
+  background: rgba(23, 50, 77, 0.35);
+}
+
+body.wc-theme-baby-blue app-customer-design .design-tag {
+  background: var(--baby-surface-tint);
+  border-color: var(--baby-border);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue app-customer-design .modern-input,
+body.wc-theme-baby-blue app-customer-design .modern-select {
+  background: var(--baby-surface);
+  border-color: var(--baby-border);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue app-customer-design .modern-input:focus,
+body.wc-theme-baby-blue app-customer-design .modern-select:focus {
+  border-color: var(--baby-primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(111, 175, 239, 0.2);
+}
+
+body.wc-theme-baby-blue app-customer-design .modern-chip {
+  background: var(--baby-surface-tint);
+  border-color: var(--baby-border);
+  color: var(--baby-text-muted);
+}
+
+body.wc-theme-baby-blue app-customer-design .modern-chip:hover {
+  background: rgba(111, 175, 239, 0.12);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue app-customer-design .modern-chip.active {
+  background: linear-gradient(135deg, var(--baby-primary) 0%, var(--baby-primary-dark) 100%);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(111, 175, 239, 0.35);
+}
+
+body.wc-theme-baby-blue app-customer-design .modern-range {
+  background: rgba(111, 175, 239, 0.2);
+}
+
+body.wc-theme-baby-blue app-customer-design .modern-range::-webkit-slider-thumb {
+  background: var(--baby-primary-dark);
+  border-color: #fff;
+  box-shadow: 0 2px 8px rgba(76, 143, 234, 0.45);
+}
+
+body.wc-theme-baby-blue app-customer-design .modern-range::-moz-range-thumb {
+  background: var(--baby-primary-dark);
+  border-color: #fff;
+  box-shadow: 0 2px 8px rgba(76, 143, 234, 0.45);
+}
+
+body.wc-theme-baby-blue app-customer-design .color-picker-wrap {
+  background: var(--baby-surface-tint);
+  border-color: var(--baby-border);
+}
+
+body.wc-theme-baby-blue app-customer-design .color-value {
+  color: var(--baby-text-muted);
+}
+
+body.wc-theme-baby-blue app-customer-design .badge-value {
+  background: rgba(111, 175, 239, 0.2);
+  color: var(--baby-primary-dark);
+}
+
+body.wc-theme-baby-blue app-customer-design .text-options-panel,
+body.wc-theme-baby-blue app-customer-design .element-actions-panel {
+  background: var(--baby-surface-tint);
+  border: 1px solid var(--baby-border);
+}
+
+body.wc-theme-baby-blue app-customer-design .wc-filters .form-control::placeholder {
+  color: var(--baby-icon-muted);
+}
+
+body.wc-theme-baby-blue app-customer-design .panel-title,
+body.wc-theme-baby-blue app-customer-design .option-label {
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue app-customer-design .panel-subtitle {
+  color: var(--baby-text-muted);
+}
+
+/* ─── Login: submit uses baby gradient (card shell styled in login.component.css) ─── */
+body.wc-theme-baby-blue app-login .login-main {
+  background: transparent;
+}
+
+body.wc-theme-baby-blue app-login .btn-dark {
+  background: linear-gradient(135deg, var(--baby-primary) 0%, var(--baby-primary-dark) 100%) !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+body.wc-theme-baby-blue app-login .btn-dark:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+/* ─── Customer register ─── */
+body.wc-theme-baby-blue app-register-customer .bg-light {
+  background-color: var(--baby-bg) !important;
+}
+
+body.wc-theme-baby-blue app-register-customer .card {
+  border-color: var(--baby-border) !important;
+  background: var(--baby-surface);
+  box-shadow: var(--baby-shadow-float) !important;
+}
+
+body.wc-theme-baby-blue app-register-customer .form-label {
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue app-register-customer .form-text {
+  color: var(--baby-text-muted);
+}
+
+body.wc-theme-baby-blue app-register-customer .text-muted {
+  color: var(--baby-text-muted) !important;
+}
+
+/* ─── Factory auth (login/register) — card on icy bg ─── */
+body.wc-theme-baby-blue .wc-factory-auth-bg {
+  background: linear-gradient(160deg, var(--baby-bg) 0%, var(--baby-surface-tint) 50%, #ddeef9 100%) !important;
+}
+
+body.wc-theme-baby-blue .wc-factory-auth-bg .wc-factory-auth-panel {
+  border-color: var(--baby-border) !important;
+  box-shadow: var(--baby-shadow-float) !important;
+}
+
+body.wc-theme-baby-blue .wc-factory-auth-bg .btn-dark {
+  background: linear-gradient(135deg, var(--baby-primary) 0%, var(--baby-primary-dark) 100%) !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+body.wc-theme-baby-blue .wc-factory-auth-bg .btn-dark:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+body.wc-theme-baby-blue .wc-factory-auth-bg h1,
+body.wc-theme-baby-blue .wc-factory-auth-bg .h4 {
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .wc-factory-auth-bg a {
+  color: var(--baby-primary-dark);
+}
+
+/* ─── Customer email confirmation ─── */
+body.wc-theme-baby-blue app-confirm-customer-email .bg-light {
+  background-color: var(--baby-bg) !important;
+}
+
+body.wc-theme-baby-blue app-confirm-customer-email .card {
+  border-color: var(--baby-border);
+  box-shadow: var(--baby-shadow-float) !important;
+}
+
+body.wc-theme-baby-blue app-confirm-customer-email .fw-bold {
+  color: var(--baby-text);
+}
+
+/* ─── Customer shop / account page shells ─── */
+body.wc-theme-baby-blue .wc-page {
+  background:
+    radial-gradient(900px 500px at 12% -10%, rgba(111, 175, 239, 0.16), transparent 60%),
+    radial-gradient(900px 500px at 88% -10%, rgba(76, 143, 234, 0.1), transparent 60%),
+    var(--baby-bg);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .wc-page-cart {
+  background:
+    radial-gradient(900px 500px at 12% -10%, rgba(111, 175, 239, 0.14), transparent 60%),
+    radial-gradient(900px 500px at 88% -10%, rgba(111, 175, 239, 0.08), transparent 60%),
+    var(--baby-bg);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .wc-page-detail {
+  background:
+    radial-gradient(820px 420px at 14% -12%, rgba(111, 175, 239, 0.14), transparent 65%),
+    var(--baby-bg);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .wc-page-category {
+  background-color: var(--baby-bg);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .co-page {
+  background: var(--baby-bg);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .customer-page-shell {
+  background-color: var(--baby-bg);
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .wc-favourites-page {
+  background: var(--baby-bg);
+}
+
+body.wc-theme-baby-blue .wc-page-title {
+  color: var(--baby-text);
+}
+
+body.wc-theme-baby-blue .wc-cart-continue {
+  color: var(--baby-primary-dark);
+}
+
+body.wc-theme-baby-blue .wc-cart-subtitle {
+  color: var(--baby-text-muted);
+}

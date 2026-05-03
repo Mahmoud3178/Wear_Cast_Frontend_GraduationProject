@@ -204,3 +204,99 @@
 .spin {
   animation: spin 1s linear infinite;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Baby Blue — light factory shell (when body.wc-theme-baby-blue, see AppComponent)
+   ═══════════════════════════════════════════════════════════════════ */
+
+body.wc-theme-baby-blue .wc-factory-shell {
+  --wc-factory-header-bg: linear-gradient(180deg, #eaf4ff 0%, #ddeef9 55%, #d4e8fc 100%);
+  --wc-factory-accent: #4c8fea;
+  --wc-factory-accent-dim: rgba(111, 175, 239, 0.22);
+  --wc-factory-border: rgba(215, 230, 247, 0.95);
+}
+
+body.wc-theme-baby-blue .wc-factory-sidebar {
+  border-right-color: var(--baby-border, #d7e6f7) !important;
+  box-shadow: 4px 0 28px rgba(76, 143, 234, 0.08);
+}
+
+body.wc-theme-baby-blue .wc-factory-brand {
+  color: #17324d;
+}
+
+body.wc-theme-baby-blue .wc-factory-brand::before {
+  background: linear-gradient(180deg, #6fafef, rgba(76, 143, 234, 0.55));
+}
+
+body.wc-theme-baby-blue .wc-factory-brand small {
+  color: #5f748c;
+}
+
+body.wc-theme-baby-blue .wc-factory-sidebar .nav-pill {
+  color: #17324d;
+}
+
+body.wc-theme-baby-blue .wc-factory-sidebar .nav-pill:hover {
+  background: rgba(111, 175, 239, 0.14);
+  color: #17324d;
+  box-shadow: none;
+}
+
+body.wc-theme-baby-blue .wc-factory-sidebar .nav-pill.active {
+  background: linear-gradient(135deg, rgba(111, 175, 239, 0.35) 0%, rgba(76, 143, 234, 0.22) 100%);
+  border-color: rgba(76, 143, 234, 0.45);
+  color: #17324d;
+  box-shadow: 0 2px 12px rgba(76, 143, 234, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+body.wc-theme-baby-blue .wc-factory-main {
+  background: linear-gradient(180deg, #f8fcff 0%, #f0f7fe 100%);
+}
+
+body.wc-theme-baby-blue .wc-factory-card {
+  border-color: rgba(215, 230, 247, 0.9) !important;
+  box-shadow: 0 8px 32px rgba(76, 143, 234, 0.07) !important;
+}
+
+body.wc-theme-baby-blue .wc-factory-card:hover {
+  box-shadow: 0 12px 42px rgba(76, 143, 234, 0.1) !important;
+}
+
+body.wc-theme-baby-blue .wc-factory-card .card-header {
+  background: linear-gradient(180deg, #ffffff 0%, #fafdff 100%);
+  border-bottom-color: rgba(215, 230, 247, 0.85);
+  color: #17324d;
+}
+
+body.wc-theme-baby-blue .wc-factory-page-title {
+  color: #17324d;
+}
+
+body.wc-theme-baby-blue .wc-factory-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #eaf4ff 100%);
+  border-color: rgba(215, 230, 247, 0.95);
+  box-shadow: 0 12px 40px rgba(111, 175, 239, 0.08);
+}
+
+body.wc-theme-baby-blue .wc-factory-dash-tile {
+  border-color: rgba(215, 230, 247, 0.9) !important;
+}
+
+body.wc-theme-baby-blue .wc-factory-dash-tile:hover {
+  box-shadow: 0 16px 44px rgba(76, 143, 234, 0.12) !important;
+}
+
+body.wc-theme-baby-blue .wc-factory-sidebar .btn.text-white.border {
+  border-color: rgba(76, 143, 234, 0.35) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  color: #17324d !important;
+}
+
+body.wc-theme-baby-blue .wc-factory-sidebar .btn.text-white.border:hover {
+  background: rgba(111, 175, 239, 0.2) !important;
+}
+
+body.wc-theme-baby-blue .list-group-item:hover {
+  background-color: rgba(111, 175, 239, 0.06);
+}

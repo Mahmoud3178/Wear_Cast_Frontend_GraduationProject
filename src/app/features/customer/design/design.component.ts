@@ -40,6 +40,7 @@ import { CommonModule } from '@angular/common';
 export class CustomerDesignComponent implements AfterViewInit {
   catalogSearchResults: any[] = [];
   loadingProducts = false;
+  initialProductsLoading = true;
   categories: any[] = [];
   loadingCategories = false;
   searchParams: any = {
@@ -302,6 +303,7 @@ export class CustomerDesignComponent implements AfterViewInit {
     this.http.get<any>(url, { params }).subscribe({
       next: (res) => {
         this.loadingProducts = false;
+        this.initialProductsLoading = false;
         // Handle paginated response: { data: { items, totalCount, totalPages, pageIndex, pageSize } }
         let arr = res;
         let responseData = res;
@@ -397,6 +399,7 @@ export class CustomerDesignComponent implements AfterViewInit {
       },
       error: (err) => {
         this.loadingProducts = false;
+        this.initialProductsLoading = false;
         console.error('Failed to load catalog products', err);
       }
     });

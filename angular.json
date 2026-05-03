@@ -30,7 +30,8 @@
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/bootstrap-icons/font/bootstrap-icons.css",
               "src/styles.css",
-              "src/app/features/factory/factory-portal.css"
+              "src/app/features/factory/factory-portal.css",
+              "src/styles/wc-theme-baby-blue.css"
             ],
             "scripts": [
               "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"

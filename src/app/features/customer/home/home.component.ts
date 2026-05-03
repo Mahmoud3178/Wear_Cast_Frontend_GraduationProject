@@ -100,15 +100,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
   ] as const;
 
-  readonly styleCards = [
-    { label: 'Casual',  icon: '👕', desc: 'Everyday comfort', cls: 'wc-style-card--casual',  dressStyle: 0 },
-    { label: 'Formal',  icon: '👔', desc: 'Clean & professional', cls: 'wc-style-card--formal',  dressStyle: 1 },
-    { label: 'Party',   icon: '🎉', desc: 'Stand out & shine', cls: 'wc-style-card--party',   dressStyle: 2 },
-    { label: 'Gym',     icon: '🏋️', desc: 'Performance wear', cls: 'wc-style-card--gym',     dressStyle: 3 },
-    { label: 'Street',  icon: '🛹', desc: 'Urban & bold', cls: 'wc-style-card--street',  dressStyle: 4 },
-    { label: 'Vintage', icon: '🧥', desc: 'Timeless classics', cls: 'wc-style-card--vintage', dressStyle: 5 },
-  ];
-
   constructor(private readonly http: HttpClient) {}
 
   ngOnInit(): void {

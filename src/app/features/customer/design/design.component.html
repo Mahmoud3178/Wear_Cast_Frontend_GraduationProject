@@ -9,6 +9,14 @@
   </div>
 </header>
 
+<div class="wc-design-loading-screen" *ngIf="initialProductsLoading" role="status" aria-live="polite">
+  <div class="wc-design-loading-card">
+    <div class="wc-design-loading-spinner"></div>
+    <h2>Preparing your design studio…</h2>
+    <p>Loading products and assets so everything is interactive.</p>
+  </div>
+</div>
+
 <div class="main-layout">
   <!-- Left sidebar - tools + product picker -->
   <aside class="sidebar left">
@@ -236,16 +244,16 @@
     <!-- ANGULAR SEARCH BAR -->
     <div class="wc-filters mt-3 mb-4">
       <div class="wc-filter-item wc-filter-item--search">
-        <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="Search templates..." [(ngModel)]="searchParams.SearchTerm" (keyup.enter)="searchCatalog()">
+        <input type="text" class="form-control" placeholder="Search templates..." [(ngModel)]="searchParams.SearchTerm" (keyup.enter)="searchCatalog()">
       </div>
       <div class="wc-filter-item">
-        <select class="form-select bg-dark text-white border-secondary" [(ngModel)]="searchParams.CategoryId" (change)="searchCatalog()" [disabled]="loadingCategories">
+        <select class="form-select" [(ngModel)]="searchParams.CategoryId" (change)="searchCatalog()" [disabled]="loadingCategories">
           <option [ngValue]="null">Any Category</option>
           <option *ngFor="let cat of categories" [ngValue]="cat.id ?? cat.Id">{{ cat.name ?? cat.Name }}</option>
         </select>
       </div>
       <div class="wc-filter-item">
-        <select class="form-select bg-dark text-white border-secondary" [(ngModel)]="searchParams.TargetAudience" (change)="searchCatalog()">
+        <select class="form-select" [(ngModel)]="searchParams.TargetAudience" (change)="searchCatalog()">
           <option [ngValue]="null">Any Audience</option>
           <option [ngValue]="1">Men</option>
           <option [ngValue]="2">Women</option>
@@ -255,7 +263,7 @@
         </select>
       </div>
       <div class="wc-filter-item">
-        <select class="form-select bg-dark text-white border-secondary" [(ngModel)]="searchParams.DressStyle" (change)="searchCatalog()">
+        <select class="form-select" [(ngModel)]="searchParams.DressStyle" (change)="searchCatalog()">
           <option [ngValue]="null">Any Style</option>
           <option [ngValue]="1">Casual</option>
           <option [ngValue]="2">Formal</option>
@@ -265,7 +273,7 @@
         </select>
       </div>
       <div class="wc-filter-item">
-        <select class="form-select bg-dark text-white border-secondary" [(ngModel)]="searchParams.SortBy" (change)="searchCatalog()">
+        <select class="form-select" [(ngModel)]="searchParams.SortBy" (change)="searchCatalog()">
           <option [ngValue]="null">Sort by</option>
           <option [ngValue]="0">Most Popular</option>
           <option [ngValue]="1">Newest</option>
@@ -278,7 +286,7 @@
         <input
           type="number"
           min="0"
-          class="form-control bg-dark text-white border-secondary"
+          class="form-control"
           placeholder="Min price"
           [(ngModel)]="searchParams.MinPrice"
           (keyup.enter)="searchCatalog()"
@@ -288,7 +296,7 @@
         <input
           type="number"
           min="0"
-          class="form-control bg-dark text-white border-secondary"
+          class="form-control"
           placeholder="Max price"
           [(ngModel)]="searchParams.MaxPrice"
           (keyup.enter)="searchCatalog()"
@@ -298,60 +306,7 @@
         <span *ngIf="loadingProducts" class="spinner-border spinner-border-sm me-1"></span>Search
       </button>
     </div>
-    <div *ngIf="catalogSearchResults.length === 0 && !loadingProducts" class="text-center text-white-50 mb-4 py-4" style="color: rgba(255,255,255,0.7) !important;">No templates found for this criteria.</div>
-
-
-    <style>
-      .angular-product-modal-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 16px;
-        max-height: 50vh;
-        overflow-y: auto;
-        padding: 4px;
-      }
-      .angular-product-card {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 12px;
-        padding: 12px;
-        text-align: center;
-        cursor: pointer;
-        transition: transform 0.2s, background 0.2s;
-      }
-      .angular-product-card:hover {
-        background: rgba(255, 255, 255, 0.15);
-        transform: translateY(-2px);
-      }
-      .angular-product-card img {
-        width: 100%;
-        height: 140px;
-        object-fit: cover;
-        border-radius: 8px;
-        margin-bottom: 8px;
-      }
-      .angular-product-card .no-img {
-        width: 100%;
-        height: 140px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255,255,255,0.12);
-        border-radius: 8px;
-        margin-bottom: 8px;
-        color: rgba(255,255,255,0.7);
-        font-size: 0.85rem;
-        font-weight: 500;
-      }
-      .angular-product-card h4 {
-        color: #ffffff !important;
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-      .angular-product-card p {
-        color: rgba(255,255,255,0.8) !important;
-      }
-    </style>
+    <div *ngIf="catalogSearchResults.length === 0 && !loadingProducts" class="text-center text-muted mb-4 py-4">No templates found for this criteria.</div>
 
 
     <!-- Product grid: Angular search results with designer-powered switching -->
@@ -378,7 +333,7 @@
       >
         <i class="fa-solid fa-chevron-left"></i> Prev
       </button>
-      <span class="text-white-50 small">
+      <span class="text-muted small">
         Page {{ searchParams.PageIndex }} of {{ totalPages }}
       </span>
       <button
@@ -390,7 +345,7 @@
         Next <i class="fa-solid fa-chevron-right"></i>
       </button>
     </div>
-    <div *ngIf="totalProducts > 0" class="text-center text-white-50 small mt-2">
+    <div *ngIf="totalProducts > 0" class="text-center text-muted small mt-2">
       Showing {{ catalogSearchResults.length }} of {{ totalProducts }} products
     </div>
   </div>

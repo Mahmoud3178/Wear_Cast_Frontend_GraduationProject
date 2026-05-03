@@ -98,21 +98,29 @@
 
     <div class="wc-section-divider"></div>
 
-    <section class="wc-section">
-      <div class="wc-section-header">
-        <h2>Browse by style</h2>
+    <section class="wc-creative-lab" aria-label="Creative design highlight">
+      <div class="wc-creative-lab__orb wc-creative-lab__orb--one" aria-hidden="true"></div>
+      <div class="wc-creative-lab__orb wc-creative-lab__orb--two" aria-hidden="true"></div>
+      <div class="wc-creative-lab__orb wc-creative-lab__orb--three" aria-hidden="true"></div>
+
+      <div class="wc-creative-lab__content">
+        <p class="wc-creative-lab__eyebrow">Creative Playground</p>
+        <h2>Turn ideas into wearable art with smooth, live editing</h2>
+        <p>
+          Build your look with layered graphics, text effects, and color variations.
+          Every element transitions in real time so you can experiment fast and create confidently.
+        </p>
+        <div class="wc-creative-lab__actions">
+          <a routerLink="/customer/design" class="wc-creative-lab__cta">Start Designing</a>
+          <a routerLink="/customer/category" class="wc-creative-lab__ghost">Explore Products</a>
+        </div>
       </div>
-      <div class="wc-style-grid">
-        <a
-          *ngFor="let s of styleCards"
-          routerLink="/customer/category"
-          class="wc-style-card"
-          [ngClass]="s.cls"
-        >
-          <span class="wc-style-icon">{{ s.icon }}</span>
-          <span class="wc-style-label">{{ s.label }}</span>
-          <span class="wc-style-desc">{{ s.desc }}</span>
-        </a>
+
+      <div class="wc-creative-lab__motion" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
       </div>
     </section>
 
