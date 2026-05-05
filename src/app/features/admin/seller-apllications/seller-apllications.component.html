@@ -1,175 +1,135 @@
-<div class="container mt-4">
 
-  <h3>Seller Applications</h3>
-<div class="card shadow-sm mb-3">
-  <div class="card-body">
+<div class="page-wrap">
 
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <div class="adm-header">
+    <div>
+      <h1 class="adm-title">Seller Applications</h1>
+      <p class="adm-subtitle">Review and manage seller application requests.</p>
+    </div>
+  </div>
 
-      <!-- 🔍 SEARCH (شمال) -->
-      <div style="flex:1; max-width:300px;">
-        <input class="form-control"
-               placeholder="Search by name or email..."
-               [(ngModel)]="searchTerm"
-               (input)="onSearch()">
+  <!-- Toolbar -->
+  <div class="adm-toolbar">
+    <div class="adm-search">
+      <i class="bi bi-search adm-search-icon"></i>
+      <input placeholder="Search by name or email..." [(ngModel)]="searchTerm" (input)="onSearch()">
+    </div>
+    <div class="adm-filters">
+      <button class="adm-filter-btn" [class.active]="!selectedStatus" (click)="setStatus(null)">All</button>
+      <button class="adm-filter-btn" [class.active]="selectedStatus==='Pending'" (click)="setStatus('Pending')">Pending</button>
+      <button class="adm-filter-btn" [class.active]="selectedStatus==='Approved'" (click)="setStatus('Approved')">Approved</button>
+      <button class="adm-filter-btn" [class.active]="selectedStatus==='Rejected'" (click)="setStatus('Rejected')">Rejected</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="adm-table-card">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>Seller</th>
+          <th>Email</th>
+          <th>City</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let app of filteredApplications" (click)="open(app)" style="cursor:pointer">
+          <td><span class="cell-main">{{ app.sellerName }}</span></td>
+          <td class="cell-muted">{{ app.sellerEmail }}</td>
+          <td class="cell-muted">{{ app.city }}</td>
+          <td>
+            <span class="adm-badge"
+              [class.badge-approved]="app.status==='Approved'"
+              [class.badge-pending]="app.status==='Pending'"
+              [class.badge-rejected]="app.status==='Rejected'">
+              {{ app.status }}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="!filteredApplications?.length" class="no-click">
+          <td colspan="4"><div class="adm-empty"><i class="bi bi-file-earmark-person"></i><p>No applications found</p></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Overlay -->
+<div class="adm-overlay" *ngIf="showDrawer" (click)="close()"></div>
+
+<!-- Drawer -->
+<div class="adm-drawer" [class.open]="showDrawer">
+  <div class="adm-drawer-head">
+    <h5 class="adm-drawer-title">Application Details</h5>
+    <button class="adm-drawer-close" (click)="close()"><i class="bi bi-x-lg"></i></button>
+  </div>
+
+  <div class="adm-drawer-body" *ngIf="selectedApplication">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div class="cell-main" style="font-size:17px;margin-bottom:4px">{{ selectedApplication.sellerName }}</div>
+        <span class="adm-badge"
+          [class.badge-approved]="selectedApplication.status==='Approved'"
+          [class.badge-pending]="selectedApplication.status==='Pending'"
+          [class.badge-rejected]="selectedApplication.status==='Rejected'">
+          {{ selectedApplication.status }}
+        </span>
       </div>
+    </div>
 
-      <!-- 🎯 FILTER (يمين) -->
-      <div class="d-flex gap-2 flex-wrap">
+    <div class="adm-section-label"><i class="bi bi-person"></i> Seller Info</div>
+    <div class="adm-info-grid" style="margin-bottom:20px">
+      <div class="adm-info-item"><span class="adm-info-label">Name</span><span class="adm-info-value">{{ selectedApplication.sellerName }}</span></div>
+      <div class="adm-info-item"><span class="adm-info-label">Email</span><span class="adm-info-value">{{ selectedApplication.sellerEmail }}</span></div>
+      <div class="adm-info-item"><span class="adm-info-label">Phone</span><span class="adm-info-value">{{ selectedApplication.sellerPhoneNumber }}</span></div>
+    </div>
 
-        <button class="btn btn-outline-primary"
-                (click)="setStatus(null)">
-          All
-        </button>
+    <div class="adm-section-label"><i class="bi bi-person-badge"></i> Manager Info</div>
+    <div class="adm-info-grid" style="margin-bottom:20px">
+      <div class="adm-info-item"><span class="adm-info-label">Name</span><span class="adm-info-value">{{ selectedApplication.managerFirstName }} {{ selectedApplication.managerLastName }}</span></div>
+      <div class="adm-info-item"><span class="adm-info-label">Email</span><span class="adm-info-value">{{ selectedApplication.managerEmail }}</span></div>
+      <div class="adm-info-item"><span class="adm-info-label">Phone</span><span class="adm-info-value">{{ selectedApplication.managerPhoneNumber }}</span></div>
+    </div>
 
-        <button class="btn btn-outline-warning"
-                (click)="setStatus('Pending')">
-          Pending
-        </button>
+    <div class="adm-section-label"><i class="bi bi-building"></i> Company Info</div>
+    <div class="adm-info-grid" style="margin-bottom:20px">
+      <div class="adm-info-item"><span class="adm-info-label">Commercial Reg.</span><span class="adm-info-value">{{ selectedApplication.commercialRegisterNumber }}</span></div>
+      <div class="adm-info-item"><span class="adm-info-label">Tax ID</span><span class="adm-info-value">{{ selectedApplication.taxIdNumber }}</span></div>
+      <div class="adm-info-item" style="grid-column:1/-1"><span class="adm-info-label">Description</span><span class="adm-info-value" style="font-weight:400;font-size:13px">{{ selectedApplication.description }}</span></div>
+    </div>
 
-        <button class="btn btn-outline-success"
-                (click)="setStatus('Approved')">
-          Approved
-        </button>
+    <div class="adm-section-label"><i class="bi bi-geo-alt"></i> Address</div>
+    <div class="adm-info-grid" style="margin-bottom:20px">
+      <div class="adm-info-item"><span class="adm-info-label">State</span><span class="adm-info-value">{{ selectedApplication.sellerAddress?.state }}</span></div>
+      <div class="adm-info-item"><span class="adm-info-label">City</span><span class="adm-info-value">{{ selectedApplication.sellerAddress?.city }}</span></div>
+      <div class="adm-info-item"><span class="adm-info-label">Street</span><span class="adm-info-value">{{ selectedApplication.sellerAddress?.street }}</span></div>
+      <div class="adm-info-item"><span class="adm-info-label">Building</span><span class="adm-info-value">{{ selectedApplication.sellerAddress?.buildingNumber }}</span></div>
+    </div>
 
-        <button class="btn btn-outline-danger"
-                (click)="setStatus('Rejected')">
-          Rejected
-        </button>
-
+    <div *ngIf="rejectMode" style="margin-bottom:16px">
+      <div class="adm-form-group">
+        <label>Rejection Reason <span class="adm-req">*</span></label>
+        <textarea class="adm-field" rows="3" placeholder="Enter reason..." [(ngModel)]="rejectReason" style="resize:vertical"></textarea>
       </div>
-
     </div>
 
   </div>
-</div>
-  <!-- TABLE -->
-  <table class="table table-hover mt-3">
-    <thead>
-      <tr>
-        <th>Seller</th>
-        <th>Email</th>
-        <th>City</th>
-        <th>Status</th>
-      </tr>
-    </thead>
 
-    <tbody>
-      <tr *ngFor="let app of filteredApplications"
-          (click)="open(app)"
-          style="cursor:pointer">
-
-        <td>{{ app.sellerName }}</td>
-        <td>{{ app.sellerEmail }}</td>
-        <td>{{ app.city }}</td>
-
-        <td>
-          <span class="badge"
-            [ngClass]="{
-              'bg-success': app.status === 'Approved',
-              'bg-warning': app.status === 'Pending',
-              'bg-danger': app.status === 'Rejected'
-            }">
-            {{ app.status }}
-          </span>
-        </td>
-
-      </tr>
-    </tbody>
-  </table>
-
-</div>
-
-<div class="drawer" [class.open]="showDrawer">
-
-  <div *ngIf="selectedApplication">
-
-    <h4 class="mb-3">{{ selectedApplication.sellerName }}</h4>
-
-    <!-- STATUS -->
-    <span class="badge mb-3"
-      [ngClass]="{
-        'bg-success': selectedApplication.status === 'Approved',
-        'bg-warning': selectedApplication.status === 'Pending',
-        'bg-danger': selectedApplication.status === 'Rejected'
-      }">
-      {{ selectedApplication.status }}
-    </span>
-
-    <hr>
-
-    <!-- SELLER -->
-    <h6>Seller Info</h6>
-
-    <p><b>Name:</b> {{ selectedApplication.sellerName }}</p>
-    <p><b>Email:</b> {{ selectedApplication.sellerEmail }}</p>
-    <p><b>Phone:</b> {{ selectedApplication.sellerPhoneNumber }}</p>
-
-    <hr>
-
-    <!-- MANAGER -->
-    <h6>Manager Info</h6>
-
-    <p><b>Name:</b>
-      {{ selectedApplication.managerFirstName }}
-      {{ selectedApplication.managerLastName }}
-    </p>
-
-    <p><b>Email:</b> {{ selectedApplication.managerEmail }}</p>
-    <p><b>Phone:</b> {{ selectedApplication.managerPhoneNumber }}</p>
-
-    <hr>
-
-    <!-- COMPANY -->
-    <h6>Company Info</h6>
-
-    <p><b>Commercial:</b> {{ selectedApplication.commercialRegisterNumber }}</p>
-    <p><b>Tax ID:</b> {{ selectedApplication.taxIdNumber }}</p>
-    <p><b>Description:</b> {{ selectedApplication.description }}</p>
-
-    <hr>
-
-    <!-- ADDRESS -->
-    <h6>Address</h6>
-
-    <p>
-      {{ selectedApplication.sellerAddress?.state }},
-      {{ selectedApplication.sellerAddress?.city }},
-      {{ selectedApplication.sellerAddress?.street }},
-      {{ selectedApplication.sellerAddress?.buildingNumber }}
-    </p>
-
-    <hr>
-
-    <!-- ACTIONS -->
-    <button class="btn btn-success w-100 mb-2"
-            (click)="approve()"
-            [disabled]="selectedApplication.status !== 'Pending'">
-      Approve
-    </button>
-
-    <button class="btn btn-danger w-100 mb-2"
-            (click)="enableReject()"
-            [disabled]="selectedApplication.status !== 'Pending'">
-      Reject
-    </button>
-
-    <div *ngIf="rejectMode">
-      <textarea class="form-control mb-2"
-                placeholder="Reason..."
-                [(ngModel)]="rejectReason"></textarea>
-
-      <button class="btn btn-danger w-100"
-              (click)="reject()">
-        Confirm Reject
+  <div class="adm-drawer-footer" *ngIf="selectedApplication">
+    <button class="adm-btn-secondary" (click)="close()">Close</button>
+    <ng-container *ngIf="selectedApplication.status === 'Pending'">
+      <button class="adm-btn-danger" (click)="enableReject()" *ngIf="!rejectMode">
+        <i class="bi bi-x-lg"></i> Reject
       </button>
-    </div>
-
-    <button class="btn btn-secondary w-100 mt-3"
-            (click)="close()">
-      Close
-    </button>
-
+      <button class="adm-btn-danger" style="background:#ef4444;color:white;border-color:#ef4444" (click)="reject()" *ngIf="rejectMode">
+        <i class="bi bi-check2"></i> Confirm Reject
+      </button>
+      <button class="adm-btn-primary" (click)="approve()" *ngIf="!rejectMode" style="flex:2;justify-content:center">
+        <i class="bi bi-check-lg"></i> Approve
+      </button>
+    </ng-container>
   </div>
-
 </div>

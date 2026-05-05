@@ -1,16 +1,38 @@
-.drawer {
-  position: fixed;
-  top: 0;
-  right: -400px;
-  width: 350px;
-  height: 100%;
-  background: #fff;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.2);
-  padding: 20px;
-  transition: 0.3s;
-  z-index: 999;
+/* ============================================================
+   SELLER APPLICATIONS — FULLY RESPONSIVE
+   ============================================================ */
+
+/* Overlay */
+.adm-overlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.4); z-index:198;
 }
 
-.drawer.open {
-  right: 0;
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+/* Drawer full-width on tablet */
+@media (max-width:1024px) {
+  .adm-drawer { width:100%; right:-100%; border-radius:0; }
+  .adm-drawer.open { right:0; }
+}
+
+@media (max-width:768px) {
+  /* Info grid inside drawer stays auto */
+  .adm-drawer .adm-info-grid {
+    grid-template-columns:1fr 1fr;
+  }
+  .adm-drawer-footer {
+    flex-wrap:wrap; gap:8px;
+  }
+  .adm-drawer-footer button {
+    flex:1; min-width:120px; justify-content:center;
+  }
+}
+
+@media (max-width:480px) {
+  .adm-drawer .adm-info-grid {
+    grid-template-columns:1fr;
+  }
 }

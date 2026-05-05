@@ -1,72 +1,134 @@
-<div class="container p-4">
+<div class="page-wrap">
 
-  <div class="d-flex justify-content-between mb-3">
-    <h4>Customer Details</h4>
-
-<div class="d-flex gap-2 align-items-center">
-
-  <input type="text"
-         class="form-control"
-         placeholder="Enter reason for delete..."
-         [(ngModel)]="deleteReason">
-
-  <button class="btn btn-danger" (click)="deleteCustomer()">
-    Delete
-  </button>
-
-</div>
-  </div>
-
-  <div class="card p-4 text-center shadow-sm">
-
-    <img [src]="customer?.imageurl"
-         class="rounded-circle mx-auto mb-3"
-         width="120"
-         height="120"
-         style="object-fit:cover">
-
-    <!-- IMAGE ACTIONS -->
-    <input type="file" class="form-control mb-2" (change)="onFileChange($event)">
-
-    <div class="d-flex gap-2 justify-content-center mb-3">
-      <button class="btn btn-primary btn-sm" (click)="uploadImage()">Upload</button>
-      <button class="btn btn-danger btn-sm" (click)="deleteImage()">Delete Image</button>
+  <div class="adm-header">
+    <div>
+      <h1 class="adm-title">Customer Details</h1>
+      <p class="adm-subtitle">View and manage customer account</p>
     </div>
-
-    <!-- EDIT -->
-    <input class="form-control mb-2" [(ngModel)]="customer.firstName" placeholder="First Name">
-    <input class="form-control mb-2" [(ngModel)]="customer.lastName" placeholder="Last Name">
-    <input class="form-control mb-2" [(ngModel)]="customer.email" placeholder="Email">
-    <input class="form-control mb-2" [(ngModel)]="customer.phoneNumber" placeholder="Phone">
-
-    <button class="btn btn-success mt-2" (click)="updateCustomer()">
-      Save Changes
-    </button>
-
-    <hr>
-
-    <p>City: {{customer?.city}}</p>
-    <p>State: {{customer?.state}}</p>
-    <p>Street: {{customer?.street}}</p>
-    <p>Building: {{customer?.buildingNumber}}</p>
-
+    <div class="adm-delete-box" style="margin-bottom:0;flex:none">
+      <i class="bi bi-exclamation-triangle-fill" style="color:#ef4444"></i>
+      <input type="text" placeholder="Reason for deletion..." [(ngModel)]="deleteReason" style="min-width:200px">
+      <button class="adm-btn-danger" style="background:#ef4444;color:white;border-color:#ef4444" (click)="deleteCustomer()">
+        <i class="bi bi-trash"></i> Delete Account
+      </button>
+    </div>
   </div>
 
-  <!-- ORDERS -->
-  <div class="card mt-3 p-3">
+  <div class="profile-layout">
 
-    <h5>Orders</h5>
+    <!-- Profile card -->
+    <div class="adm-profile-card">
+      <img [src]="customer?.imageurl" class="adm-profile-img"
+        onerror="this.src='https://ui-avatars.com/api/?name=C&background=6366f1&color=fff&size=96'">
 
-    <div *ngIf="orders.length; else empty">
-      <div *ngFor="let o of orders" class="border p-2 mb-2">
-        Order #{{o.id}} - {{o.status}}
+      <div style="margin-bottom:16px;width:100%">
+        <input type="file" class="adm-field" style="margin-bottom:8px" (change)="onFileChange($event)">
+        <div style="display:flex;gap:8px">
+          <button class="adm-btn-primary" style="flex:1;justify-content:center;font-size:13px;padding:7px" (click)="uploadImage()">
+            <i class="bi bi-cloud-upload"></i> Upload
+          </button>
+          <button class="adm-btn-danger" style="flex:1;justify-content:center;font-size:13px;padding:7px" (click)="deleteImage()">
+            <i class="bi bi-trash"></i> Remove
+          </button>
+        </div>
       </div>
     </div>
 
-    <ng-template #empty>
-      <p class="text-muted">No orders found</p>
-    </ng-template>
+    <!-- Edit form -->
+    <div style="display:flex;flex-direction:column;gap:16px">
 
+      <div class="adm-card">
+        <div class="adm-card-head">
+          <h3 class="adm-card-title"><i class="bi bi-person"></i> Personal Information</h3>
+        </div>
+        <div class="adm-card-body">
+          <div class="adm-form-grid">
+            <div class="adm-form-group">
+              <label>First Name</label>
+              <input class="adm-field" [(ngModel)]="customer.firstName" placeholder="First name">
+            </div>
+            <div class="adm-form-group">
+              <label>Last Name</label>
+              <input class="adm-field" [(ngModel)]="customer.lastName" placeholder="Last name">
+            </div>
+            <div class="adm-form-group">
+              <label>Email</label>
+              <input class="adm-field" type="email" [(ngModel)]="customer.email" placeholder="Email">
+            </div>
+            <div class="adm-form-group">
+              <label>Phone</label>
+              <input class="adm-field" [(ngModel)]="customer.phoneNumber" placeholder="Phone">
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="adm-btn-primary" (click)="updateCustomer()">
+              <i class="bi bi-check2"></i> Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-card">
+        <div class="adm-card-head">
+          <h3 class="adm-card-title"><i class="bi bi-geo-alt"></i> Address</h3>
+        </div>
+        <div class="adm-card-body">
+          <div class="adm-info-grid">
+            <div class="adm-info-item">
+              <span class="adm-info-label">City</span>
+              <span class="adm-info-value">{{ customer?.city || '—' }}</span>
+            </div>
+            <div class="adm-info-item">
+              <span class="adm-info-label">State</span>
+              <span class="adm-info-value">{{ customer?.state || '—' }}</span>
+            </div>
+            <div class="adm-info-item">
+              <span class="adm-info-label">Street</span>
+              <span class="adm-info-value">{{ customer?.street || '—' }}</span>
+            </div>
+            <div class="adm-info-item">
+              <span class="adm-info-label">Building</span>
+              <span class="adm-info-value">{{ customer?.buildingNumber || '—' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orders -->
+      <div class="adm-card">
+        <div class="adm-card-head">
+          <h3 class="adm-card-title"><i class="bi bi-bag"></i> Orders</h3>
+          <span class="adm-badge badge-indigo">{{ orders.length }}</span>
+        </div>
+        <div class="adm-card-body" *ngIf="orders.length">
+          <div class="adm-table-card">
+            <table class="adm-table">
+              <thead><tr><th>Order ID</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let o of orders">
+                  <td><span class="cell-main">#{{ o.id }}</span></td>
+                  <td>
+                    <span class="adm-badge"
+                      [class.badge-paid]="o.status==='Paid'"
+                      [class.badge-pending]="o.status==='Pending'"
+                      [class.badge-rejected]="o.status==='Cancelled'">
+                      {{ o.status }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="adm-card-body" *ngIf="!orders.length">
+          <div class="adm-empty" style="padding:28px">
+            <i class="bi bi-bag-x"></i>
+            <p>No orders yet</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
 </div>

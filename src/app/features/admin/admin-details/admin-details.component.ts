@@ -1,3 +1,4 @@
+import { ToastService } from '../../../core/services/toast.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -27,7 +28,9 @@ export class AdminDetailsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private service: HandelAdminsForAdminService
+    private service: HandelAdminsForAdminService,
+    private toast: ToastService  // ← أضف السطر ده
+
   ) {}
 
   ngOnInit() {
@@ -66,10 +69,10 @@ loadAdmin() {
     };
 
     this.service.updateAdmin(this.id, body).subscribe({
-      next: () => alert('✅ Updated successfully'),
+      next: () => this.toast.success('Updated successfully'),
       error: (err) => {
         console.log(err);
-        alert('❌ Update failed');
+        this.toast.error('Update failed');
       }
     });
   }

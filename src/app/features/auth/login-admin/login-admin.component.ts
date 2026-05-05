@@ -20,6 +20,7 @@ export class LoginAdminComponent {
 
   errorMessage = '';
   submitting = false;
+  showPassword = false;
 
   constructor(
     private auth: AuthService,
@@ -34,21 +35,17 @@ export class LoginAdminComponent {
       next: (res: any) => {
         this.submitting = false;
 
-        // ❗ مهم: تأكد انه Admin
         if (res.role !== 'ADMIN') {
           this.errorMessage = 'Access denied: Admins only';
           return;
         }
 
-        // 🔥 خزّن اليوزر
         this.auth.saveUser(res);
-
-        // 🔥 روح على admin dashboard
         this.router.navigate(['/admin/dashboard']);
       },
       error: (err) => {
         this.submitting = false;
-        this.errorMessage = err.message || 'Login failed';
+        this.errorMessage = err.message || 'Login failed. Please check your credentials.';
       }
     });
   }

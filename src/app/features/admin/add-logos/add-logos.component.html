@@ -1,99 +1,61 @@
-<div class="container-fluid p-4">
+<div class="page-wrap">
 
-  <!-- Title -->
-  <h3 class="fw-bold mb-4">Add New Logo</h3>
-
-  <div class="card shadow-sm border-0 p-4">
-
-    <!-- Upload -->
-    <div class="upload-box text-center mb-4">
-
-      <input type="file"
-             hidden
-             #fileInput
-             (change)="onFileSelect($event)">
-
-      <div (click)="fileInput.click()" style="cursor:pointer">
-
-        <i class="bi bi-cloud-upload fs-1 text-primary"></i>
-
-        <p class="mt-2 mb-0">
-          <span class="text-primary">Click to upload</span>
-        </p>
-
-        <small class="text-muted">
-          SVG, PNG or JPG
-        </small>
-
-      </div>
-
-      <div *ngIf="file" class="mt-2 text-success">
-        Selected: {{file.name}}
-      </div>
-
+  <div class="adm-header">
+    <div>
+      <h1 class="adm-title">Add New Logo</h1>
+      <p class="adm-subtitle">Upload a new logo asset to the platform</p>
     </div>
-
-    <!-- Inputs -->
-    <div class="row g-3">
-
-      <!-- Name -->
-      <div class="col-md-6">
-        <label class="form-label">Logo Name</label>
-        <input type="text"
-               class="form-control"
-               [(ngModel)]="logoName">
-      </div>
-
-      <!-- Category -->
-      <div class="col-md-6">
-        <label class="form-label">Category</label>
-
-        <select class="form-select"
-                [(ngModel)]="categoryId">
-
-          <option [ngValue]="null">Select category</option>
-
-          <option *ngFor="let c of categories"
-                  [ngValue]="c.id">
-            {{c.name}}
-          </option>
-
-        </select>
-
-      </div>
-
-      <!-- WIDTH -->
-      <div class="col-md-6">
-        <label class="form-label">Width (px)</label>
-        <input type="number"
-               class="form-control"
-               [(ngModel)]="widthPx">
-      </div>
-
-      <!-- HEIGHT -->
-      <div class="col-md-6">
-        <label class="form-label">Height (px)</label>
-        <input type="number"
-               class="form-control"
-               [(ngModel)]="heightPx">
-      </div>
-
-    </div>
-
-    <!-- Buttons -->
-    <div class="d-flex justify-content-end mt-4 gap-2">
-
-      <button class="btn btn-light border"
-              (click)="cancel()">
-        Cancel
-      </button>
-
-      <button class="btn btn-primary"
-              (click)="upload()">
-        Upload Logo
-      </button>
-
-    </div>
-
   </div>
+
+  <div class="adm-card" style="max-width:640px">
+    <div class="adm-card-body">
+
+      <!-- Upload zone -->
+      <div class="upload-zone" (click)="fileInput.click()" [class.has-file]="file">
+        <input type="file" hidden #fileInput (change)="onFileSelect($event)">
+        <div *ngIf="!file">
+          <i class="bi bi-cloud-upload upload-icon"></i>
+          <div class="upload-title">Click to upload</div>
+          <div class="upload-sub">SVG, PNG or JPG</div>
+        </div>
+        <div *ngIf="file" class="upload-selected">
+          <i class="bi bi-check-circle-fill" style="color:#10b981;font-size:32px"></i>
+          <div style="font-size:14px;font-weight:600;color:#0f172a;margin-top:8px">{{ file.name }}</div>
+          <div style="font-size:12px;color:#94a3b8">Click to change</div>
+        </div>
+      </div>
+
+      <!-- Fields -->
+      <div class="adm-form-grid" style="margin-top:20px">
+        <div class="adm-form-group">
+          <label>Logo Name <span class="adm-req">*</span></label>
+          <input class="adm-field" placeholder="Enter logo name" [(ngModel)]="logoName">
+        </div>
+        <div class="adm-form-group">
+          <label>Category</label>
+          <select class="adm-field" [(ngModel)]="categoryId">
+            <option [ngValue]="null">— Select Category —</option>
+            <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.name }}</option>
+          </select>
+        </div>
+        <div class="adm-form-group">
+          <label>Width (px)</label>
+          <input type="number" class="adm-field" placeholder="e.g. 200" [(ngModel)]="widthPx">
+        </div>
+        <div class="adm-form-group">
+          <label>Height (px)</label>
+          <input type="number" class="adm-field" placeholder="e.g. 200" [(ngModel)]="heightPx">
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+        <button class="adm-btn-secondary" (click)="cancel()">Cancel</button>
+        <button class="adm-btn-primary" (click)="upload()">
+          <i class="bi bi-cloud-upload"></i> Upload Logo
+        </button>
+      </div>
+
+    </div>
+  </div>
+
 </div>

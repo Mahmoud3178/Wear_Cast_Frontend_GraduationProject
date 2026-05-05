@@ -1,133 +1,56 @@
-/* Overlay */
-.reviews-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.3);
-  z-index: 999;
-}
+/* ============================================================
+   PRODUCT DETAILS — FULLY RESPONSIVE
+   ============================================================ */
 
-/* Panel */
-.reviews-panel {
-  position: fixed;
-  top: 0;
-  right: -400px; /* مخفي */
-  width: 400px;
-  height: 100%;
-  background: #fff;
-  z-index: 1000;
-  padding: 20px;
-  overflow-y: auto;
-  transition: 0.3s ease;
-  box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+.main-image-box {
+  width:100%; height:460px; background:#f8f9fa; border-radius:14px;
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  position:relative;
 }
-
-/* لما يفتح */
-.reviews-panel.open {
-  right: 0;
-}
-.thumb-img {
-  width: 70px;
-  height: 70px;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 2px solid #ddd;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.thumb-img:hover {
-  transform: scale(1.05);
-}
-
-.active-thumb {
-  border-color: #0d6efd;
-  transform: scale(1.08);
-}
+.main-image { width:100%; height:100%; object-fit:contain; }
 
 .nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0,0,0,0.5);
-  border: none;
-  color: #fff;
-  font-size: 22px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
+  position:absolute; top:50%; transform:translateY(-50%);
+  background:rgba(0,0,0,.45); border:none; color:white;
+  font-size:22px; width:40px; height:40px; border-radius:50%; cursor:pointer;
+  transition:background .2s;
 }
+.nav-btn:hover { background:rgba(0,0,0,.65); }
+.nav-btn.left  { left:10px; }
+.nav-btn.right { right:10px; }
 
-.nav-btn.left {
-  left: 10px;
+.thumb-img {
+  width:70px; height:70px; object-fit:cover; border-radius:10px;
+  border:2px solid #e2e8f0; cursor:pointer; transition:all .25s;
 }
-
-.nav-btn.right {
-  right: 10px;
-}
+.thumb-img:hover  { transform:scale(1.05); border-color:#6366f1; }
+.active-thumb     { border-color:#6366f1; transform:scale(1.08); box-shadow:0 0 0 3px rgba(99,102,241,.2); }
 
 .color-circle {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 2px solid #ddd;
+  width:30px; height:30px; border-radius:50%;
+  border:2px solid #e2e8f0; cursor:pointer; transition:all .2s;
 }
-.main-image-box {
-  width: 100%;
-  height: 400px;
-  background: #f8f9fa;
-  border-radius: 12px;
+.color-circle:hover { transform:scale(1.15); border-color:#6366f1; }
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  overflow: hidden;
-}
-
-.main-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-.main-image-box {
-  width: 100%;
-  height: 500px; /* كبرناها */
-  background: #f8f9fa;
-  border-radius: 12px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  overflow: hidden;
-}
-
-.main-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* أو cover لو عايز تملى */
-}
 .category-card {
-  background: #f8f9fa;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #eee;
-  min-width: 180px;
-  transition: 0.3s;
+  background:#f8fafc; padding:12px 16px; border-radius:12px;
+  border:1px solid #e2e8f0; transition:.3s;
+}
+.category-card:hover { box-shadow:0 5px 15px rgba(0,0,0,.08); }
+.category-img { width:80px; height:80px; object-fit:cover; border-radius:10px; border:1px solid #e2e8f0; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:768px) {
+  .main-image-box { height:300px; border-radius:10px; }
+  .thumb-img { width:56px; height:56px; }
+  .category-img  { width:64px; height:64px; }
+  .category-card { min-width:unset; width:100%; }
 }
 
-.category-card:hover {
-  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-}
-
-.category-img {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid #ddd;
+@media (max-width:480px) {
+  .main-image-box { height:220px; }
+  .thumb-img { width:48px; height:48px; border-radius:8px; }
+  .nav-btn { width:34px; height:34px; font-size:18px; }
 }

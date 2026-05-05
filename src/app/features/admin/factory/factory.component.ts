@@ -1,3 +1,4 @@
+import { ToastService } from '../../../core/services/toast.service';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -41,7 +42,8 @@ export class FactoryComponent implements OnInit {
   confirmPassword: ''
 };
 
-  constructor(private service: FactoryForAdminService) {}
+  constructor(private service: FactoryForAdminService,    private toast: ToastService,
+) {}
 
   ngOnInit(): void {
     this.loadFactory(1);
@@ -135,11 +137,11 @@ export class FactoryComponent implements OnInit {
       next: () => {
         this.closeAddModal();
         this.loadFactory(1);
-        alert('Factory created successfully');
+        this.toast.success('Factory created successfully');
       },
       error: (err) => {
         console.error(err);
-        alert('Error creating factory');
+        this.toast.error('Error creating factory');
       }
     });
   }

@@ -1,50 +1,109 @@
-<div class="vh-100 d-flex justify-content-center align-items-center bg-light">
+<div class="login-root">
 
-  <div class="card shadow-lg p-4" style="width: 350px; border-radius: 15px;">
-
-    <!-- Title -->
-    <div class="text-center mb-4">
-      <h3 class="fw-bold text-danger">Admin Panel 🔐</h3>
-      <p class="text-muted">Login as Administrator</p>
+  <!-- Left panel: branding -->
+  <div class="login-left">
+    <div class="left-content">
+      <div class="brand-mark">
+        <div class="brand-icon-wrap">
+          <i class="bi bi-grid-3x3-gap-fill"></i>
+        </div>
+        <span class="brand-wordmark">WearCast</span>
+      </div>
+      <div class="hero-text">
+        <h1>Admin<br>Control<br>Center</h1>
+        <p>Manage your platform, users, products, and operations from one powerful dashboard.</p>
+      </div>
+      <div class="left-stats">
+        <div class="mini-stat">
+          <i class="bi bi-shield-check"></i>
+          <span>Secure Access</span>
+        </div>
+        <div class="mini-stat">
+          <i class="bi bi-speedometer2"></i>
+          <span>Live Dashboard</span>
+        </div>
+        <div class="mini-stat">
+          <i class="bi bi-people"></i>
+          <span>User Management</span>
+        </div>
+      </div>
     </div>
+    <div class="left-bg-grid"></div>
+    <div class="left-blob-1"></div>
+    <div class="left-blob-2"></div>
+  </div>
 
-    <!-- Form -->
-    <form (ngSubmit)="login()">
+  <!-- Right panel: form -->
+  <div class="login-right">
+    <div class="form-card">
 
-      <div *ngIf="errorMessage" class="alert alert-danger py-2 small">
+      <div class="form-header">
+        <div class="lock-badge">
+          <i class="bi bi-lock-fill"></i>
+        </div>
+        <h2>Administrator Login</h2>
+        <p>Sign in with your admin credentials to continue.</p>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-alert">
+        <i class="bi bi-exclamation-circle-fill"></i>
         {{ errorMessage }}
       </div>
 
-      <!-- Email -->
-      <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="email"
-               class="form-control"
-               [(ngModel)]="form.email"
-               name="email"
-               required>
+      <form (ngSubmit)="login()" class="login-form">
+
+        <div class="field-group">
+          <label class="field-label">Email Address</label>
+          <div class="field-wrap">
+            <i class="bi bi-envelope field-icon"></i>
+            <input
+              type="email"
+              class="field-input"
+              [(ngModel)]="form.email"
+              name="email"
+              placeholder="admin@wearcast.com"
+              required
+              autocomplete="username">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <div class="field-wrap">
+            <i class="bi bi-key field-icon"></i>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              class="field-input"
+              [(ngModel)]="form.password"
+              name="password"
+              placeholder="Enter your password"
+              required
+              autocomplete="current-password">
+            <button type="button" class="toggle-password" (click)="showPassword = !showPassword" tabindex="-1">
+              <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" [disabled]="submitting">
+          <span class="btn-content" *ngIf="!submitting">
+            <i class="bi bi-box-arrow-in-right"></i>
+            Sign In
+          </span>
+          <span class="btn-content" *ngIf="submitting">
+            <span class="spinner"></span>
+            Signing in...
+          </span>
+        </button>
+
+      </form>
+
+      <div class="form-footer">
+        <i class="bi bi-shield-lock-fill"></i>
+        Access is restricted to authorized administrators only.
       </div>
 
-      <!-- Password -->
-      <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input type="password"
-               class="form-control"
-               [(ngModel)]="form.password"
-               name="password"
-               required>
-      </div>
-
-      <!-- Button -->
-      <button type="submit"
-              class="btn btn-danger w-100"
-              [disabled]="submitting">
-
-        {{ submitting ? 'Signing in...' : 'Login as Admin' }}
-      </button>
-
-    </form>
-
+    </div>
   </div>
 
 </div>

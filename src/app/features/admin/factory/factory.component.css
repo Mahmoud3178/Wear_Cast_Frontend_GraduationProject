@@ -1,0 +1,40 @@
+/* ============================================================
+   FACTORY — FULLY RESPONSIVE
+   ============================================================ */
+
+.profile-layout {
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:20px;
+  align-items:start;
+}
+
+.adm-header > div:last-child {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+@media (max-width:1024px) {
+  .profile-layout { grid-template-columns:240px 1fr; }
+}
+
+@media (max-width:800px) {
+  .profile-layout { grid-template-columns:1fr; }
+  .adm-profile-card { max-width:360px; margin:0 auto; }
+}
+
+@media (max-width:768px) {
+  .adm-header > div:last-child { width:100%; }
+  .adm-header > div:last-child button {
+    flex:1; min-width:110px; justify-content:center;
+  }
+}
+
+@media (max-width:480px) {
+  .adm-header > div:last-child button {
+    flex:1 0 calc(50% - 5px);
+    font-size:12.5px;
+    padding:8px 10px;
+  }
+}

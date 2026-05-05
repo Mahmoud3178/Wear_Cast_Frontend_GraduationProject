@@ -1,25 +1,41 @@
-<div class="container p-4" *ngIf="shipment">
+<div class="page-wrap" *ngIf="shipment">
 
-  <h3 class="fw-bold mb-3">Shipment #{{shipment.id}}</h3>
+  <div class="adm-header">
+    <div>
+      <h1 class="adm-title">Shipment #{{ shipment.id }}</h1>
+      <p class="adm-subtitle">Shipment details and customer info</p>
+    </div>
+    <span class="adm-badge badge-pending" style="font-size:13px;padding:6px 14px">{{ shipment.shipmentStatus }}</span>
+  </div>
 
-  <div class="card p-3 shadow-sm mb-3">
+  <div class="two-col-grid">
 
-    <p><strong>Status:</strong> {{shipment.shipmentStatus}}</p>
-    <p><strong>Price:</strong> {{shipment.price}}</p>
-    <p><strong>Customer:</strong> {{shipment.customerName}}</p>
-    <p><strong>Phone:</strong> {{shipment.customerPhoneNumber}}</p>
+    <div class="adm-card">
+      <div class="adm-card-head"><h3 class="adm-card-title"><i class="bi bi-person"></i> Customer Info</h3></div>
+      <div class="adm-card-body">
+        <div class="adm-info-grid">
+          <div class="adm-info-item"><span class="adm-info-label">Name</span><span class="adm-info-value">{{ shipment.customerName }}</span></div>
+          <div class="adm-info-item"><span class="adm-info-label">Phone</span><span class="adm-info-value">{{ shipment.customerPhoneNumber }}</span></div>
+          <div class="adm-info-item"><span class="adm-info-label">Price</span><span class="adm-info-value" style="color:#10b981">{{ shipment.price }} EGP</span></div>
+        </div>
+      </div>
+    </div>
 
-    <hr>
-
-    <h5>Address</h5>
-    <p>{{shipment.deliveryAddress.state}}</p>
-    <p>{{shipment.deliveryAddress.city}}</p>
-    <p>{{shipment.deliveryAddress.street}}</p>
+    <div class="adm-card">
+      <div class="adm-card-head"><h3 class="adm-card-title"><i class="bi bi-geo-alt"></i> Delivery Address</h3></div>
+      <div class="adm-card-body">
+        <div class="adm-info-grid">
+          <div class="adm-info-item"><span class="adm-info-label">State</span><span class="adm-info-value">{{ shipment.deliveryAddress?.state }}</span></div>
+          <div class="adm-info-item"><span class="adm-info-label">City</span><span class="adm-info-value">{{ shipment.deliveryAddress?.city }}</span></div>
+          <div class="adm-info-item"><span class="adm-info-label">Street</span><span class="adm-info-value">{{ shipment.deliveryAddress?.street }}</span></div>
+        </div>
+      </div>
+    </div>
 
   </div>
 
-  <button class="btn btn-primary" (click)="goToItems()">
-    View Items
+  <button class="adm-btn-primary" (click)="goToItems()">
+    <i class="bi bi-box-seam"></i> View Shipment Items
   </button>
 
 </div>

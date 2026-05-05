@@ -1,106 +1,116 @@
-<div class="container-fluid p-4">
+<div class="dashboard-page">
 
-  <!-- HEADER -->
-  <h2 class="fw-bold mb-4">Dashboard</h2>
-
-  <!-- 🔥 COMMISSION -->
-  <div class="card shadow-sm p-3 mb-4">
-
-    <label class="fw-bold mb-2">
-      Commission Percentage Per Product (%)
-    </label>
-
-    <div class="d-flex gap-2 align-items-center">
-
-      <input type="number"
-             class="form-control w-25"
-             [(ngModel)]="commission">
-
-      <button class="btn btn-success"
-              (click)="saveCommission()"
-              [disabled]="loadingCommission">
-
-        <span *ngIf="!loadingCommission">Save</span>
-        <span *ngIf="loadingCommission" class="spinner-border spinner-border-sm"></span>
-
-      </button>
-
+  <!-- ===== PAGE HEADER ===== -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">
+        <i class="bi bi-circle-fill live-dot"></i>
+        Live overview of your platform activity
+      </p>
     </div>
-
+    <div class="commission-panel">
+      <div class="commission-label">
+        <i class="bi bi-percent"></i>
+        Commission Rate
+      </div>
+      <div class="commission-controls">
+        <input
+          type="number"
+          class="commission-input"
+          [(ngModel)]="commission"
+          min="0"
+          max="100">
+        <span class="commission-pct">%</span>
+        <button
+          class="commission-btn"
+          (click)="saveCommission()"
+          [disabled]="loadingCommission">
+          <span *ngIf="!loadingCommission"><i class="bi bi-check2"></i> Update</span>
+          <span *ngIf="loadingCommission" class="spinner-border spinner-border-sm"></span>
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- 🔥 STATS -->
-  <div class="row g-3 mb-4">
+  <!-- ===== KPI STATS ===== -->
+  <div class="kpi-grid" *ngIf="stats.length">
+    <div class="kpi-card" *ngFor="let stat of stats">
+      <div class="kpi-icon-wrap" [style.background]="stat.bg">
+        <i class="bi {{ stat.icon }}" [style.color]="stat.color"></i>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ stat.value }}</div>
+        <div class="kpi-label">{{ stat.title }}</div>
+      </div>
+      <div class="kpi-accent" [style.background]="stat.color + '18'"></div>
+    </div>
+  </div>
 
-    <div class="col-md-3 col-lg-3" *ngFor="let stat of stats">
+  <!-- Loading skeleton -->
+  <div class="kpi-grid" *ngIf="!stats.length">
+    <div class="kpi-skeleton" *ngFor="let i of [1,2,3,4,5,6,7,8]"></div>
+  </div>
 
-      <div class="card shadow-sm stat-card">
-
-        <div class="card-body d-flex gap-3 align-items-center">
-
-          <i class="bi fs-3 text-{{stat.color}}" [ngClass]="stat.icon"></i>
-
-          <div>
-            <small class="text-muted">{{stat.title}}</small>
-            <h5 class="fw-bold">{{stat.value}}</h5>
-          </div>
-
+  <!-- ===== HIGHLIGHT CARDS ===== -->
+  <div class="highlight-row" *ngIf="data">
+    <div class="highlight-card hl-revenue">
+      <div class="hl-icon">
+        <i class="bi bi-graph-up-arrow"></i>
+      </div>
+      <div class="hl-body">
+        <div class="hl-label">Platform Revenue</div>
+        <div class="hl-value">
+          {{ data?.platformRevenue | number }}
+          <span class="hl-unit">EGP</span>
         </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- 🔥 EXTRA -->
-  <div class="row g-3 mb-4">
-
-    <div class="col-md-6">
-<div class="card p-3 shadow-sm d-flex align-items-center gap-3 flex-row">
-
-  <i class="bi bi-graph-up-arrow fs-2 text-success"></i>
-
-  <div>
-    <h6 class="mb-0">Platform Revenue</h6>
-    <h4 class="mb-0">{{data?.platformRevenue}} LE</h4>
-  </div>
-
-</div>
-    </div>
-
-    <div class="col-md-6">
-<div class="card p-3 shadow-sm d-flex align-items-center gap-3 flex-row">
-
-  <i class="bi bi-person-badge fs-2 text-primary"></i>
-
-  <div>
-    <h6 class="mb-0">Drivers</h6>
-    <h4 class="mb-0">{{data?.totalDrivers}}</h4>
-  </div>
-
-</div>
-    </div>
-
-  </div>
-
-  <!-- 🔥 CHARTS -->
-  <div class="row g-4">
-
-    <div class="col-md-6">
-      <div class="card p-3 shadow-sm">
-        <h6>Orders Distribution</h6>
-        <canvas id="lineChart"></canvas>
+        <div class="hl-sub">Total commissions collected</div>
       </div>
     </div>
 
-    <div class="col-md-6">
-      <div class="card p-3 shadow-sm">
-        <h6>Users</h6>
-        <canvas id="barChart"></canvas>
+    <div class="highlight-card hl-drivers">
+      <div class="hl-icon">
+        <i class="bi bi-person-badge"></i>
+      </div>
+      <div class="hl-body">
+        <div class="hl-label">Active Drivers</div>
+        <div class="hl-value">{{ data?.totalDrivers }}</div>
+        <div class="hl-sub">Registered delivery drivers</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CHARTS ===== -->
+  <div class="charts-row" *ngIf="data">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Orders Distribution</div>
+          <div class="chart-sub">Seller vs Factory orders</div>
+        </div>
+        <div class="chart-badge indigo">
+          {{ (data?.totalSellerOrders || 0) + (data?.totalFactoryOrders || 0) }} Total
+        </div>
+      </div>
+      <div class="chart-body">
+        <canvas id="lineChart" height="220"></canvas>
       </div>
     </div>
 
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">User Breakdown</div>
+          <div class="chart-sub">Customers & Sellers registered</div>
+        </div>
+        <div class="chart-badge emerald">
+          {{ (data?.totalCustomers || 0) + (data?.totalSellers || 0) }} Users
+        </div>
+      </div>
+      <div class="chart-body">
+        <canvas id="barChart" height="220"></canvas>
+      </div>
+    </div>
   </div>
 
 </div>

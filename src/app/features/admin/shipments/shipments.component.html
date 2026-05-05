@@ -1,11 +1,15 @@
-<div class="container-fluid p-4">
+<div class="page-wrap">
 
-  <h3 class="fw-bold mb-4">Shipments</h3>
+  <div class="adm-header">
+    <div>
+      <h1 class="adm-title">Shipments</h1>
+      <p class="adm-subtitle">Track and manage all shipments.</p>
+    </div>
+  </div>
 
-  <div class="card shadow-sm">
-    <table class="table table-hover mb-0">
-
-      <thead class="table-light">
+  <div class="adm-table-card">
+    <table class="adm-table">
+      <thead>
         <tr>
           <th>ID</th>
           <th>Customer</th>
@@ -16,37 +20,31 @@
           <th>Date</th>
         </tr>
       </thead>
-
       <tbody>
-        <tr *ngFor="let s of shipments"
-            (click)="goToDetails(s.id)"
-            style="cursor:pointer">
-
-          <td>{{s.id}}</td>
-          <td>{{s.customerName}}</td>
+        <tr *ngFor="let s of shipments" (click)="goToDetails(s.id)" style="cursor:pointer">
+          <td><span class="cell-main">#{{s.id}}</span></td>
+          <td><span class="cell-main">{{s.customerName}}</span></td>
           <td>
-            <span class="badge bg-warning">
-              {{s.shipmentStatus}}
-            </span>
+            <span class="adm-badge badge-pending">{{s.shipmentStatus}}</span>
           </td>
-          <td>{{s.price}}</td>
-          <td>{{s.numberOfOrders}}</td>
-          <td>{{s.deliveryCity}}</td>
-          <td>{{s.orderTime | date}}</td>
-
+          <td><span class="cell-main" style="color:#10b981">{{s.price}} EGP</span></td>
+          <td><span class="adm-badge badge-dark">{{s.numberOfOrders}}</span></td>
+          <td class="cell-muted">{{s.deliveryCity}}</td>
+          <td class="cell-muted">{{s.orderTime | date:'mediumDate'}}</td>
+        </tr>
+        <tr *ngIf="!shipments?.length" class="no-click">
+          <td colspan="7"><div class="adm-empty"><i class="bi bi-truck"></i><p>No shipments found</p></div></td>
         </tr>
       </tbody>
-
     </table>
-  </div>
 
-  <!-- PAGINATION -->
-  <div class="d-flex justify-content-center mt-3 gap-2">
-    <button class="btn btn-outline-dark" (click)="prev()">Prev</button>
-    <span class="align-self-center">
-      Page {{pageIndex}} / {{totalPages}}
-    </span>
-    <button class="btn btn-outline-dark" (click)="next()">Next</button>
+    <div class="adm-pagination">
+      <span class="adm-pagination-info">Page {{pageIndex}} / {{totalPages}}</span>
+      <div class="adm-pager">
+        <button class="adm-page-btn" (click)="prev()" [disabled]="pageIndex === 1"><i class="bi bi-chevron-left"></i></button>
+        <button class="adm-page-btn" (click)="next()" [disabled]="pageIndex === totalPages"><i class="bi bi-chevron-right"></i></button>
+      </div>
+    </div>
   </div>
 
 </div>

@@ -1,136 +1,101 @@
-<div class="container-fluid p-4">
+<div class="page-wrap">
 
-  <!-- HEADER -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-
+  <div class="adm-header">
     <div>
-      <h3 class="fw-bold mb-1">Logos Management</h3>
-      <small class="text-muted">Manage and organize your assets</small>
+      <h1 class="adm-title">Logos</h1>
+      <p class="adm-subtitle">Manage and organize logo assets for the platform.</p>
     </div>
+    <a routerLink="/admin/add-logos" class="adm-btn-primary">
+      <i class="bi bi-plus-lg"></i> Add Logo
+    </a>
+  </div>
 
-    <div class="d-flex flex-wrap gap-2">
+  <!-- Category filter pills -->
+  <div class="logo-cats">
+    <button class="logo-cat-btn" [class.active]="selectedCategory===null"
+      (click)="selectedCategory=null; onCategoryChange()">
+      <i class="bi bi-grid-3x3-gap"></i> All
+    </button>
+    <button *ngFor="let c of categories" class="logo-cat-btn"
+      [class.active]="selectedCategory===c.id"
+      (click)="selectedCategory=c.id; onCategoryChange()">
+      {{ c.name }}
+    </button>
+  </div>
 
-      <input type="text"
-             class="form-control"
-             placeholder="Search..."
-             style="min-width:200px"
-             [(ngModel)]="searchTerm">
-
-      <a routerLink="/admin/add-logos" class="btn btn-primary">
-        + Add Logo
-      </a>
-
-      <button class="btn btn-outline-dark"
-              data-bs-toggle="modal"
-              data-bs-target="#addCategoryModal">
-        + Category
-      </button>
-
+  <!-- Search -->
+  <div class="adm-toolbar" style="margin-bottom:24px">
+    <div class="adm-search">
+      <i class="bi bi-search adm-search-icon"></i>
+      <input type="text" placeholder="Search logos..." [(ngModel)]="searchTerm">
     </div>
   </div>
 
-  <!-- CATEGORY -->
-  <div class="d-flex flex-wrap gap-2 mb-3">
-
-    <button class="btn btn-sm rounded-pill"
-            [ngClass]="selectedCategory === null ? 'btn-dark' : 'btn-outline-dark'"
-            (click)="selectedCategory = null; onCategoryChange()">
-      All
-    </button>
-
-    <button *ngFor="let c of categories"
-            class="btn btn-sm rounded-pill"
-            [ngClass]="selectedCategory === c.id ? 'btn-primary' : 'btn-outline-secondary'"
-            (click)="selectedCategory = c.id; onCategoryChange()">
-      {{c.name}}
-    </button>
-
-  </div>
-
-
-  <!-- LOGOS -->
-<!-- LOGOS -->
-<div class="row g-4">
-
-  <div class="col-lg-3 col-md-4 col-sm-6"
-       *ngFor="let logo of filteredLogos">
-
-    <div class="card shadow-sm border-0 h-100 logo-card"
-         (click)="openLogo(logo)"
-         data-bs-toggle="offcanvas"
-         data-bs-target="#logoPanel">
-
-      <!-- IMAGE BOX -->
-      <div class="logo-img-box d-flex align-items-center justify-content-center p-3">
-
-        <img [src]="logo.imageUrl"
-             class="img-fluid logo-img">
-
+  <!-- Logos grid -->
+  <div class="logo-grid">
+    <div class="logo-card" *ngFor="let logo of filteredLogos" (click)="openLogo(logo)">
+      <div class="logo-img-box">
+        <img [src]="logo.imageUrl" class="logo-img" [alt]="logo.name"
+             onerror="this.src='https://via.placeholder.com/120?text=Logo'">
       </div>
-
-      <!-- INFO -->
-      <div class="card-body text-center">
-
-        <h6 class="fw-semibold mb-1">
-          {{logo.name}}
-        </h6>
-
-        <small class="text-muted d-block">
-          {{logo.widthPx}} × {{logo.heightPx}} px
-        </small>
-
+      <div class="logo-info">
+        <span class="logo-name">{{ logo.name }}</span>
+        <span class="logo-dim">{{ logo.widthPx }} × {{ logo.heightPx }} px</span>
       </div>
-
     </div>
 
+    <div class="logo-empty" *ngIf="!filteredLogos?.length">
+      <i class="bi bi-image-fill"></i>
+      <p>No logos found</p>
+    </div>
   </div>
 
 </div>
-<!-- OFFCANVAS -->
-<div class="offcanvas offcanvas-end" id="logoPanel">
 
-  <div class="offcanvas-header">
-    <h5>Logo Details</h5>
-    <button class="btn-close" data-bs-dismiss="offcanvas"></button>
+<!-- Overlay -->
+<div class="adm-overlay" *ngIf="selectedLogo" (click)="selectedLogo=null"></div>
+
+<!-- Logo detail drawer -->
+<div class="adm-drawer" [class.open]="!!selectedLogo">
+  <div class="adm-drawer-head">
+    <h5 class="adm-drawer-title">Logo Details</h5>
+    <button class="adm-drawer-close" (click)="selectedLogo=null"><i class="bi bi-x-lg"></i></button>
   </div>
 
-  <div class="offcanvas-body" *ngIf="selectedLogo">
+  <div class="adm-drawer-body" *ngIf="selectedLogo">
+    <div class="logo-preview-box">
+      <img [src]="selectedLogo.imageUrl" class="logo-preview-img"
+           onerror="this.src='https://via.placeholder.com/200?text=Logo'">
+    </div>
 
-    <img [src]="selectedLogo.imageUrl"
-         class="img-fluid mb-3">
-
-    <!-- NAME -->
-    <input class="form-control mb-2"
-           placeholder="Name"
-           [(ngModel)]="selectedLogo.name">
-
-    <!-- WIDTH -->
-    <input type="number"
-           class="form-control mb-2"
-           placeholder="Width (px)"
-           [(ngModel)]="selectedLogo.widthPx">
-
-    <!-- HEIGHT -->
-    <input type="number"
-           class="form-control mb-2"
-           placeholder="Height (px)"
-           [(ngModel)]="selectedLogo.heightPx">
-
-    <!-- IMAGE -->
-    <input type="file"
-           class="form-control mb-3"
-           (change)="onLogoFileChange($event)">
-
-    <button class="btn btn-primary w-100 mb-2"
-            (click)="updateLogo()">
-      Update
-    </button>
-
-    <button class="btn btn-danger w-100"
-            (click)="deleteLogo(selectedLogo.id)">
-      Delete
-    </button>
-
+    <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px">
+      <div class="adm-form-group">
+        <label>Name</label>
+        <input class="adm-field" placeholder="Logo name" [(ngModel)]="selectedLogo.name">
+      </div>
+      <div class="adm-form-grid">
+        <div class="adm-form-group">
+          <label>Width (px)</label>
+          <input type="number" class="adm-field" [(ngModel)]="selectedLogo.widthPx">
+        </div>
+        <div class="adm-form-group">
+          <label>Height (px)</label>
+          <input type="number" class="adm-field" [(ngModel)]="selectedLogo.heightPx">
+        </div>
+      </div>
+      <div class="adm-form-group">
+        <label>Replace Image</label>
+        <input type="file" class="adm-field" (change)="onLogoFileChange($event)">
+      </div>
+    </div>
   </div>
 
+  <div class="adm-drawer-footer" *ngIf="selectedLogo">
+    <button class="adm-btn-danger" (click)="deleteLogo(selectedLogo.id)">
+      <i class="bi bi-trash"></i> Delete
+    </button>
+    <button class="adm-btn-primary" style="flex:2;justify-content:center" (click)="updateLogo()">
+      <i class="bi bi-check2"></i> Update Logo
+    </button>
+  </div>
 </div>

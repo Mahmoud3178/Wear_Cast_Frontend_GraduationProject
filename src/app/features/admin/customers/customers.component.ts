@@ -1,3 +1,4 @@
+import { ToastService } from '../../../core/services/toast.service';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +16,9 @@ export class CustomersComponent {
 
   constructor(
     private router: Router,
-    private customerService: AllCustomersForAdminService
+    private customerService: AllCustomersForAdminService,
+    private toast: ToastService  // ← أضف السطر ده
+
   ) {}
 
   searchTerm = '';
@@ -75,7 +78,7 @@ cancelDelete() {
 confirmDelete() {
 
   if (!this.deleteReason || this.deleteReason.trim() === '') {
-    alert('Please enter delete reason');
+    this.toast.warning('Please enter a delete reason');
     return;
   }
 
@@ -89,7 +92,7 @@ confirmDelete() {
         this.showDeleteBox = false;
         this.loadCustomers();
       },
-      error: (err) => alert(err.error?.title || 'Delete failed')
+      error: (err) => this.toast.error(err.error?.title || 'Delete failed')
     });
 }
   onSearch() {

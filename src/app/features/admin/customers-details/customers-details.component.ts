@@ -1,3 +1,4 @@
+import { ToastService } from '../../../core/services/toast.service';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,8 @@ export class CustomersDetailsComponent {
 
   constructor(
     private route: ActivatedRoute,
-    private service: AllCustomersForAdminService
+    private service: AllCustomersForAdminService,
+     private toast: ToastService  // ← أضف السطر ده
   ) {}
 
   ngOnInit() {
@@ -71,8 +73,8 @@ updateCustomer() {
 
   this.service.updateCustomer(this.customerId, body)
     .subscribe({
-      next: () => alert('Updated successfully'),
-      error: (err) => alert(err.error?.title || 'Update failed')
+      next: () => this.toast.success('Updated successfully'),
+      error: (err) => this.toast.error(err.error?.title || 'Update failed')
     });
 }
 
@@ -86,7 +88,7 @@ updateCustomer() {
 
     this.service.updateCustomerImage(this.customerId, this.selectedFile)
       .subscribe(() => {
-        alert('Image updated');
+        this.toast.success('Image updated successfully');
         this.loadCustomer();
       });
   }
@@ -94,7 +96,7 @@ updateCustomer() {
   deleteImage() {
     this.service.deleteCustomerImage(this.customerId)
       .subscribe(() => {
-        alert('Image deleted');
+        this.toast.success('Image deleted');
         this.loadCustomer();
       });
   }
@@ -104,7 +106,7 @@ deleteCustomer() {
   if (!confirm('Are you sure you want to delete this customer?')) return;
 
   if (!this.deleteReason || this.deleteReason.trim() === '') {
-    alert('Please enter a reason for deletion');
+    this.toast.warning('Please enter a reason for deletion');
     return;
   }
 
@@ -115,7 +117,7 @@ deleteCustomer() {
   this.service.deleteCustomer(this.customerId, body)
     .subscribe({
       next: () => history.back(),
-      error: (err) => alert(err.error?.title || 'Delete failed')
+      error: (err) => this.toast.error(err.error?.title || 'Delete failed')
     });
 }
 

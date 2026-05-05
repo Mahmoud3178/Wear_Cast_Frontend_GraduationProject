@@ -1,0 +1,14 @@
+/* ============================================================
+   SHIPMENT DETAILS — FULLY RESPONSIVE
+   ============================================================ */
+
+.two-col-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  margin-bottom:20px;
+}
+
+@media (max-width:768px) {
+  .two-col-grid { grid-template-columns:1fr; gap:12px; }
+}

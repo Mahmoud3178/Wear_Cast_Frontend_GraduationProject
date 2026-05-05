@@ -126,3 +126,41 @@
   border-radius: 10px;
   border: 1px solid #ddd;
 }
+/* ============================================================
+   DESIGN PRODUCT DETAILS — FULLY RESPONSIVE
+   ============================================================ */
+
+.main-image-box {
+  width:100%; height:420px; background:#f8f9fa; border-radius:14px;
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.main-image { width:100%; height:100%; object-fit:contain; }
+
+.thumb-img {
+  width:80px; height:80px; object-fit:cover; border-radius:10px;
+  border:2px solid #e2e8f0; cursor:pointer; transition:.3s;
+}
+.thumb-img:hover { transform:scale(1.08); border-color:#6366f1; }
+
+.color-circle {
+  width:30px; height:30px; border-radius:50%;
+  border:2px solid #e2e8f0; cursor:pointer; transition:.2s;
+}
+.color-circle:hover { transform:scale(1.15); border-color:#6366f1; }
+
+.category-card { background:#f8fafc; padding:10px; border-radius:12px; border:1px solid #e2e8f0; }
+.category-img  { width:90px; height:90px; object-fit:cover; border-radius:10px; border:1px solid #e2e8f0; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:768px) {
+  .main-image-box { height:280px; }
+  .thumb-img      { width:60px; height:60px; }
+  .category-img   { width:70px; height:70px; }
+}
+
+@media (max-width:480px) {
+  .main-image-box { height:220px; }
+  .thumb-img { width:50px; height:50px; border-radius:8px; }
+}

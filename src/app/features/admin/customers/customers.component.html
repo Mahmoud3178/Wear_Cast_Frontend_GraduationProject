@@ -1,183 +1,108 @@
-<div class="container-fluid p-4">
+<div class="page-wrap">
 
   <!-- Header -->
-  <div class="mb-4">
-    <h4 class="fw-bold mb-1">Customer List</h4>
-    <p class="text-muted mb-0">
-      Manage, search, and filter all customer accounts.
-    </p>
+  <div class="adm-header">
+    <div>
+      <h1 class="adm-title">Customers</h1>
+      <p class="adm-subtitle">Manage, search, and filter all customer accounts.</p>
+    </div>
   </div>
 
-  <!-- Search + Filters -->
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-
-    <!-- Search -->
-    <div class="input-group search-box" style="max-width: 320px;">
-      <span class="input-group-text bg-white border-end-0">
-        🔍
-      </span>
+  <!-- Toolbar -->
+  <div class="adm-toolbar">
+    <div class="adm-search">
+      <i class="bi bi-search adm-search-icon"></i>
       <input type="text"
-             class="form-control border-start-0"
              placeholder="Search by name or email..."
              [(ngModel)]="searchTerm"
              (input)="onSearch()">
     </div>
-
-    <!-- Filters -->
-    <div class="btn-group shadow-sm">
-
-      <button class="btn btn-sm"
-        [ngClass]="selectedFilter === 'all' ? 'btn-primary' : 'btn-outline-primary'"
-        (click)="setFilter('all')">
-        All
-      </button>
-
-      <button class="btn btn-sm"
-        [ngClass]="selectedFilter === 'active' ? 'btn-primary' : 'btn-outline-primary'"
-        (click)="setFilter('active')">
-        Active
-      </button>
-
-      <button class="btn btn-sm"
-        [ngClass]="selectedFilter === 'suspended' ? 'btn-primary' : 'btn-outline-primary'"
-        (click)="setFilter('suspended')">
-        Suspended
-      </button>
-
+    <div class="adm-filters">
+      <button class="adm-filter-btn" [class.active]="selectedFilter === 'all'" (click)="setFilter('all')">All</button>
+      <button class="adm-filter-btn" [class.active]="selectedFilter === 'active'" (click)="setFilter('active')">Active</button>
+      <button class="adm-filter-btn" [class.active]="selectedFilter === 'suspended'" (click)="setFilter('suspended')">Suspended</button>
     </div>
-
   </div>
-<div *ngIf="showDeleteBox" class="alert alert-warning d-flex gap-2 align-items-center">
 
-  <input type="text"
-         class="form-control"
-         placeholder="Enter delete reason..."
-         [(ngModel)]="deleteReason">
-
-  <button class="btn btn-danger btn-sm" (click)="confirmDelete()">
-    Confirm
-  </button>
-
-  <button class="btn btn-secondary btn-sm" (click)="cancelDelete()">
-    Cancel
-  </button>
-
-</div>
-  <!-- Table Card -->
-  <div class="card border-0 shadow-sm">
-
-    <div class="card-body p-0">
-
-      <div class="table-responsive">
-
-        <table class="table table-hover align-middle mb-0">
-
-          <!-- Header -->
-          <thead class="table-light">
-            <tr>
-              <th>Customer</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-
-          <!-- Body -->
-          <tbody>
-
-<tr *ngFor="let c of filteredCustomers"
-    (click)="goToDetails(c.id)"
-    style="cursor: pointer;">
-
-  <td>
-    <div class="d-flex align-items-center gap-2">
-      <img [src]="c.image" class="rounded-circle" width="40" height="40">
-      <div>
-        <div class="fw-bold">{{c.name}}</div>
-        <small class="text-muted">ID: {{c.id}}</small>
-      </div>
-    </div>
-  </td>
-
-  <td>{{c.email}}</td>
-  <td>{{c.phoneNumber}}</td>
-
-  <td>
-    <span class="badge bg-success">Active</span>
-  </td>
-
-  <td class="text-end">
-
-    <!-- ⚠️ مهم جدًا -->
-    <button class="btn btn-sm btn-light"
-            (click)="$event.stopPropagation(); goToDetails(c.id)">
-      Edit
+  <!-- Delete confirm -->
+  <div *ngIf="showDeleteBox" class="adm-delete-box">
+    <i class="bi bi-exclamation-triangle-fill" style="color:#ef4444;font-size:16px"></i>
+    <input type="text" placeholder="Enter delete reason..." [(ngModel)]="deleteReason">
+    <button class="adm-btn-danger" style="background:#ef4444;color:white;border-color:#ef4444" (click)="confirmDelete()">
+      <i class="bi bi-check2"></i> Confirm
     </button>
-
-<button class="btn btn-sm btn-danger"
-        (click)="$event.stopPropagation(); deleteCustomer(c.id)">
-  Delete
-</button>
-
-  </td>
-
-</tr>
-
-            <!-- Empty -->
-            <tr *ngIf="!isLoading && filteredCustomers.length === 0">
-              <td colspan="5" class="text-center text-muted py-5">
-                <div>
-                  <i class="bi bi-people fs-1"></i>
-                  <p class="mt-2 mb-0">No customers found</p>
-                </div>
-              </td>
-            </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </div>
-
+    <button class="adm-btn-secondary" (click)="cancelDelete()">Cancel</button>
   </div>
 
-  <!-- Pagination -->
-  <div class="d-flex justify-content-between align-items-center mt-3">
+  <!-- Table -->
+  <div class="adm-table-card">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th style="text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of filteredCustomers" (click)="goToDetails(c.id)" style="cursor:pointer">
+          <td>
+            <div class="cell-avatar">
+              <img [src]="c.image" class="cell-img-circle"
+                   onerror="this.src='https://ui-avatars.com/api/?name=C&background=6366f1&color=fff&size=40'">
+              <div>
+                <div class="cell-main">{{c.name}}</div>
+                <div class="cell-sub">ID: {{c.id}}</div>
+              </div>
+            </div>
+          </td>
+          <td class="cell-muted">{{c.email}}</td>
+          <td class="cell-muted">{{c.phoneNumber}}</td>
+          <td>
+            <span class="adm-badge badge-active">
+              <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block"></span>
+              Active
+            </span>
+          </td>
+          <td style="text-align:right">
+            <div class="adm-actions" style="justify-content:flex-end">
+              <button class="adm-action-btn act-view" (click)="$event.stopPropagation(); goToDetails(c.id)" title="Details">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="adm-action-btn act-delete" (click)="$event.stopPropagation(); deleteCustomer(c.id)" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="!isLoading && filteredCustomers.length === 0" class="no-click">
+          <td colspan="5">
+            <div class="adm-empty">
+              <i class="bi bi-people"></i>
+              <p>No customers found</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-    <small class="text-muted">
-      Showing
-      {{ (currentPage - 1) * pageSize + 1 }}
-      –
-      {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }}
-      of {{ totalCount }}
-    </small>
-
-    <div class="btn-group">
-
-      <button class="btn btn-outline-secondary btn-sm"
-              (click)="prevPage()"
-              [disabled]="currentPage === 1">
-        Prev
-      </button>
-
-      <button class="btn btn-sm"
-              *ngFor="let page of totalPages"
-              [ngClass]="page === currentPage ? 'btn-primary' : 'btn-outline-primary'"
-              (click)="goToPage(page)">
-        {{ page }}
-      </button>
-
-      <button class="btn btn-outline-secondary btn-sm"
-              (click)="nextPage()"
-              [disabled]="currentPage === totalPages.length">
-        Next
-      </button>
-
+    <!-- Pagination -->
+    <div class="adm-pagination">
+      <span class="adm-pagination-info">
+        Showing {{ (currentPage - 1) * pageSize + 1 }}–{{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }} of {{ totalCount }}
+      </span>
+      <div class="adm-pager">
+        <button class="adm-page-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="adm-page-btn" *ngFor="let page of totalPages" [class.current]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
+        <button class="adm-page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages.length">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
-
   </div>
 
 </div>

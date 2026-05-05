@@ -1,256 +1,172 @@
-<div class="container-fluid">
-  <div class="row">
+<!-- Sidebar Overlay (mobile) -->
+<div class="sidebar-overlay" *ngIf="sidebarOpen" (click)="closeSidebar()"></div>
 
-    <!-- 🔹 Mobile Top Bar -->
-    <div class="d-md-none d-flex justify-content-between align-items-center p-3 shadow-sm bg-white">
+<div class="admin-wrapper">
 
-      <!-- Hamburger Button -->
-      <button class="btn btn-outline-dark"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#mobileSidebar">
-        <i class="bi bi-list fs-4"></i>
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" [class.open]="sidebarOpen">
+
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">
+          <i class="bi bi-grid-3x3-gap-fill"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">WearCast</span>
+          <span class="brand-sub">Admin Panel</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+
+      <div class="nav-section-label">Overview</div>
+
+      <a routerLink="dashboard" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-speedometer2 nav-icon"></i>
+        Dashboard
+      </a>
+
+      <div class="nav-section-label">Management</div>
+
+      <a routerLink="customers" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-people nav-icon"></i>
+        Customers
+      </a>
+
+      <a routerLink="stores" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-shop nav-icon"></i>
+        Stores
+      </a>
+
+      <a routerLink="seller-applications" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-file-earmark-person nav-icon"></i>
+        Seller Applications
+      </a>
+
+      <a routerLink="admins" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-shield-lock nav-icon"></i>
+        Admins
+      </a>
+
+      <div class="nav-section-label">Catalog</div>
+
+      <a routerLink="products" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-box-seam nav-icon"></i>
+        Products
+      </a>
+
+      <a routerLink="design-products" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-palette nav-icon"></i>
+        Design Products
+      </a>
+
+      <a routerLink="categories" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-tags nav-icon"></i>
+        Categories
+      </a>
+
+      <a routerLink="logos" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-image nav-icon"></i>
+        Logos
+      </a>
+
+      <div class="nav-section-label">Operations</div>
+
+      <a routerLink="orders" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-bag-check nav-icon"></i>
+        Orders
+      </a>
+
+      <a routerLink="shipments" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-truck nav-icon"></i>
+        Shipments
+      </a>
+
+      <a routerLink="delivery-company" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-building nav-icon"></i>
+        Delivery Company
+      </a>
+
+      <a routerLink="Factory" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+        <i class="bi bi-gear nav-icon"></i>
+        Factory
+      </a>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="logout-btn" (click)="confirmLogout()">
+        <i class="bi bi-box-arrow-right"></i>
+        Logout
       </button>
-
-      <h6 class="mb-0 fw-bold">E Commerce</h6>
     </div>
 
+  </aside>
 
-    <!-- 🔹 Desktop Sidebar -->
-    <div class="col-md-2 bg-white shadow-sm vh-100 p-3 d-none d-md-block position-fixed">
-      <h5 class="mb-4 fw-bold">Admin Panel</h5>
+  <!-- ===== MAIN ===== -->
+  <div class="main-content">
 
-      <ul class="nav flex-column">
-        <li class="nav-item mb-2">
-          <a routerLink="dashboard" routerLinkActive="active"
-             class="nav-link d-flex align-items-center">
-            <i class="bi bi-speedometer2 me-2"></i> Dashboard
-          </a>
-        </li>
-
-        <li class="nav-item mb-2">
-          <a routerLink="stores" routerLinkActive="active"
-             class="nav-link d-flex align-items-center">
-            <i class="bi bi-person-circle me-2"></i> Stores
-          </a>
-        </li>
-
-        <li class="nav-item mb-2">
-          <a routerLink="customers" routerLinkActive="active"
-             class="nav-link d-flex align-items-center">
-            <i class="bi bi-box-seam me-2"></i> Customers
-          </a>
-        </li>
-
-        <li class="nav-item mb-2">
-          <a routerLink="products" routerLinkActive="active"
-             class="nav-link d-flex align-items-center">
-            <i class="bi bi-bag-check me-2"></i> Products
-          </a>
-        </li>
-                <li class="nav-item mb-2">
-          <a routerLink="design-products" routerLinkActive="active"
-             class="nav-link d-flex align-items-center">
-            <i class="bi bi-bag-check me-2"></i> Design-Products
-          </a>
-        </li>
-                    <li class="nav-item mb-2">
-            <a routerLink="orders"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Orders
-            </a>
-          </li>
-                              <li class="nav-item mb-2">
-            <a routerLink="shipments"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Shipments
-            </a>
-          </li>
-
-                              <li class="nav-item mb-2">
-            <a routerLink="seller-applications"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Seller-Apllications
-            </a>
-          </li>
-                              <li class="nav-item mb-2">
-            <a routerLink="delivery-company"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Delivery Company
-            </a>
-          </li>
-            <li class="nav-item mb-2">
-            <a routerLink="Factory"
-                routerLinkActive="active"
-              class="nav-link d-flex align-items-center"
-                data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Factory
-            </a>
-          </li>
-                              <li class="nav-item mb-2">
-            <a routerLink="logos"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Logos
-            </a>
-          </li>
-                                        <li class="nav-item mb-2">
-            <a routerLink="categories"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> categories
-            </a>
-          </li>
-                              <li class="nav-item mb-2">
-            <a routerLink="admins"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Admins
-            </a>
-          </li>
-      </ul>
-      <button class="btn btn-outline-danger w-100" (click)="logout()">
-  <i class="bi bi-box-arrow-right me-2"></i> Logout
-</button>
-       <!-- <div class="mt-auto">
-    <button class="btn btn-outline-danger w-100" (click)="logout()">
-      <i class="bi bi-box-arrow-right me-2"></i> Logout
-    </button>
-  </div> -->
-    </div>
-
-
-    <!-- 🔹 Mobile Offcanvas Sidebar -->
-    <div class="offcanvas offcanvas-start d-md-none"
-         tabindex="-1"
-         id="mobileSidebar">
-
-      <div class="offcanvas-header">
-        <h5 class="offcanvas-title fw-bold">Admin Panel</h5>
-        <button type="button"
-                class="btn-close"
-                data-bs-dismiss="offcanvas">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="mobile-toggle" (click)="toggleSidebar()">
+          <i class="bi bi-list"></i>
         </button>
+        <div class="page-breadcrumb">
+          <span class="breadcrumb-root">WearCast</span>
+          <i class="bi bi-chevron-right breadcrumb-sep"></i>
+          <span class="breadcrumb-current">{{ currentPageTitle }}</span>
+        </div>
       </div>
-
-      <div class="offcanvas-body">
-        <ul class="nav flex-column">
-          <li class="nav-item mb-2">
-            <a routerLink="dashboard"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-speedometer2 me-2"></i> Dashboard
-            </a>
-          </li>
-
-          <li class="nav-item mb-2">
-            <a routerLink="profile"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-person-circle me-2"></i> Stores
-            </a>
-          </li>
-
-          <li class="nav-item mb-2">
-            <a routerLink="products"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-box-seam me-2"></i> Customers
-            </a>
-          </li>
-
-          <li class="nav-item mb-2">
-            <a routerLink="orders"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Products
-            </a>
-          </li>
-                    <li class="nav-item mb-2">
-            <a routerLink="orders"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Design-Products
-            </a>
-          </li>
-                    <li class="nav-item mb-2">
-            <a routerLink="orders"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Orders
-            </a>
-          </li>
-
-                              <li class="nav-item mb-2">
-            <a routerLink="seller-applications"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Seller-Apllications
-            </a>
-          </li>
-
-                              <li class="nav-item mb-2">
-            <a routerLink="orders"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Delivery Company
-            </a>
-          </li>
-                              <li class="nav-item mb-2">
-            <a routerLink="orders"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Logos
-            </a>
-          </li>
-
-                              <li class="nav-item mb-2">
-            <a routerLink="orders"
-               routerLinkActive="active"
-               class="nav-link d-flex align-items-center"
-               data-bs-dismiss="offcanvas">
-              <i class="bi bi-bag-check me-2"></i> Admins
-            </a>
-          </li>
-
-        </ul>
-        <div class="mt-3">
-  <button class="btn btn-outline-danger w-100" (click)="logout()">
-    <i class="bi bi-box-arrow-right me-2"></i> Logout
-  </button>
-</div>
-            <!-- <div class="mt-3">
-      <button class="btn btn-outline-danger w-100" (click)="logout()">
-        <i class="bi bi-box-arrow-right me-2"></i> Logout
-      </button>
-    </div> -->
+      <div class="top-bar-right">
+        <div class="admin-info">
+          <div class="avatar-ring">
+            <div class="avatar-inner">{{ adminInitials }}</div>
+          </div>
+          <div class="admin-text-col">
+            <div class="admin-display-name">{{ adminName }}</div>
+            <div class="admin-badge">
+              <span class="badge-dot"></span>
+              Super Admin
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </header>
 
-
-    <!-- 🔹 Content -->
-    <div class="col-md-10 offset-md-2 bg-light p-4">
+    <!-- Page Content -->
+    <div class="content-area">
       <router-outlet></router-outlet>
     </div>
 
   </div>
+
 </div>
+
+<!-- ===== LOGOUT CONFIRM MODAL ===== -->
+<div class="logout-modal-overlay" *ngIf="showLogoutModal" (click)="cancelLogout()">
+  <div class="logout-modal" (click)="$event.stopPropagation()">
+
+    <div class="logout-modal-icon">
+      <i class="bi bi-box-arrow-right"></i>
+    </div>
+
+    <p class="logout-modal-title">Confirm Logout</p>
+    <p class="logout-modal-desc">Are you sure you want to logout from the admin panel?</p>
+
+    <div class="logout-modal-actions">
+      <button class="logout-modal-cancel" (click)="cancelLogout()">
+        Cancel
+      </button>
+      <button class="logout-modal-confirm" (click)="logout()">
+        <i class="bi bi-box-arrow-right"></i>
+        Logout
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-container" id="toastContainer"></div>

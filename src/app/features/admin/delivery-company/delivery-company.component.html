@@ -1,275 +1,128 @@
-<div class="container-fluid p-4">
+<div class="page-wrap">
 
-  <!-- HEADER -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="adm-header">
     <div>
-      <h3 class="fw-bold">Delivery Company 🚚</h3>
-      <p class="text-muted">Manage delivery company profile</p>
+      <h1 class="adm-title">Delivery Company</h1>
+      <p class="adm-subtitle">Manage the delivery company profile</p>
     </div>
-
-    <div class="d-flex gap-2">
-<button class="btn btn-primary"
-        (click)="openCompanyModal()"
-        [disabled]="company">
-  + Add Company
-</button>
-      <button class="btn btn-outline-primary" (click)="toggleEdit()">
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="adm-btn-primary" (click)="openCompanyModal()" [disabled]="company">
+        <i class="bi bi-plus-lg"></i> Add Company
+      </button>
+      <button class="adm-btn-secondary" (click)="toggleEdit()">
+        <i class="bi" [class.bi-pencil]="!editMode" [class.bi-x-lg]="editMode"></i>
         {{ editMode ? 'Cancel' : 'Edit' }}
       </button>
-
-      <button class="btn btn-success" *ngIf="editMode" (click)="save()">
-        Save
+      <button class="adm-btn-primary" *ngIf="editMode" (click)="save()" style="background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 2px 8px rgba(16,185,129,0.3)">
+        <i class="bi bi-check2"></i> Save
       </button>
-
-      <button class="btn btn-danger" (click)="deleteCompany()">
-        Delete
+      <button class="adm-btn-danger" (click)="deleteCompany()">
+        <i class="bi bi-trash"></i> Delete
       </button>
     </div>
   </div>
- <!-- MODAL -->
-  <div class="modal fade show d-block" *ngIf="showCompanyModal">
-    <div class="modal-dialog modal-xl">
-      <div class="modal-content shadow-lg rounded-4">
 
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title">🚚 Add Delivery Company</h5>
-          <button class="btn-close btn-close-white" (click)="closeAddModal()"></button>
-        </div>
-
-        <div class="modal-body">
-
-          <div class="row g-3">
-
-            <!-- COMPANY INFO -->
-            <div class="col-12">
-              <h6 class="text-primary">Company Info</h6>
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Name" [(ngModel)]="form.name">
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Email" [(ngModel)]="form.email">
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Phone" [(ngModel)]="form.phoneNumber">
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Delivery Fee" [(ngModel)]="form.deliveryFee">
-            </div>
-
-            <!-- ✅ REQUIRED FIELDS ADDED -->
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Commercial Register Number"
-                     [(ngModel)]="form.commercialRegisterNumber">
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Tax ID Number"
-                     [(ngModel)]="form.taxIdNumber">
-            </div>
-
-            <div class="col-md-12">
-              <textarea class="form-control" placeholder="Description"
-                        [(ngModel)]="form.description"></textarea>
-            </div>
-
-            <!-- ADDRESS -->
-            <div class="col-md-4">
-              <input class="form-control" placeholder="State"
-                     [(ngModel)]="form.state">
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="City"
-                     [(ngModel)]="form.city">
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Street"
-                     [(ngModel)]="form.street">
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Building"
-                     [(ngModel)]="form.buildingNumber">
-            </div>
-
-            <hr>
-
-            <!-- MANAGER -->
-            <div class="col-12">
-              <h6 class="text-success">Manager Info</h6>
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="First Name"
-                     [(ngModel)]="form.managerFirstName">
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Last Name"
-                     [(ngModel)]="form.managerLastName">
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Email"
-                     [(ngModel)]="form.managerEmail">
-            </div>
-
-            <div class="col-md-4">
-              <input class="form-control" placeholder="Phone"
-                     [(ngModel)]="form.managerPhone">
-            </div>
-
-            <div class="col-md-4">
-              <input type="password" class="form-control" placeholder="Password"
-                     [(ngModel)]="form.password">
-            </div>
-
-            <div class="col-md-4">
-              <input type="password" class="form-control" placeholder="Confirm Password"
-                     [(ngModel)]="form.confirmPassword">
-            </div>
-
-            <div class="col-md-6">
-              <input type="file" class="form-control" (change)="onFileChange($event)">
-            </div>
-
-          </div>
-
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeAddModal()">Close</button>
-          <button class="btn btn-success px-4" (click)="addCompany()">Create</button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-  <!-- LOADING -->
-  <div *ngIf="loading" class="text-center py-5">
-    <div class="spinner-border text-primary"></div>
-  </div>
+  <div class="adm-loading" *ngIf="loading"><div class="adm-spinner"></div></div>
 
   <div *ngIf="!loading && company">
+    <div class="profile-layout">
 
-    <div class="row g-4">
-
-      <!-- LEFT SIDE -->
-      <div class="col-md-4">
-
-        <div class="card border-0 shadow-sm text-center p-3">
-
-          <img [src]="company.logoUrl"
-               class="company-logo mb-3">
-
-          <h5 class="fw-bold">{{ company.name }}</h5>
-
-          <p class="text-muted">{{ company.email }}</p>
-          <p class="text-muted">{{ company.phoneNumber }}</p>
-
-          <!-- UPLOAD -->
-          <div *ngIf="editMode">
-            <input type="file" class="form-control mb-2" (change)="onFileChange($event)">
-            <button class="btn btn-sm btn-dark w-100" (click)="uploadLogo()">
-              Upload Logo
-            </button>
-          </div>
-
+      <div class="adm-profile-card">
+        <img [src]="company.logoUrl" class="adm-profile-img" onerror="this.src='https://ui-avatars.com/api/?name=D&background=6366f1&color=fff&size=96'">
+        <h2 class="adm-profile-name">{{ company.name }}</h2>
+        <p class="adm-profile-sub">{{ company.email }}</p>
+        <p class="adm-profile-sub" style="margin-top:-10px">{{ company.phoneNumber }}</p>
+        <div *ngIf="editMode" style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+          <input type="file" class="adm-field" (change)="onFileChange($event)">
+          <button class="adm-btn-secondary" style="justify-content:center" (click)="uploadLogo()">
+            <i class="bi bi-cloud-upload"></i> Upload Logo
+          </button>
         </div>
-
       </div>
 
-      <!-- RIGHT SIDE -->
-      <div class="col-md-8">
-
-        <div class="card border-0 shadow-sm p-3">
-
-          <h5 class="fw-bold mb-3">Company Info</h5>
-
-          <div class="row g-3">
-
-            <div class="col-md-6">
-              <label>Name</label>
-              <input class="form-control" [(ngModel)]="form.name" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>Email</label>
-              <input class="form-control" [(ngModel)]="form.email" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>Phone</label>
-              <input class="form-control" [(ngModel)]="form.phoneNumber" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>Delivery Fee</label>
-              <input type="number" class="form-control" [(ngModel)]="form.deliveryFee" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>Commercial Reg</label>
-              <input class="form-control" [(ngModel)]="form.commercialRegisterNumber" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>Tax ID</label>
-              <input class="form-control" [(ngModel)]="form.taxIdNumber" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-12">
-              <label>Description</label>
-              <textarea class="form-control" rows="3"
-                        [(ngModel)]="form.description"
-                        [disabled]="!editMode"></textarea>
-            </div>
-
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="adm-card">
+          <div class="adm-card-head">
+            <h3 class="adm-card-title"><i class="bi bi-truck"></i> Company Info</h3>
           </div>
-
+          <div class="adm-card-body">
+            <div class="adm-form-grid">
+              <div class="adm-form-group"><label>Name</label><input class="adm-field" [(ngModel)]="form.name" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Email</label><input class="adm-field" [(ngModel)]="form.email" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Phone</label><input class="adm-field" [(ngModel)]="form.phoneNumber" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Delivery Fee</label><input type="number" class="adm-field" [(ngModel)]="form.deliveryFee" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Commercial Reg</label><input class="adm-field" [(ngModel)]="form.commercialRegisterNumber" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Tax ID</label><input class="adm-field" [(ngModel)]="form.taxIdNumber" [disabled]="!editMode"></div>
+              <div class="adm-form-group full"><label>Description</label><textarea class="adm-field" rows="3" [(ngModel)]="form.description" [disabled]="!editMode"></textarea></div>
+            </div>
+          </div>
         </div>
 
-        <!-- ADDRESS -->
-        <div class="card border-0 shadow-sm p-3 mt-3">
-
-          <h5 class="fw-bold mb-3">Address</h5>
-
-          <div class="row g-3">
-
-            <div class="col-md-6">
-              <label>State</label>
-              <input class="form-control" [(ngModel)]="form.state" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>City</label>
-              <input class="form-control" [(ngModel)]="form.city" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>Street</label>
-              <input class="form-control" [(ngModel)]="form.street" [disabled]="!editMode">
-            </div>
-
-            <div class="col-md-6">
-              <label>Building</label>
-              <input class="form-control" [(ngModel)]="form.buildingNumber" [disabled]="!editMode">
-            </div>
-
+        <div class="adm-card">
+          <div class="adm-card-head">
+            <h3 class="adm-card-title"><i class="bi bi-geo-alt"></i> Address</h3>
           </div>
-
+          <div class="adm-card-body">
+            <div class="adm-form-grid">
+              <div class="adm-form-group"><label>State</label><input class="adm-field" [(ngModel)]="form.state" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>City</label><input class="adm-field" [(ngModel)]="form.city" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Street</label><input class="adm-field" [(ngModel)]="form.street" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Building</label><input class="adm-field" [(ngModel)]="form.buildingNumber" [disabled]="!editMode"></div>
+            </div>
+          </div>
         </div>
-
       </div>
 
     </div>
-
   </div>
 
+  <div class="adm-card" *ngIf="!loading && !company">
+    <div class="adm-card-body">
+      <div class="adm-empty">
+        <i class="bi bi-truck"></i>
+        <p>No delivery company registered yet. Click "Add Company" to get started.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Modal -->
+<div class="adm-modal-overlay" *ngIf="showCompanyModal" (click)="closeAddModal()">
+  <div class="adm-modal adm-modal-xl" (click)="$event.stopPropagation()">
+    <div class="adm-modal-head">
+      <h3 class="adm-modal-title"><i class="bi bi-truck"></i> Add Delivery Company</h3>
+      <button class="adm-modal-close" (click)="closeAddModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="adm-modal-body">
+      <div class="adm-section-label"><i class="bi bi-building"></i> Company Info</div>
+      <div class="adm-form-grid" style="margin-bottom:20px">
+        <div class="adm-form-group"><label>Name <span class="adm-req">*</span></label><input class="adm-field" placeholder="Company name" [(ngModel)]="form.name"></div>
+        <div class="adm-form-group"><label>Email <span class="adm-req">*</span></label><input class="adm-field" [(ngModel)]="form.email"></div>
+        <div class="adm-form-group"><label>Phone</label><input class="adm-field" [(ngModel)]="form.phoneNumber"></div>
+        <div class="adm-form-group"><label>Delivery Fee</label><input type="number" class="adm-field" [(ngModel)]="form.deliveryFee"></div>
+        <div class="adm-form-group"><label>Commercial Reg <span class="adm-req">*</span></label><input class="adm-field" [(ngModel)]="form.commercialRegisterNumber"></div>
+        <div class="adm-form-group"><label>Tax ID <span class="adm-req">*</span></label><input class="adm-field" [(ngModel)]="form.taxIdNumber"></div>
+        <div class="adm-form-group"><label>State</label><input class="adm-field" [(ngModel)]="form.state"></div>
+        <div class="adm-form-group"><label>City</label><input class="adm-field" [(ngModel)]="form.city"></div>
+        <div class="adm-form-group"><label>Street</label><input class="adm-field" [(ngModel)]="form.street"></div>
+        <div class="adm-form-group"><label>Building</label><input class="adm-field" [(ngModel)]="form.buildingNumber"></div>
+        <div class="adm-form-group full"><label>Description</label><textarea class="adm-field" rows="3" [(ngModel)]="form.description"></textarea></div>
+      </div>
+      <div class="adm-section-label"><i class="bi bi-person-badge"></i> Manager Info</div>
+      <div class="adm-form-grid">
+        <div class="adm-form-group"><label>First Name <span class="adm-req">*</span></label><input class="adm-field" [(ngModel)]="form.managerFirstName"></div>
+        <div class="adm-form-group"><label>Last Name</label><input class="adm-field" [(ngModel)]="form.managerLastName"></div>
+        <div class="adm-form-group"><label>Email <span class="adm-req">*</span></label><input class="adm-field" [(ngModel)]="form.managerEmail"></div>
+        <div class="adm-form-group"><label>Phone</label><input class="adm-field" [(ngModel)]="form.managerPhone"></div>
+        <div class="adm-form-group"><label>Password <span class="adm-req">*</span></label><input type="password" class="adm-field" [(ngModel)]="form.password"></div>
+        <div class="adm-form-group"><label>Confirm Password <span class="adm-req">*</span></label><input type="password" class="adm-field" [(ngModel)]="form.confirmPassword"></div>
+        <div class="adm-form-group full"><label>Logo</label><input type="file" class="adm-field" (change)="onFileChange($event)"></div>
+      </div>
+    </div>
+    <div class="adm-modal-footer">
+      <button class="adm-btn-secondary" (click)="closeAddModal()">Cancel</button>
+      <button class="adm-btn-primary" (click)="addCompany()"><i class="bi bi-plus-lg"></i> Create Company</button>
+    </div>
+  </div>
 </div>

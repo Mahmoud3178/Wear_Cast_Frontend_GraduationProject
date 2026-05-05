@@ -1,55 +1,67 @@
-<div class="container p-4">
+<div class="page-wrap">
 
-  <h3 class="fw-bold mb-4">Add New Administrator</h3>
-
-  <div class="card shadow-sm p-4">
-
-    <h5 class="mb-3">Personal Information</h5>
-
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <input class="form-control" placeholder="First Name" [(ngModel)]="admin.firstName">
-      </div>
-
-      <div class="col-md-6">
-        <input class="form-control" placeholder="Last Name" [(ngModel)]="admin.lastName">
-      </div>
+  <div class="adm-header">
+    <div>
+      <h1 class="adm-title">Add New Administrator</h1>
+      <p class="adm-subtitle">Create a new admin account with role assignment.</p>
     </div>
+  </div>
 
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <input class="form-control" placeholder="Email" [(ngModel)]="admin.email">
-      </div>
-
-      <div class="col-md-6">
-        <input class="form-control" placeholder="Phone" [(ngModel)]="admin.phone">
-      </div>
+  <div class="adm-card" style="max-width:680px">
+    <div class="adm-card-head">
+      <h3 class="adm-card-title"><i class="bi bi-shield-lock"></i> Admin Information</h3>
     </div>
+    <div class="adm-card-body">
 
-    <h5>Role</h5>
-    <select class="form-select mb-3" [(ngModel)]="admin.role">
-      <option>Editor</option>
-      <option>Manager</option>
-      <option>Super Admin</option>
-    </select>
-
-    <h5>Security</h5>
-
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <input type="password" class="form-control" placeholder="Password" [(ngModel)]="admin.password">
+      <div class="adm-section-label"><i class="bi bi-person"></i> Personal Info</div>
+      <div class="adm-form-grid" style="margin-bottom:20px">
+        <div class="adm-form-group">
+          <label>First Name <span class="adm-req">*</span></label>
+          <input class="adm-field" placeholder="First Name" [(ngModel)]="admin.firstName">
+        </div>
+        <div class="adm-form-group">
+          <label>Last Name</label>
+          <input class="adm-field" placeholder="Last Name" [(ngModel)]="admin.lastName">
+        </div>
+        <div class="adm-form-group">
+          <label>Email <span class="adm-req">*</span></label>
+          <input class="adm-field" type="email" placeholder="admin@wearcast.com" [(ngModel)]="admin.email">
+        </div>
+        <div class="adm-form-group">
+          <label>Phone</label>
+          <input class="adm-field" placeholder="+20 1xx xxx xxxx" [(ngModel)]="admin.phone">
+        </div>
       </div>
 
-      <div class="col-md-6">
-        <input type="password" class="form-control" placeholder="Confirm Password" [(ngModel)]="admin.confirmPassword">
+      <div class="adm-section-label"><i class="bi bi-shield-check"></i> Role & Security</div>
+      <div class="adm-form-grid">
+        <div class="adm-form-group full">
+          <label>Role <span class="adm-req">*</span></label>
+          <select class="adm-field" [(ngModel)]="admin.role">
+            <option value="">— Select Role —</option>
+            <option>Editor</option>
+            <option>Manager</option>
+            <option>Super Admin</option>
+          </select>
+        </div>
+        <div class="adm-form-group">
+          <label>Password <span class="adm-req">*</span></label>
+          <input type="password" class="adm-field" placeholder="••••••••" [(ngModel)]="admin.password">
+        </div>
+        <div class="adm-form-group">
+          <label>Confirm Password <span class="adm-req">*</span></label>
+          <input type="password" class="adm-field" placeholder="••••••••" [(ngModel)]="admin.confirmPassword">
+        </div>
       </div>
-    </div>
 
-    <div class="text-end">
-      <button class="btn btn-secondary me-2">Cancel</button>
-      <button class="btn btn-primary">Add Admin</button>
-    </div>
+      <div class="add-admin-footer">
+        <button class="adm-btn-secondary" routerLink="/admin/admins">Cancel</button>
+        <button class="adm-btn-primary">
+          <i class="bi bi-plus-lg"></i> Add Admin
+        </button>
+      </div>
 
+    </div>
   </div>
 
 </div>

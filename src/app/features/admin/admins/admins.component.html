@@ -1,49 +1,57 @@
-<div class="container-fluid p-4">
+<div class="page-wrap">
 
-  <!-- HEADER -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <!-- Header -->
+  <div class="page-header">
     <div>
-      <h3 class="fw-bold">Admins List</h3>
-      <p class="text-muted">Manage platform administrators</p>
+      <h2 class="page-heading">Admins</h2>
+      <p class="page-desc">Manage platform administrators and their permissions.</p>
     </div>
-
-    <button class="btn btn-primary" (click)="toggleAdd()">
-      + Add New Admin
+    <button class="btn-add" (click)="toggleAdd()">
+      <i class="bi bi-plus-lg"></i> Add Admin
     </button>
   </div>
 
-  <!-- TABLE -->
-  <div class="card shadow-sm">
-    <table class="table mb-0">
-      <thead class="table-light">
+  <!-- Table -->
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
         <tr>
           <th>Name</th>
           <th>Email</th>
           <th>Role</th>
-          <th></th>
+          <th style="width:140px">Actions</th>
         </tr>
       </thead>
-
       <tbody>
         <tr *ngFor="let admin of admins">
-
-          <td>{{admin.fullName}}</td>
-          <td>{{admin.email}}</td>
-          <td>{{admin.role}}</td>
-
-          <td class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-primary"
-                    (click)="goToDetails(admin.id)">
-              Details
-            </button>
-
-            <button class="btn btn-sm btn-danger"
-                    [disabled]="admin.role === 'SuperAdmin'"
-                    (click)="deleteAdmin(admin.id)">
-              Delete
-            </button>
+          <td>
+            <div class="cell-avatar">
+              <div class="avatar-sm">{{ admin.fullName?.charAt(0) || 'A' }}</div>
+              <span class="cell-name">{{ admin.fullName }}</span>
+            </div>
           </td>
-
+          <td class="cell-muted">{{ admin.email }}</td>
+          <td>
+            <span class="role-badge" [ngClass]="getRoleClass(admin.role)">
+              {{ admin.role }}
+            </span>
+          </td>
+          <td>
+            <div class="action-row">
+              <button class="action-btn view-btn" (click)="goToDetails(admin.id)" title="Details">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="action-btn delete-btn"
+                      [disabled]="admin.role === 'SuperAdmin'"
+                      (click)="deleteAdmin(admin.id)"
+                      title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="admins.length === 0">
+          <td colspan="4" class="empty-state">No admins found.</td>
         </tr>
       </tbody>
     </table>
@@ -51,50 +59,73 @@
 
 </div>
 
-<!-- DRAWER -->
+<!-- Drawer Overlay -->
+<div class="drawer-overlay" *ngIf="showAdd" (click)="toggleAdd()"></div>
+
+<!-- Drawer -->
 <div class="drawer" [class.open]="showAdd">
+  <div class="drawer-inner">
 
-  <div class="drawer-content">
+    <div class="drawer-top">
+      <h5 class="drawer-title">Add New Admin</h5>
+      <button class="drawer-close" (click)="toggleAdd()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
 
-    <h5 class="mb-3">Add Admin</h5>
+    <div class="form-grid">
 
-    <input class="form-control mb-2" placeholder="First Name"
-           [(ngModel)]="newAdmin.firstName" autocomplete="off">
+      <div class="form-group">
+        <label>First Name <span class="req">*</span></label>
+        <input class="form-field" placeholder="John" [(ngModel)]="newAdmin.firstName" autocomplete="off">
+      </div>
 
-    <input class="form-control mb-2" placeholder="Last Name"
-           [(ngModel)]="newAdmin.lastName" autocomplete="off">
+      <div class="form-group">
+        <label>Last Name</label>
+        <input class="form-field" placeholder="Doe" [(ngModel)]="newAdmin.lastName" autocomplete="off">
+      </div>
 
-    <input class="form-control mb-2" placeholder="Email"
-           [(ngModel)]="newAdmin.email" autocomplete="off">
+      <div class="form-group full">
+        <label>Email <span class="req">*</span></label>
+        <input class="form-field" type="email" placeholder="admin@wearcast.com" [(ngModel)]="newAdmin.email" autocomplete="off">
+      </div>
 
-    <input class="form-control mb-2" placeholder="Phone"
-           [(ngModel)]="newAdmin.phoneNumber" autocomplete="off">
+      <div class="form-group full">
+        <label>Phone</label>
+        <input class="form-field" placeholder="+20 1xx xxx xxxx" [(ngModel)]="newAdmin.phoneNumber" autocomplete="off">
+      </div>
 
-    <input type="password" class="form-control mb-2"
-           placeholder="Password"
-           [(ngModel)]="newAdmin.password" autocomplete="off">
+      <div class="form-group">
+        <label>Password <span class="req">*</span></label>
+        <input type="password" class="form-field" placeholder="••••••••" [(ngModel)]="newAdmin.password" autocomplete="off">
+      </div>
 
-    <input type="password" class="form-control mb-2"
-           placeholder="Confirm Password"
-           [(ngModel)]="newAdmin.confirmPassword" autocomplete="off">
+      <div class="form-group">
+        <label>Confirm Password <span class="req">*</span></label>
+        <input type="password" class="form-field" placeholder="••••••••" [(ngModel)]="newAdmin.confirmPassword" autocomplete="off">
+      </div>
 
-    <select class="form-control mb-3"
-            [(ngModel)]="newAdmin.role">
+      <div class="form-group full">
+        <label>Role <span class="req">*</span></label>
+        <select class="form-field" [(ngModel)]="newAdmin.role">
+          <option value="">— Select Role —</option>
+          <option>SuperAdmin</option>
+          <option>OperationsAdmin</option>
+          <option>CustomerServiceAdmin</option>
+          <option>VendorAdmin</option>
+          <option>CatalogAdmin</option>
+        </select>
+      </div>
 
-      <option value="">Select Role</option>
-      <option>SuperAdmin</option>
-      <option>OperationsAdmin</option>
-      <option>CustomerServiceAdmin</option>
-      <option>VendorAdmin</option>
-      <option>CatalogAdmin</option>
+    </div>
 
-    </select>
-
-    <div class="d-flex gap-2">
-      <button class="btn btn-success w-100" (click)="addAdmin()">Save</button>
-      <button class="btn btn-secondary w-100" (click)="toggleAdd()">Cancel</button>
+    <div class="drawer-footer">
+      <button class="btn-cancel" (click)="toggleAdd()">Cancel</button>
+      <button class="btn-save" (click)="addAdmin()" [disabled]="loading">
+        <span *ngIf="!loading">Save Admin</span>
+        <span *ngIf="loading" class="spinner-border spinner-border-sm"></span>
+      </button>
     </div>
 
   </div>
-
 </div>

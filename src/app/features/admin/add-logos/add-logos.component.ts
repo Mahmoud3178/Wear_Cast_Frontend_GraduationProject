@@ -1,3 +1,4 @@
+import { ToastService } from '../../../core/services/toast.service';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,9 +24,10 @@ export class AddLogosComponent implements OnInit {
 
   categories: any[] = [];
 
-  constructor(
+constructor(
     private service: AdminLogosService,
-    private router: Router
+    private router: Router,
+    private toast: ToastService  // ← أضف السطر ده
   ) {}
 
   ngOnInit() {
@@ -48,7 +50,7 @@ export class AddLogosComponent implements OnInit {
   upload() {
 
     if (!this.file || !this.logoName || !this.categoryId) {
-      alert('❌ Please fill all required fields');
+      this.toast.warning('Please fill all required fields');
       return;
     }
 
@@ -65,7 +67,7 @@ export class AddLogosComponent implements OnInit {
 
     this.service.createLogo(formData).subscribe({
       next: () => {
-        alert('✅ Logo uploaded successfully');
+        this.toast.success('Logo uploaded successfully');
 
         // reset
         this.logoName = '';
@@ -78,7 +80,7 @@ export class AddLogosComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        alert('❌ Upload failed');
+        this.toast.error('Upload failed');
       }
     });
   }

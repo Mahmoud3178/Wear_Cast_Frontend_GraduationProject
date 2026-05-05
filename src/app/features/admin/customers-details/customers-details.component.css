@@ -1,0 +1,33 @@
+/* ============================================================
+   CUSTOMER DETAILS — FULLY RESPONSIVE
+   ============================================================ */
+
+.profile-layout {
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:20px;
+  align-items:start;
+}
+
+@media (max-width:900px) {
+  .profile-layout { grid-template-columns:1fr; }
+  .adm-profile-card { max-width:380px; margin:0 auto; }
+}
+
+@media (max-width:768px) {
+  /* Header: stack title + delete box vertically */
+  .adm-header { flex-direction:column; align-items:stretch; gap:12px; }
+
+  /* Delete box in header */
+  .adm-header .adm-delete-box {
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .adm-header .adm-delete-box input {
+    min-width:unset !important;
+    width:100%;
+  }
+  .adm-header .adm-delete-box button {
+    justify-content:center;
+  }
+}

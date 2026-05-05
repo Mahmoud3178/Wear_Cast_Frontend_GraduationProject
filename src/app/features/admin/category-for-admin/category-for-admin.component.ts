@@ -1,3 +1,4 @@
+import { ToastService } from '../../../core/services/toast.service';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,8 @@ export class CategoryForAdminComponent implements OnInit {
   editId: number | null = null;
   editMode = false;
 selectedImage: File | null = null;
-  constructor(private service: HandelCategoryesForAdminService) {}
+  constructor(private service: HandelCategoryesForAdminService,    private toast: ToastService  // ← أضف السطر ده
+) {}
 
   ngOnInit() {
     this.loadAll();
@@ -53,7 +55,7 @@ onFileChange(event: any) {
 addProduct() {
 
   if (!this.name || !this.selectedImage) {
-    alert('Name + Image required');
+    this.toast.warning('Name and Image are required');
     return;
   }
 

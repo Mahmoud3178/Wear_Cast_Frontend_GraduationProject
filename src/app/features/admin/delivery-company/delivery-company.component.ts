@@ -1,3 +1,4 @@
+import { ToastService } from '../../../core/services/toast.service';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -41,7 +42,8 @@ export class DeliveryCompanyComponent implements OnInit {
     confirmPassword: ''
   };
 
-  constructor(private service: ShippingCompanyForAdminService) {}
+  constructor(private service: ShippingCompanyForAdminService,    private toast: ToastService,
+) {}
 
   ngOnInit(): void {
     this.loadCompany(1); // 👈 غيرها حسب ال id
@@ -162,11 +164,11 @@ save() {
     next: () => {
       this.closeAddModal();
       this.loadCompany(1);
-      alert('Company created successfully');
+      this.toast.success('Company created successfully');
     },
     error: (err) => {
       console.error(err);
-      alert('Error creating company');
+      this.toast.error('Error creating company');
     }
   });
 }
@@ -187,12 +189,12 @@ deleteCompany() {
 
   this.service.deleteCompany(this.company.id, reason).subscribe({
     next: () => {
-      alert('Company deleted successfully');
+      this.toast.success('Company deleted');
       this.company = null;
     },
     error: (err) => {
       console.error(err);
-      alert('Delete failed');
+      this.toast.error('Delete failed');
     }
   });
 }

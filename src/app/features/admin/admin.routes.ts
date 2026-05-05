@@ -26,11 +26,7 @@ export const ADMIN_ROUTES: Routes = [
           import('./dashboard/dashboard.component')
             .then(m => m.DashboardComponent)
       },
-  {
-    path: 'users',
-    loadComponent: () =>
-      import('./users/users.component').then(m => m.UsersComponent)
-  },
+
   {
     path: 'reports',
     loadComponent: () =>
@@ -120,12 +116,7 @@ export const ADMIN_ROUTES: Routes = [
     import('./delivery-company/delivery-company.component')
       .then(m => m.DeliveryCompanyComponent)
 },
-{
-  path: 'templets',
-  loadComponent: () =>
-    import('./templets/templets.component')
-      .then(m => m.TempletsComponent)
-},
+
 {
   path: 'logos',
   loadComponent: () =>

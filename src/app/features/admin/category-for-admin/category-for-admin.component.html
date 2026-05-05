@@ -1,133 +1,101 @@
-<div class="container p-4">
+<div class="page-wrap">
 
-  <!-- HEADER -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-
-    <h3 class="fw-bold">Categories Dashboard</h3>
-
-    <div class="btn-group">
-
-      <button class="btn"
-              [ngClass]="activeTab === 'product' ? 'btn-primary' : 'btn-outline-primary'"
-              (click)="setTab('product')">
-        Products
-      </button>
-
-      <button class="btn"
-              [ngClass]="activeTab === 'asset' ? 'btn-dark' : 'btn-outline-dark'"
-              (click)="setTab('asset')">
-        Assets
-      </button>
-
+  <div class="adm-header">
+    <div>
+      <h1 class="adm-title">Categories</h1>
+      <p class="adm-subtitle">Manage product and asset categories.</p>
     </div>
-
+    <div class="adm-tabs">
+      <button class="adm-tab" [class.active]="activeTab==='product'" (click)="setTab('product')">
+        <i class="bi bi-box-seam"></i> Products
+      </button>
+      <button class="adm-tab" [class.active]="activeTab==='asset'" (click)="setTab('asset')">
+        <i class="bi bi-tags"></i> Assets
+      </button>
+    </div>
   </div>
 
-  <!-- FORM -->
-  <div class="card shadow-sm border-0 mb-4 p-4">
-
-    <h5 class="mb-3">
-      {{ editMode ? 'Update Category' : 'Add New Category' }}
-    </h5>
-
-    <div class="row g-2">
-
-      <!-- NAME -->
-      <div class="col-md-6">
-        <input class="form-control"
-               placeholder="Enter category name"
-               [(ngModel)]="name">
-      </div>
-
-      <!-- IMAGE (ONLY FOR PRODUCT) -->
-      <div class="col-md-6" *ngIf="activeTab === 'product'">
-        <input type="file"
-               class="form-control"
-               (change)="onFileChange($event)">
-      </div>
-
+  <!-- Add / Edit form -->
+  <div class="adm-card" style="margin-bottom:28px">
+    <div class="adm-card-head">
+      <h3 class="adm-card-title">
+        <i class="bi bi-plus-circle"></i>
+        {{ editMode ? 'Update Category' : 'Add New Category' }}
+      </h3>
     </div>
-
-    <div class="mt-3 text-end">
-      <button class="btn btn-success px-4"
-        (click)="activeTab === 'product'
-                  ? addProduct()
-                  : (editMode ? updateAsset() : addAsset())">
-
-        {{ editMode ? 'Update' : 'Save' }}
-      </button>
-    </div>
-
-  </div>
-
-  <!-- ================= PRODUCT ================= -->
-  <div *ngIf="activeTab === 'product'">
-
-    <div class="row g-3">
-
-      <div class="col-md-3" *ngFor="let c of productCategories">
-
-        <div class="card h-100 shadow-sm border-0 category-card">
-
-          <img *ngIf="c.imageUrl"
-               [src]="c.imageUrl"
-               class="card-img-top"
-               style="height:150px; object-fit:cover">
-
-          <div class="card-body text-center">
-
-            <h6 class="fw-bold">{{ c.name }}</h6>
-
-            <button class="btn btn-outline-danger btn-sm mt-2 w-100"
-                    (click)="deleteProduct(c.id)">
-              Delete
-            </button>
-
-          </div>
-
+    <div class="adm-card-body">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1;min-width:200px" class="adm-form-group">
+          <label>Category Name <span class="adm-req">*</span></label>
+          <input class="adm-field" placeholder="Enter category name" [(ngModel)]="name">
         </div>
-
+        <div style="flex:1;min-width:200px" class="adm-form-group" *ngIf="activeTab==='product'">
+          <label>Category Image</label>
+          <input type="file" class="adm-field" (change)="onFileChange($event)">
+        </div>
+        <button class="adm-btn-primary"
+          (click)="activeTab==='product' ? addProduct() : (editMode ? updateAsset() : addAsset())">
+          <i class="bi" [class.bi-check2]="editMode" [class.bi-plus-lg]="!editMode"></i>
+          {{ editMode ? 'Update' : 'Save Category' }}
+        </button>
+        <button class="adm-btn-secondary" *ngIf="editMode" (click)="editMode=false;name=''">
+          Cancel
+        </button>
       </div>
-
     </div>
-
   </div>
 
-  <!-- ================= ASSET ================= -->
-  <div *ngIf="activeTab === 'asset'">
-
-    <div class="row g-3">
-
-      <div class="col-md-3" *ngFor="let c of assetCategories">
-
-        <div class="card h-100 shadow-sm border-0 text-center p-3 category-card">
-
-          <div class="category-icon mb-2">
-            📦
+  <!-- Product categories grid -->
+  <div *ngIf="activeTab==='product'">
+    <div class="cat-grid">
+      <div class="cat-card" *ngFor="let c of productCategories">
+        <div class="cat-img-wrap">
+          <img *ngIf="c.imageUrl" [src]="c.imageUrl" class="cat-img"
+               onerror="this.style.display='none'">
+          <div *ngIf="!c.imageUrl" class="cat-img-placeholder">
+            <i class="bi bi-image"></i>
           </div>
-
-          <h6 class="fw-bold">{{ c.name }}</h6>
-
-          <div class="d-flex gap-2 mt-2 justify-content-center">
-
-            <button class="btn btn-outline-warning btn-sm"
-                    (click)="editAsset(c)">
-              Edit
-            </button>
-
-            <button class="btn btn-outline-danger btn-sm"
-                    (click)="deleteAsset(c.id)">
-              Delete
-            </button>
-
-          </div>
-
         </div>
-
+        <div class="cat-body">
+          <span class="cat-name">{{ c.name }}</span>
+          <button class="adm-action-btn act-delete" (click)="deleteProduct(c.id)" title="Delete">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
       </div>
 
+      <div class="cat-empty" *ngIf="!productCategories?.length">
+        <i class="bi bi-folder-x"></i>
+        <p>No product categories yet</p>
+      </div>
     </div>
+  </div>
 
+  <!-- Asset categories grid -->
+  <div *ngIf="activeTab==='asset'">
+    <div class="cat-grid">
+      <div class="cat-card" *ngFor="let c of assetCategories">
+        <div class="cat-img-wrap asset-icon">
+          <i class="bi bi-tags-fill"></i>
+        </div>
+        <div class="cat-body">
+          <span class="cat-name">{{ c.name }}</span>
+          <div style="display:flex;gap:6px">
+            <button class="adm-action-btn act-edit" (click)="editAsset(c)" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="adm-action-btn act-delete" (click)="deleteAsset(c.id)" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cat-empty" *ngIf="!assetCategories?.length">
+        <i class="bi bi-folder-x"></i>
+        <p>No asset categories yet</p>
+      </div>
+    </div>
   </div>
 
 </div>

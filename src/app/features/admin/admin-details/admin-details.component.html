@@ -1,58 +1,51 @@
-<div class="container py-4">
+<div class="page-wrap">
 
-  <h3 class="fw-bold mb-4">Admin Details</h3>
-
-  <div class="card shadow-sm border-0 p-4">
-
-    <div class="row g-3">
-
-      <!-- First -->
-      <div class="col-md-6">
-        <label class="form-label">First Name</label>
-        <input class="form-control" [(ngModel)]="admin.firstName">
-      </div>
-
-      <!-- Last -->
-      <div class="col-md-6">
-        <label class="form-label">Last Name</label>
-        <input class="form-control" [(ngModel)]="admin.lastName">
-      </div>
-
-      <!-- Email -->
-      <div class="col-md-6">
-        <label class="form-label">Email</label>
-        <input class="form-control" [(ngModel)]="admin.email">
-      </div>
-
-      <!-- Phone -->
-      <div class="col-md-6">
-        <label class="form-label">Phone</label>
-        <input class="form-control" [(ngModel)]="admin.phoneNumber">
-      </div>
-
-      <!-- Role -->
-      <div class="col-md-6">
-        <label class="form-label">Role</label>
-
-        <select class="form-select" [(ngModel)]="admin.role">
-          <option>SuperAdmin</option>
-          <option>OperationsAdmin</option>
-          <option>CustomerServiceAdmin</option>
-          <option>VendorAdmin</option>
-          <option>CatalogAdmin</option>
-        </select>
-
-      </div>
-
+  <div class="adm-header">
+    <div>
+      <h1 class="adm-title">Admin Details</h1>
+      <p class="adm-subtitle">Update admin account information</p>
     </div>
+  </div>
 
-    <!-- BUTTON -->
-    <div class="mt-4">
-      <button class="btn btn-primary w-100" (click)="update()">
-        Save Changes
-      </button>
+  <div class="adm-card" style="max-width:640px">
+    <div class="adm-card-head">
+      <h3 class="adm-card-title"><i class="bi bi-shield-lock"></i> Account Info</h3>
     </div>
-
+    <div class="adm-card-body">
+      <div class="adm-form-grid">
+        <div class="adm-form-group">
+          <label>First Name <span class="adm-req">*</span></label>
+          <input class="adm-field" placeholder="First name" [(ngModel)]="admin.firstName">
+        </div>
+        <div class="adm-form-group">
+          <label>Last Name</label>
+          <input class="adm-field" placeholder="Last name" [(ngModel)]="admin.lastName">
+        </div>
+        <div class="adm-form-group">
+          <label>Email <span class="adm-req">*</span></label>
+          <input class="adm-field" type="email" placeholder="Email" [(ngModel)]="admin.email">
+        </div>
+        <div class="adm-form-group">
+          <label>Phone</label>
+          <input class="adm-field" placeholder="Phone" [(ngModel)]="admin.phoneNumber">
+        </div>
+        <div class="adm-form-group full">
+          <label>Role <span class="adm-req">*</span></label>
+          <select class="adm-field" [(ngModel)]="admin.role">
+            <option>SuperAdmin</option>
+            <option>OperationsAdmin</option>
+            <option>CustomerServiceAdmin</option>
+            <option>VendorAdmin</option>
+            <option>CatalogAdmin</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <button class="adm-btn-primary" (click)="update()">
+          <i class="bi bi-check2"></i> Save Changes
+        </button>
+      </div>
+    </div>
   </div>
 
 </div>
