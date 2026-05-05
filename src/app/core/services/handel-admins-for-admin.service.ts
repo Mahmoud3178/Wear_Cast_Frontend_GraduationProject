@@ -57,4 +57,11 @@ export class HandelAdminsForAdminService {
       headers: this.headers()
     });
   }
+
+    getAdminById(id: string) {
+    return this.http.get(`${this.base}/api/Admins/${id}`, {
+      headers: this.headers()
+    });
+  }
+
 }

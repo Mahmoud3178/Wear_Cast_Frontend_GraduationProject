@@ -1,43 +1,57 @@
-<div class="container p-4">
+<div class="container py-4">
 
   <h3 class="fw-bold mb-4">Admin Details</h3>
 
-  <div class="card p-4 shadow-sm">
+  <div class="card shadow-sm border-0 p-4">
 
-    <div class="row mb-3">
+    <div class="row g-3">
 
+      <!-- First -->
       <div class="col-md-6">
-        <label>First Name</label>
+        <label class="form-label">First Name</label>
         <input class="form-control" [(ngModel)]="admin.firstName">
       </div>
 
+      <!-- Last -->
       <div class="col-md-6">
-        <label>Last Name</label>
+        <label class="form-label">Last Name</label>
         <input class="form-control" [(ngModel)]="admin.lastName">
+      </div>
+
+      <!-- Email -->
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input class="form-control" [(ngModel)]="admin.email">
+      </div>
+
+      <!-- Phone -->
+      <div class="col-md-6">
+        <label class="form-label">Phone</label>
+        <input class="form-control" [(ngModel)]="admin.phoneNumber">
+      </div>
+
+      <!-- Role -->
+      <div class="col-md-6">
+        <label class="form-label">Role</label>
+
+        <select class="form-select" [(ngModel)]="admin.role">
+          <option>SuperAdmin</option>
+          <option>OperationsAdmin</option>
+          <option>CustomerServiceAdmin</option>
+          <option>VendorAdmin</option>
+          <option>CatalogAdmin</option>
+        </select>
+
       </div>
 
     </div>
 
-    <div class="mb-3">
-      <label>Email</label>
-      <input class="form-control" [(ngModel)]="admin.email">
+    <!-- BUTTON -->
+    <div class="mt-4">
+      <button class="btn btn-primary w-100" (click)="update()">
+        Save Changes
+      </button>
     </div>
-<div class="mb-3">
-  <label>Phone</label>
-  <input class="form-control" [(ngModel)]="admin.phoneNumber">
-</div>
-    <div class="mb-3">
-      <label>Role</label>
-      <select class="form-control" [(ngModel)]="admin.role">
-        <option>SuperAdmin</option>
-        <option>Manager</option>
-        <option>Moderator</option>
-      </select>
-    </div>
-
-    <button class="btn btn-primary" (click)="update()">
-      Save Changes
-    </button>
 
   </div>
 
