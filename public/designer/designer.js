@@ -1931,6 +1931,22 @@
     img.src = dataUrl;
   }
 
+  function shouldSkipProductImageInExport(imgEl) {
+    if (!imgEl || !imgEl.src) return false;
+    var src = String(imgEl.src);
+    if (!src) return false;
+    // Relative, data, and blob URLs are safe for export.
+    if (src.indexOf('data:') === 0 || src.indexOf('blob:') === 0 || src.indexOf('http') !== 0) {
+      return false;
+    }
+    try {
+      var u = new URL(src, window.location.origin);
+      return u.origin !== window.location.origin;
+    } catch (_e) {
+      return false;
+    }
+  }
+
   /**
    * Pixel snapshot of what the user sees: #product-image + Fabric canvases (same dimensions).
    */
@@ -1945,12 +1961,19 @@
     out.width = w;
     out.height = h;
     var ctx = out.getContext('2d');
-    if (productImage && productImage.complete && productImage.naturalWidth > 0) {
+    if (
+      productImage &&
+      productImage.complete &&
+      productImage.naturalWidth > 0 &&
+      !shouldSkipProductImageInExport(productImage)
+    ) {
       try {
         ctx.drawImage(productImage, 0, 0, w, h);
       } catch (drawErr) {
         console.warn('WearCast: product image draw skipped', drawErr);
       }
+    } else if (productImage && shouldSkipProductImageInExport(productImage)) {
+      console.warn('WearCast: skipped cross-origin product image in export to avoid tainted canvas.');
     }
     var lower = canvas.lowerCanvasEl;
     if (lower) {
