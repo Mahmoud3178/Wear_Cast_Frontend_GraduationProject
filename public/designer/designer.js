@@ -92,6 +92,18 @@
     return views[view] || views.front;
   }
 
+  function isCrossOriginUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    if (url.indexOf('data:') === 0 || url.indexOf('blob:') === 0) return false;
+    try {
+      var parsed = new URL(url, window.location.href);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+      return parsed.origin !== window.location.origin;
+    } catch (_e) {
+      return false;
+    }
+  }
+
   // Dynamic catalog products only (loaded from Angular bootstrap).
   var PRODUCTS = {};
 
@@ -120,9 +132,9 @@
   var viewUndoStacks = {};
   var viewRedoStacks = {};
   var VIEW_KEYS = ['front', 'back', 'right', 'left'];
-  /** Valid 1×1 PNG — ensures every view sends a file when export fails (blank garment / tainted canvas). */
+  /** Transparent 100x100 PNG fallback when export fails. */
   var WEARCAST_PLACEHOLDER_VIEW_PNG =
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAjDMOZf6BzO0A0KvyRVcsjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjI2DMz8n8j7r45xNkAAAAASUVORK5CYII=';
 
   function normalizeViewDataUrl(url) {
     if (url && typeof url === 'string' && url.indexOf('data:image') === 0) {
@@ -288,6 +300,12 @@
 
   function initCanvas() {
     const dim = getStageDimensions();
+    // Prefer 2D filtering to avoid WebGL/GPU artifacts on some browsers.
+    if (fabric && typeof fabric.Canvas2dFilterBackend === 'function') {
+      try {
+        fabric.filterBackend = new fabric.Canvas2dFilterBackend();
+      } catch (_e) {}
+    }
     canvas = new fabric.Canvas('design-canvas', {
       width: dim.width,
       height: dim.height,
@@ -538,7 +556,12 @@
     obj.wearcastFxBrightness = parseInt(imgBrightnessSlider.value, 10) || 100;
     obj.wearcastFxContrast = parseInt(imgContrastSlider.value, 10) || 100;
     obj.wearcastFxSaturation = parseInt(imgSaturationSlider.value, 10) || 100;
-    obj.applyFilters();
+    try {
+      obj.applyFilters();
+    } catch (filterErr) {
+      console.warn('WearCast: image filter apply failed', filterErr);
+    }
+    obj.dirty = true;
   }
 
   function syncImageOptionsFromObject(obj) {
@@ -989,6 +1012,7 @@
   function addStickerFromUrl(url) {
     if (!canvas || !url) return;
     var dim = getStageDimensions();
+    var remoteUrl = isCrossOriginUrl(url);
     function mountSticker(img) {
       if (!img) return;
       var scale = Math.min(140 / img.width, 140 / img.height, 1);
@@ -999,6 +1023,8 @@
         scaleY: scale,
         originX: 'center',
         originY: 'center',
+        objectCaching: false,
+        noScaleCache: true,
         wearcastFxBrightness: 100,
         wearcastFxContrast: 100,
         wearcastFxSaturation: 100,
@@ -1011,21 +1037,39 @@
       closeDesignsPanel();
     }
 
-    // Try without crossOrigin first so production hosts that do not send
-    // CORS headers can still render stickers in the editor.
-    fabric.Image.fromURL(url, function (img) {
+    // For cross-origin sources, request anonymous CORS first so canvas export
+    // (save/add-to-cart snapshots) remains readable in production deployments.
+    function tryAnonymous(done) {
+      fabric.Image.fromURL(url, done, { crossOrigin: 'anonymous' });
+    }
+
+    function tryDefault(done) {
+      fabric.Image.fromURL(url, done);
+    }
+
+    if (remoteUrl) {
+      tryAnonymous(function (img) {
+        if (img) {
+          mountSticker(img);
+          return;
+        }
+        console.warn('WearCast: cross-origin sticker blocked by CORS, cannot keep export-safe canvas.', url);
+        alert('This design image host blocks CORS, so it cannot be used safely for saving/export. Please choose another image.');
+      });
+      return;
+    }
+
+    tryDefault(function (img) {
       if (img) {
         mountSticker(img);
         return;
       }
-      // Fallback to anonymous CORS for hosts that allow it, which keeps
-      // canvas export safer when possible.
-      fabric.Image.fromURL(url, function (fallbackImg) {
+      tryAnonymous(function (fallbackImg) {
         if (!fallbackImg) {
           return;
         }
         mountSticker(fallbackImg);
-      }, { crossOrigin: 'anonymous' });
+      });
     });
   }
 
@@ -2511,37 +2555,48 @@
       });
     }
 
-    var applyImageControls = function () {
+    var applyImageControls = function (commitHistory) {
       var obj = canvas && canvas.getActiveObject ? canvas.getActiveObject() : null;
       if (!isImageObject(obj)) return;
       setImageEffectsFromControls(obj);
       if (imgShapeSelect) setImageShapeStyle(obj, imgShapeSelect.value || 'normal');
-      canvas.renderAll();
-      saveState();
+      canvas.requestRenderAll();
+      if (commitHistory) {
+        saveState();
+      }
       syncImageOptionsFromObject(obj);
     };
 
     if (imgBrightnessSlider) {
       imgBrightnessSlider.addEventListener('input', function () {
         if (imgBrightnessValue) imgBrightnessValue.textContent = this.value + '%';
-        applyImageControls();
+        applyImageControls(false);
+      });
+      imgBrightnessSlider.addEventListener('change', function () {
+        applyImageControls(true);
       });
     }
     if (imgContrastSlider) {
       imgContrastSlider.addEventListener('input', function () {
         if (imgContrastValue) imgContrastValue.textContent = this.value + '%';
-        applyImageControls();
+        applyImageControls(false);
+      });
+      imgContrastSlider.addEventListener('change', function () {
+        applyImageControls(true);
       });
     }
     if (imgSaturationSlider) {
       imgSaturationSlider.addEventListener('input', function () {
         if (imgSaturationValue) imgSaturationValue.textContent = this.value + '%';
-        applyImageControls();
+        applyImageControls(false);
+      });
+      imgSaturationSlider.addEventListener('change', function () {
+        applyImageControls(true);
       });
     }
     if (imgShapeSelect) {
       imgShapeSelect.addEventListener('change', function () {
-        applyImageControls();
+        applyImageControls(true);
       });
     }
 
