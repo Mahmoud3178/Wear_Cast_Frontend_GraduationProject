@@ -27,6 +27,9 @@ export class FactoryOrdersComponent implements OnInit {
   activeImageContext: string[] = [];
   activeImageIndex = 0;
   inspectedDesigns: Record<number, { texts: string[], images: string[] }> = {};
+  updatingStatusForId: number | null = null;
+  statusUpdateError: string | null = null;
+  statusUpdateSuccess: string | null = null;
 
   constructor(private readonly factoryApi: FactoryApiService) {}
 
@@ -133,9 +136,9 @@ export class FactoryOrdersComponent implements OnInit {
         }
       });
     } catch (e) {}
-    return { 
-      texts: [...new Set(texts)], 
-      images: [...new Set(images.filter(img => !img.startsWith('data:')))] 
+    return {
+      texts: [...new Set(texts)],
+      images: [...new Set(images.filter(img => !img.startsWith('data:')))]
     };
   }
 
@@ -175,5 +178,38 @@ export class FactoryOrdersComponent implements OnInit {
 
   trackByOrderId(_: number, order: FactoryOrderSummary): number {
     return order.id;
+  }
+
+  canSetStatusToReady(order: FactoryOrderSummary): boolean {
+    // Allow setting to Ready if current status is Pending, Processing, Paid, or other pre-production statuses
+    const allowedCurrentStatuses = ['pending', 'processing', 'new', 'confirmed', 'paid', 'created', 'placed'];
+    const status = order.status?.toLowerCase() || '';
+    // Also hide if already Ready or beyond (Shipped, Delivered, Cancelled)
+    const completedStatuses = ['ready', 'shipped', 'delivered', 'cancelled'];
+    if (completedStatuses.includes(status)) return false;
+    return allowedCurrentStatuses.includes(status) || !completedStatuses.includes(status);
+  }
+
+  setOrderToReady(order: FactoryOrderSummary): void {
+    if (!this.canSetStatusToReady(order)) return;
+
+    this.updatingStatusForId = order.id;
+    this.statusUpdateError = null;
+    this.statusUpdateSuccess = null;
+
+    this.factoryApi.updateOrderStatus(order.id, 'Ready').subscribe({
+      next: () => {
+        this.updatingStatusForId = null;
+        this.statusUpdateSuccess = `Order #${order.id} marked as Ready!`;
+        // Update local order status
+        order.status = 'Ready';
+        setTimeout(() => this.statusUpdateSuccess = null, 3000);
+      },
+      error: (err: any) => {
+        this.updatingStatusForId = null;
+        this.statusUpdateError = err?.message || `Failed to update order #${order.id} status.`;
+        setTimeout(() => this.statusUpdateError = null, 5000);
+      }
+    });
   }
 }

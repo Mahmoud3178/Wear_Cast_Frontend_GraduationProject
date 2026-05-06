@@ -98,7 +98,12 @@
   var productImage, productStage, productTitleEl, productPriceEl, uploadInput, textModal, textInput, textCancel, textAdd;
   var colorNameEl, colorSwatches, textOptionsPanel, textFontSelect, textColorInput, textColorHex, textBendSlider, textBendValue;
   var textStrokeColorInput, textStrokeColorHex, textStrokeWidthSlider, textStrokeWidthValue, textShapeGrid, textAlignGrid, textContentInput;
+  var imageOptionsPanel, imgBrightnessSlider, imgContrastSlider, imgSaturationSlider, imgShapeSelect;
+  var imgBrightnessValue, imgContrastValue, imgSaturationValue;
   var saveModal, saveNameInput, saveCancel, saveConfirm, loadModal, savedListEl, loadCloseBtn;
+  var saveExistingNameInput, saveExistingChooseBtn;
+  var selectedUpdateDesignId = 0;
+  var selectedUpdateDesignName = '';
   var productDetailsModal, productDetailsOpenBtn, productDetailsCloseBtn;
   var productsModal, productsModalClose;
   var sizeQtyModal, sizeQtyRowsEl, sizeQtyModalClose, sizeQtyModalCancel, sizeQtyModalConfirm;
@@ -330,10 +335,19 @@
     } else {
       textOptionsPanel.classList.add('hidden');
     }
+    if (imageOptionsPanel) {
+      if (isImageObject(obj)) {
+        imageOptionsPanel.classList.remove('hidden');
+        syncImageOptionsFromObject(obj);
+      } else {
+        imageOptionsPanel.classList.add('hidden');
+      }
+    }
   }
 
   function onSelectionCleared() {
     textOptionsPanel.classList.add('hidden');
+    if (imageOptionsPanel) imageOptionsPanel.classList.add('hidden');
     var deleteBtn = document.getElementById('delete-selected-btn');
     if (deleteBtn) deleteBtn.classList.add('hidden');
     var actionsPanel = document.getElementById('element-actions-panel');
@@ -469,6 +483,77 @@
       } else if (obj.type === 'group' && obj.textSource) {
         textContentInput.value = obj.textSource || '';
       }
+    }
+  }
+
+  function isImageObject(obj) {
+    return !!obj && obj.type === 'image';
+  }
+
+  function setImageShapeStyle(obj, style) {
+    if (!isImageObject(obj)) return;
+    var normalized = style || 'normal';
+    var w = Math.max(1, Number(obj.width) || 1);
+    var h = Math.max(1, Number(obj.height) || 1);
+    if (normalized === 'circle') {
+      obj.clipPath = new fabric.Circle({
+        radius: Math.min(w, h) / 2,
+        originX: 'center',
+        originY: 'center',
+        left: 0,
+        top: 0
+      });
+      obj.wearcastImageStyle = 'circle';
+      return;
+    }
+    if (normalized === 'rounded') {
+      obj.clipPath = new fabric.Rect({
+        width: w,
+        height: h,
+        rx: Math.min(w, h) * 0.18,
+        ry: Math.min(w, h) * 0.18,
+        originX: 'center',
+        originY: 'center',
+        left: 0,
+        top: 0
+      });
+      obj.wearcastImageStyle = 'rounded';
+      return;
+    }
+    obj.clipPath = null;
+    obj.wearcastImageStyle = 'normal';
+  }
+
+  function setImageEffectsFromControls(obj) {
+    if (!isImageObject(obj)) return;
+    if (!imgBrightnessSlider || !imgContrastSlider || !imgSaturationSlider) return;
+    var brightness = ((parseInt(imgBrightnessSlider.value, 10) || 100) - 100) / 100;
+    var contrast = ((parseInt(imgContrastSlider.value, 10) || 100) - 100) / 100;
+    var saturation = ((parseInt(imgSaturationSlider.value, 10) || 100) - 100) / 100;
+    obj.filters = [
+      new fabric.Image.filters.Brightness({ brightness: brightness }),
+      new fabric.Image.filters.Contrast({ contrast: contrast }),
+      new fabric.Image.filters.Saturation({ saturation: saturation })
+    ];
+    obj.wearcastFxBrightness = parseInt(imgBrightnessSlider.value, 10) || 100;
+    obj.wearcastFxContrast = parseInt(imgContrastSlider.value, 10) || 100;
+    obj.wearcastFxSaturation = parseInt(imgSaturationSlider.value, 10) || 100;
+    obj.applyFilters();
+  }
+
+  function syncImageOptionsFromObject(obj) {
+    if (!isImageObject(obj) || !imageOptionsPanel) return;
+    var b = Number.isFinite(obj.wearcastFxBrightness) ? obj.wearcastFxBrightness : 100;
+    var c = Number.isFinite(obj.wearcastFxContrast) ? obj.wearcastFxContrast : 100;
+    var s = Number.isFinite(obj.wearcastFxSaturation) ? obj.wearcastFxSaturation : 100;
+    if (imgBrightnessSlider) imgBrightnessSlider.value = String(b);
+    if (imgContrastSlider) imgContrastSlider.value = String(c);
+    if (imgSaturationSlider) imgSaturationSlider.value = String(s);
+    if (imgBrightnessValue) imgBrightnessValue.textContent = b + '%';
+    if (imgContrastValue) imgContrastValue.textContent = c + '%';
+    if (imgSaturationValue) imgSaturationValue.textContent = s + '%';
+    if (imgShapeSelect) {
+      imgShapeSelect.value = obj.wearcastImageStyle || (obj.clipPath ? 'rounded' : 'normal');
     }
   }
 
@@ -837,7 +922,12 @@
       'fontSize',
       'fill',
       'stroke',
-      'strokeWidth'
+      'strokeWidth',
+      'wearcastFxBrightness',
+      'wearcastFxContrast',
+      'wearcastFxSaturation',
+      'wearcastImageStyle',
+      'clipPath'
     ]);
     if (undoStack.length >= MAX_UNDO) undoStack.shift();
     undoStack.push(JSON.stringify(json));
@@ -859,7 +949,12 @@
       'fontSize',
       'fill',
       'stroke',
-      'strokeWidth'
+      'strokeWidth',
+      'wearcastFxBrightness',
+      'wearcastFxContrast',
+      'wearcastFxSaturation',
+      'wearcastImageStyle',
+      'clipPath'
     ]);
     viewUndoStacks[currentProduct] = viewUndoStacks[currentProduct] || {};
     viewRedoStacks[currentProduct] = viewRedoStacks[currentProduct] || {};
@@ -903,7 +998,11 @@
         scaleX: scale,
         scaleY: scale,
         originX: 'center',
-        originY: 'center'
+        originY: 'center',
+        wearcastFxBrightness: 100,
+        wearcastFxContrast: 100,
+        wearcastFxSaturation: 100,
+        wearcastImageStyle: 'normal'
       });
       canvas.add(img);
       canvas.setActiveObject(img);
@@ -1121,6 +1220,10 @@
           scaleY: scale,
           originX: 'center',
           originY: 'center',
+          wearcastFxBrightness: 100,
+          wearcastFxContrast: 100,
+          wearcastFxSaturation: 100,
+          wearcastImageStyle: 'normal'
         });
         canvas.add(img);
         canvas.setActiveObject(img);
@@ -1393,47 +1496,61 @@
 
   function toggleSaveModeFields() {
     var modeUpdate = document.getElementById('save-mode-update');
-    var sel = document.getElementById('save-existing-select');
+    var chooseBtn = document.getElementById('save-existing-choose');
+    var nameInput = document.getElementById('save-existing-name');
     var upd = modeUpdate && modeUpdate.checked;
-    if (sel) sel.disabled = !upd;
+    if (chooseBtn) chooseBtn.disabled = !upd;
+    if (nameInput) {
+      nameInput.disabled = !upd;
+      nameInput.placeholder = upd ? 'Choose a saved design' : 'No draft selected';
+    }
+  }
+
+  function normalizeDesignListResponse(list) {
+    if (Array.isArray(list)) return list;
+    if (list && typeof list === 'object') {
+      if (Array.isArray(list.items)) return list.items;
+      if (Array.isArray(list.data)) return list.data;
+      if (list.data && typeof list.data === 'object' && Array.isArray(list.data.items)) {
+        return list.data.items;
+      }
+    }
+    return [];
+  }
+
+  function setSelectedUpdateTarget(id, name) {
+    selectedUpdateDesignId = parseInt(id, 10) || 0;
+    selectedUpdateDesignName = (name && String(name).trim()) || '';
+    var input = document.getElementById('save-existing-name');
+    if (input) {
+      input.value = selectedUpdateDesignId
+        ? (selectedUpdateDesignName || ('Design #' + selectedUpdateDesignId))
+        : '';
+    }
   }
 
   function refreshSaveModalDraftList() {
-    var sel = document.getElementById('save-existing-select');
-    if (!sel) return;
+    var input = document.getElementById('save-existing-name');
+    var chooseBtn = document.getElementById('save-existing-choose');
+    if (!input) return;
     var fnList = window.__WEARCAST_LIST_CUSTOMER_DESIGNS__;
-    sel.innerHTML = '';
-    var opt0 = document.createElement('option');
-    opt0.value = '';
-    opt0.textContent = 'Select a draft…';
-    sel.appendChild(opt0);
-    sel.disabled = true;
+    input.value = '';
+    selectedUpdateDesignId = 0;
+    selectedUpdateDesignName = '';
+    if (chooseBtn) chooseBtn.disabled = true;
     if (typeof fnList !== 'function') {
-      opt0.textContent = 'Sign in to list drafts';
+      input.placeholder = 'Sign in to list drafts';
       toggleSaveModeFields();
       return;
     }
     fnList()
-      .then(function (list) {
-        sel.innerHTML = '';
-        var o = document.createElement('option');
-        o.value = '';
-        o.textContent = 'Select a draft…';
-        sel.appendChild(o);
-        (Array.isArray(list) ? list : []).forEach(function (item) {
-          var opt = document.createElement('option');
-          opt.value = String(item.id);
-          opt.textContent = (item.name || 'Untitled') + ' (#' + item.id + ')';
-          sel.appendChild(opt);
-        });
+      .then(function () {
+        input.placeholder = 'Choose a saved design';
+        if (chooseBtn) chooseBtn.disabled = false;
         toggleSaveModeFields();
       })
       .catch(function () {
-        sel.innerHTML = '';
-        var o = document.createElement('option');
-        o.value = '';
-        o.textContent = 'Could not load drafts';
-        sel.appendChild(o);
+        input.placeholder = 'Could not load drafts';
         toggleSaveModeFields();
       });
   }
@@ -1455,7 +1572,6 @@
         return;
       }
       var modeUpdate = document.getElementById('save-mode-update');
-      var existingSelect = document.getElementById('save-existing-select');
       var doUpdate = modeUpdate && modeUpdate.checked;
       var existingId = 0;
       if (doUpdate) {
@@ -1463,7 +1579,7 @@
           alert('Update is not available. Sign in as a customer and refresh the page.');
           return;
         }
-        existingId = parseInt(existingSelect && existingSelect.value, 10) || 0;
+        existingId = selectedUpdateDesignId;
         if (!existingId) {
           alert('Choose which saved design to update.');
           return;
@@ -1643,7 +1759,7 @@
     }
     fnList()
       .then(function (list) {
-        renderSavedListFromArray(Array.isArray(list) ? list : []);
+        renderSavedListFromArray(normalizeDesignListResponse(list));
       })
       .catch(function (err) {
         var msg = err && err.message ? err.message : String(err);
@@ -1657,6 +1773,7 @@
 
   function openSaveModal() {
     saveNameInput.value = '';
+    setSelectedUpdateTarget(0, '');
     var modeNew = document.getElementById('save-mode-new');
     if (modeNew) modeNew.checked = true;
     refreshSaveModalDraftList();
@@ -1665,6 +1782,11 @@
   }
 
   function openLoadModal() {
+    var angularOpen = window.__WEARCAST_OPEN_SAVED_DESIGNS_MODAL__;
+    if (typeof angularOpen === 'function') {
+      angularOpen();
+      return;
+    }
     renderSavedList();
     loadModal.classList.remove('hidden');
   }
@@ -2052,6 +2174,21 @@
     window.__WEARCAST_DESIGNER_BOOTSTRAP__ = null;
   }
 
+  function mergeDesignerBootstrap(boot) {
+    if (!boot || !boot.products || typeof boot.products !== 'object') {
+      return;
+    }
+    Object.keys(boot.products).forEach(function (k) {
+      PRODUCTS[k] = boot.products[k];
+    });
+    if (Array.isArray(boot.colors) && boot.colors.length) {
+      boot.colors.forEach(function (c) {
+        if (COLORS.indexOf(c) === -1) COLORS.push(c);
+      });
+    }
+    rebuildProductListFromProducts();
+  }
+
   function hasFactoryCatalogProducts() {
     return Object.keys(PRODUCTS).some(function (k) {
       return k.length > 0 && k.charAt(0) === 'p';
@@ -2182,8 +2319,18 @@
     textBendSlider = document.getElementById('text-bend');
     textBendValue = document.getElementById('text-bend-value');
     textContentInput = document.getElementById('text-content-input');
+    imageOptionsPanel = document.getElementById('image-options-panel');
+    imgBrightnessSlider = document.getElementById('img-brightness');
+    imgContrastSlider = document.getElementById('img-contrast');
+    imgSaturationSlider = document.getElementById('img-saturation');
+    imgShapeSelect = document.getElementById('img-shape-style');
+    imgBrightnessValue = document.getElementById('img-brightness-value');
+    imgContrastValue = document.getElementById('img-contrast-value');
+    imgSaturationValue = document.getElementById('img-saturation-value');
     saveModal = document.getElementById('save-modal');
     saveNameInput = document.getElementById('save-name-input');
+    saveExistingNameInput = document.getElementById('save-existing-name');
+    saveExistingChooseBtn = document.getElementById('save-existing-choose');
     saveCancel = document.getElementById('save-cancel');
     saveConfirm = document.getElementById('save-confirm');
     loadModal = document.getElementById('load-modal');
@@ -2341,6 +2488,40 @@
       });
     }
 
+    var applyImageControls = function () {
+      var obj = canvas && canvas.getActiveObject ? canvas.getActiveObject() : null;
+      if (!isImageObject(obj)) return;
+      setImageEffectsFromControls(obj);
+      if (imgShapeSelect) setImageShapeStyle(obj, imgShapeSelect.value || 'normal');
+      canvas.renderAll();
+      saveState();
+      syncImageOptionsFromObject(obj);
+    };
+
+    if (imgBrightnessSlider) {
+      imgBrightnessSlider.addEventListener('input', function () {
+        if (imgBrightnessValue) imgBrightnessValue.textContent = this.value + '%';
+        applyImageControls();
+      });
+    }
+    if (imgContrastSlider) {
+      imgContrastSlider.addEventListener('input', function () {
+        if (imgContrastValue) imgContrastValue.textContent = this.value + '%';
+        applyImageControls();
+      });
+    }
+    if (imgSaturationSlider) {
+      imgSaturationSlider.addEventListener('input', function () {
+        if (imgSaturationValue) imgSaturationValue.textContent = this.value + '%';
+        applyImageControls();
+      });
+    }
+    if (imgShapeSelect) {
+      imgShapeSelect.addEventListener('change', function () {
+        applyImageControls();
+      });
+    }
+
     document.getElementById('undo-btn').addEventListener('click', undo);
     document.getElementById('redo-btn').addEventListener('click', redo);
 
@@ -2425,6 +2606,34 @@
     var saveModeUpdate = document.getElementById('save-mode-update');
     if (saveModeNew) saveModeNew.addEventListener('change', toggleSaveModeFields);
     if (saveModeUpdate) saveModeUpdate.addEventListener('change', toggleSaveModeFields);
+    if (saveExistingChooseBtn) {
+      saveExistingChooseBtn.addEventListener('click', function () {
+        var openSelector = window.__WEARCAST_OPEN_UPDATE_DESIGN_SELECTOR__;
+        if (typeof openSelector === 'function') {
+          openSelector();
+          return;
+        }
+        var fnList = window.__WEARCAST_LIST_CUSTOMER_DESIGNS__;
+        if (typeof fnList !== 'function') return;
+        fnList().then(function (list) {
+          var rows = normalizeDesignListResponse(list);
+          if (!rows.length) {
+            alert('No saved designs available to update.');
+            return;
+          }
+          var first = rows[0];
+          setSelectedUpdateTarget(first.id, first.name || ('Design #' + first.id));
+        });
+      });
+    }
+    window.__WEARCAST_SET_UPDATE_TARGET__ = function (id, name) {
+      setSelectedUpdateTarget(id, name);
+      if (saveModal) saveModal.classList.remove('hidden');
+      var modeUpdate = document.getElementById('save-mode-update');
+      if (modeUpdate) modeUpdate.checked = true;
+      toggleSaveModeFields();
+    };
+    toggleSaveModeFields();
     saveConfirm.addEventListener('click', function () {
       var name = saveNameInput.value.trim() || 'Untitled design';
       saveDesign(name);
@@ -2545,6 +2754,7 @@
     window.wearcastOpenProductsModal = openProductsModal;
     window.wearcastCloseProductsModal = closeProductsModal;
     window.wearcastGetProducts = function () { return PRODUCTS; };
+    window.wearcastMergeBootstrap = mergeDesignerBootstrap;
     window.wearcastLoadDesignById = loadDesignById;
     window.wearcastDuplicateSelected = duplicateSelectedObject;
     window.wearcastFlipHorizontal = flipHorizontal;

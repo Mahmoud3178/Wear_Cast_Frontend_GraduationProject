@@ -36,6 +36,8 @@
   </div>
 
   <div *ngIf="loadError" class="alert alert-danger py-2 small">{{ loadError }}</div>
+  <div *ngIf="statusUpdateError" class="alert alert-danger py-2 small">{{ statusUpdateError }}</div>
+  <div *ngIf="statusUpdateSuccess" class="alert alert-success py-2 small">{{ statusUpdateSuccess }}</div>
   <div *ngIf="loadingOrders" class="text-muted small mb-2">Loading orders from server…</div>
 
   <div class="alert alert-light border rounded-3" *ngIf="!loadingOrders && !orders.length && !loadError">
@@ -58,14 +60,30 @@
           </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-          <span class="badge rounded-pill bg-secondary-subtle text-secondary">{{ order.status }}</span>
-          <span class="fw-semibold">${{ order.totalAmount }}</span>
+          <span class="badge rounded-pill"
+                [class.bg-secondary-subtle]="order.status.toLowerCase() !== 'ready'"
+                [class.text-secondary]="order.status.toLowerCase() !== 'ready'"
+                [class.bg-success-subtle]="order.status.toLowerCase() === 'ready'"
+                [class.text-success]="order.status.toLowerCase() === 'ready'">
+            {{ order.status }}
+          </span>
+          <span class="fw-semibold">EGP {{ order.totalAmount | number:'1.2-2' }}</span>
           <button
             type="button"
             class="btn btn-sm btn-outline-dark rounded-pill px-3"
             (click)="toggleItems(order)"
           >
             {{ expandedOrderId === order.id ? 'Hide items' : 'View items' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-success rounded-pill px-3"
+            (click)="setOrderToReady(order)"
+            [disabled]="updatingStatusForId === order.id || !canSetStatusToReady(order)"
+            *ngIf="canSetStatusToReady(order)"
+          >
+            <span *ngIf="updatingStatusForId === order.id" class="spinner-border spinner-border-sm me-1"></span>
+            {{ updatingStatusForId === order.id ? 'Updating...' : 'Set to Ready' }}
           </button>
         </div>
       </div>
@@ -112,11 +130,11 @@
                   </div>
                   <div class="d-flex justify-content-between align-items-center mt-2">
                     <span class="small text-muted">Unit price</span>
-                    <strong>${{ item.unitPrice | number:'1.2-2' }}</strong>
+                    <strong>EGP {{ item.unitPrice | number:'1.2-2' }}</strong>
                   </div>
                   <div class="d-flex justify-content-between align-items-center">
                     <span class="small text-muted">Line total</span>
-                    <strong>${{ item.totalPrice | number:'1.2-2' }}</strong>
+                    <strong>EGP {{ item.totalPrice | number:'1.2-2' }}</strong>
                   </div>
                 </div>
               </div>

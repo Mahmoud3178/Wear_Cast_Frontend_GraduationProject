@@ -70,6 +70,16 @@ export class CustomerDesignComponent implements AfterViewInit {
   showReviewForm = false;
   isAuthenticated = false;
 
+  // Saved Designs (My Designs) pagination and search
+  savedDesigns: CustomerDesignSummary[] = [];
+  savedDesignsSearchTerm = '';
+  savedDesignsPageIndex = 1;
+  savedDesignsPageSize = 8;
+  savedDesignsTotalCount = 0;
+  savedDesignsTotalPages = 1;
+  loadingSavedDesigns = false;
+  savedDesignsModalMode: 'load' | 'update' = 'load';
+
   constructor(
     private readonly catalog: DesignCatalogService,
     private readonly auth: AuthService,
@@ -94,11 +104,12 @@ export class CustomerDesignComponent implements AfterViewInit {
       __WEARCAST_ADD_DESIGNED_TO_CART__?: (
         items: AddOrUpdateDesignedToCartRequest[]
       ) => Promise<void>;
-      __WEARCAST_LIST_CUSTOMER_DESIGNS__?: () => Promise<CustomerDesignSummary[]>;
+      __WEARCAST_LIST_CUSTOMER_DESIGNS__?: (pageIndex?: number, pageSize?: number, searchTerm?: string) => Promise<{ items: CustomerDesignSummary[]; totalCount: number; totalPages: number }>;
       __WEARCAST_GET_CUSTOMER_DESIGN__?: (
         id: number
       ) => Promise<Record<string, unknown> | null>;
       __WEARCAST_DELETE_CUSTOMER_DESIGN__?: (id: number) => Promise<void>;
+      __WEARCAST_LOAD_DESIGN_TO_CANVAS__?: (id: number) => Promise<void>;
       __WEARCAST_LOAD_DESIGN_ASSET_CATEGORIES__?: () => Promise<DesignAssetCategoryRow[]>;
       __WEARCAST_LOAD_DESIGN_ASSETS__?: (
         categoryId: number | null,
@@ -107,6 +118,9 @@ export class CustomerDesignComponent implements AfterViewInit {
       ) => Promise<DesignAssetRow[]>;
       wearcastLoadDesignById?: (id: number) => void;
       wearcastOnProductChanged?: (baseProductId: number) => void;
+      __WEARCAST_OPEN_SAVED_DESIGNS_MODAL__?: () => void;
+      __WEARCAST_OPEN_UPDATE_DESIGN_SELECTOR__?: () => void;
+      __WEARCAST_SET_UPDATE_TARGET__?: (id: number, name: string) => void;
     };
 
     w.__WEARCAST_LOAD_DESIGN_ASSET_CATEGORIES__ = async () =>
@@ -198,14 +212,51 @@ export class CustomerDesignComponent implements AfterViewInit {
         }
       };
 
-      w.__WEARCAST_LIST_CUSTOMER_DESIGNS__ = async () =>
-        firstValueFrom(this.customerDesign.listMyDesigns(1, 100));
+      w.__WEARCAST_LIST_CUSTOMER_DESIGNS__ = async (pageIndex = 1, pageSize = 8, searchTerm = '') =>
+        firstValueFrom(this.customerDesign.listMyDesigns(pageIndex, pageSize, searchTerm));
 
       w.__WEARCAST_GET_CUSTOMER_DESIGN__ = async (id: number) =>
         firstValueFrom(this.customerDesign.getMyDesignById(id));
 
       w.__WEARCAST_DELETE_CUSTOMER_DESIGN__ = async (id: number) => {
         await firstValueFrom(this.customerDesign.deleteMyDesign(id));
+      };
+
+      w.__WEARCAST_LOAD_DESIGN_TO_CANVAS__ = async (id: number) => {
+        if (typeof w.wearcastLoadDesignById !== 'function') {
+          throw new Error('Designer loader is not ready yet.');
+        }
+        w.wearcastLoadDesignById(id);
+      };
+
+      // Open saved designs modal and load designs
+      w.__WEARCAST_OPEN_SAVED_DESIGNS_MODAL__ = () => {
+        // Reset pagination and search
+        this.savedDesignsModalMode = 'load';
+        this.savedDesignsPageIndex = 1;
+        this.savedDesignsSearchTerm = '';
+        // Load designs
+        this.loadSavedDesigns();
+        // Open modal (vanilla JS will handle the display)
+        const modal = document.getElementById('load-modal');
+        if (modal) {
+          modal.classList.remove('hidden');
+        }
+      };
+
+      // Open modal for selecting which design to update
+      w.__WEARCAST_OPEN_UPDATE_DESIGN_SELECTOR__ = () => {
+        // Reset pagination and search
+        this.savedDesignsModalMode = 'update';
+        this.savedDesignsPageIndex = 1;
+        this.savedDesignsSearchTerm = '';
+        // Load designs
+        this.loadSavedDesigns();
+        // Open modal
+        const modal = document.getElementById('load-modal');
+        if (modal) {
+          modal.classList.remove('hidden');
+        }
       };
     } else {
       delete w.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
@@ -214,6 +265,10 @@ export class CustomerDesignComponent implements AfterViewInit {
       delete w.__WEARCAST_LIST_CUSTOMER_DESIGNS__;
       delete w.__WEARCAST_GET_CUSTOMER_DESIGN__;
       delete w.__WEARCAST_DELETE_CUSTOMER_DESIGN__;
+      delete w.__WEARCAST_OPEN_SAVED_DESIGNS_MODAL__;
+      delete w.__WEARCAST_OPEN_UPDATE_DESIGN_SELECTOR__;
+      delete w.__WEARCAST_LOAD_DESIGN_TO_CANVAS__;
+      delete w.__WEARCAST_SET_UPDATE_TARGET__;
     }
 
     // Connect product switching in designer to Angular reviews
@@ -433,7 +488,12 @@ export class CustomerDesignComponent implements AfterViewInit {
     this.selectedProductId = id;
     this.loadReviews(id);
 
-    const w = window as any;
+    const w = window as Window & {
+      wearcastGetProducts?: () => Record<string, unknown>;
+      wearcastSetProduct?: (productKey: string) => void;
+      wearcastCloseProductsModal?: () => void;
+      wearcastMergeBootstrap?: (boot: { products: Record<string, unknown>; colors: string[] }) => void;
+    };
     const productKey = `p${id}`;
 
     if (typeof w.wearcastGetProducts === 'function') {
@@ -449,7 +509,34 @@ export class CustomerDesignComponent implements AfterViewInit {
       }
     }
 
-    window.location.href = `/customer/design?designedProductIds=${id}`;
+    // Product wasn't in the live registry; fetch and merge it without reloading the page.
+    const token = this.auth.getToken();
+    this.catalog.loadDesignerBootstrap(token, { extraProductIds: [id] }).subscribe({
+      next: boot => {
+        if (typeof w.wearcastMergeBootstrap === 'function') {
+          w.wearcastMergeBootstrap(boot as { products: Record<string, unknown>; colors: string[] });
+        } else {
+          const bootstrapWindow = window as Window & {
+            __WEARCAST_DESIGNER_BOOTSTRAP__?: { products: Record<string, unknown>; colors: string[] };
+          };
+          bootstrapWindow.__WEARCAST_DESIGNER_BOOTSTRAP__ = {
+            products: boot.products as Record<string, unknown>,
+            colors: boot.colors
+          };
+        }
+
+        if (typeof w.wearcastSetProduct === 'function') {
+          w.wearcastSetProduct(productKey);
+        }
+        if (typeof w.wearcastCloseProductsModal === 'function') {
+          w.wearcastCloseProductsModal();
+        }
+      },
+      error: err => {
+        console.error('Failed to switch product without reload:', err);
+        alert('Could not load this product right now. Please try again.');
+      }
+    });
   }
 
   loadReviews(productId: number): void {
@@ -658,5 +745,108 @@ export class CustomerDesignComponent implements AfterViewInit {
       return map[value];
     }
     return 'All';
+  }
+
+  // Saved designs search and pagination methods
+  searchSavedDesigns(): void {
+    this.savedDesignsPageIndex = 1;
+    this.loadSavedDesigns();
+  }
+
+  loadSavedDesigns(): void {
+    this.loadingSavedDesigns = true;
+    this.customerDesign.listMyDesigns(
+      this.savedDesignsPageIndex,
+      this.savedDesignsPageSize,
+      this.savedDesignsSearchTerm
+    ).subscribe({
+      next: result => {
+        this.savedDesigns = result.items;
+        this.savedDesignsTotalCount = result.totalCount;
+        this.savedDesignsTotalPages = result.totalPages;
+        this.loadingSavedDesigns = false;
+      },
+      error: () => {
+        this.savedDesigns = [];
+        this.loadingSavedDesigns = false;
+      }
+    });
+  }
+
+  goToSavedDesignsPage(page: number): void {
+    if (page < 1 || page > this.savedDesignsTotalPages || page === this.savedDesignsPageIndex) return;
+    this.savedDesignsPageIndex = page;
+    this.loadSavedDesigns();
+  }
+
+  nextSavedDesignsPage(): void {
+    if (this.savedDesignsPageIndex < this.savedDesignsTotalPages) {
+      this.savedDesignsPageIndex++;
+      this.loadSavedDesigns();
+    }
+  }
+
+  prevSavedDesignsPage(): void {
+    if (this.savedDesignsPageIndex > 1) {
+      this.savedDesignsPageIndex--;
+      this.loadSavedDesigns();
+    }
+  }
+
+  onLoadDesign(designId: number): void {
+    // Use the window global function to load design into canvas
+    const w = window as Window & {
+      __WEARCAST_LOAD_DESIGN_TO_CANVAS__?: (id: number) => Promise<void>;
+    };
+    if (w.__WEARCAST_LOAD_DESIGN_TO_CANVAS__) {
+      w.__WEARCAST_LOAD_DESIGN_TO_CANVAS__(designId).then(() => {
+        // Close the modal after loading
+        const loadModal = document.getElementById('load-modal');
+        if (loadModal) {
+          loadModal.classList.add('hidden');
+        }
+      }).catch((err) => {
+        console.error('Failed to load design into canvas:', err);
+        alert('Could not load the selected design. Please try again.');
+      });
+    }
+  }
+
+  onSavedDesignPrimaryAction(design: CustomerDesignSummary): void {
+    if (this.savedDesignsModalMode === 'update') {
+      const w = window as Window & {
+        __WEARCAST_SET_UPDATE_TARGET__?: (id: number, name: string) => void;
+      };
+      if (typeof w.__WEARCAST_SET_UPDATE_TARGET__ === 'function') {
+        w.__WEARCAST_SET_UPDATE_TARGET__(design.id, design.name || `Design #${design.id}`);
+      }
+      const loadModal = document.getElementById('load-modal');
+      if (loadModal) {
+        loadModal.classList.add('hidden');
+      }
+      return;
+    }
+    this.onLoadDesign(design.id);
+  }
+
+  onDeleteDesign(designId: number): void {
+    if (!confirm('Are you sure you want to delete this design?')) return;
+
+    this.customerDesign.deleteMyDesign(designId).subscribe({
+      next: () => {
+        // Remove from local list and reload
+        this.savedDesigns = this.savedDesigns.filter(d => d.id !== designId);
+        this.savedDesignsTotalCount--;
+        // Reload if current page is now empty
+        if (this.savedDesigns.length === 0 && this.savedDesignsPageIndex > 1) {
+          this.savedDesignsPageIndex--;
+        }
+        this.loadSavedDesigns();
+      },
+      error: (err) => {
+        console.error('Failed to delete design:', err);
+        alert('Failed to delete design. Please try again.');
+      }
+    });
   }
 }

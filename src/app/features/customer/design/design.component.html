@@ -228,6 +228,46 @@
         <button type="button" class="btn delete-btn" id="delete-selected-btn">Remove selected</button>
       </div>
 
+      <div id="image-options-panel" class="text-options-panel hidden">
+        <div class="panel-header">
+          <h3 class="panel-title">Image effects</h3>
+          <p class="panel-subtitle">Adjust selected logo/photo style</p>
+        </div>
+
+        <div class="option-group">
+          <div class="label-with-value">
+            <label class="option-label">Brightness</label>
+            <span class="badge-value" id="img-brightness-value">100%</span>
+          </div>
+          <input type="range" id="img-brightness" class="modern-range" min="0" max="200" value="100">
+        </div>
+
+        <div class="option-group">
+          <div class="label-with-value">
+            <label class="option-label">Contrast</label>
+            <span class="badge-value" id="img-contrast-value">100%</span>
+          </div>
+          <input type="range" id="img-contrast" class="modern-range" min="0" max="200" value="100">
+        </div>
+
+        <div class="option-group">
+          <div class="label-with-value">
+            <label class="option-label">Saturation</label>
+            <span class="badge-value" id="img-saturation-value">100%</span>
+          </div>
+          <input type="range" id="img-saturation" class="modern-range" min="0" max="200" value="100">
+        </div>
+
+        <div class="option-group">
+          <label class="option-label">Shape style</label>
+          <select id="img-shape-style" class="modern-select">
+            <option value="normal">Original</option>
+            <option value="circle">Circle</option>
+            <option value="rounded">Rounded</option>
+          </select>
+        </div>
+      </div>
+
       <button type="button" class="cta-btn">Choose size &amp; quantity</button>
     </div>
   </aside>
@@ -378,10 +418,20 @@
         <span>Update existing</span>
       </label>
     </div>
-    <label class="form-label small text-muted mb-1" for="save-existing-select">Draft to update</label>
-    <select id="save-existing-select" class="form-select form-select-sm mb-3" disabled aria-label="Choose saved design to update">
-      <option value="">Loading…</option>
-    </select>
+    <label class="form-label small text-muted mb-1" for="save-existing-name">Draft to update</label>
+    <div class="d-flex gap-2 mb-3">
+      <input
+        type="text"
+        id="save-existing-name"
+        class="form-control form-control-sm"
+        placeholder="No draft selected"
+        readonly
+        aria-label="Selected saved design for update"
+      >
+      <button type="button" class="btn btn-sm btn-outline-primary" id="save-existing-choose">
+        Choose from saved
+      </button>
+    </div>
     <label class="form-label small text-muted mb-1" for="save-name-input">Name</label>
     <input type="text" id="save-name-input" placeholder="Design name">
     <div class="modal-actions">
@@ -394,8 +444,97 @@
 <!-- Load design modal -->
 <div id="load-modal" class="modal hidden">
   <div class="modal-content modal-wide">
-    <h3>My saved designs</h3>
-    <div class="saved-list" id="saved-list"></div>
+    <h3>{{ savedDesignsModalMode === 'update' ? 'Select design to update' : 'My saved designs' }}</h3>
+
+    <!-- Search and Pagination Controls -->
+    <div class="saved-designs-controls mb-3">
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <div class="flex-grow-1" style="min-width: 200px;">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search your designs..."
+            [(ngModel)]="savedDesignsSearchTerm"
+            (keyup.enter)="searchSavedDesigns()"
+          >
+        </div>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="searchSavedDesigns()"
+          [disabled]="loadingSavedDesigns"
+        >
+          <span *ngIf="loadingSavedDesigns" class="spinner-border spinner-border-sm me-1"></span>
+          Search
+        </button>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-center align-items-center gap-2 mt-3" *ngIf="savedDesignsTotalPages > 1">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-dark"
+          (click)="prevSavedDesignsPage()"
+          [disabled]="savedDesignsPageIndex === 1 || loadingSavedDesigns"
+        >
+          <i class="fa-solid fa-chevron-left"></i> Prev
+        </button>
+        <span class="text-muted small">
+          Page {{ savedDesignsPageIndex }} of {{ savedDesignsTotalPages }}
+        </span>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-dark"
+          (click)="nextSavedDesignsPage()"
+          [disabled]="savedDesignsPageIndex === savedDesignsTotalPages || loadingSavedDesigns"
+        >
+          Next <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+      <div *ngIf="savedDesignsTotalCount > 0" class="text-center text-muted small mt-2">
+        Showing {{ savedDesignsTotalCount }} design{{ savedDesignsTotalCount !== 1 ? 's' : '' }}
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="loadingSavedDesigns" class="text-center text-muted py-4">
+      <span class="spinner-border spinner-border-sm me-2"></span>
+      Loading your designs...
+    </div>
+
+    <!-- Designs list -->
+    <div *ngIf="!loadingSavedDesigns" class="saved-list" id="saved-list">
+      <div *ngIf="savedDesigns.length === 0" class="text-center text-muted py-4">
+        No saved designs found.
+      </div>
+
+      <div
+        *ngFor="let design of savedDesigns"
+        class="saved-design-item d-flex align-items-center gap-3 p-3 border-bottom"
+        (click)="onSavedDesignPrimaryAction(design)"
+        style="cursor: pointer;"
+      >
+        <div class="saved-design-preview" style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; background: #f1f5f9; display: flex; align-items: center; justify-content: center;">
+          <img *ngIf="design.previewUrl" [src]="design.previewUrl" [alt]="design.name" style="width: 100%; height: 100%; object-fit: cover;">
+          <span *ngIf="!design.previewUrl" style="font-size: 24px;">👕</span>
+        </div>
+        <div class="saved-design-info flex-grow-1">
+          <h5 class="mb-1" style="font-size: 1rem; font-weight: 600;">{{ design.name || 'Untitled Design' }}</h5>
+          <p class="mb-0 text-muted small">
+            {{ design.createdAt ? (design.createdAt | date:'medium') : 'Custom Design' }}
+          </p>
+        </div>
+        <div class="saved-design-actions d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="$event.stopPropagation(); onSavedDesignPrimaryAction(design)">
+            {{ savedDesignsModalMode === 'update' ? 'Select' : 'Load' }}
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger" (click)="$event.stopPropagation(); onDeleteDesign(design.id)">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-actions">
       <button type="button" class="btn secondary" id="load-close">Close</button>
     </div>

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { DecimalPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DesignCatalogService } from '../../../core/services/design-catalog.service';
@@ -13,23 +13,19 @@ import {
   TARGET_AUDIENCE_OPTIONS
 } from '../../../core/services/factory-api.service';
 
-/** SortBy enum guesses — omit for API default sort. Adjust if backend documents differ. */
-const CATALOG_SORT_OPTIONS: ReadonlyArray<{ label: string; value: number | null }> = [
+const CATALOG_SORT_OPTIONS: ReadonlyArray<{ label: string; value: string | null }> = [
   { label: 'Default', value: null },
-  { label: 'Option 1', value: 1 },
-  { label: 'Option 2', value: 2 },
-  { label: 'Option 3', value: 3 },
-  { label: 'Option 4', value: 4 },
-  { label: 'Option 5', value: 5 },
-  { label: 'Option 6', value: 6 },
-  { label: 'Option 7', value: 7 },
-  { label: 'Option 8', value: 8 }
+  { label: 'Most Popular', value: 'MostPopular' },
+  { label: 'Newest', value: 'Newest' },
+  { label: 'Price (Low to High)', value: 'PriceAsc' },
+  { label: 'Price (High to Low)', value: 'PriceDesc' },
+  { label: 'Best Seller', value: 'BestSeller' }
 ];
 
 @Component({
   selector: 'app-factory-products',
   standalone: true,
-  imports: [RouterLink, NgFor, NgIf, FormsModule],
+  imports: [RouterLink, NgFor, NgIf, FormsModule, DecimalPipe],
   templateUrl: './factory-products.component.html'
 })
 export class FactoryProductsComponent implements OnInit {

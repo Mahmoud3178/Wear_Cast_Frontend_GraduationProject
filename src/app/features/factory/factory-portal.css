@@ -300,3 +300,64 @@ body.wc-theme-baby-blue .wc-factory-sidebar .btn.text-white.border:hover {
 body.wc-theme-baby-blue .list-group-item:hover {
   background-color: rgba(111, 175, 239, 0.06);
 }
+
+@media (max-width: 992px) {
+  .wc-factory-shell .wc-factory-main {
+    padding-inline: 10px;
+  }
+
+  .wc-factory-shell .wc-factory-card,
+  .wc-factory-shell .card {
+    border-radius: 12px !important;
+  }
+
+  .wc-factory-shell .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .wc-factory-shell table {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 768px) {
+  .wc-factory-shell .wc-factory-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .wc-factory-shell .wc-factory-sidebar nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .wc-factory-shell .wc-factory-sidebar .nav-pill {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.55rem;
+  }
+
+  .wc-factory-shell .container,
+  .wc-factory-shell .container-fluid {
+    padding-inline: 10px;
+  }
+
+  .wc-factory-shell .row {
+    --bs-gutter-x: 0.75rem;
+  }
+
+  .wc-factory-shell .btn {
+    min-height: 38px;
+  }
+
+  .wc-factory-shell .modal-dialog {
+    margin: 0.5rem;
+  }
+
+  .wc-factory-shell .modal-body,
+  .wc-factory-shell .card-body {
+    padding: 0.85rem;
+  }
+}

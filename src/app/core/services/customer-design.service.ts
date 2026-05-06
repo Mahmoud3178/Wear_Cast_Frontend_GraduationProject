@@ -47,9 +47,9 @@ interface ApiEnvelope<T = unknown> {
 export class CustomerDesignService {
   private readonly base = environment.apiUrl;
 
-  /** 1×1 PNG — server always receives four multipart parts when a side is missing. */
+  /** 100x100 transparent PNG — server always receives four multipart parts when a side is missing. */
   private static readonly placeholderViewPngDataUrl =
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAjDMOZf6BzO0A0KvyRVcsjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjI2DMz8n8j7r45xNkAAAAASUVORK5CYII=';
 
   constructor(private readonly http: HttpClient) {}
 
@@ -135,7 +135,30 @@ export class CustomerDesignService {
     console.log('[WearCast] Name:', name, 'AssetCount:', assetCount);
     console.log('[WearCast] ProductId:', body.productId, 'ProductColorId:', body.productColorId);
     console.log('[WearCast] viewDesignsJson length:', body.viewDesignsJson?.length ?? 0);
-    console.log('[WearCast] frontImage length:', (body.frontImage && typeof body.frontImage === 'string') ? body.frontImage.length : 'not-string');
+    console.log('[WearCast] API Base URL:', this.base || '(empty - proxied)');
+
+    // Log image info (safely)
+    const logImageInfo = (label: string, img: unknown) => {
+      if (!img) return console.log(`[WearCast] ${label}: null/undefined`);
+      if (typeof img === 'string') {
+        if (img.startsWith('data:')) {
+          return console.log(`[WearCast] ${label}: data URL (${img.length} chars)`);
+        }
+        return console.log(`[WearCast] ${label}: string (${img.length} chars)`);
+      }
+      if (img instanceof Blob) {
+        return console.log(`[WearCast] ${label}: Blob (${img.size} bytes, ${img.type})`);
+      }
+      if (img instanceof File) {
+        return console.log(`[WearCast] ${label}: File (${img.name}, ${img.size} bytes)`);
+      }
+      console.log(`[WearCast] ${label}: unknown type`, typeof img);
+    };
+
+    logImageInfo('frontImage', body.frontImage);
+    logImageInfo('backImage', body.backImage);
+    logImageInfo('leftImage', body.leftImage);
+    logImageInfo('rightImage', body.rightImage);
 
     return this.http.post<unknown>(url, fd).pipe(
       map(raw => {
@@ -196,15 +219,25 @@ export class CustomerDesignService {
   }
 
   private dataURLToBlob(dataURL: string): Blob {
-    const arr = dataURL.split(',');
-    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
+    try {
+      const arr = dataURL.split(',');
+      if (arr.length < 2) {
+        console.error('[CustomerDesignService] Invalid data URL format');
+        return new Blob([], { type: 'image/png' });
+      }
+      const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], { type: mime });
+    } catch (err) {
+      console.error('[CustomerDesignService] Failed to convert data URL to blob:', err);
+      // Return empty blob as fallback
+      return new Blob([], { type: 'image/png' });
     }
-    return new Blob([u8arr], { type: mime });
   }
 
   /** Generate view images from canvas elements or data URLs for the 4 product views.
@@ -234,20 +267,44 @@ export class CustomerDesignService {
     return result;
   }
 
-  /** GET /api/customers/me/designs — paginated list of the customer’s saved designs. */
+  /** GET /api/customers/me/designs — paginated list of the customer's saved designs with optional search. */
   listMyDesigns(
     pageIndex = 1,
-    pageSize = 50
-  ): Observable<CustomerDesignSummary[]> {
+    pageSize = 10,
+    searchTerm?: string
+  ): Observable<{ items: CustomerDesignSummary[]; totalCount: number; totalPages: number }> {
     const url = `${this.base}/api/customers/me/designs`;
+    const params: Record<string, string> = {
+      pageIndex: String(pageIndex),
+      pageSize: String(pageSize)
+    };
+    if (searchTerm && searchTerm.trim()) {
+      params['searchTerm'] = searchTerm.trim();
+    }
     return this.http
-      .get<unknown>(url, {
-        params: {
-          pageIndex: String(pageIndex),
-          pageSize: String(pageSize)
+      .get<unknown>(url, { params })
+      .pipe(map(raw => {
+        const normalized = normalizeCustomerDesignList(raw);
+        // Try to extract pagination info from response
+        let totalCount = normalized.length;
+        let totalPages = 1;
+        if (raw && typeof raw === 'object') {
+          const o = raw as Record<string, unknown>;
+          const data = o['data'] ?? o['Data'] ?? o;
+          if (data && typeof data === 'object' && !Array.isArray(data)) {
+            const d = data as Record<string, unknown>;
+            const tc = d['totalCount'] ?? d['TotalCount'] ?? d['total'] ?? d['Total'];
+            const tp = d['totalPages'] ?? d['TotalPages'] ?? d['pages'] ?? d['Pages'];
+            if (typeof tc === 'number') totalCount = tc;
+            if (typeof tp === 'number') totalPages = tp;
+          }
         }
-      })
-      .pipe(map(raw => normalizeCustomerDesignList(raw)));
+        // Calculate totalPages if not provided
+        if (totalPages === 1 && totalCount > pageSize) {
+          totalPages = Math.ceil(totalCount / pageSize);
+        }
+        return { items: normalized, totalCount, totalPages };
+      }));
   }
 
   /** GET /api/customers/me/designs/{id} — full design for restoring the editor. */

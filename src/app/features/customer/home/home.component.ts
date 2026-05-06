@@ -41,6 +41,9 @@ export class HomeComponent implements OnInit, AfterViewInit {
   newArrivals: NewArrivalProduct[] = [];
   newArrivalsLoading = true;
 
+  bestSellers: NewArrivalProduct[] = [];
+  bestSellersLoading = true;
+
   readonly productShowcase: ReadonlyArray<{
     label: string;
     image: string;
@@ -107,6 +110,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
       this.showLanding = !localStorage.getItem(LANDING_SEEN_KEY);
     }
     this.loadNewArrivals();
+    this.loadBestSellers();
   }
 
   ngAfterViewInit(): void {
@@ -162,6 +166,35 @@ export class HomeComponent implements OnInit, AfterViewInit {
     ).subscribe(products => {
       this.newArrivals = products;
       this.newArrivalsLoading = false;
+    });
+  }
+
+  private loadBestSellers(): void {
+    this.http.get<any>(`${environment.apiUrl}/api/FixedProduct/GetAll`, {
+      params: { PageSize: 5, PageIndex: 1, SortBy: 'bestSeller' }
+    }).pipe(
+      map(res => {
+        let rows: any = res?.data ?? res;
+        if (rows && typeof rows === 'object' && !Array.isArray(rows)) {
+          rows = rows.items ?? rows.Items ?? rows.data ?? rows.Data ?? rows.products ?? rows;
+        }
+        if (rows && typeof rows === 'object' && !Array.isArray(rows)) {
+          rows = rows.items ?? rows.Items ?? rows.records ?? [];
+        }
+        if (!Array.isArray(rows)) return [];
+        return rows.slice(0, 5).map((p: any) => ({
+          id: p.id || p.Id,
+          name: p.name || p.Name || p.productName || 'Product',
+          imageUrl: p.imageUrl || p.ImageUrl || p.mainImageUrl || p.MainImageUrl ||
+                    (p.colors?.[0]?.mainImageUrl) || (p.colors?.[0]?.imageUrl) || null,
+          price: p.price || p.Price || p.basePrice || 0,
+          category: p.categoryName || p.CategoryName || ''
+        } as NewArrivalProduct));
+      }),
+      catchError(() => of([]))
+    ).subscribe(products => {
+      this.bestSellers = products;
+      this.bestSellersLoading = false;
     });
   }
 
