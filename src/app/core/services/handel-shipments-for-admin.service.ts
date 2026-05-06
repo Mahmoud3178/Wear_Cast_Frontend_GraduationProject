@@ -7,32 +7,25 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class HandelShipmentsForAdminService {
-
   private api = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
   // 🔹 GET ALL SHIPMENTS
   getShipments(pageIndex = 1, pageSize = 10): Observable<any> {
-    let params = new HttpParams()
+    const params = new HttpParams()
       .set('pageIndex', pageIndex)
       .set('pageSize', pageSize);
-
     return this.http.get(`${this.api}/api/Shipments`, { params });
   }
 
-  // 🔹 DETAILS
+  // 🔹 DETAILS — يرجع الشيبمنت مع orders[]
   getShipmentDetails(id: number): Observable<any> {
     return this.http.get(`${this.api}/api/Orders/shipment/${id}`);
   }
 
-  // 🔹 ITEMS
-  getShipmentItems(id: number, page = 1, size = 10): Observable<any> {
-    let params = new HttpParams()
-      .set('pageNumber', page)
-      .set('pageSize', size)
-      .set('sortDescending', false);
-
-    return this.http.get(`${this.api}/api/Orders/shipment/${id}/items`, { params });
+  // 🔹 ORDER ITEMS — GET /api/Orders/{orderId}/items
+  getOrderItems(orderId: number): Observable<any> {
+    return this.http.get(`${this.api}/api/Orders/${orderId}/items`);
   }
 }

@@ -3,6 +3,15 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } fro
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 
+// ── الصلاحيات لكل role ──────────────────────────────────────────
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  SuperAdmin:            ['*'],  // كل حاجه
+  OperationsAdmin:       ['dashboard', 'shipments', 'delivery-company'],
+  VendorAdmin:           ['dashboard', 'Factory', 'seller-applications', 'stores'],
+  CatalogAdmin:          ['dashboard', 'products', 'design-products', 'categories', 'logos'],
+  CustomerServiceAdmin:  ['dashboard', 'orders', 'customers'],
+};
+
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
@@ -12,31 +21,31 @@ import { filter } from 'rxjs/operators';
 })
 export class AdminLayoutComponent implements OnInit {
 
-  sidebarOpen = false;
+  sidebarOpen     = false;
   showLogoutModal = false;
-  adminName = 'Administrator';
-  adminInitials = 'A';
+  adminName       = 'Administrator';
+  adminInitials   = 'A';
+  adminRole       = 'SuperAdmin';
   currentPageTitle = 'Dashboard';
 
-  // Map route segments to readable titles
   private readonly routeTitles: Record<string, string> = {
-    'dashboard': 'Dashboard',
-    'customers': 'Customers',
-    'stores': 'Stores',
+    'dashboard':           'Dashboard',
+    'customers':           'Customers',
+    'stores':              'Stores',
     'seller-applications': 'Seller Applications',
-    'admins': 'Admins',
-    'products': 'Products',
-    'design-products': 'Design Products',
-    'categories': 'Categories',
-    'logos': 'Logos',
-    'orders': 'Orders',
-    'shipments': 'Shipments',
-    'delivery-company': 'Delivery Company',
-    'Factory': 'Factory',
-    'add-logos': 'Add Logos',
-    'templets': 'Templates',
-    'users': 'Users',
-    'reports': 'Reports',
+    'admins':              'Admins',
+    'products':            'Products',
+    'design-products':     'Design Products',
+    'categories':          'Categories',
+    'logos':               'Logos',
+    'orders':              'Orders',
+    'shipments':           'Shipments',
+    'delivery-company':    'Delivery Company',
+    'Factory':             'Factory',
+    'add-logos':           'Add Logos',
+    'templets':            'Templates',
+    'users':               'Users',
+    'reports':             'Reports',
   };
 
   constructor(private router: Router) {}
@@ -44,43 +53,58 @@ export class AdminLayoutComponent implements OnInit {
   ngOnInit() {
     this.loadAdminInfo();
     this.updatePageTitle(this.router.url);
-
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
-      .subscribe((e: any) => {
-        this.updatePageTitle(e.urlAfterRedirects || e.url);
-      });
+      .subscribe((e: any) => this.updatePageTitle(e.urlAfterRedirects || e.url));
   }
 
+  // ── صلاحية: هل الـ route ده مسموح للرول الحالي؟ ──────────────
+  canAccess(route: string): boolean {
+    const perms = ROLE_PERMISSIONS[this.adminRole] ?? [];
+    return perms.includes('*') || perms.includes(route);
+  }
+
+  // ── JWT decode ────────────────────────────────────────────────
   private loadAdminInfo(): void {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const part = token.split('.')[1];
+      const part   = token.split('.')[1];
       if (!part) return;
       const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
       const padded = base64 + '==='.slice((base64.length + 3) % 4);
       const payload = JSON.parse(atob(padded));
 
-      const given = payload['given_name']
-        ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']
-        ?? '';
-      const family = payload['family_name']
-        ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname']
-        ?? '';
+      // ── Role ──
+      const rawRole =
+        payload['role'] ??
+        payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ??
+        'SuperAdmin';
+
+      // الـ roleMap يحول الـ numeric role لو كان رقم
+      const numericToRole: Record<number, string> = {
+        16: 'SuperAdmin',
+        1:  'OperationsAdmin',
+        2:  'VendorAdmin',
+        4:  'CatalogAdmin',
+        8:  'CustomerServiceAdmin',
+      };
+      this.adminRole = (typeof rawRole === 'number')
+        ? (numericToRole[rawRole] ?? 'SuperAdmin')
+        : rawRole;
+
+      // ── Name ──
+      const given  = payload['given_name']  ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']  ?? '';
+      const family = payload['family_name'] ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname']     ?? '';
 
       if (given || family) {
         this.adminName = [given, family].filter(Boolean).join(' ');
       } else {
-        const fullName = payload['name']
-          ?? payload['unique_name']
-          ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
+        const fullName = payload['name'] ?? payload['unique_name'] ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
         if (typeof fullName === 'string' && fullName && !fullName.includes('@')) {
           this.adminName = fullName;
         } else {
-          const email = payload['email']
-            ?? payload['unique_name']
-            ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
+          const email = payload['email'] ?? payload['unique_name'] ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
           if (typeof email === 'string' && email.includes('@')) {
             this.adminName = email.split('@')[0];
           }
@@ -88,45 +112,26 @@ export class AdminLayoutComponent implements OnInit {
       }
 
       const parts = this.adminName.trim().split(/\s+/);
-      this.adminInitials = parts
-        .slice(0, 2)
-        .map(p => p[0]?.toUpperCase() ?? '')
-        .join('');
+      this.adminInitials = parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('');
 
-    } catch {
-      // keep defaults
-    }
+    } catch { /* keep defaults */ }
   }
 
   private updatePageTitle(url: string): void {
     const segments = url.split('/').filter(Boolean);
     const adminIdx = segments.indexOf('admin');
-    const after = adminIdx >= 0 ? segments.slice(adminIdx + 1) : segments;
+    const after    = adminIdx >= 0 ? segments.slice(adminIdx + 1) : segments;
     for (let i = after.length - 1; i >= 0; i--) {
       const seg = after[i];
-      if (this.routeTitles[seg]) {
-        this.currentPageTitle = this.routeTitles[seg];
-        return;
-      }
+      if (this.routeTitles[seg]) { this.currentPageTitle = this.routeTitles[seg]; return; }
     }
     this.currentPageTitle = 'Dashboard';
   }
 
-  toggleSidebar() {
-    this.sidebarOpen = !this.sidebarOpen;
-  }
-
-  closeSidebar() {
-    this.sidebarOpen = false;
-  }
-
-  confirmLogout() {
-    this.showLogoutModal = true;
-  }
-
-  cancelLogout() {
-    this.showLogoutModal = false;
-  }
+  toggleSidebar()  { this.sidebarOpen = !this.sidebarOpen; }
+  closeSidebar()   { this.sidebarOpen = false; }
+  confirmLogout()  { this.showLogoutModal = true; }
+  cancelLogout()   { this.showLogoutModal = false; }
 
   logout() {
     this.showLogoutModal = false;

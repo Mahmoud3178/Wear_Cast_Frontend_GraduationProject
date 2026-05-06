@@ -94,25 +94,36 @@
         </div>
       </div>
 
-      <!-- Orders -->
+      <!-- Shipments -->
       <div class="adm-card">
         <div class="adm-card-head">
-          <h3 class="adm-card-title"><i class="bi bi-bag"></i> Orders</h3>
-          <span class="adm-badge badge-indigo">{{ orders.length }}</span>
+          <h3 class="adm-card-title"><i class="bi bi-truck"></i> Shipments</h3>
+          <span class="adm-badge badge-indigo">{{ shipmentsTotal }}</span>
         </div>
-        <div class="adm-card-body" *ngIf="orders.length">
+
+        <!-- Has shipments -->
+        <div class="adm-card-body" *ngIf="shipments.length">
           <div class="adm-table-card">
             <table class="adm-table">
-              <thead><tr><th>Order ID</th><th>Status</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Shipment ID</th>
+                  <th>City</th>
+                  <th>Street</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
               <tbody>
-                <tr *ngFor="let o of orders">
-                  <td><span class="cell-main">#{{ o.id }}</span></td>
+<tr *ngFor="let s of shipments"
+    (click)="goToShipmentItems(s.id)"
+    style="cursor:pointer">                  <td><span class="cell-main">#{{ s.id }}</span></td>
+                  <td><span class="cell-muted">{{ s.deliveryCity || s.city || '—' }}</span></td>
+                  <td><span class="cell-muted">{{ s.deliveryStreet || s.street || '—' }}</span></td>
+                  <td><span class="cell-main">{{ s.price != null ? (s.price | number:'1.2-2') + ' EGP' : '—' }}</span></td>
                   <td>
-                    <span class="adm-badge"
-                      [class.badge-paid]="o.status==='Paid'"
-                      [class.badge-pending]="o.status==='Pending'"
-                      [class.badge-rejected]="o.status==='Cancelled'">
-                      {{ o.status }}
+                    <span class="adm-badge" [ngClass]="getStatusClass(s.shipmentStatus || s.status)">
+                      {{ s.shipmentStatus || s.status || '—' }}
                     </span>
                   </td>
                 </tr>
@@ -120,10 +131,12 @@
             </table>
           </div>
         </div>
-        <div class="adm-card-body" *ngIf="!orders.length">
+
+        <!-- Empty state -->
+        <div class="adm-card-body" *ngIf="!shipments.length">
           <div class="adm-empty" style="padding:28px">
-            <i class="bi bi-bag-x"></i>
-            <p>No orders yet</p>
+            <i class="bi bi-truck"></i>
+            <p>No shipments yet</p>
           </div>
         </div>
       </div>

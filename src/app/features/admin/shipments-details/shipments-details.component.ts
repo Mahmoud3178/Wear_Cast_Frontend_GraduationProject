@@ -31,7 +31,17 @@ export class ShipmentsDetailsComponent implements OnInit {
     });
   }
 
-  goToItems() {
-    this.router.navigate(['/admin/shipments', this.shipment.id, 'items']);
+  getStatusClass(status: string): string {
+    const s = (status || '').toLowerCase();
+    if (s === 'delivered')   return 'badge-paid';
+    if (s === 'unassigned')  return 'badge-pending';
+    if (s === 'cancelled' || s === 'canceled') return 'badge-rejected';
+    return 'badge-indigo';
+  }
+
+  goToOrderItems(orderId: number) {
+    this.router.navigate(['/admin/shipments', this.shipment.id, 'items'], {
+      queryParams: { orderId }
+    });
   }
 }

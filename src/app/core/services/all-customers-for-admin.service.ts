@@ -13,7 +13,6 @@ export class AllCustomersForAdminService {
 
   // ================= GET ALL =================
   getAllCustomers(pageIndex = 1, pageSize = 5, searchTerm = '') {
-
     let params = new HttpParams()
       .set('PageIndex', pageIndex)
       .set('PageSize', pageSize);
@@ -33,26 +32,23 @@ export class AllCustomersForAdminService {
   }
 
   // ================= UPDATE =================
-updateCustomer(id: number, body: any) {
-  return this.http.put(`${this.baseUrl}/api/customers/profile`, {
-    providedCustomerId: id,
-    ...body
-  });
-}
+  updateCustomer(id: number, body: any) {
+    return this.http.put(`${this.baseUrl}/api/customers/profile`, {
+      providedCustomerId: id,
+      ...body
+    });
+  }
 
-  // ================= DELETE ================= ✅ FIXED
-deleteCustomer(id: number, body: any) {
-  return this.http.delete(`${this.baseUrl}/api/customers/${id}`, {
-    body
-  });
-}
+  // ================= DELETE =================
+  deleteCustomer(id: number, body: any) {
+    return this.http.delete(`${this.baseUrl}/api/customers/${id}`, { body });
+  }
+
   // ================= IMAGE =================
-
   updateCustomerImage(id: number, file: File) {
     const formData = new FormData();
     formData.append('NewImage', file);
     formData.append('ProvidedCustomerId', id.toString());
-
     return this.http.put(`${this.baseUrl}/api/customers/profile-image`, formData);
   }
 
@@ -62,10 +58,24 @@ deleteCustomer(id: number, body: any) {
     });
   }
 
-  // ================= ORDERS =================
-  getCustomerOrders(id: number) {
-    return this.http.get(`${this.baseUrl}/api/customers/orders`, {
-      params: { customerId: id }
-    });
+  // ================= SHIPMENTS (Orders) =================
+  getCustomerShipments(customerId: number, pageIndex = 1, pageSize = 10) {
+    const params = new HttpParams()
+      .set('CustomerId', customerId)
+      .set('PageIndex', pageIndex)
+      .set('PageSize', pageSize);
+
+    return this.http.get(`${this.baseUrl}/api/CustomerShipments`, { params });
   }
-}
+  // ================= SHIPMENT ITEMS =================
+getShipmentItems(shipmentId: number, pageNumber = 1, pageSize = 10) {
+
+  const params = new HttpParams()
+    .set('pageNumber', pageNumber)
+    .set('pageSize', pageSize);
+
+  return this.http.get(
+    `${this.baseUrl}/api/Orders/shipment/${shipmentId}/items`,
+    { params }
+  );
+}}

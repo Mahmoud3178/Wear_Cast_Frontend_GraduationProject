@@ -20,6 +20,7 @@
 
     <nav class="sidebar-nav">
 
+      <!-- ── OVERVIEW ── -->
       <div class="nav-section-label">Overview</div>
 
       <a routerLink="dashboard" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
@@ -27,71 +28,92 @@
         Dashboard
       </a>
 
-      <div class="nav-section-label">Management</div>
+      <!-- ── MANAGEMENT ── SuperAdmin only -->
+      <ng-container *ngIf="canAccess('admins') || canAccess('customers') || canAccess('stores') || canAccess('seller-applications')">
+        <div class="nav-section-label">Management</div>
 
-      <a routerLink="customers" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-people nav-icon"></i>
-        Customers
-      </a>
+        <a *ngIf="canAccess('customers')"
+           routerLink="customers" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-people nav-icon"></i>
+          Customers
+        </a>
 
-      <a routerLink="stores" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-shop nav-icon"></i>
-        Stores
-      </a>
+        <a *ngIf="canAccess('stores')"
+           routerLink="stores" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-shop nav-icon"></i>
+          Stores
+        </a>
 
-      <a routerLink="seller-applications" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-file-earmark-person nav-icon"></i>
-        Seller Applications
-      </a>
+        <a *ngIf="canAccess('seller-applications')"
+           routerLink="seller-applications" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-file-earmark-person nav-icon"></i>
+          Seller Applications
+        </a>
 
-      <a routerLink="admins" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-shield-lock nav-icon"></i>
-        Admins
-      </a>
+        <a *ngIf="canAccess('admins')"
+           routerLink="admins" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-shield-lock nav-icon"></i>
+          Admins
+        </a>
+      </ng-container>
 
-      <div class="nav-section-label">Catalog</div>
+      <!-- ── CATALOG ── -->
+      <ng-container *ngIf="canAccess('products') || canAccess('design-products') || canAccess('categories') || canAccess('logos')">
+        <div class="nav-section-label">Catalog</div>
 
-      <a routerLink="products" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-box-seam nav-icon"></i>
-        Products
-      </a>
+        <a *ngIf="canAccess('products')"
+           routerLink="products" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-box-seam nav-icon"></i>
+          Products
+        </a>
 
-      <a routerLink="design-products" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-palette nav-icon"></i>
-        Design Products
-      </a>
+        <a *ngIf="canAccess('design-products')"
+           routerLink="design-products" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-palette nav-icon"></i>
+          Design Products
+        </a>
 
-      <a routerLink="categories" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-tags nav-icon"></i>
-        Categories
-      </a>
+        <a *ngIf="canAccess('categories')"
+           routerLink="categories" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-tags nav-icon"></i>
+          Categories
+        </a>
 
-      <a routerLink="logos" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-image nav-icon"></i>
-        Logos
-      </a>
+        <a *ngIf="canAccess('logos')"
+           routerLink="logos" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-image nav-icon"></i>
+          Logos
+        </a>
+      </ng-container>
 
-      <div class="nav-section-label">Operations</div>
+      <!-- ── OPERATIONS ── -->
+      <ng-container *ngIf="canAccess('orders') || canAccess('shipments') || canAccess('delivery-company') || canAccess('Factory')">
+        <div class="nav-section-label">Operations</div>
 
-      <a routerLink="orders" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-bag-check nav-icon"></i>
-        Orders
-      </a>
+        <a *ngIf="canAccess('orders')"
+           routerLink="orders" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-bag-check nav-icon"></i>
+          Orders
+        </a>
 
-      <a routerLink="shipments" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-truck nav-icon"></i>
-        Shipments
-      </a>
+        <a *ngIf="canAccess('shipments')"
+           routerLink="shipments" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-truck nav-icon"></i>
+          Shipments
+        </a>
 
-      <a routerLink="delivery-company" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-building nav-icon"></i>
-        Delivery Company
-      </a>
+        <a *ngIf="canAccess('delivery-company')"
+           routerLink="delivery-company" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-building nav-icon"></i>
+          Delivery Company
+        </a>
 
-      <a routerLink="Factory" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
-        <i class="bi bi-gear nav-icon"></i>
-        Factory
-      </a>
+        <a *ngIf="canAccess('Factory')"
+           routerLink="Factory" routerLinkActive="active" class="nav-item-link" (click)="closeSidebar()">
+          <i class="bi bi-gear nav-icon"></i>
+          Factory
+        </a>
+      </ng-container>
 
     </nav>
 
@@ -107,7 +129,6 @@
   <!-- ===== MAIN ===== -->
   <div class="main-content">
 
-    <!-- Top Bar -->
     <header class="top-bar">
       <div class="top-bar-left">
         <button class="mobile-toggle" (click)="toggleSidebar()">
@@ -128,14 +149,13 @@
             <div class="admin-display-name">{{ adminName }}</div>
             <div class="admin-badge">
               <span class="badge-dot"></span>
-              Super Admin
+              {{ adminRole }}
             </div>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- Page Content -->
     <div class="content-area">
       <router-outlet></router-outlet>
     </div>
@@ -147,24 +167,17 @@
 <!-- ===== LOGOUT CONFIRM MODAL ===== -->
 <div class="logout-modal-overlay" *ngIf="showLogoutModal" (click)="cancelLogout()">
   <div class="logout-modal" (click)="$event.stopPropagation()">
-
     <div class="logout-modal-icon">
       <i class="bi bi-box-arrow-right"></i>
     </div>
-
     <p class="logout-modal-title">Confirm Logout</p>
     <p class="logout-modal-desc">Are you sure you want to logout from the admin panel?</p>
-
     <div class="logout-modal-actions">
-      <button class="logout-modal-cancel" (click)="cancelLogout()">
-        Cancel
-      </button>
+      <button class="logout-modal-cancel" (click)="cancelLogout()">Cancel</button>
       <button class="logout-modal-confirm" (click)="logout()">
-        <i class="bi bi-box-arrow-right"></i>
-        Logout
+        <i class="bi bi-box-arrow-right"></i> Logout
       </button>
     </div>
-
   </div>
 </div>
 

@@ -1,0 +1,115 @@
+<div class="container p-4">
+
+  <h3 class="fw-bold mb-4">Shipment Items</h3>
+
+  <!-- LOADING -->
+  <div *ngIf="loading" class="text-center p-5">
+    <div class="spinner-border"></div>
+  </div>
+
+  <!-- NO DATA -->
+  <div *ngIf="!loading && !fixedItems.length && !designedItems.length"
+       class="text-center text-muted p-5">
+    No items found
+  </div>
+
+  <!-- ================= FIXED ITEMS ================= -->
+  <div *ngIf="fixedItems.length">
+
+    <h5 class="mb-3">Fixed Products</h5>
+
+    <div class="row g-3">
+
+      <div class="col-md-4" *ngFor="let item of fixedItems">
+        <div class="card h-100 shadow-sm p-3">
+
+          <img [src]="item.imageUrl"
+               class="img-fluid mb-3 rounded"
+               style="height:180px;object-fit:cover">
+
+          <h6 class="fw-bold">{{item.productName}}</h6>
+
+          <div class="text-muted small mb-2">
+            Color: {{item.colorName}}
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <span>Price</span>
+            <strong>{{item.unitPrice}} EGP</strong>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <span>Qty</span>
+            <strong>{{item.totalQuantity}}</strong>
+          </div>
+
+          <div class="d-flex justify-content-between mt-2 border-top pt-2">
+            <span>Total</span>
+            <strong>{{item.totalPrice}} EGP</strong>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= DESIGNED ITEMS ================= -->
+  <div *ngIf="designedItems.length" class="mt-5">
+
+    <h5 class="mb-3">Designed Products</h5>
+
+    <div class="row g-3">
+
+      <div class="col-md-6" *ngFor="let item of designedItems">
+
+        <div class="card shadow-sm p-3">
+
+          <!-- Images -->
+          <div class="d-flex gap-2 mb-3 flex-wrap">
+            <img [src]="item.frontImageUrl" class="design-img">
+            <img [src]="item.backImageUrl" class="design-img">
+            <img [src]="item.leftImageUrl" class="design-img">
+            <img [src]="item.rightImageUrl" class="design-img">
+          </div>
+
+          <h6 class="fw-bold">{{item.productName}}</h6>
+
+          <div class="text-muted small mb-2">
+            Color: {{item.colorName}}
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <span>Price</span>
+            <strong>{{item.unitPrice}} EGP</strong>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <span>Qty</span>
+            <strong>{{item.totalQuantity}}</strong>
+          </div>
+
+          <div class="d-flex justify-content-between mt-2 border-top pt-2">
+            <span>Total</span>
+            <strong>{{item.totalPrice}} EGP</strong>
+          </div>
+
+          <!-- Sizes -->
+          <div class="mt-3">
+            <strong>Sizes:</strong>
+            <div class="d-flex gap-2 flex-wrap mt-1">
+              <span class="badge bg-secondary"
+                    *ngFor="let s of item.sizes">
+                {{s.sizeName}} ({{s.quantity}})
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>

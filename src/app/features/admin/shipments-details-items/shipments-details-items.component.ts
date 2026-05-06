@@ -12,9 +12,11 @@ import { HandelShipmentsForAdminService } from '../../../core/services/handel-sh
 })
 export class ShipmentsDetailsItemsComponent implements OnInit {
 
-  fixedItems: any[] = [];
+  fixedItems: any[]    = [];
   designedItems: any[] = [];
-  allItems: any[] = [];
+  allItems: any[]      = [];
+  loading = true;
+  orderId!: number;
 
   constructor(
     private route: ActivatedRoute,
@@ -22,23 +24,28 @@ export class ShipmentsDetailsItemsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    const id = Number(this.route.snapshot.params['id']);
-    this.load(id);
+    // orderId بييجي من queryParam اللي بعتناه من shipments-details
+    this.orderId = Number(this.route.snapshot.queryParams['orderId']);
+    if (this.orderId) {
+      this.load(this.orderId);
+    } else {
+      this.loading = false;
+    }
   }
 
-  load(id: number) {
-    this.service.getShipmentItems(id).subscribe((res: any) => {
-
-      this.fixedItems = res?.fixedItems?.items || [];
-      this.designedItems = res?.designedItems?.items || [];
-
-      // دمج مع تمييز النوع
-      this.allItems = [
-        ...this.fixedItems.map(x => ({ ...x, type: 'fixed' })),
-        ...this.designedItems.map(x => ({ ...x, type: 'designed' }))
-      ];
-
-      console.log('ALL ITEMS 👉', this.allItems);
+  load(orderId: number) {
+    this.loading = true;
+    this.service.getOrderItems(orderId).subscribe({
+      next: (res: any) => {
+        this.fixedItems    = res?.fixedItems?.items    || res?.fixedItems    || [];
+        this.designedItems = res?.designedItems?.items || res?.designedItems || [];
+        this.allItems = [
+          ...this.fixedItems.map(x => ({ ...x, type: 'fixed' })),
+          ...this.designedItems.map(x => ({ ...x, type: 'designed' }))
+        ];
+        this.loading = false;
+      },
+      error: () => { this.loading = false; }
     });
   }
 }

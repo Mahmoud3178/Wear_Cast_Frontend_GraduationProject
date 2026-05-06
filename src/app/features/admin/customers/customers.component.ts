@@ -17,8 +17,7 @@ export class CustomersComponent {
   constructor(
     private router: Router,
     private customerService: AllCustomersForAdminService,
-    private toast: ToastService  // ← أضف السطر ده
-
+    private toast: ToastService,
   ) {}
 
   searchTerm = '';
@@ -155,5 +154,8 @@ deleteCustomer(id: number) {
   this.customerService.deleteCustomer(id, body).subscribe({
     next: () => this.loadCustomers()
   });
+}
+goToShipmentItems(id: number) {
+  this.router.navigate(['/admin/shipments', id, 'items']);
 }
 }
