@@ -64,26 +64,33 @@ export class DesignAssetsCatalogService {
       : {};
   }
 
-  /** Match catalog / designer rules: dev strips host so images use the dev proxy. */
+  /**
+   * Match catalog / designer rules: always strip the backend host so images
+   * load same-origin (dev: Angular proxy, prod: Vercel `/uploads` rewrite).
+   * Keeps the canvas non-tainted so Fabric filters and `toDataURL` work.
+   */
   resolveMediaUrl(raw: string): string {
     const u = raw.trim();
     if (!u) return '';
     if (/^https?:\/\//i.test(u)) {
-      if (!this.base) {
-        try {
-          const urlObj = new URL(u);
-          return urlObj.pathname + urlObj.search;
-        } catch {
-          return u;
-        }
+      try {
+        const urlObj = new URL(u);
+        return urlObj.pathname + urlObj.search;
+      } catch {
+        return u;
       }
-      return u;
     }
     if (u.startsWith('//')) {
-      return `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}${u}`;
+      try {
+        const protocol =
+          typeof window !== 'undefined' ? window.location.protocol : 'https:';
+        const urlObj = new URL(`${protocol}${u}`);
+        return urlObj.pathname + urlObj.search;
+      } catch {
+        return u;
+      }
     }
-    const path = u.startsWith('/') ? u : `/${u}`;
-    return this.base ? `${this.base}${path}` : path;
+    return u.startsWith('/') ? u : `/${u}`;
   }
 }
 

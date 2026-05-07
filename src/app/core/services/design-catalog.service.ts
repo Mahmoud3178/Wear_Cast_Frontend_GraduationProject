@@ -407,9 +407,12 @@ export class DesignCatalogService {
     };
   }
 
-  /** Turn API-relative paths into absolute URLs the `<img>` and canvas can load.
-   *  In dev (apiUrl empty), absolute backend URLs are made relative so they
-   *  route through the Angular dev-server proxy and avoid CORS.
+  /**
+   * Turn any backend image URL into a same-origin path so the canvas stays
+   * non-tainted. Dev: handled by the Angular dev-server proxy. Prod (Vercel):
+   * handled by the `/uploads/:path*` rewrite in `vercel.json`. Without this,
+   * cross-origin garment/category images would taint the Fabric canvas and
+   * break Brightness/Contrast/Saturation filters and `toDataURL` exports.
    */
   private resolveMediaUrl(raw: string): string {
     const u = raw.trim();
@@ -417,23 +420,24 @@ export class DesignCatalogService {
       return '';
     }
     if (/^https?:\/\//i.test(u)) {
-      if (!this.base) {
-        // Dev mode: strip origin so images go through the proxy (same-origin)
-        try {
-          const urlObj = new URL(u);
-          return urlObj.pathname + urlObj.search;
-        } catch {
-          return u;
-        }
+      try {
+        const urlObj = new URL(u);
+        return urlObj.pathname + urlObj.search;
+      } catch {
+        return u;
       }
-      return u;
     }
     if (u.startsWith('//')) {
-      return `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}${u}`;
+      try {
+        const protocol =
+          typeof window !== 'undefined' ? window.location.protocol : 'https:';
+        const urlObj = new URL(`${protocol}${u}`);
+        return urlObj.pathname + urlObj.search;
+      } catch {
+        return u;
+      }
     }
-    const base = this.base.replace(/\/$/, '');
-    const path = u.startsWith('/') ? u : `/${u}`;
-    return `${base}${path}`;
+    return u.startsWith('/') ? u : `/${u}`;
   }
 }
 

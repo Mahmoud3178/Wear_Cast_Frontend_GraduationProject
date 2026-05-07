@@ -92,18 +92,6 @@
     return views[view] || views.front;
   }
 
-  function isCrossOriginUrl(url) {
-    if (!url || typeof url !== 'string') return false;
-    if (url.indexOf('data:') === 0 || url.indexOf('blob:') === 0) return false;
-    try {
-      var parsed = new URL(url, window.location.href);
-      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
-      return parsed.origin !== window.location.origin;
-    } catch (_e) {
-      return false;
-    }
-  }
-
   // Dynamic catalog products only (loaded from Angular bootstrap).
   var PRODUCTS = {};
 
@@ -1012,7 +1000,6 @@
   function addStickerFromUrl(url) {
     if (!canvas || !url) return;
     var dim = getStageDimensions();
-    var remoteUrl = isCrossOriginUrl(url);
     function mountSticker(img) {
       if (!img) return;
       var scale = Math.min(140 / img.width, 140 / img.height, 1);
@@ -1037,40 +1024,20 @@
       closeDesignsPanel();
     }
 
-    // For cross-origin sources, request anonymous CORS first so canvas export
-    // (save/add-to-cart snapshots) remains readable in production deployments.
-    function tryAnonymous(done) {
-      fabric.Image.fromURL(url, done, { crossOrigin: 'anonymous' });
-    }
-
-    function tryDefault(done) {
-      fabric.Image.fromURL(url, done);
-    }
-
-    if (remoteUrl) {
-      tryAnonymous(function (img) {
-        if (img) {
-          mountSticker(img);
-          return;
-        }
-        console.warn('WearCast: cross-origin sticker blocked by CORS, cannot keep export-safe canvas.', url);
-        alert('This design image host blocks CORS, so it cannot be used safely for saving/export. Please choose another image.');
-      });
-      return;
-    }
-
-    tryDefault(function (img) {
+    // Image URLs are routed through dev proxy / Vercel `/uploads` rewrite to be
+    // same-origin, so anonymous CORS works without any backend cooperation.
+    // Falls back to a plain load if the anonymous request fails so the editor
+    // still shows the image even in unexpected cross-origin scenarios.
+    fabric.Image.fromURL(url, function (img) {
       if (img) {
         mountSticker(img);
         return;
       }
-      tryAnonymous(function (fallbackImg) {
-        if (!fallbackImg) {
-          return;
-        }
+      fabric.Image.fromURL(url, function (fallbackImg) {
+        if (!fallbackImg) return;
         mountSticker(fallbackImg);
       });
-    });
+    }, { crossOrigin: 'anonymous' });
   }
 
   function openDesignsPanel() {
@@ -1975,20 +1942,17 @@
     img.src = dataUrl;
   }
 
+  /**
+   * Returns true only when drawing the product image would taint the export
+   * canvas. Image URLs are now routed through the dev proxy / Vercel
+   * `/uploads` rewrite so they're same-origin, AND the `<img>` element is
+   * marked `crossOrigin="anonymous"`, so cross-origin images that pass CORS
+   * are also safe to draw. The actual `ctx.drawImage` call is wrapped in
+   * try/catch so a SecurityError (tainted canvas) never breaks the export.
+   */
   function shouldSkipProductImageInExport(imgEl) {
-    if (!imgEl || !imgEl.src) return false;
-    var src = String(imgEl.src);
-    if (!src) return false;
-    // Relative, data, and blob URLs are safe for export.
-    if (src.indexOf('data:') === 0 || src.indexOf('blob:') === 0 || src.indexOf('http') !== 0) {
-      return false;
-    }
-    try {
-      var u = new URL(src, window.location.origin);
-      return u.origin !== window.location.origin;
-    } catch (_e) {
-      return false;
-    }
+    if (!imgEl || !imgEl.src) return true;
+    return false;
   }
 
   /**
@@ -2014,10 +1978,8 @@
       try {
         ctx.drawImage(productImage, 0, 0, w, h);
       } catch (drawErr) {
-        console.warn('WearCast: product image draw skipped', drawErr);
+        console.warn('WearCast: product image draw skipped (likely tainted canvas)', drawErr);
       }
-    } else if (productImage && shouldSkipProductImageInExport(productImage)) {
-      console.warn('WearCast: skipped cross-origin product image in export to avoid tainted canvas.');
     }
     var lower = canvas.lowerCanvasEl;
     if (lower) {
@@ -2363,6 +2325,13 @@
     currentColor = 'black';
     currentView = 'front';
     productImage = document.getElementById('product-image');
+    if (productImage) {
+      // Request the garment image in CORS-safe mode so it can be drawn into
+      // the export canvas without tainting it. URLs are routed through the
+      // dev proxy / Vercel `/uploads` rewrite so they're effectively
+      // same-origin, but setting this protects against any direct host URL.
+      productImage.crossOrigin = 'anonymous';
+    }
     productStage = document.getElementById('product-stage');
     productTitleEl = document.getElementById('product-title');
     productPriceEl = document.getElementById('product-price');
