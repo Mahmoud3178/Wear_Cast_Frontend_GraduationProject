@@ -130,3 +130,84 @@
   .data-table th,
   .data-table td { padding:10px 12px;font-size:12.5px; }
 }
+/* ============================================================
+   ERROR UI
+   ============================================================ */
+
+.drawer-error-banner{
+  margin:18px 28px 0;
+  padding:14px 16px;
+  border-radius:12px;
+  background:#fff1f2;
+  border:1px solid #fecaca;
+  color:#b91c1c;
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+}
+
+.drawer-error-banner i{
+  font-size:18px;
+  margin-top:2px;
+}
+
+.drawer-error-content{
+  flex:1;
+}
+
+.drawer-error-content ul{
+  margin:8px 0 0;
+  padding-left:18px;
+}
+
+.drawer-error-content li{
+  margin-bottom:4px;
+}
+
+.field-error{
+  color:#dc2626;
+  font-size:12px;
+  margin-top:6px;
+  font-weight:500;
+}
+
+.field-invalid{
+  border-color:#ef4444 !important;
+  background:#fff !important;
+  box-shadow:0 0 0 3px rgba(239,68,68,.08);
+}
+
+/* ============================================================
+   PASSWORD FIELD
+   ============================================================ */
+
+.password-wrap{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+
+.password-wrap .form-field{
+  padding-right:42px;
+}
+
+.eye-btn{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  background:none;
+  border:none;
+  cursor:pointer;
+  color:#6b7280;
+  font-size:17px;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.2s;
+}
+
+.eye-btn:hover{
+  color:#4f46e5;
+}

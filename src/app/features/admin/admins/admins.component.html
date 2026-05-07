@@ -4,16 +4,22 @@
   <div class="page-header">
     <div>
       <h2 class="page-heading">Admins</h2>
-      <p class="page-desc">Manage platform administrators and their permissions.</p>
+      <p class="page-desc">
+        Manage platform administrators and their permissions.
+      </p>
     </div>
+
     <button class="btn-add" (click)="toggleAdd()">
-      <i class="bi bi-plus-lg"></i> Add Admin
+      <i class="bi bi-plus-lg"></i>
+      Add Admin
     </button>
   </div>
 
   <!-- Table -->
   <div class="table-card">
+
     <table class="data-table">
+
       <thead>
         <tr>
           <th>Name</th>
@@ -22,110 +28,330 @@
           <th style="width:140px">Actions</th>
         </tr>
       </thead>
+
       <tbody>
+
         <tr *ngFor="let admin of admins">
+
           <td>
             <div class="cell-avatar">
-              <div class="avatar-sm">{{ admin.fullName?.charAt(0) || 'A' }}</div>
-              <span class="cell-name">{{ admin.fullName }}</span>
+
+              <div class="avatar-sm">
+                {{ admin.fullName?.charAt(0) || 'A' }}
+              </div>
+
+              <span class="cell-name">
+                {{ admin.fullName }}
+              </span>
+
             </div>
           </td>
-          <td class="cell-muted">{{ admin.email }}</td>
+
+          <td class="cell-muted">
+            {{ admin.email }}
+          </td>
+
           <td>
             <span class="role-badge" [ngClass]="getRoleClass(admin.role)">
               {{ admin.role }}
             </span>
           </td>
+
           <td>
+
             <div class="action-row">
-              <button class="action-btn view-btn" (click)="goToDetails(admin.id)" title="Details">
+
+              <button
+                class="action-btn view-btn"
+                (click)="goToDetails(admin.id)"
+                title="Details">
+
                 <i class="bi bi-eye"></i>
+
               </button>
-              <button class="action-btn delete-btn"
-                      [disabled]="admin.role === 'SuperAdmin'"
-                      (click)="deleteAdmin(admin.id)"
-                      title="Delete">
+
+              <button
+                class="action-btn delete-btn"
+                [disabled]="admin.role === 'SuperAdmin'"
+                (click)="deleteAdmin(admin.id)"
+                title="Delete">
+
                 <i class="bi bi-trash"></i>
+
               </button>
+
             </div>
+
           </td>
+
         </tr>
+
         <tr *ngIf="admins.length === 0">
-          <td colspan="4" class="empty-state">No admins found.</td>
+
+          <td colspan="4" class="empty-state">
+            No admins found.
+          </td>
+
         </tr>
+
       </tbody>
+
     </table>
+
   </div>
 
 </div>
 
-<!-- Drawer Overlay -->
-<div class="drawer-overlay" *ngIf="showAdd" (click)="toggleAdd()"></div>
+<!-- Overlay -->
+<div
+  class="drawer-overlay"
+  *ngIf="showAdd"
+  (click)="toggleAdd()">
+</div>
 
 <!-- Drawer -->
 <div class="drawer" [class.open]="showAdd">
+
   <div class="drawer-inner">
 
+    <!-- Top -->
     <div class="drawer-top">
-      <h5 class="drawer-title">Add New Admin</h5>
+
+      <h5 class="drawer-title">
+        Add New Admin
+      </h5>
+
       <button class="drawer-close" (click)="toggleAdd()">
         <i class="bi bi-x-lg"></i>
       </button>
+
     </div>
 
+    <!-- ERROR BANNER -->
+    <div class="drawer-error-banner" *ngIf="errorMessages.length">
+
+      <i class="bi bi-exclamation-circle-fill"></i>
+
+      <div class="drawer-error-content">
+
+        <strong>Please fix the following:</strong>
+
+        <ul>
+          <li *ngFor="let err of errorMessages">
+            {{ err }}
+          </li>
+        </ul>
+
+      </div>
+
+    </div>
+
+    <!-- Form -->
     <div class="form-grid">
 
+      <!-- First Name -->
       <div class="form-group">
-        <label>First Name <span class="req">*</span></label>
-        <input class="form-field" placeholder="John" [(ngModel)]="newAdmin.firstName" autocomplete="off">
+
+        <label>
+          First Name
+          <span class="req">*</span>
+        </label>
+
+        <input
+          class="form-field"
+          [class.field-invalid]="fieldErrors.firstName"
+          placeholder="John"
+          [(ngModel)]="newAdmin.firstName"
+          autocomplete="off">
+
+        <div class="field-error" *ngIf="fieldErrors.firstName">
+          {{ fieldErrors.firstName }}
+        </div>
+
       </div>
 
+      <!-- Last Name -->
       <div class="form-group">
+
         <label>Last Name</label>
-        <input class="form-field" placeholder="Doe" [(ngModel)]="newAdmin.lastName" autocomplete="off">
+
+        <input
+          class="form-field"
+          placeholder="Doe"
+          [(ngModel)]="newAdmin.lastName"
+          autocomplete="off">
+
       </div>
 
+      <!-- Email -->
       <div class="form-group full">
-        <label>Email <span class="req">*</span></label>
-        <input class="form-field" type="email" placeholder="admin@wearcast.com" [(ngModel)]="newAdmin.email" autocomplete="off">
+
+        <label>
+          Email
+          <span class="req">*</span>
+        </label>
+
+        <input
+          class="form-field"
+          type="email"
+          [class.field-invalid]="fieldErrors.email"
+          placeholder="admin@wearcast.com"
+          [(ngModel)]="newAdmin.email"
+          autocomplete="off">
+
+        <div class="field-error" *ngIf="fieldErrors.email">
+          {{ fieldErrors.email }}
+        </div>
+
       </div>
 
+      <!-- Phone -->
       <div class="form-group full">
+
         <label>Phone</label>
-        <input class="form-field" placeholder="+20 1xx xxx xxxx" [(ngModel)]="newAdmin.phoneNumber" autocomplete="off">
+
+        <input
+          class="form-field"
+          placeholder="+20 1xx xxx xxxx"
+          [(ngModel)]="newAdmin.phoneNumber"
+          autocomplete="off">
+
       </div>
 
+      <!-- Password -->
       <div class="form-group">
-        <label>Password <span class="req">*</span></label>
-        <input type="password" class="form-field" placeholder="••••••••" [(ngModel)]="newAdmin.password" autocomplete="off">
+
+        <label>
+          Password
+          <span class="req">*</span>
+        </label>
+
+        <div class="password-wrap">
+
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            class="form-field"
+            [class.field-invalid]="fieldErrors.password"
+            placeholder="••••••••"
+            [(ngModel)]="newAdmin.password"
+            autocomplete="off">
+
+          <button
+            type="button"
+            class="eye-btn"
+            (click)="togglePassword()">
+
+            <i
+              class="bi"
+              [class.bi-eye]="!showPassword"
+              [class.bi-eye-slash]="showPassword">
+            </i>
+
+          </button>
+
+        </div>
+
+        <div class="field-error" *ngIf="fieldErrors.password">
+          {{ fieldErrors.password }}
+        </div>
+
       </div>
 
+      <!-- Confirm Password -->
       <div class="form-group">
-        <label>Confirm Password <span class="req">*</span></label>
-        <input type="password" class="form-field" placeholder="••••••••" [(ngModel)]="newAdmin.confirmPassword" autocomplete="off">
+
+        <label>
+          Confirm Password
+          <span class="req">*</span>
+        </label>
+
+        <div class="password-wrap">
+
+          <input
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            class="form-field"
+            [class.field-invalid]="fieldErrors.confirmPassword"
+            placeholder="••••••••"
+            [(ngModel)]="newAdmin.confirmPassword"
+            autocomplete="off">
+
+          <button
+            type="button"
+            class="eye-btn"
+            (click)="toggleConfirmPassword()">
+
+            <i
+              class="bi"
+              [class.bi-eye]="!showConfirmPassword"
+              [class.bi-eye-slash]="showConfirmPassword">
+            </i>
+
+          </button>
+
+        </div>
+
+        <div class="field-error" *ngIf="fieldErrors.confirmPassword">
+          {{ fieldErrors.confirmPassword }}
+        </div>
+
       </div>
 
+      <!-- Role -->
       <div class="form-group full">
-        <label>Role <span class="req">*</span></label>
-        <select class="form-field" [(ngModel)]="newAdmin.role">
+
+        <label>
+          Role
+          <span class="req">*</span>
+        </label>
+
+        <select
+          class="form-field"
+          [class.field-invalid]="fieldErrors.role"
+          [(ngModel)]="newAdmin.role">
+
           <option value="">— Select Role —</option>
+
           <option>SuperAdmin</option>
           <option>OperationsAdmin</option>
           <option>CustomerServiceAdmin</option>
           <option>VendorAdmin</option>
           <option>CatalogAdmin</option>
+
         </select>
+
+        <div class="field-error" *ngIf="fieldErrors.role">
+          {{ fieldErrors.role }}
+        </div>
+
       </div>
 
     </div>
 
+    <!-- Footer -->
     <div class="drawer-footer">
-      <button class="btn-cancel" (click)="toggleAdd()">Cancel</button>
-      <button class="btn-save" (click)="addAdmin()" [disabled]="loading">
-        <span *ngIf="!loading">Save Admin</span>
-        <span *ngIf="loading" class="spinner-border spinner-border-sm"></span>
+
+      <button class="btn-cancel" (click)="toggleAdd()">
+        Cancel
       </button>
+
+      <button
+        class="btn-save"
+        (click)="addAdmin()"
+        [disabled]="loading">
+
+        <span *ngIf="!loading">
+          Save Admin
+        </span>
+
+        <span
+          *ngIf="loading"
+          class="spinner-border spinner-border-sm">
+        </span>
+
+      </button>
+
     </div>
 
   </div>
+
 </div>

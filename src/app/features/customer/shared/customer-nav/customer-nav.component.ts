@@ -13,6 +13,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 })
 export class CustomerNavComponent {
   searchTerm = '';
+  isMobileMenuOpen = false;
 
   constructor(
     readonly auth: AuthService,
@@ -28,6 +29,15 @@ export class CustomerNavComponent {
     this.router.navigate(['/customer/category'], {
       queryParams: q ? { q } : {}
     });
+    this.isMobileMenuOpen = false;
+  }
+
+  toggleMobileMenu(): void {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+  }
+
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen = false;
   }
 }
 

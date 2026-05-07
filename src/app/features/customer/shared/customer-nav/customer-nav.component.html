@@ -4,13 +4,23 @@
       <a routerLink="/customer/home" class="wc-logo">WearCast</a>
     </div>
 
-    <nav class="wc-links" aria-label="Main navigation">
+    <button
+      type="button"
+      class="wc-menu-toggle"
+      [attr.aria-expanded]="isMobileMenuOpen"
+      aria-label="Toggle navigation menu"
+      (click)="toggleMobileMenu()"
+    >
+      <i class="fa-solid" [ngClass]="isMobileMenuOpen ? 'fa-xmark' : 'fa-bars'"></i>
+    </button>
+
+    <nav class="wc-links" aria-label="Main navigation" [class.wc-links--open]="isMobileMenuOpen">
       <a routerLink="/customer/home" routerLinkActive="active">Home</a>
       <a routerLink="/customer/category" routerLinkActive="active">Products</a>
       <a routerLink="/customer/design" routerLinkActive="active">Create design</a>
     </nav>
 
-    <div class="wc-actions">
+    <div class="wc-actions" [class.wc-actions--open]="isMobileMenuOpen">
       <div class="wc-search">
         <input
           type="search"
@@ -24,6 +34,7 @@
         *ngIf="!auth.isLoggedIn()"
         routerLink="/login"
         class="wc-nav-auth wc-nav-auth--primary"
+        (click)="closeMobileMenu()"
       >Log in</a>
       <button
         *ngIf="auth.isLoggedIn()"
@@ -31,13 +42,13 @@
         class="wc-nav-auth"
         (click)="signOut()"
       >Sign out</button>
-      <a routerLink="/customer/favourites" class="wc-icon-btn" aria-label="Favourites" *ngIf="auth.isLoggedIn()">
+      <a routerLink="/customer/favourites" class="wc-icon-btn" aria-label="Favourites" *ngIf="auth.isLoggedIn()" (click)="closeMobileMenu()">
         <span class="wc-icon">♡</span>
       </a>
-      <a routerLink="/customer/cart" class="wc-icon-btn" aria-label="Cart">
+      <a routerLink="/customer/cart" class="wc-icon-btn" aria-label="Cart" (click)="closeMobileMenu()">
         <span class="wc-icon">🛒</span>
       </a>
-      <a routerLink="/customer/profile" class="wc-icon-btn" aria-label="Account">
+      <a routerLink="/customer/profile" class="wc-icon-btn" aria-label="Account" (click)="closeMobileMenu()">
         <span class="wc-icon">👤</span>
       </a>
     </div>

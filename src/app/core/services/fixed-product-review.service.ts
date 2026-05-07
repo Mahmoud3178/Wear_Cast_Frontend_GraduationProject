@@ -13,6 +13,15 @@ export interface FixedProductReview {
   isOwn?: boolean;
 }
 
+export interface ReviewsPage {
+  reviews: FixedProductReview[];
+  totalCount: number;
+  pageIndex: number;
+  pageSize: number;
+  totalPages: number;
+  averageRating: number;
+}
+
 export interface CreateFixedProductReviewRequest {
   rating: number;
   comment: string;
@@ -24,13 +33,13 @@ export class FixedProductReviewService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getReviews(productId: number, pageIndex = 1, pageSize = 20): Observable<FixedProductReview[]> {
+  getReviews(productId: number, pageIndex = 1, pageSize = 5): Observable<ReviewsPage> {
     return this.http.get<any>(
       `${this.base}/api/fixed-products/${productId}/reviews`,
       { params: { pageIndex, pageSize } }
     ).pipe(
-      map(res => this.mapList(res)),
-      catchError(() => of([]))
+      map(res => this.mapPage(res, pageIndex, pageSize)),
+      catchError(() => of({ reviews: [], totalCount: 0, pageIndex: 1, pageSize, totalPages: 0, averageRating: 0 }))
     );
   }
 
@@ -62,13 +71,39 @@ export class FixedProductReviewService {
     );
   }
 
-  private mapList(res: any): FixedProductReview[] {
-    let rows: any = res?.data ?? res?.items ?? res?.results ?? res;
+  private mapPage(res: any, pageIndex: number, pageSize: number): ReviewsPage {
+    // Unwrap common envelopes
+    let payload = res?.data ?? res?.result ?? res ?? {};
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+      const inner = payload?.data ?? payload?.result;
+      if (inner != null) payload = inner;
+    }
+
+    // Extract list
+    let rows: any = payload?.items ?? payload?.reviews ?? payload?.data ?? payload?.results ?? payload;
     if (rows && typeof rows === 'object' && !Array.isArray(rows)) {
       rows = rows.items ?? rows.data ?? rows.results ?? rows.reviews ?? [];
     }
-    if (!Array.isArray(rows)) return [];
-    return rows.map((r: any) => this.mapOne(r, false));
+    if (!Array.isArray(rows)) rows = [];
+
+    const reviews = rows.map((r: any) => this.mapOne(r, false));
+    const totalCount = payload?.totalCount ?? payload?.total ?? payload?.count ?? reviews.length;
+    const pageCount = payload?.totalPages ?? payload?.pages ?? (totalCount > 0 ? Math.ceil(totalCount / pageSize) : 0);
+
+    // Compute average rating from reviews if API doesn't provide it
+    const apiAvg = payload?.averageRating ?? payload?.average ?? payload?.avgRating;
+    const averageRating = (typeof apiAvg === 'number' && apiAvg > 0)
+      ? apiAvg
+      : (reviews.length > 0 ? reviews.reduce((s: number, r: FixedProductReview) => s + r.rating, 0) / reviews.length : 0);
+
+    return {
+      reviews,
+      totalCount,
+      pageIndex: payload?.pageIndex ?? pageIndex,
+      pageSize: payload?.pageSize ?? pageSize,
+      totalPages: pageCount,
+      averageRating
+    };
   }
 
   private mapOne(r: any, isOwn: boolean): FixedProductReview {

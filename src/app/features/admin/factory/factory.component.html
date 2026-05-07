@@ -13,7 +13,8 @@
         <i class="bi" [class.bi-pencil]="!editMode" [class.bi-x-lg]="editMode"></i>
         {{ editMode ? 'Cancel' : 'Edit' }}
       </button>
-      <button class="adm-btn-primary" *ngIf="editMode" (click)="save()" style="background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 2px 8px rgba(16,185,129,0.3)">
+      <button class="adm-btn-primary" *ngIf="editMode" (click)="save()"
+        style="background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 2px 8px rgba(16,185,129,0.3)">
         <i class="bi bi-check2"></i> Save Changes
       </button>
       <button class="adm-btn-danger" (click)="deleteFactory()">
@@ -22,18 +23,31 @@
     </div>
   </div>
 
-  <!-- Loading -->
-  <div class="adm-loading" *ngIf="loading">
-    <div class="adm-spinner"></div>
+  <!-- ✅ Error Banner -->
+  <div class="adm-error-banner" *ngIf="errorMessages.length">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div>
+      <strong>Please fix the following errors:</strong>
+      <ul><li *ngFor="let msg of errorMessages">{{ msg }}</li></ul>
+    </div>
+    <button class="adm-error-close" (click)="errorMessages=[]"><i class="bi bi-x-lg"></i></button>
   </div>
 
-  <!-- Factory view -->
+  <!-- ✅ Success Banner -->
+  <div class="adm-success-banner" *ngIf="successMessage">
+    <i class="bi bi-check-circle-fill"></i>
+    {{ successMessage }}
+    <button class="adm-error-close" (click)="successMessage=''"><i class="bi bi-x-lg"></i></button>
+  </div>
+
+  <div class="adm-loading" *ngIf="loading"><div class="adm-spinner"></div></div>
+
   <div *ngIf="!loading && factory">
     <div class="profile-layout">
 
-      <!-- Profile card -->
       <div class="adm-profile-card">
-        <img [src]="factory.logoUrl" class="adm-profile-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=6366f1&color=fff&size=96'">
+        <img [src]="factory.logoUrl" class="adm-profile-img"
+          onerror="this.src='https://ui-avatars.com/api/?name=F&background=6366f1&color=fff&size=96'">
         <h2 class="adm-profile-name">{{ factory.name }}</h2>
         <p class="adm-profile-sub">{{ factory.email }}</p>
         <p class="adm-profile-sub" style="margin-top:-10px">{{ factory.phoneNumber }}</p>
@@ -45,7 +59,6 @@
         </div>
       </div>
 
-      <!-- Info card -->
       <div>
         <div class="adm-card">
           <div class="adm-card-head">
@@ -53,30 +66,12 @@
           </div>
           <div class="adm-card-body">
             <div class="adm-form-grid">
-              <div class="adm-form-group">
-                <label>Factory Name</label>
-                <input class="adm-field" [(ngModel)]="form.name" [disabled]="!editMode">
-              </div>
-              <div class="adm-form-group">
-                <label>Email</label>
-                <input class="adm-field" [(ngModel)]="form.email" [disabled]="!editMode">
-              </div>
-              <div class="adm-form-group">
-                <label>Phone</label>
-                <input class="adm-field" [(ngModel)]="form.phoneNumber" [disabled]="!editMode">
-              </div>
-              <div class="adm-form-group">
-                <label>Commercial Reg</label>
-                <input class="adm-field" [(ngModel)]="form.commercialRegisterNumber" [disabled]="!editMode">
-              </div>
-              <div class="adm-form-group">
-                <label>Tax ID</label>
-                <input class="adm-field" [(ngModel)]="form.taxIdNumber" [disabled]="!editMode">
-              </div>
-              <div class="adm-form-group full">
-                <label>Description</label>
-                <textarea class="adm-field" rows="3" [(ngModel)]="form.description" [disabled]="!editMode"></textarea>
-              </div>
+              <div class="adm-form-group"><label>Factory Name</label><input class="adm-field" [(ngModel)]="form.name" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Email</label><input class="adm-field" [(ngModel)]="form.email" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Phone</label><input class="adm-field" [(ngModel)]="form.phoneNumber" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Commercial Reg</label><input class="adm-field" [(ngModel)]="form.commercialRegisterNumber" [disabled]="!editMode"></div>
+              <div class="adm-form-group"><label>Tax ID</label><input class="adm-field" [(ngModel)]="form.taxIdNumber" [disabled]="!editMode"></div>
+              <div class="adm-form-group full"><label>Description</label><textarea class="adm-field" rows="3" [(ngModel)]="form.description" [disabled]="!editMode"></textarea></div>
             </div>
           </div>
         </div>
@@ -85,7 +80,6 @@
     </div>
   </div>
 
-  <!-- Empty state -->
   <div class="adm-card" *ngIf="!loading && !factory">
     <div class="adm-card-body">
       <div class="adm-empty">
@@ -106,15 +100,25 @@
     </div>
     <div class="adm-modal-body">
 
+      <!-- ✅ Error inside modal -->
+      <div class="adm-error-banner" *ngIf="errorMessages.length">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <div>
+          <strong>Please fix the following errors:</strong>
+          <ul><li *ngFor="let msg of errorMessages">{{ msg }}</li></ul>
+        </div>
+        <button class="adm-error-close" (click)="errorMessages=[]"><i class="bi bi-x-lg"></i></button>
+      </div>
+
       <div class="adm-section-label"><i class="bi bi-building"></i> Factory Info</div>
       <div class="adm-form-grid" style="margin-bottom:20px">
         <div class="adm-form-group"><label>Factory Name <span class="adm-req">*</span></label><input class="adm-field" placeholder="Factory name" [(ngModel)]="form.name"></div>
-        <div class="adm-form-group"><label>Email <span class="adm-req">*</span></label><input class="adm-field" placeholder="Email" [(ngModel)]="form.email"></div>
-        <div class="adm-form-group"><label>Phone</label><input class="adm-field" placeholder="Phone" [(ngModel)]="form.phoneNumber"></div>
-        <div class="adm-form-group"><label>City</label><input class="adm-field" placeholder="City" [(ngModel)]="form.city"></div>
-        <div class="adm-form-group"><label>State</label><input class="adm-field" placeholder="State" [(ngModel)]="form.state"></div>
-        <div class="adm-form-group"><label>Street</label><input class="adm-field" placeholder="Street" [(ngModel)]="form.street"></div>
-        <div class="adm-form-group"><label>Building</label><input class="adm-field" placeholder="Building No." [(ngModel)]="form.buildingNumber"></div>
+        <div class="adm-form-group"><label>Email <span class="adm-req">*</span></label><input class="adm-field" [(ngModel)]="form.email"></div>
+        <div class="adm-form-group"><label>Phone</label><input class="adm-field" [(ngModel)]="form.phoneNumber"></div>
+        <div class="adm-form-group"><label>City</label><input class="adm-field" [(ngModel)]="form.city"></div>
+        <div class="adm-form-group"><label>State</label><input class="adm-field" [(ngModel)]="form.state"></div>
+        <div class="adm-form-group"><label>Street</label><input class="adm-field" [(ngModel)]="form.street"></div>
+        <div class="adm-form-group"><label>Building</label><input class="adm-field" [(ngModel)]="form.buildingNumber"></div>
         <div class="adm-form-group"><label>Commercial Reg <span class="adm-req">*</span></label><input class="adm-field" [(ngModel)]="form.commercialRegisterNumber"></div>
         <div class="adm-form-group"><label>Tax ID <span class="adm-req">*</span></label><input class="adm-field" [(ngModel)]="form.taxIdNumber"></div>
         <div class="adm-form-group full"><label>Description</label><textarea class="adm-field" rows="3" [(ngModel)]="form.description"></textarea></div>
@@ -122,12 +126,33 @@
 
       <div class="adm-section-label"><i class="bi bi-person-badge"></i> Manager Info</div>
       <div class="adm-form-grid">
-        <div class="adm-form-group"><label>First Name <span class="adm-req">*</span></label><input class="adm-field" placeholder="First name" [(ngModel)]="form.managerFirstName"></div>
-        <div class="adm-form-group"><label>Last Name</label><input class="adm-field" placeholder="Last name" [(ngModel)]="form.managerLastName"></div>
-        <div class="adm-form-group"><label>Email <span class="adm-req">*</span></label><input class="adm-field" placeholder="Manager email" [(ngModel)]="form.managerEmail"></div>
-        <div class="adm-form-group"><label>Phone</label><input class="adm-field" placeholder="Manager phone" [(ngModel)]="form.managerPhone"></div>
-        <div class="adm-form-group"><label>Password <span class="adm-req">*</span></label><input type="password" class="adm-field" placeholder="Password" [(ngModel)]="form.password"></div>
-        <div class="adm-form-group"><label>Confirm Password <span class="adm-req">*</span></label><input type="password" class="adm-field" placeholder="Confirm" [(ngModel)]="form.confirmPassword"></div>
+        <div class="adm-form-group"><label>First Name <span class="adm-req">*</span></label><input class="adm-field" [(ngModel)]="form.managerFirstName"></div>
+        <div class="adm-form-group"><label>Last Name</label><input class="adm-field" [(ngModel)]="form.managerLastName"></div>
+        <div class="adm-form-group"><label>Email <span class="adm-req">*</span></label><input class="adm-field" [(ngModel)]="form.managerEmail"></div>
+        <div class="adm-form-group"><label>Phone</label><input class="adm-field" [(ngModel)]="form.managerPhone"></div>
+
+        <!-- 👁️ Password -->
+        <div class="adm-form-group">
+          <label>Password <span class="adm-req">*</span></label>
+          <div class="adm-password-wrap">
+            <input [type]="showPassword ? 'text' : 'password'" class="adm-field" [(ngModel)]="form.password">
+            <button type="button" class="adm-eye-btn" (click)="togglePassword()">
+              <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 👁️ Confirm Password -->
+        <div class="adm-form-group">
+          <label>Confirm Password <span class="adm-req">*</span></label>
+          <div class="adm-password-wrap">
+            <input [type]="showConfirmPassword ? 'text' : 'password'" class="adm-field" [(ngModel)]="form.confirmPassword">
+            <button type="button" class="adm-eye-btn" (click)="toggleConfirmPassword()">
+              <i class="bi" [class.bi-eye]="!showConfirmPassword" [class.bi-eye-slash]="showConfirmPassword"></i>
+            </button>
+          </div>
+        </div>
+
         <div class="adm-form-group full"><label>Logo</label><input type="file" class="adm-field" (change)="onFileChange($event)"></div>
       </div>
 

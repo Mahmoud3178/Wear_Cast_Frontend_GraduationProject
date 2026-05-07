@@ -26,6 +26,7 @@
 
   <main class="wc-page">
     <section class="wc-products-hero" aria-labelledby="wc-products-hero-title">
+      <div class="wc-products-hero__aurora" aria-hidden="true"></div>
       <h1 id="wc-products-hero-title" class="wc-products-hero__title">customizable products</h1>
       <p class="wc-products-hero__subtitle">
         Sell t-shirts, hoodies, tote bags, stickers, and more using personal designs.
@@ -47,19 +48,42 @@
       <a routerLink="/customer/category" class="wc-products-hero__browse">Browse products &amp; prices</a>
     </section>
 
-    <section class="wc-parallax">
-      <div class="wc-parallax-row">
-        <article
-          class="wc-parallax-card"
-          *ngFor="let card of parallaxCards"
-          (mousemove)="onParallaxMove($event)"
-          (mouseleave)="onParallaxLeave($event)"
-          (mousedown)="onParallaxClick($event)"
-          (mouseup)="onParallaxRelease($event)"
-        >
-          <div class="wc-parallax-glow" aria-hidden="true"></div>
-          <img class="wc-parallax-img" [src]="card.imageUrl" [alt]="card.title" />
-        </article>
+    <!-- Geometric Hero Section - WearCast Design Studio -->
+    <section class="wc-geometric-hero" aria-label="WearCast Design Studio">
+      <div class="wc-geometric-hero__bg" aria-hidden="true"></div>
+
+      <div class="wc-geometric-shapes" aria-hidden="true">
+        <div class="wc-shape wc-shape--1"></div>
+        <div class="wc-shape wc-shape--2"></div>
+        <div class="wc-shape wc-shape--3"></div>
+        <div class="wc-shape wc-shape--4"></div>
+        <div class="wc-shape wc-shape--5"></div>
+      </div>
+
+      <div class="wc-geometric-hero__content">
+        <div class="wc-geometric-badge">
+          <span class="wc-geometric-badge__dot"></span>
+          <span class="wc-geometric-badge__text">WearCast Studio</span>
+        </div>
+
+        <h2 class="wc-geometric-title">
+          <span class="wc-geometric-title__line1">Design Your Style</span>
+          <span class="wc-geometric-title__line2">Create With Passion</span>
+        </h2>
+
+        <p class="wc-geometric-subtitle">
+          Transform your creative vision into wearable art. Customize apparel with
+          AI-powered tools, premium materials, and endless possibilities.
+        </p>
+
+        <div class="wc-geometric-actions">
+          <a routerLink="/customer/design" class="wc-geometric-btn wc-geometric-btn--primary">
+            Start Creating
+          </a>
+          <a routerLink="/customer/category" class="wc-geometric-btn wc-geometric-btn--ghost">
+            Explore Collection
+          </a>
+        </div>
       </div>
     </section>
 
@@ -91,6 +115,40 @@
           <!-- Placeholder if no products -->
           <div *ngIf="newArrivals.length === 0" class="wc-no-products">
             No products yet.
+          </div>
+        </ng-container>
+      </div>
+    </section>
+
+    <!-- Best Sellers Section -->
+    <section class="wc-section wc-section--bestsellers">
+      <div class="wc-section-header">
+        <h2>Best Sellers</h2>
+        <a routerLink="/customer/category" [queryParams]="{sort: 'bestSeller'}" class="wc-link-btn">View all →</a>
+      </div>
+      <div class="wc-grid">
+        <!-- Loading skeletons -->
+        <ng-container *ngIf="bestSellersLoading">
+          <div class="wc-card wc-card--skeleton" *ngFor="let i of [1,2,3,4,5]">
+            <div class="wc-card-image wc-skeleton-pulse"></div>
+            <div class="wc-skeleton-line wc-skeleton-pulse" style="width:70%;height:14px;border-radius:6px"></div>
+            <div class="wc-skeleton-line wc-skeleton-pulse" style="width:40%;height:12px;border-radius:6px"></div>
+            <div class="wc-skeleton-line wc-skeleton-pulse" style="width:30%;height:14px;border-radius:6px"></div>
+          </div>
+        </ng-container>
+        <!-- Real products -->
+        <ng-container *ngIf="!bestSellersLoading">
+          <article class="wc-card" *ngFor="let p of bestSellers" [routerLink]="['/customer/product', p.id]">
+            <div class="wc-card-image">
+              <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" class="wc-card-img">
+            </div>
+            <h3>{{ p.name }}</h3>
+            <p class="wc-card-meta">{{ p.category || 'Apparel' }}</p>
+            <p class="wc-card-price">EGP {{ p.price | number:'1.0-0' }}</p>
+          </article>
+          <!-- Placeholder if no products -->
+          <div *ngIf="bestSellers.length === 0" class="wc-no-products">
+            No best sellers yet.
           </div>
         </ng-container>
       </div>

@@ -8,12 +8,18 @@ import {
   FixedProductService,
   FixedProductDetail,
   FixedProductColor,
-  FixedProductColorDetail
+  FixedProductColorDetail,
+  FixedProductSummary
 } from '../../../core/services/fixed-product.service';
 import { CartService, SizeQuantityItem } from '../../../core/services/cart.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { FavouritesService } from '../../../core/services/favourites.service';
 import { TryOnService } from '../../../core/services/try-on.service';
+import {
+  FixedProductReviewService,
+  FixedProductReview,
+  ReviewsPage
+} from '../../../core/services/fixed-product-review.service';
 import { environment } from '../../../../environments/environment';
 import { parseWearCastApiDate } from '../../../core/utils/api-date';
 
@@ -56,6 +62,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly favouritesService = inject(FavouritesService);
   private readonly tryOnService = inject(TryOnService);
+  private readonly reviewService = inject(FixedProductReviewService);
 
   // ── product state ──────────────────────────────────────────────
   loading = true;
@@ -87,8 +94,23 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   favouriteMessage = '';
   favouriteError = '';
 
-  // ── review state removed — backend only supports designed-product reviews ──
+  // ── reviews ───────────────────────────────────────────────────
   isAuthenticated = false;
+  reviewsPage: ReviewsPage | null = null;
+  reviewsLoading = false;
+  reviewPageIndex = 1;
+  reviewPageSize = 5;
+  myReview: FixedProductReview | null = null;
+  showReviewForm = false;
+  newReviewRating = 0;
+  newReviewComment = '';
+  reviewSubmitting = false;
+  reviewError = '';
+  reviewSuccess = '';
+
+  // ── best sellers ───────────────────────────────────────────────
+  bestSellers: FixedProductSummary[] = [];
+  bestSellersLoading = false;
 
   // ── virtual try-on ─────────────────────────────────────────────
   showTryOnModal = false;
@@ -116,6 +138,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       return;
     }
     this.loadProduct(id);
+    this.loadReviews(id);
+    if (this.isAuthenticated) {
+      this.loadMyReview(id);
+    }
+    this.loadBestSellers();
   }
 
   // ── Product loading ────────────────────────────────────────────
@@ -268,11 +295,158 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     return Array.from({ length: 5 }, (_, i) => i < Math.round(rating));
   }
 
+  starArrayExact(rating: number): { filled: boolean; half: boolean }[] {
+    return Array.from({ length: 5 }, (_, i) => {
+      const starValue = i + 1;
+      const filled = rating >= starValue;
+      const half = !filled && rating >= starValue - 0.5;
+      return { filled, half };
+    });
+  }
+
   formatDate(d: string): string {
     if (!d) return '';
     const parsed = parseWearCastApiDate(d);
     if (!parsed) return d;
     return parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  // ── Reviews ────────────────────────────────────────────────────
+
+  private loadReviews(productId: number): void {
+    this.reviewsLoading = true;
+    this.reviewService.getReviews(productId, this.reviewPageIndex, this.reviewPageSize).subscribe({
+      next: page => {
+        this.reviewsPage = page;
+        this.reviewsLoading = false;
+      },
+      error: () => {
+        this.reviewsLoading = false;
+      }
+    });
+  }
+
+  private loadMyReview(productId: number): void {
+    this.reviewService.getMyReview(productId).subscribe({
+      next: review => {
+        this.myReview = review;
+      },
+      error: () => {
+        this.myReview = null;
+      }
+    });
+  }
+
+  changeReviewPage(delta: number): void {
+    if (!this.product) return;
+    const newPage = this.reviewPageIndex + delta;
+    if (newPage < 1 || (this.reviewsPage && newPage > this.reviewsPage.totalPages)) return;
+    this.reviewPageIndex = newPage;
+    this.loadReviews(this.product.id);
+  }
+
+  openReviewForm(): void {
+    if (this.myReview) {
+      this.newReviewRating = this.myReview.rating;
+      this.newReviewComment = this.myReview.comment;
+    } else {
+      this.newReviewRating = 0;
+      this.newReviewComment = '';
+    }
+    this.showReviewForm = true;
+    this.reviewError = '';
+    this.reviewSuccess = '';
+  }
+
+  closeReviewForm(): void {
+    this.showReviewForm = false;
+    this.newReviewRating = 0;
+    this.newReviewComment = '';
+    this.reviewError = '';
+  }
+
+  setRating(rating: number): void {
+    this.newReviewRating = rating;
+  }
+
+  submitReview(): void {
+    if (!this.product) return;
+    if (this.newReviewRating < 1 || this.newReviewRating > 5) {
+      this.reviewError = 'Please select a rating between 1 and 5 stars.';
+      return;
+    }
+    if (!this.newReviewComment.trim()) {
+      this.reviewError = 'Please write a review comment.';
+      return;
+    }
+
+    this.reviewSubmitting = true;
+    this.reviewError = '';
+    this.reviewSuccess = '';
+
+    this.reviewService.submitReview(this.product.id, {
+      rating: this.newReviewRating,
+      comment: this.newReviewComment.trim()
+    }).subscribe({
+      next: () => {
+        this.reviewSubmitting = false;
+        this.reviewSuccess = this.myReview ? 'Review updated successfully!' : 'Review submitted successfully!';
+        this.showReviewForm = false;
+        // Reload reviews and my review
+        this.loadReviews(this.product!.id);
+        this.loadMyReview(this.product!.id);
+        setTimeout(() => this.reviewSuccess = '', 3000);
+      },
+      error: (err: any) => {
+        this.reviewSubmitting = false;
+        // Extract error description from API response
+        const errorDesc = err?.error?.error?.description;
+        const errorCode = err?.error?.error?.code;
+        if (errorDesc) {
+          this.reviewError = errorDesc;
+        } else if (errorCode === 'FixedProductReview.NotPurchased') {
+          this.reviewError = 'You can only review products you have purchased and picked up.';
+        } else {
+          this.reviewError = err.message || 'Failed to submit review. Please try again.';
+        }
+      }
+    });
+  }
+
+  deleteMyReview(): void {
+    if (!this.myReview || !this.product) return;
+    if (!confirm('Are you sure you want to delete your review?')) return;
+
+    this.reviewService.deleteReview(this.myReview.reviewId).subscribe({
+      next: () => {
+        this.myReview = null;
+        this.reviewSuccess = 'Review deleted successfully!';
+        this.loadReviews(this.product!.id);
+        setTimeout(() => this.reviewSuccess = '', 3000);
+      },
+      error: (e: Error) => {
+        this.reviewError = e.message || 'Failed to delete review.';
+      }
+    });
+  }
+
+  // ── Best Sellers ───────────────────────────────────────────────
+
+  private loadBestSellers(): void {
+    this.bestSellersLoading = true;
+    this.fixedProductService.getAll({
+      PageSize: 4,
+      SortBy: 'bestSeller'
+    }).subscribe({
+      next: result => {
+        this.bestSellers = result.items;
+        this.bestSellersLoading = false;
+      },
+      error: () => {
+        this.bestSellersLoading = false;
+        this.bestSellers = [];
+      }
+    });
   }
 
   // ── Size Table Modal ───────────────────────────────────────────

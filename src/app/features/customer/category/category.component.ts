@@ -38,11 +38,11 @@ export class CategoryComponent implements OnInit {
   ];
 
   sortOptions = [
-    { label: 'Most Popular', value: 0 },
-    { label: 'Newest', value: 1 },
-    { label: 'Price (Low to High)', value: 2 },
-    { label: 'Price (High to Low)', value: 3 },
-    { label: 'Best Seller', value: 4 }
+    { label: 'Most Popular', value: 'MostPopular' },
+    { label: 'Newest', value: 'Newest' },
+    { label: 'Price (Low to High)', value: 'PriceAsc' },
+    { label: 'Price (High to Low)', value: 'PriceDesc' },
+    { label: 'Best Seller', value: 'BestSeller' }
   ];
 
   categories: any[] = [];
@@ -51,7 +51,7 @@ export class CategoryComponent implements OnInit {
   selectedAudience: number | null = null;
   selectedStyle: number | null = null;
   selectedCategory: number | null = null;
-  selectedSort: number | null = 0;
+  selectedSort: string | null = 'MostPopular';
   minPrice = 0;
   maxPrice = 99999;
   searchTerm = '';

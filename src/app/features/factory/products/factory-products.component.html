@@ -112,7 +112,7 @@
         <div>
           <div class="fw-medium">{{ item.name }}</div>
           <div class="small text-muted">
-            {{ item.categoryName }} · {{ item.targetAudienceLabel }} · ${{ item.price }}
+            {{ item.categoryName }} · {{ item.targetAudienceLabel }} · EGP {{ item.price | number:'1.2-2' }}
           </div>
           <div class="small text-muted">
             Rating:

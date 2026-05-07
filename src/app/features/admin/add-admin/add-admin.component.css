@@ -1,15 +1,167 @@
 /* ============================================================
-   ADD ADMIN — FULLY RESPONSIVE
+   ADD ADMIN PAGE
    ============================================================ */
-.add-admin-footer {
+
+.add-admin-footer{
   display:flex;
   justify-content:flex-end;
-  gap:10px;
+  gap:12px;
   margin-top:24px;
   flex-wrap:wrap;
 }
 
-@media (max-width:480px) {
-  .add-admin-footer { flex-direction:column; }
-  .add-admin-footer button { width:100%; justify-content:center; }
+/* ============================================================
+   ERROR / SUCCESS BANNERS
+   ============================================================ */
+
+.adm-error-banner,
+.adm-success-banner{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  padding:16px 18px;
+  border-radius:12px;
+  margin-bottom:20px;
+  position:relative;
+  animation:fadeIn .25s ease;
+}
+
+.adm-error-banner{
+  background:#fff1f2;
+  border:1px solid #fecaca;
+  color:#b91c1c;
+}
+
+.adm-success-banner{
+  background:#f0fdf4;
+  border:1px solid #86efac;
+  color:#15803d;
+  align-items:center;
+}
+
+.adm-error-banner i:first-child,
+.adm-success-banner i:first-child{
+  font-size:20px;
+  flex-shrink:0;
+  margin-top:2px;
+}
+
+.adm-error-content{
+  flex:1;
+}
+
+.adm-error-content ul{
+  margin:8px 0 0;
+  padding-left:18px;
+}
+
+.adm-error-content li{
+  margin-bottom:4px;
+}
+
+.adm-error-close{
+  background:none;
+  border:none;
+  cursor:pointer;
+  color:inherit;
+  opacity:.7;
+  transition:.2s;
+  padding:0;
+  flex-shrink:0;
+}
+
+.adm-error-close:hover{
+  opacity:1;
+  transform:scale(1.05);
+}
+
+/* ============================================================
+   FIELD ERRORS
+   ============================================================ */
+
+.field-error{
+  color:#dc2626;
+  font-size:13px;
+  margin-top:6px;
+  font-weight:500;
+}
+
+.field-invalid{
+  border-color:#ef4444 !important;
+  box-shadow:0 0 0 3px rgba(239,68,68,.08);
+}
+
+/* ============================================================
+   PASSWORD FIELD
+   ============================================================ */
+
+.adm-password-wrap{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+
+.adm-password-wrap .adm-field{
+  width:100%;
+  padding-right:44px;
+}
+
+.adm-eye-btn{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  border:none;
+  background:none;
+  cursor:pointer;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#6b7280;
+  font-size:18px;
+  transition:.2s;
+}
+
+.adm-eye-btn:hover{
+  color:#4f46e5;
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width:480px){
+
+  .add-admin-footer{
+    flex-direction:column;
+  }
+
+  .add-admin-footer button{
+    width:100%;
+    justify-content:center;
+  }
+
+  .adm-error-banner,
+  .adm-success-banner{
+    padding:14px;
+    font-size:14px;
+  }
+
+}
+
+/* ============================================================
+   ANIMATION
+   ============================================================ */
+
+@keyframes fadeIn{
+  from{
+    opacity:0;
+    transform:translateY(-5px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
 }

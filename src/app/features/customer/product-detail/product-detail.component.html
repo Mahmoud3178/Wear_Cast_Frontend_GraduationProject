@@ -49,7 +49,20 @@
             <span *ngIf="!favouriteLoading">{{ isInFavourites ? '♥' : '♡' }}</span>
           </button>
         </div>
-        <p class="wc-price">EGP {{ product.price | number:'1.2-2' }}</p>
+        <div class="wc-price-rating-row">
+          <p class="wc-price">EGP {{ product.price | number:'1.2-2' }}</p>
+          <div class="wc-product-rating" *ngIf="reviewsPage && reviewsPage.totalCount > 0">
+            <div class="wc-rating-stars">
+              <span *ngFor="let star of starArrayExact(reviewsPage.averageRating); let i = index"
+                    class="star"
+                    [class.filled]="star.filled"
+                    [class.half]="star.half">
+                {{ star.filled ? '★' : (star.half ? '½' : '☆') }}
+              </span>
+            </div>
+            <span class="wc-rating-text">{{ reviewsPage.averageRating | number:'1.1-1' }} ({{ reviewsPage.totalCount }} {{ reviewsPage.totalCount === 1 ? 'review' : 'reviews' }})</span>
+          </div>
+        </div>
 
         <!-- Favourite messages -->
         <div *ngIf="favouriteMessage" class="wc-fav-success">{{ favouriteMessage }}</div>
@@ -120,6 +133,181 @@
           </button>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ───────────────── Reviews Section ───────────────── -->
+    <section class="wc-reviews-section" *ngIf="!loading && product">
+      <div class="wc-reviews-container">
+        <div class="wc-reviews-header">
+          <div class="wc-reviews-title-block">
+            <h2>Customer Reviews</h2>
+            <div class="wc-reviews-summary" *ngIf="reviewsPage && reviewsPage.totalCount > 0">
+              <div class="wc-summary-stars">
+                <span *ngFor="let star of starArrayExact(reviewsPage.averageRating); let i = index"
+                      class="summary-star"
+                      [class.filled]="star.filled"
+                      [class.half]="star.half">
+                  {{ star.filled ? '★' : (star.half ? '½' : '☆') }}
+                </span>
+              </div>
+              <span class="wc-summary-text">{{ reviewsPage.averageRating | number:'1.1-1' }} out of 5</span>
+              <span class="wc-summary-count">Based on {{ reviewsPage.totalCount }} {{ reviewsPage.totalCount === 1 ? 'review' : 'reviews' }}</span>
+            </div>
+          </div>
+
+          <!-- Write Review Button (if authenticated and doesn't have review) -->
+          <button class="wc-btn-write-review" *ngIf="isAuthenticated && !myReview && !showReviewForm" (click)="openReviewForm()">
+            Write a Review
+          </button>
+
+          <!-- Update Review Button (if has review) -->
+          <button class="wc-btn-write-review wc-btn-update" *ngIf="isAuthenticated && myReview && !showReviewForm" (click)="openReviewForm()">
+            Edit My Review
+          </button>
+        </div>
+
+        <!-- Review Messages -->
+        <div *ngIf="reviewSuccess" class="wc-review-success">{{ reviewSuccess }}</div>
+        <div *ngIf="reviewError && !showReviewForm" class="wc-review-error">{{ reviewError }}</div>
+
+        <!-- Login Prompt -->
+        <div *ngIf="!isAuthenticated" class="wc-review-auth-prompt">
+          <a routerLink="/login">Sign in</a> to write a review
+        </div>
+
+        <!-- Review Form -->
+        <div class="wc-review-form-card" *ngIf="showReviewForm">
+          <h3>{{ myReview ? 'Update Your Review' : 'Write a Review' }}</h3>
+          <div class="wc-star-picker">
+            <button *ngFor="let _ of [1,2,3,4,5]; let i = index"
+                    class="star-pick"
+                    [class.active]="newReviewRating >= i + 1"
+                    (click)="setRating(i + 1)">
+              ★
+            </button>
+            <span class="wc-rating-label" *ngIf="newReviewRating > 0">{{ newReviewRating }} star{{ newReviewRating > 1 ? 's' : '' }}</span>
+          </div>
+          <textarea class="wc-review-textarea"
+                    [(ngModel)]="newReviewComment"
+                    placeholder="Share your thoughts about this product..."
+                    rows="4">
+          </textarea>
+          <div class="wc-review-form-actions">
+            <button class="wc-btn-outline" (click)="closeReviewForm()">Cancel</button>
+            <button class="wc-btn-submit-review"
+                    [disabled]="reviewSubmitting"
+                    (click)="submitReview()">
+              <span *ngIf="reviewSubmitting" class="wc-dot-loader"></span>
+              {{ reviewSubmitting ? 'Submitting...' : (myReview ? 'Update Review' : 'Submit Review') }}
+            </button>
+          </div>
+          <div *ngIf="reviewError" class="wc-review-error mt-2">{{ reviewError }}</div>
+        </div>
+
+        <!-- My Review Card -->
+        <div class="wc-my-review-card" *ngIf="myReview && !showReviewForm">
+          <div class="wc-my-review-badge">Your Review</div>
+          <div class="wc-review-card-header">
+            <div class="wc-reviewer-info">
+              <span class="wc-reviewer-name">{{ myReview.reviewerName }}</span>
+              <span class="wc-review-date">{{ formatDate(myReview.createdAt) }}</span>
+            </div>
+            <div class="wc-review-stars">
+              <span *ngFor="let filled of starArray(myReview.rating)"
+                    [class.filled]="filled">★</span>
+            </div>
+          </div>
+          <p class="wc-review-comment">{{ myReview.comment }}</p>
+          <div class="wc-review-actions">
+            <button class="wc-btn-sm wc-btn-ghost" (click)="openReviewForm()">Edit</button>
+            <button class="wc-btn-sm wc-btn-danger-ghost" (click)="deleteMyReview()">Delete</button>
+          </div>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="wc-reviews-loading" *ngIf="reviewsLoading">
+          <div class="wc-spinner wc-spinner--sm"></div>
+          <span>Loading reviews...</span>
+        </div>
+
+        <div class="wc-no-reviews" *ngIf="!reviewsLoading && reviewsPage && reviewsPage.reviews.length === 0">
+          <div class="wc-no-reviews-icon">💬</div>
+          <p>No reviews yet. Be the first to review this product!</p>
+        </div>
+
+        <div class="wc-reviews-list" *ngIf="!reviewsLoading && reviewsPage && reviewsPage.reviews.length > 0">
+          <div class="wc-review-card" *ngFor="let review of reviewsPage.reviews" [class.wc-review-own]="review.reviewId === myReview?.reviewId">
+            <div class="wc-review-card-header">
+              <div class="wc-reviewer-info">
+                <span class="wc-reviewer-name">{{ review.reviewerName }}</span>
+                <span class="wc-review-date">{{ formatDate(review.createdAt) }}</span>
+              </div>
+              <div class="wc-review-stars">
+                <span *ngFor="let filled of starArray(review.rating)"
+                      [class.filled]="filled">★</span>
+              </div>
+            </div>
+            <p class="wc-review-comment">{{ review.comment }}</p>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="wc-reviews-pagination" *ngIf="reviewsPage && reviewsPage.totalPages > 1">
+          <button class="wc-page-btn"
+                  [disabled]="reviewPageIndex <= 1"
+                  (click)="changeReviewPage(-1)">
+            ← Previous
+          </button>
+          <span class="wc-page-info">Page {{ reviewPageIndex }} of {{ reviewsPage.totalPages }}</span>
+          <button class="wc-page-btn"
+                  [disabled]="reviewPageIndex >= reviewsPage.totalPages"
+                  (click)="changeReviewPage(1)">
+            Next →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────────── Best Sellers Section ───────────────── -->
+    <section class="wc-bestsellers-section" *ngIf="!loading && product">
+      <div class="wc-section-container">
+        <div class="wc-section-header">
+          <h2>Best Sellers</h2>
+          <p class="wc-section-subtitle">Customers also loved these</p>
+        </div>
+
+        <div class="wc-bestsellers-loading" *ngIf="bestSellersLoading">
+          <div class="wc-spinner wc-spinner--sm"></div>
+          <span>Loading best sellers...</span>
+        </div>
+
+        <div class="wc-bestsellers-grid" *ngIf="!bestSellersLoading">
+          <a [routerLink]="['/customer/product', item.id]"
+             class="wc-bestseller-card"
+             *ngFor="let item of bestSellers; let i = index"
+             [class.wc-bestseller-top3]="i < 3">
+            <div class="wc-bestseller-rank" *ngIf="i < 3">#{{ i + 1 }}</div>
+            <div class="wc-bestseller-image">
+              <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name">
+              <div *ngIf="!item.imageUrl" class="wc-bestseller-placeholder">👕</div>
+            </div>
+            <div class="wc-bestseller-info">
+              <h4 class="wc-bestseller-name">{{ item.name }}</h4>
+              <p class="wc-bestseller-price">EGP {{ item.price | number:'1.2-2' }}</p>
+              <div class="wc-bestseller-tags">
+                <span class="wc-bestseller-tag" *ngIf="item.categoryName">{{ item.categoryName }}</span>
+                <span class="wc-bestseller-tag" *ngIf="audienceLabel(item.targetAudience)">{{ audienceLabel(item.targetAudience) }}</span>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <div class="wc-bestsellers-footer" *ngIf="!bestSellersLoading && bestSellers.length > 0">
+          <a routerLink="/customer/category" class="wc-btn-see-more">
+            See More Products →
+          </a>
+        </div>
       </div>
     </section>
 

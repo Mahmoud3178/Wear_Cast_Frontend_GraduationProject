@@ -1,67 +1,282 @@
 <div class="page-wrap">
 
+  <!-- Header -->
   <div class="adm-header">
     <div>
       <h1 class="adm-title">Add New Administrator</h1>
-      <p class="adm-subtitle">Create a new admin account with role assignment.</p>
+      <p class="adm-subtitle">
+        Create a new admin account with role assignment.
+      </p>
     </div>
   </div>
 
-  <div class="adm-card" style="max-width:680px">
-    <div class="adm-card-head">
-      <h3 class="adm-card-title"><i class="bi bi-shield-lock"></i> Admin Information</h3>
+  <!-- Error Banner -->
+  <div class="adm-error-banner" *ngIf="errorMessages.length">
+
+    <i class="bi bi-exclamation-triangle-fill"></i>
+
+    <div class="adm-error-content">
+      <strong>Please fix the following errors:</strong>
+
+      <ul>
+        <li *ngFor="let msg of errorMessages">
+          {{ msg }}
+        </li>
+      </ul>
     </div>
+
+    <button
+      type="button"
+      class="adm-error-close"
+      (click)="errorMessages=[]">
+
+      <i class="bi bi-x-lg"></i>
+
+    </button>
+
+  </div>
+
+  <!-- Success Banner -->
+  <div class="adm-success-banner" *ngIf="successMessage">
+
+    <i class="bi bi-check-circle-fill"></i>
+
+    <span>{{ successMessage }}</span>
+
+    <button
+      type="button"
+      class="adm-error-close"
+      (click)="successMessage=''">
+
+      <i class="bi bi-x-lg"></i>
+
+    </button>
+
+  </div>
+
+  <!-- Card -->
+  <div class="adm-card" style="max-width:680px">
+
+    <div class="adm-card-head">
+      <h3 class="adm-card-title">
+        <i class="bi bi-shield-lock"></i>
+        Admin Information
+      </h3>
+    </div>
+
     <div class="adm-card-body">
 
-      <div class="adm-section-label"><i class="bi bi-person"></i> Personal Info</div>
-      <div class="adm-form-grid" style="margin-bottom:20px">
-        <div class="adm-form-group">
-          <label>First Name <span class="adm-req">*</span></label>
-          <input class="adm-field" placeholder="First Name" [(ngModel)]="admin.firstName">
-        </div>
-        <div class="adm-form-group">
-          <label>Last Name</label>
-          <input class="adm-field" placeholder="Last Name" [(ngModel)]="admin.lastName">
-        </div>
-        <div class="adm-form-group">
-          <label>Email <span class="adm-req">*</span></label>
-          <input class="adm-field" type="email" placeholder="admin@wearcast.com" [(ngModel)]="admin.email">
-        </div>
-        <div class="adm-form-group">
-          <label>Phone</label>
-          <input class="adm-field" placeholder="+20 1xx xxx xxxx" [(ngModel)]="admin.phone">
-        </div>
+      <!-- Personal -->
+      <div class="adm-section-label">
+        <i class="bi bi-person"></i>
+        Personal Info
       </div>
 
-      <div class="adm-section-label"><i class="bi bi-shield-check"></i> Role & Security</div>
+      <div class="adm-form-grid" style="margin-bottom:20px">
+
+        <!-- First Name -->
+        <div class="adm-form-group">
+
+          <label>
+            First Name
+            <span class="adm-req">*</span>
+          </label>
+
+          <input
+            class="adm-field"
+            [class.field-invalid]="fieldErrors?.FirstName"
+            placeholder="First Name"
+            [(ngModel)]="admin.firstName">
+
+          <div class="field-error" *ngIf="fieldErrors?.FirstName">
+            {{ fieldErrors.FirstName[0] }}
+          </div>
+
+        </div>
+
+        <!-- Last Name -->
+        <div class="adm-form-group">
+
+          <label>Last Name</label>
+
+          <input
+            class="adm-field"
+            placeholder="Last Name"
+            [(ngModel)]="admin.lastName">
+
+        </div>
+
+        <!-- Email -->
+        <div class="adm-form-group">
+
+          <label>
+            Email
+            <span class="adm-req">*</span>
+          </label>
+
+          <input
+            class="adm-field"
+            type="email"
+            [class.field-invalid]="fieldErrors?.Email"
+            placeholder="admin@wearcast.com"
+            [(ngModel)]="admin.email">
+
+          <div class="field-error" *ngIf="fieldErrors?.Email">
+            {{ fieldErrors.Email[0] }}
+          </div>
+
+        </div>
+
+        <!-- Phone -->
+        <div class="adm-form-group">
+
+          <label>Phone</label>
+
+          <input
+            class="adm-field"
+            placeholder="+20 1xx xxx xxxx"
+            [(ngModel)]="admin.phone">
+
+        </div>
+
+      </div>
+
+      <!-- Security -->
+      <div class="adm-section-label">
+        <i class="bi bi-shield-check"></i>
+        Role & Security
+      </div>
+
       <div class="adm-form-grid">
+
+        <!-- Role -->
         <div class="adm-form-group full">
-          <label>Role <span class="adm-req">*</span></label>
-          <select class="adm-field" [(ngModel)]="admin.role">
+
+          <label>
+            Role
+            <span class="adm-req">*</span>
+          </label>
+
+          <select
+            class="adm-field"
+            [class.field-invalid]="fieldErrors?.Role"
+            [(ngModel)]="admin.role">
+
             <option value="">— Select Role —</option>
             <option>Editor</option>
             <option>Manager</option>
             <option>Super Admin</option>
+
           </select>
+
+          <div class="field-error" *ngIf="fieldErrors?.Role">
+            {{ fieldErrors.Role[0] }}
+          </div>
+
         </div>
+
+        <!-- Password -->
         <div class="adm-form-group">
-          <label>Password <span class="adm-req">*</span></label>
-          <input type="password" class="adm-field" placeholder="••••••••" [(ngModel)]="admin.password">
+
+          <label>
+            Password
+            <span class="adm-req">*</span>
+          </label>
+
+          <div class="adm-password-wrap">
+
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              class="adm-field"
+              [class.field-invalid]="fieldErrors?.Password"
+              placeholder="••••••••"
+              [(ngModel)]="admin.password">
+
+            <button
+              type="button"
+              class="adm-eye-btn"
+              (click)="togglePassword()">
+
+              <i
+                class="bi"
+                [class.bi-eye]="!showPassword"
+                [class.bi-eye-slash]="showPassword">
+              </i>
+
+            </button>
+
+          </div>
+
+          <div class="field-error" *ngIf="fieldErrors?.Password">
+            {{ fieldErrors.Password[0] }}
+          </div>
+
         </div>
+
+        <!-- Confirm Password -->
         <div class="adm-form-group">
-          <label>Confirm Password <span class="adm-req">*</span></label>
-          <input type="password" class="adm-field" placeholder="••••••••" [(ngModel)]="admin.confirmPassword">
+
+          <label>
+            Confirm Password
+            <span class="adm-req">*</span>
+          </label>
+
+          <div class="adm-password-wrap">
+
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              class="adm-field"
+              [class.field-invalid]="fieldErrors?.ConfirmPassword"
+              placeholder="••••••••"
+              [(ngModel)]="admin.confirmPassword">
+
+            <button
+              type="button"
+              class="adm-eye-btn"
+              (click)="toggleConfirmPassword()">
+
+              <i
+                class="bi"
+                [class.bi-eye]="!showConfirmPassword"
+                [class.bi-eye-slash]="showConfirmPassword">
+              </i>
+
+            </button>
+
+          </div>
+
+          <div class="field-error" *ngIf="fieldErrors?.ConfirmPassword">
+            {{ fieldErrors.ConfirmPassword[0] }}
+          </div>
+
         </div>
+
       </div>
 
+      <!-- Footer -->
       <div class="add-admin-footer">
-        <button class="adm-btn-secondary" routerLink="/admin/admins">Cancel</button>
-        <button class="adm-btn-primary">
-          <i class="bi bi-plus-lg"></i> Add Admin
+
+        <button
+          class="adm-btn-secondary"
+          routerLink="/admin/admins">
+
+          Cancel
+
         </button>
+
+        <button
+          class="adm-btn-primary"
+          (click)="submit()">
+
+          <i class="bi bi-plus-lg"></i>
+          Add Admin
+
+        </button>
+
       </div>
 
     </div>
+
   </div>
 
 </div>

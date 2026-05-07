@@ -18,6 +18,12 @@ export class AdminsComponent implements OnInit {
   showAdd = false;
   loading = false;
 
+  showPassword = false;
+  showConfirmPassword = false;
+
+  errorMessages: string[] = [];
+  fieldErrors: any = {};
+
   roleMap: any = {
     SuperAdmin: 16,
     OperationsAdmin: 1,
@@ -58,21 +64,56 @@ export class AdminsComponent implements OnInit {
 
   toggleAdd() {
     this.showAdd = !this.showAdd;
-    if (!this.showAdd) this.reset();
+
+    if (!this.showAdd) {
+      this.reset();
+    }
+  }
+
+  togglePassword() {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPassword() {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
   addAdmin() {
+
+    this.errorMessages = [];
+    this.fieldErrors = {};
+
     if (!this.newAdmin.firstName || !this.newAdmin.email || !this.newAdmin.role) {
-      this.toast.warning('Please fill in all required fields.');
+
+      this.errorMessages.push('Please fill in all required fields.');
+
+      if (!this.newAdmin.firstName) {
+        this.fieldErrors.firstName = 'First name is required';
+      }
+
+      if (!this.newAdmin.email) {
+        this.fieldErrors.email = 'Email is required';
+      }
+
+      if (!this.newAdmin.role) {
+        this.fieldErrors.role = 'Role is required';
+      }
+
       return;
     }
 
     if (this.newAdmin.password !== this.newAdmin.confirmPassword) {
-      this.toast.error('Passwords do not match.');
+
+      this.errorMessages.push('Passwords do not match.');
+
+      this.fieldErrors.password = 'Passwords do not match';
+      this.fieldErrors.confirmPassword = 'Passwords do not match';
+
       return;
     }
 
     this.loading = true;
+
     const body = {
       FirstName: this.newAdmin.firstName,
       LastName: this.newAdmin.lastName,
@@ -84,38 +125,81 @@ export class AdminsComponent implements OnInit {
     };
 
     this.service.addAdmin(body).subscribe({
+
       next: () => {
+
         this.loading = false;
+
         this.loadAdmins();
+
         this.toggleAdd();
+
         this.toast.success('Admin added successfully.');
+
       },
+
       error: (err) => {
+
         this.loading = false;
-        this.toast.error(err?.error?.message || 'Failed to add admin.');
+
+        const errors = err?.error?.errors;
+
+        if (errors) {
+
+          Object.keys(errors).forEach(key => {
+
+            this.errorMessages.push(...errors[key]);
+
+            this.fieldErrors[key.toLowerCase()] = errors[key][0];
+
+          });
+
+        } else {
+
+          this.errorMessages.push(
+            err?.error?.message || 'Failed to add admin.'
+          );
+
+        }
+
       }
+
     });
   }
 
   deleteAdmin(id: string) {
+
     if (!confirm('Are you sure you want to delete this admin?')) return;
 
     this.service.deleteAdmin(id).subscribe({
+
       next: () => {
+
         this.loadAdmins();
+
         this.toast.success('Admin removed successfully.');
+
       },
+
       error: (err) => {
+
         if (err.error?.code === 'Admin.CannotDeleteSuperAdmin') {
+
           this.toast.error('Cannot delete a Super Admin account.');
+
         } else {
+
           this.toast.error('Failed to delete admin.');
+
         }
+
       }
+
     });
   }
 
   getRoleClass(role: string): string {
+
     const map: any = {
       SuperAdmin: 'role-super',
       OperationsAdmin: 'role-ops',
@@ -123,10 +207,12 @@ export class AdminsComponent implements OnInit {
       VendorAdmin: 'role-vendor',
       CatalogAdmin: 'role-catalog'
     };
+
     return map[role] || '';
   }
 
   reset() {
+
     this.newAdmin = {
       firstName: '',
       lastName: '',
@@ -136,5 +222,11 @@ export class AdminsComponent implements OnInit {
       phoneNumber: '',
       role: ''
     };
+
+    this.errorMessages = [];
+    this.fieldErrors = {};
+
+    this.showPassword = false;
+    this.showConfirmPassword = false;
   }
 }

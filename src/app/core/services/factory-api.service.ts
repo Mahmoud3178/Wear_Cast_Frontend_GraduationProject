@@ -225,7 +225,7 @@ export interface FactoryDesignedCatalogQuery {
   maxPrice?: number | null;
   dressStyle?: number | null;
   targetAudiences?: number | null;
-  sortBy?: number | null;
+  sortBy?: string | null;
   pageIndex?: number;
   pageSize?: number;
 }
@@ -377,8 +377,8 @@ export class FactoryApiService {
     if (query.targetAudiences != null && Number.isFinite(query.targetAudiences)) {
       params = params.set('TargetAudiences', String(query.targetAudiences));
     }
-    if (query.sortBy != null && Number.isFinite(query.sortBy)) {
-      params = params.set('SortBy', String(query.sortBy));
+    if (typeof query.sortBy === 'string' && query.sortBy.trim()) {
+      params = params.set('SortBy', query.sortBy.trim());
     }
 
     return this.http.get<ApiEnvelope | unknown>(url, { params }).pipe(
@@ -989,6 +989,27 @@ export class FactoryApiService {
       totalOrderItems:
         this.toNum(r['totalOrderItems'] ?? r['TotalOrderItems']) ?? undefined
     };
+  }
+
+  /** PUT /api/Orders/{orderId}/status — update order status (e.g., to "Ready").
+   * Request body: { "newStatus": "Ready" } - sends status as string
+   */
+  updateOrderStatus(orderId: number, newStatus: string): Observable<void> {
+    const url = `${this.base}/api/Orders/${orderId}/status`;
+    const factoryId = this.auth.getFactoryId();
+    let params = new HttpParams();
+    if (factoryId != null) {
+      params = params.set('providedFactoryId', String(factoryId));
+    }
+    const body = { newStatus };
+    return this.http.put<ApiEnvelope>(url, body, { params }).pipe(
+      map(res => {
+        if (res && typeof res === 'object' && 'isSuccess' in res && !res.isSuccess) {
+          throw this.envErr(res as ApiEnvelope);
+        }
+      }),
+      catchError(e => this.mapErr(e))
+    );
   }
 
   /** GET /api/Orders/{orderId}/items — list order items. */
