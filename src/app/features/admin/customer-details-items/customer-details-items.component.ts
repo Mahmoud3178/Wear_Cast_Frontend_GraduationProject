@@ -22,7 +22,7 @@ export class CustomerDetailsItemsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private service: AllCustomersForAdminService,
-    
+
   ) {}
 
   ngOnInit() {
@@ -30,22 +30,28 @@ export class CustomerDetailsItemsComponent implements OnInit {
     this.loadItems();
   }
 
-  loadItems() {
-    this.loading = true;
+loadItems() {
 
-    this.service.getShipmentItems(this.shipmentId).subscribe({
-      next: (res: any) => {
+  this.loading = true;
 
-        this.fixedItems = res?.fixedItems?.items || [];
-        this.designedItems = res?.designedItems?.items || [];
+  this.service.getShipmentItems(this.shipmentId).subscribe({
 
-        this.loading = false;
-      },
-      error: () => {
-        this.fixedItems = [];
-        this.designedItems = [];
-        this.loading = false;
-      }
-    });
-  }
+    next: (res: any) => {
+
+      this.fixedItems = res?.fixedItems || [];
+      this.designedItems = res?.designedItems || [];
+
+      this.loading = false;
+    },
+
+    error: () => {
+
+      this.fixedItems = [];
+      this.designedItems = [];
+
+      this.loading = false;
+    }
+
+  });
+}
 }
