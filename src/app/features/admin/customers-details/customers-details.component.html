@@ -103,8 +103,11 @@
 
         <!-- Has shipments -->
         <div class="adm-card-body" *ngIf="shipments.length">
-          <div class="adm-table-card">
-            <table class="adm-table">
+        <div class="adm-table-wrapper">
+
+  <div class="adm-table-card">
+
+    <table class="adm-table">
               <thead>
                 <tr>
                   <th>Shipment ID</th>
@@ -130,6 +133,7 @@
               </tbody>
             </table>
           </div>
+        </div>
         </div>
 
         <!-- Empty state -->

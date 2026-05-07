@@ -31,3 +31,46 @@
     justify-content:center;
   }
 }
+.profile-layout > div:last-child {
+  min-width: 0;
+}
+/* ============================================================
+   RESPONSIVE TABLE FIX
+   ============================================================ */
+
+.profile-layout > div:last-child {
+  min-width: 0;
+}
+
+.adm-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.adm-table-card {
+  width: 100%;
+}
+
+.adm-table {
+  width: 100%;
+  min-width: 750px;
+  border-collapse: collapse;
+}
+
+.adm-table th,
+.adm-table td {
+  white-space: nowrap;
+}
+
+/* Scrollbar */
+.adm-table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.adm-table-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 20px;
+  grid-template-columns:300px 1fr;
+}

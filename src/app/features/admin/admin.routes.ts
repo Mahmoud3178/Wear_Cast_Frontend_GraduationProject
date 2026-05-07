@@ -80,6 +80,12 @@ export const ADMIN_ROUTES: Routes = [
     import('./customers-details/customers-details.component')
       .then(m => m.CustomersDetailsComponent)
 },
+{
+  path: 'customers/:id/shipments/:shipmentId/items',
+  loadComponent: () =>
+    import('./customer-details-items/customer-details-items.component')
+      .then(m => m.CustomerDetailsItemsComponent)
+},
   {
     path: 'seller-applications',
     loadComponent: () =>

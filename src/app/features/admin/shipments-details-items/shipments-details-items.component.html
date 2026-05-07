@@ -1,80 +1,116 @@
 <div class="page-wrap">
 
+  <!-- Header -->
   <div class="adm-header">
     <div>
-      <h1 class="adm-title">Shipment Items</h1>
-      <p class="adm-subtitle">All items in order #{{ orderId }}</p>
+      <h1 class="adm-title">Order Items</h1>
+      <p class="adm-subtitle">All items in order <strong>#{{ orderId }}</strong></p>
     </div>
-
+    <span class="adm-badge badge-dark" style="font-size:13px;padding:6px 14px">
+      {{ allItems.length }} Items
+    </span>
+  </div>
 
   <!-- Loading -->
   <div class="adm-loading" *ngIf="loading">
     <div class="adm-spinner"></div>
   </div>
 
-  <!-- No orderId passed -->
-  <div class="adm-empty" *ngIf="!loading && !orderId">
-    <i class="bi bi-exclamation-circle"></i>
-    <p>No order selected. Go back and click Items on an order.</p>
+  <!-- No orderId -->
+  <div class="adm-card" *ngIf="!loading && !orderId">
+    <div class="adm-card-body">
+      <div class="adm-empty">
+        <i class="bi bi-exclamation-circle"></i>
+        <p>No order selected. Go back and click Items on an order.</p>
+      </div>
+    </div>
   </div>
 
-  <!-- Items grid -->
+  <!-- Items -->
   <div class="items-grid" *ngIf="!loading && allItems.length">
+
     <div class="ship-item-card" *ngFor="let item of allItems">
 
-      <div class="ship-item-head">
-        <div>
-          <div class="ship-item-name">{{ item.productName }}</div>
+      <!-- Card Header -->
+      <div class="sic-head">
+        <div class="sic-title-row">
+          <span class="sic-name">{{ item.productName }}</span>
           <span class="adm-badge"
             [class.badge-info]="item.type === 'fixed'"
-            [class.badge-indigo]="item.type === 'designed'"
-            style="margin-top:4px">
-            {{ item.type }}
+            [class.badge-indigo]="item.type === 'designed'">
+            {{ item.type === 'designed' ? 'Designed' : 'Fixed' }}
           </span>
         </div>
-        <div class="ship-item-price">{{ item.totalPrice }} EGP</div>
+        <div class="sic-price">{{ item.totalPrice | number:'1.2-2' }} EGP</div>
       </div>
 
-      <div class="ship-item-info">
-        <div class="adm-info-item">
-          <span class="adm-info-label">Color</span>
-          <span class="adm-info-value">{{ item.colorName || '—' }}</span>
+      <!-- Design Images (4 views) -->
+      <div class="sic-images" *ngIf="item.type === 'designed'">
+        <div class="sic-img-wrap" *ngIf="item.frontImageUrl">
+          <img [src]="item.frontImageUrl" alt="Front">
+          <span class="sic-img-label">Front</span>
         </div>
-        <div class="adm-info-item">
-          <span class="adm-info-label">Unit Price</span>
-          <span class="adm-info-value">{{ item.unitPrice }} EGP</span>
+        <div class="sic-img-wrap" *ngIf="item.backImageUrl">
+          <img [src]="item.backImageUrl" alt="Back">
+          <span class="sic-img-label">Back</span>
         </div>
-        <div class="adm-info-item">
-          <span class="adm-info-label">Quantity</span>
-          <span class="adm-info-value">{{ item.totalQuantity }}</span>
+        <div class="sic-img-wrap" *ngIf="item.rightImageUrl">
+          <img [src]="item.rightImageUrl" alt="Right">
+          <span class="sic-img-label">Right</span>
+        </div>
+        <div class="sic-img-wrap" *ngIf="item.leftImageUrl">
+          <img [src]="item.leftImageUrl" alt="Left">
+          <span class="sic-img-label">Left</span>
         </div>
       </div>
 
-      <!-- Design images -->
-      <div *ngIf="item.type === 'designed'" class="ship-item-images">
-        <img *ngIf="item.frontImageUrl" [src]="item.frontImageUrl" title="Front">
-        <img *ngIf="item.backImageUrl"  [src]="item.backImageUrl"  title="Back">
-        <img *ngIf="item.rightImageUrl" [src]="item.rightImageUrl" title="Right">
-        <img *ngIf="item.leftImageUrl"  [src]="item.leftImageUrl"  title="Left">
+      <!-- Info Grid -->
+      <div class="sic-info">
+        <div class="sic-info-item">
+          <span class="sic-label">Color</span>
+          <span class="sic-value">{{ item.colorName || '—' }}</span>
+        </div>
+        <div class="sic-info-item">
+          <span class="sic-label">Unit Price</span>
+          <span class="sic-value">{{ item.unitPrice | number:'1.2-2' }} EGP</span>
+        </div>
+        <div class="sic-info-item">
+          <span class="sic-label">Quantity</span>
+          <span class="sic-value" style="color:#6366f1;font-weight:700">{{ item.totalQuantity }}</span>
+        </div>
+        <div class="sic-info-item" *ngIf="item.orderItemType">
+          <span class="sic-label">Item Type</span>
+          <span class="sic-value">{{ item.orderItemType }}</span>
+        </div>
+        <div class="sic-info-item" *ngIf="item.customerDesignId">
+          <span class="sic-label">Design ID</span>
+          <span class="sic-value">#{{ item.customerDesignId }}</span>
+        </div>
       </div>
 
       <!-- Sizes -->
-      <div *ngIf="item.sizes?.length" class="ship-item-sizes">
-        <span class="adm-info-label">Sizes</span>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-          <span class="adm-badge badge-dark" *ngFor="let s of item.sizes">
-            {{ s.sizeName }} ({{ s.quantity }})
-          </span>
+      <div class="sic-sizes" *ngIf="item.sizes?.length">
+        <span class="sic-label">Sizes</span>
+        <div class="sic-sizes-row">
+          <div class="sic-size-chip" *ngFor="let s of item.sizes">
+            <span class="sic-size-name">{{ s.sizeName }}</span>
+            <span class="sic-size-qty">× {{ s.quantity }}</span>
+          </div>
         </div>
       </div>
 
     </div>
+
   </div>
 
   <!-- Empty -->
-  <div class="adm-empty" *ngIf="!loading && orderId && !allItems.length">
-    <i class="bi bi-box"></i>
-    <p>No items found for this order</p>
+  <div class="adm-card" *ngIf="!loading && orderId && !allItems.length">
+    <div class="adm-card-body">
+      <div class="adm-empty">
+        <i class="bi bi-box"></i>
+        <p>No items found for this order.</p>
+      </div>
+    </div>
   </div>
 
 </div>

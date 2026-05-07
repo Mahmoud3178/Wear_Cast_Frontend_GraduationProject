@@ -25,7 +25,7 @@ export class CustomersDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     private service: AllCustomersForAdminService,
     private toast: ToastService,
-      private router: Router
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -52,7 +52,6 @@ export class CustomersDetailsComponent implements OnInit {
     });
   }
 
-  // ================= UPDATE =================
   updateCustomer() {
     const body = {
       firstName: this.customer.firstName,
@@ -66,17 +65,13 @@ export class CustomersDetailsComponent implements OnInit {
         buildingNumber: this.customer.buildingNumber
       }
     };
-
     this.service.updateCustomer(this.customerId, body).subscribe({
       next: () => this.toast.success('Updated successfully'),
       error: (err) => this.toast.error(err.error?.title || 'Update failed')
     });
   }
 
-  // ================= IMAGE =================
-  onFileChange(event: any) {
-    this.selectedFile = event.target.files[0];
-  }
+  onFileChange(event: any) { this.selectedFile = event.target.files[0]; }
 
   uploadImage() {
     if (!this.selectedFile) return;
@@ -93,36 +88,28 @@ export class CustomersDetailsComponent implements OnInit {
     });
   }
 
-  // ================= DELETE =================
   deleteCustomer() {
     if (!confirm('Are you sure you want to delete this customer?')) return;
-
     if (!this.deleteReason || this.deleteReason.trim() === '') {
       this.toast.warning('Please enter a reason for deletion');
       return;
     }
-
     this.service.deleteCustomer(this.customerId, { reason: this.deleteReason }).subscribe({
       next: () => history.back(),
       error: (err) => this.toast.error(err.error?.title || 'Delete failed')
     });
   }
 
-  // ================= SHIPMENTS =================
   loadShipments() {
     this.service.getCustomerShipments(this.customerId).subscribe({
       next: (res: any) => {
         this.shipments = res?.data?.items || res?.data || res?.items || [];
         this.shipmentsTotal = res?.data?.totalCount || this.shipments.length;
       },
-      error: () => {
-        this.shipments = [];
-        this.shipmentsTotal = 0;
-      }
+      error: () => { this.shipments = []; this.shipmentsTotal = 0; }
     });
   }
 
-  // helper: badge class per shipment status
   getStatusClass(status: string): string {
     const s = (status || '').toLowerCase();
     if (s === 'delivered') return 'badge-paid';
@@ -131,7 +118,12 @@ export class CustomersDetailsComponent implements OnInit {
     return 'badge-indigo';
   }
 
-goToShipmentItems(id: number) {
-  this.router.navigate(['/admin/shipments', id, 'items']);
-}
+  // ✅ navigate للـ route الصح
+  goToShipmentItems(shipmentId: number) {
+    this.router.navigate([
+      '/admin/customers', this.customerId,
+      'shipments', shipmentId,
+      'items'
+    ]);
+  }
 }

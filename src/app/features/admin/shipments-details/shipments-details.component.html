@@ -5,15 +5,19 @@
       <h1 class="adm-title">Shipment #{{ shipment.id }}</h1>
       <p class="adm-subtitle">Shipment details and customer info</p>
     </div>
-    <span class="adm-badge" [ngClass]="getStatusClass(shipment.shipmentStatus)"
-      style="font-size:13px;padding:6px 14px">
-      {{ shipment.shipmentStatus }}
-    </span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="adm-badge badge-dark" style="font-size:12px;padding:5px 12px">
+        <i class="bi bi-key"></i> {{ shipment.deliveryCode }}
+      </span>
+      <span class="adm-badge" [ngClass]="getStatusClass(shipment.shipmentStatus)"
+        style="font-size:13px;padding:6px 14px">
+        {{ shipment.shipmentStatus }}
+      </span>
+    </div>
   </div>
 
-  <!-- Customer + Delivery -->
+  <!-- Row 1: Customer + Delivery -->
   <div class="two-col-grid">
-
     <div class="adm-card">
       <div class="adm-card-head">
         <h3 class="adm-card-title"><i class="bi bi-person"></i> Customer Info</h3>
@@ -67,17 +71,80 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Row 2: Driver + Timeline -->
+  <div class="two-col-grid">
+
+    <div class="adm-card">
+      <div class="adm-card-head">
+        <h3 class="adm-card-title"><i class="bi bi-person-badge"></i> Driver Info</h3>
+        <span class="adm-badge badge-pending" *ngIf="!shipment.driverId">Unassigned</span>
+        <span class="adm-badge badge-active"  *ngIf="shipment.driverId">Assigned</span>
+      </div>
+      <div class="adm-card-body">
+        <div class="adm-info-grid" *ngIf="shipment.driverId">
+          <div class="adm-info-item">
+            <span class="adm-info-label">Name</span>
+            <span class="adm-info-value">{{ shipment.driverName || '—' }}</span>
+          </div>
+          <div class="adm-info-item">
+            <span class="adm-info-label">Phone</span>
+            <span class="adm-info-value">{{ shipment.driverPhoneNumber || '—' }}</span>
+          </div>
+          <div class="adm-info-item">
+            <span class="adm-info-label">National ID</span>
+            <span class="adm-info-value">{{ shipment.driverNationalId || '—' }}</span>
+          </div>
+        </div>
+        <div class="adm-empty" style="padding:20px" *ngIf="!shipment.driverId">
+          <i class="bi bi-person-x" style="font-size:28px"></i>
+          <p style="font-size:13px">No driver assigned yet</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="adm-card">
+      <div class="adm-card-head">
+        <h3 class="adm-card-title"><i class="bi bi-clock-history"></i> Shipment Timeline</h3>
+      </div>
+      <div class="adm-card-body">
+        <div class="adm-info-grid">
+          <div class="adm-info-item">
+            <span class="adm-info-label">Ordered</span>
+            <span class="adm-info-value" style="font-size:13px">{{ shipment.orderTime | date:'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
+          <div class="adm-info-item">
+            <span class="adm-info-label">Ready for Pickup</span>
+            <span class="adm-info-value" style="font-size:13px">{{ shipment.readyForPickupAt ? (shipment.readyForPickupAt | date:'dd MMM yyyy, hh:mm a') : '—' }}</span>
+          </div>
+          <div class="adm-info-item">
+            <span class="adm-info-label">Trip Started</span>
+            <span class="adm-info-value" style="font-size:13px">{{ shipment.tripStartedAt ? (shipment.tripStartedAt | date:'dd MMM yyyy, hh:mm a') : '—' }}</span>
+          </div>
+          <div class="adm-info-item">
+            <span class="adm-info-label">Out for Delivery</span>
+            <span class="adm-info-value" style="font-size:13px">{{ shipment.outForDeliveryAt ? (shipment.outForDeliveryAt | date:'dd MMM yyyy, hh:mm a') : '—' }}</span>
+          </div>
+          <div class="adm-info-item">
+            <span class="adm-info-label">Delivered</span>
+            <span class="adm-info-value" style="font-size:13px" [style.color]="shipment.deliveredAt ? '#10b981' : ''">
+              {{ shipment.deliveredAt ? (shipment.deliveredAt | date:'dd MMM yyyy, hh:mm a') : '—' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </div>
 
-  <!-- Orders inside this shipment -->
-  <div class="adm-card" style="margin-top:0">
+  <!-- Orders -->
+  <div class="adm-card">
     <div class="adm-card-head">
       <h3 class="adm-card-title"><i class="bi bi-bag-check"></i> Orders</h3>
       <span class="adm-badge badge-indigo">{{ shipment.orders?.length || 0 }}</span>
     </div>
 
-    <!-- Has orders -->
     <div class="adm-card-body" *ngIf="shipment.orders?.length">
       <div class="adm-table-card">
         <table class="adm-table">
@@ -116,9 +183,7 @@
               </td>
               <td><span class="cell-muted">{{ o.createdOn | date:'dd MMM yyyy' }}</span></td>
               <td>
-                <button class="adm-btn-primary"
-                  style="font-size:12px;padding:5px 12px"
-                  (click)="goToOrderItems(o.id)">
+                <button class="adm-btn-primary" style="font-size:12px;padding:5px 12px" (click)="goToOrderItems(o.id)">
                   <i class="bi bi-box-seam"></i> Items
                 </button>
               </td>
@@ -128,14 +193,12 @@
       </div>
     </div>
 
-    <!-- No orders -->
     <div class="adm-card-body" *ngIf="!shipment.orders?.length">
       <div class="adm-empty" style="padding:28px">
         <i class="bi bi-bag-x"></i>
         <p>No orders in this shipment</p>
       </div>
     </div>
-
   </div>
 
 </div>

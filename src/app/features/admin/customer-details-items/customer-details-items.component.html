@@ -1,114 +1,139 @@
-<div class="container p-4">
+<div class="page-wrap">
 
-  <h3 class="fw-bold mb-4">Shipment Items</h3>
-
-  <!-- LOADING -->
-  <div *ngIf="loading" class="text-center p-5">
-    <div class="spinner-border"></div>
+  <div class="adm-header">
+    <div>
+      <h1 class="adm-title">Shipment Items</h1>
+      <p class="adm-subtitle">Shipment #{{ shipmentId }}</p>
+    </div>
+    <span class="adm-badge badge-indigo" style="font-size:13px;padding:6px 14px">
+      {{ fixedItems.length + designedItems.length }} Items
+    </span>
   </div>
 
-  <!-- NO DATA -->
-  <div *ngIf="!loading && !fixedItems.length && !designedItems.length"
-       class="text-center text-muted p-5">
-    No items found
+  <!-- Loading -->
+  <div class="adm-loading" *ngIf="loading">
+    <div class="adm-spinner"></div>
   </div>
 
-  <!-- ================= FIXED ITEMS ================= -->
-  <div *ngIf="fixedItems.length">
-
-    <h5 class="mb-3">Fixed Products</h5>
-
-    <div class="row g-3">
-
-      <div class="col-md-4" *ngFor="let item of fixedItems">
-        <div class="card h-100 shadow-sm p-3">
-
-          <img [src]="item.imageUrl"
-               class="img-fluid mb-3 rounded"
-               style="height:180px;object-fit:cover">
-
-          <h6 class="fw-bold">{{item.productName}}</h6>
-
-          <div class="text-muted small mb-2">
-            Color: {{item.colorName}}
-          </div>
-
-          <div class="d-flex justify-content-between">
-            <span>Price</span>
-            <strong>{{item.unitPrice}} EGP</strong>
-          </div>
-
-          <div class="d-flex justify-content-between">
-            <span>Qty</span>
-            <strong>{{item.totalQuantity}}</strong>
-          </div>
-
-          <div class="d-flex justify-content-between mt-2 border-top pt-2">
-            <span>Total</span>
-            <strong>{{item.totalPrice}} EGP</strong>
-          </div>
-
-        </div>
+  <!-- Empty -->
+  <div class="adm-card" *ngIf="!loading && !fixedItems.length && !designedItems.length">
+    <div class="adm-card-body">
+      <div class="adm-empty">
+        <i class="bi bi-box"></i>
+        <p>No items found for this shipment</p>
       </div>
-
     </div>
   </div>
 
-  <!-- ================= DESIGNED ITEMS ================= -->
-  <div *ngIf="designedItems.length" class="mt-5">
+  <!-- ===== FIXED ITEMS ===== -->
+  <div *ngIf="!loading && fixedItems.length">
+    <div class="adm-card" style="margin-bottom:16px">
+      <div class="adm-card-head">
+        <h3 class="adm-card-title"><i class="bi bi-box-seam"></i> Fixed Products</h3>
+        <span class="adm-badge badge-info">{{ fixedItems.length }}</span>
+      </div>
+      <div class="adm-table-card">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Color</th>
+              <th>Unit Price</th>
+              <th>Qty</th>
+              <th>Total</th>
+              <th>Sizes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="no-click" *ngFor="let item of fixedItems">
+              <td>
+                <div class="cell-avatar">
+                  <img *ngIf="item.imageUrl" [src]="item.imageUrl" class="cell-img">
+                  <span class="cell-main">{{ item.productName }}</span>
+                </div>
+              </td>
+              <td><span class="cell-muted">{{ item.colorName || '—' }}</span></td>
+              <td><span class="cell-main">{{ item.unitPrice | number:'1.2-2' }} EGP</span></td>
+              <td><span class="adm-badge badge-indigo">{{ item.totalQuantity }}</span></td>
+              <td><span class="cell-main" style="color:#10b981">{{ item.totalPrice | number:'1.2-2' }} EGP</span></td>
+              <td>
+                <div style="display:flex;gap:4px;flex-wrap:wrap" *ngIf="item.sizes?.length">
+                  <span class="adm-badge badge-dark" *ngFor="let s of item.sizes">
+                    {{ s.sizeName }} ({{ s.quantity }})
+                  </span>
+                </div>
+                <span class="cell-muted" *ngIf="!item.sizes?.length">—</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-    <h5 class="mb-3">Designed Products</h5>
+  <!-- ===== DESIGNED ITEMS ===== -->
+  <div *ngIf="!loading && designedItems.length">
+    <div class="adm-card">
+      <div class="adm-card-head">
+        <h3 class="adm-card-title"><i class="bi bi-palette"></i> Designed Products</h3>
+        <span class="adm-badge badge-indigo">{{ designedItems.length }}</span>
+      </div>
+      <div class="adm-card-body" style="display:flex;flex-direction:column;gap:16px">
 
-    <div class="row g-3">
-
-      <div class="col-md-6" *ngFor="let item of designedItems">
-
-        <div class="card shadow-sm p-3">
-
-          <!-- Images -->
-          <div class="d-flex gap-2 mb-3 flex-wrap">
-            <img [src]="item.frontImageUrl" class="design-img">
-            <img [src]="item.backImageUrl" class="design-img">
-            <img [src]="item.leftImageUrl" class="design-img">
-            <img [src]="item.rightImageUrl" class="design-img">
+        <div class="adm-card" style="margin-bottom:0;border:1px solid #f1f5f9"
+             *ngFor="let item of designedItems">
+          <div class="adm-card-head">
+            <h3 class="adm-card-title" style="font-size:14px">{{ item.productName }}</h3>
+            <span class="cell-main" style="color:#10b981">{{ item.totalPrice | number:'1.2-2' }} EGP</span>
           </div>
+          <div class="adm-card-body">
 
-          <h6 class="fw-bold">{{item.productName}}</h6>
-
-          <div class="text-muted small mb-2">
-            Color: {{item.colorName}}
-          </div>
-
-          <div class="d-flex justify-content-between">
-            <span>Price</span>
-            <strong>{{item.unitPrice}} EGP</strong>
-          </div>
-
-          <div class="d-flex justify-content-between">
-            <span>Qty</span>
-            <strong>{{item.totalQuantity}}</strong>
-          </div>
-
-          <div class="d-flex justify-content-between mt-2 border-top pt-2">
-            <span>Total</span>
-            <strong>{{item.totalPrice}} EGP</strong>
-          </div>
-
-          <!-- Sizes -->
-          <div class="mt-3">
-            <strong>Sizes:</strong>
-            <div class="d-flex gap-2 flex-wrap mt-1">
-              <span class="badge bg-secondary"
-                    *ngFor="let s of item.sizes">
-                {{s.sizeName}} ({{s.quantity}})
-              </span>
+            <!-- Design images -->
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+              <div *ngFor="let img of [
+                {url: item.frontImageUrl,  label: 'Front'},
+                {url: item.backImageUrl,   label: 'Back'},
+                {url: item.leftImageUrl,   label: 'Left'},
+                {url: item.rightImageUrl,  label: 'Right'}
+              ]">
+                <div *ngIf="img.url" style="text-align:center">
+                  <img [src]="img.url"
+                       style="width:90px;height:90px;object-fit:cover;border-radius:10px;border:1px solid #f1f5f9">
+                  <div class="cell-muted" style="font-size:11px;margin-top:4px">{{ img.label }}</div>
+                </div>
+              </div>
             </div>
-          </div>
 
+            <!-- Info grid -->
+            <div class="adm-info-grid">
+              <div class="adm-info-item">
+                <span class="adm-info-label">Color</span>
+                <span class="adm-info-value">{{ item.colorName || '—' }}</span>
+              </div>
+              <div class="adm-info-item">
+                <span class="adm-info-label">Unit Price</span>
+                <span class="adm-info-value">{{ item.unitPrice | number:'1.2-2' }} EGP</span>
+              </div>
+              <div class="adm-info-item">
+                <span class="adm-info-label">Quantity</span>
+                <span class="adm-info-value">{{ item.totalQuantity }}</span>
+              </div>
+            </div>
+
+            <!-- Sizes -->
+            <div style="margin-top:14px" *ngIf="item.sizes?.length">
+              <span class="adm-info-label">Sizes</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                <span class="adm-badge badge-dark" *ngFor="let s of item.sizes">
+                  {{ s.sizeName }} ({{ s.quantity }})
+                </span>
+              </div>
+            </div>
+
+          </div>
         </div>
 
       </div>
-
     </div>
   </div>
 

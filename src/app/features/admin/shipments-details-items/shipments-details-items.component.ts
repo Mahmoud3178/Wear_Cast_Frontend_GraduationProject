@@ -12,19 +12,18 @@ import { HandelShipmentsForAdminService } from '../../../core/services/handel-sh
 })
 export class ShipmentsDetailsItemsComponent implements OnInit {
 
-  fixedItems: any[]    = [];
+  fixedItems:    any[] = [];
   designedItems: any[] = [];
-  allItems: any[]      = [];
-  loading = true;
+  allItems:      any[] = [];
+  loading  = true;
   orderId!: number;
 
   constructor(
-    private route: ActivatedRoute,
+    private route:   ActivatedRoute,
     private service: HandelShipmentsForAdminService
   ) {}
 
   ngOnInit() {
-    // orderId بييجي من queryParam اللي بعتناه من shipments-details
     this.orderId = Number(this.route.snapshot.queryParams['orderId']);
     if (this.orderId) {
       this.load(this.orderId);
@@ -37,12 +36,21 @@ export class ShipmentsDetailsItemsComponent implements OnInit {
     this.loading = true;
     this.service.getOrderItems(orderId).subscribe({
       next: (res: any) => {
-        this.fixedItems    = res?.fixedItems?.items    || res?.fixedItems    || [];
-        this.designedItems = res?.designedItems?.items || res?.designedItems || [];
+        // ── Fixed items ──────────────────────────────────
+        // API response: { items: [...] }  OR  direct array
+        const fixed = res?.items ?? res?.fixedItems?.items ?? res?.fixedItems ?? [];
+
+        // ── Designed items ───────────────────────────────
+        const designed = res?.designedItems ?? res?.designedItems?.items ?? [];
+
+        this.fixedItems    = Array.isArray(fixed)    ? fixed    : [];
+        this.designedItems = Array.isArray(designed) ? designed : [];
+
         this.allItems = [
-          ...this.fixedItems.map(x => ({ ...x, type: 'fixed' })),
-          ...this.designedItems.map(x => ({ ...x, type: 'designed' }))
+          ...this.fixedItems.map((x: any)    => ({ ...x, type: 'fixed' })),
+          ...this.designedItems.map((x: any) => ({ ...x, type: 'designed' }))
         ];
+
         this.loading = false;
       },
       error: () => { this.loading = false; }
