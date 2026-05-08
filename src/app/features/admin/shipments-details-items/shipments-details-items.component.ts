@@ -12,6 +12,7 @@ import { HandelShipmentsForAdminService } from '../../../core/services/handel-sh
 })
 export class ShipmentsDetailsItemsComponent implements OnInit {
 
+  order:         any;          // ✅ كامل الـ response
   fixedItems:    any[] = [];
   designedItems: any[] = [];
   allItems:      any[] = [];
@@ -36,11 +37,9 @@ export class ShipmentsDetailsItemsComponent implements OnInit {
     this.loading = true;
     this.service.getOrderItems(orderId).subscribe({
       next: (res: any) => {
-        // ── Fixed items ──────────────────────────────────
-        // API response: { items: [...] }  OR  direct array
-        const fixed = res?.items ?? res?.fixedItems?.items ?? res?.fixedItems ?? [];
+        this.order = res;  // ✅ احتفظ بالكامل
 
-        // ── Designed items ───────────────────────────────
+        const fixed   = res?.items ?? res?.fixedItems?.items ?? res?.fixedItems ?? [];
         const designed = res?.designedItems ?? res?.designedItems?.items ?? [];
 
         this.fixedItems    = Array.isArray(fixed)    ? fixed    : [];

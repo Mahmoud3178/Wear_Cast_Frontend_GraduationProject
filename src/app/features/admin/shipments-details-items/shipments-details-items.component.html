@@ -26,91 +26,151 @@
     </div>
   </div>
 
-  <!-- Items -->
-  <div class="items-grid" *ngIf="!loading && allItems.length">
+  <ng-container *ngIf="!loading && orderId && order">
 
-    <div class="ship-item-card" *ngFor="let item of allItems">
+    <!-- ✅ Row: Vendor + Pickup Address -->
+    <div class="two-col-grid" style="margin-bottom:20px">
 
-      <!-- Card Header -->
-      <div class="sic-head">
-        <div class="sic-title-row">
-          <span class="sic-name">{{ item.productName }}</span>
-          <span class="adm-badge"
-            [class.badge-info]="item.type === 'fixed'"
-            [class.badge-indigo]="item.type === 'designed'">
-            {{ item.type === 'designed' ? 'Designed' : 'Fixed' }}
-          </span>
+      <!-- Vendor Info -->
+      <div class="adm-card">
+        <div class="adm-card-head">
+          <h3 class="adm-card-title"><i class="bi bi-shop"></i> Vendor Info</h3>
         </div>
-        <div class="sic-price">{{ item.totalPrice | number:'1.2-2' }} EGP</div>
-      </div>
-
-      <!-- Design Images (4 views) -->
-      <div class="sic-images" *ngIf="item.type === 'designed'">
-        <div class="sic-img-wrap" *ngIf="item.frontImageUrl">
-          <img [src]="item.frontImageUrl" alt="Front">
-          <span class="sic-img-label">Front</span>
-        </div>
-        <div class="sic-img-wrap" *ngIf="item.backImageUrl">
-          <img [src]="item.backImageUrl" alt="Back">
-          <span class="sic-img-label">Back</span>
-        </div>
-        <div class="sic-img-wrap" *ngIf="item.rightImageUrl">
-          <img [src]="item.rightImageUrl" alt="Right">
-          <span class="sic-img-label">Right</span>
-        </div>
-        <div class="sic-img-wrap" *ngIf="item.leftImageUrl">
-          <img [src]="item.leftImageUrl" alt="Left">
-          <span class="sic-img-label">Left</span>
+        <div class="adm-card-body">
+          <div class="adm-info-grid" *ngIf="order.vendorName || order.vendorPhoneNumber; else noVendor">
+            <div class="adm-info-item">
+              <span class="adm-info-label">Vendor Name</span>
+              <span class="adm-info-value">{{ order.vendorName || '—' }}</span>
+            </div>
+            <div class="adm-info-item">
+              <span class="adm-info-label">Vendor Phone</span>
+              <span class="adm-info-value">{{ order.vendorPhoneNumber || '—' }}</span>
+            </div>
+          </div>
+          <ng-template #noVendor>
+            <div class="adm-empty" style="padding:20px">
+              <i class="bi bi-shop" style="font-size:28px"></i>
+              <p style="font-size:13px">No vendor assigned</p>
+            </div>
+          </ng-template>
         </div>
       </div>
 
-      <!-- Info Grid -->
-      <div class="sic-info">
-        <div class="sic-info-item">
-          <span class="sic-label">Color</span>
-          <span class="sic-value">{{ item.colorName || '—' }}</span>
+      <!-- Pickup Address -->
+      <div class="adm-card">
+        <div class="adm-card-head">
+          <h3 class="adm-card-title"><i class="bi bi-box-arrow-up"></i> Pickup Address</h3>
         </div>
-        <div class="sic-info-item">
-          <span class="sic-label">Unit Price</span>
-          <span class="sic-value">{{ item.unitPrice | number:'1.2-2' }} EGP</span>
-        </div>
-        <div class="sic-info-item">
-          <span class="sic-label">Quantity</span>
-          <span class="sic-value" style="color:#6366f1;font-weight:700">{{ item.totalQuantity }}</span>
-        </div>
-        <div class="sic-info-item" *ngIf="item.orderItemType">
-          <span class="sic-label">Item Type</span>
-          <span class="sic-value">{{ item.orderItemType }}</span>
-        </div>
-        <div class="sic-info-item" *ngIf="item.customerDesignId">
-          <span class="sic-label">Design ID</span>
-          <span class="sic-value">#{{ item.customerDesignId }}</span>
-        </div>
-      </div>
-
-      <!-- Sizes -->
-      <div class="sic-sizes" *ngIf="item.sizes?.length">
-        <span class="sic-label">Sizes</span>
-        <div class="sic-sizes-row">
-          <div class="sic-size-chip" *ngFor="let s of item.sizes">
-            <span class="sic-size-name">{{ s.sizeName }}</span>
-            <span class="sic-size-qty">× {{ s.quantity }}</span>
+        <div class="adm-card-body">
+          <div class="adm-info-grid">
+            <div class="adm-info-item">
+              <span class="adm-info-label">State</span>
+              <span class="adm-info-value">{{ order.pickUpAddress?.state || '—' }}</span>
+            </div>
+            <div class="adm-info-item">
+              <span class="adm-info-label">City</span>
+              <span class="adm-info-value">{{ order.pickUpAddress?.city || '—' }}</span>
+            </div>
+            <div class="adm-info-item">
+              <span class="adm-info-label">Street</span>
+              <span class="adm-info-value">{{ order.pickUpAddress?.street || '—' }}</span>
+            </div>
+            <div class="adm-info-item">
+              <span class="adm-info-label">Building</span>
+              <span class="adm-info-value">{{ order.pickUpAddress?.buildingNumber || '—' }}</span>
+            </div>
           </div>
         </div>
       </div>
 
     </div>
 
-  </div>
+    <!-- Items Grid -->
+    <div class="items-grid" *ngIf="allItems.length">
 
-  <!-- Empty -->
-  <div class="adm-card" *ngIf="!loading && orderId && !allItems.length">
-    <div class="adm-card-body">
-      <div class="adm-empty">
-        <i class="bi bi-box"></i>
-        <p>No items found for this order.</p>
+      <div class="ship-item-card" *ngFor="let item of allItems">
+
+        <!-- Card Header -->
+        <div class="sic-head">
+          <div class="sic-title-row">
+            <span class="sic-name">{{ item.productName }}</span>
+            <span class="adm-badge"
+              [class.badge-info]="item.type === 'fixed'"
+              [class.badge-indigo]="item.type === 'designed'">
+              {{ item.type === 'designed' ? 'Designed' : 'Fixed' }}
+            </span>
+          </div>
+          <div class="sic-price">{{ item.totalPrice | number:'1.2-2' }} EGP</div>
+        </div>
+
+        <!-- Design Images (4 views) -->
+        <div class="sic-images" *ngIf="item.type === 'designed'">
+          <div class="sic-img-wrap" *ngIf="item.frontImageUrl">
+            <img [src]="item.frontImageUrl" alt="Front">
+            <span class="sic-img-label">Front</span>
+          </div>
+          <div class="sic-img-wrap" *ngIf="item.backImageUrl">
+            <img [src]="item.backImageUrl" alt="Back">
+            <span class="sic-img-label">Back</span>
+          </div>
+          <div class="sic-img-wrap" *ngIf="item.rightImageUrl">
+            <img [src]="item.rightImageUrl" alt="Right">
+            <span class="sic-img-label">Right</span>
+          </div>
+          <div class="sic-img-wrap" *ngIf="item.leftImageUrl">
+            <img [src]="item.leftImageUrl" alt="Left">
+            <span class="sic-img-label">Left</span>
+          </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="sic-info">
+          <div class="sic-info-item">
+            <span class="sic-label">Color</span>
+            <span class="sic-value">{{ item.colorName || '—' }}</span>
+          </div>
+          <div class="sic-info-item">
+            <span class="sic-label">Unit Price</span>
+            <span class="sic-value">{{ item.unitPrice | number:'1.2-2' }} EGP</span>
+          </div>
+          <div class="sic-info-item">
+            <span class="sic-label">Quantity</span>
+            <span class="sic-value" style="color:#6366f1;font-weight:700">{{ item.totalQuantity }}</span>
+          </div>
+          <div class="sic-info-item" *ngIf="item.orderItemType">
+            <span class="sic-label">Item Type</span>
+            <span class="sic-value">{{ item.orderItemType }}</span>
+          </div>
+          <div class="sic-info-item" *ngIf="item.customerDesignId">
+            <span class="sic-label">Design ID</span>
+            <span class="sic-value">#{{ item.customerDesignId }}</span>
+          </div>
+        </div>
+
+        <!-- Sizes -->
+        <div class="sic-sizes" *ngIf="item.sizes?.length">
+          <span class="sic-label">Sizes</span>
+          <div class="sic-sizes-row">
+            <div class="sic-size-chip" *ngFor="let s of item.sizes">
+              <span class="sic-size-name">{{ s.sizeName }}</span>
+              <span class="sic-size-qty">× {{ s.quantity }}</span>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
-  </div>
+
+    <!-- Empty items -->
+    <div class="adm-card" *ngIf="!allItems.length">
+      <div class="adm-card-body">
+        <div class="adm-empty">
+          <i class="bi bi-box"></i>
+          <p>No items found for this order.</p>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
 
 </div>

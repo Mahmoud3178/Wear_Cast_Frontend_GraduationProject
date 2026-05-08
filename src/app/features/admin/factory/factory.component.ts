@@ -75,21 +75,56 @@ export class FactoryComponent implements OnInit {
   closeAddModal() { this.showFactoryModal = false; }
   onFileChange(event: any) { this.selectedFile = event.target.files[0]; }
 
-  handleError(err: any) {
-    this.errorMessages = [];
-    const error = err?.error;
-    if (error?.errors) {
-      for (const key of Object.keys(error.errors)) {
-        this.errorMessages.push(...error.errors[key]);
-      }
-    } else if (Array.isArray(error?.messages)) {
-      this.errorMessages = error.messages;
-    } else if (error?.message) {
-      this.errorMessages = [error.message];
-    } else {
-      this.errorMessages = ['Something went wrong. Please try again.'];
-    }
+handleError(err: any) {
+  this.errorMessages = [];
+  const error = err?.error;
+
+  if (!error) {
+    this.errorMessages = ['Something went wrong. Please try again.'];
+    return;
   }
+
+  // ✅ Case 1: { validationErrors: { TaxIdNumber: "msg", ... } }  ← باك إند بتاعك
+  if (error.validationErrors && typeof error.validationErrors === 'object') {
+    for (const key of Object.keys(error.validationErrors)) {
+      const val = error.validationErrors[key];
+      if (Array.isArray(val)) {
+        this.errorMessages.push(...val);
+      } else {
+        this.errorMessages.push(val);
+      }
+    }
+    return;
+  }
+
+  // ✅ Case 2: { errors: { FieldName: ["msg"] } }  ← ASP.NET ModelState
+  if (error.errors && typeof error.errors === 'object') {
+    for (const key of Object.keys(error.errors)) {
+      const val = error.errors[key];
+      if (Array.isArray(val)) {
+        this.errorMessages.push(...val);
+      } else {
+        this.errorMessages.push(val);
+      }
+    }
+    return;
+  }
+
+  // ✅ Case 3: { messages: ["msg1", "msg2"] }
+  if (Array.isArray(error.messages)) {
+    this.errorMessages = error.messages;
+    return;
+  }
+
+  // ✅ Case 4: { message: "msg" }
+  if (error.message) {
+    this.errorMessages = [error.message];
+    return;
+  }
+
+  // Fallback
+  this.errorMessages = ['Something went wrong. Please try again.'];
+}
 
   addFactory() {
     this.errorMessages = [];

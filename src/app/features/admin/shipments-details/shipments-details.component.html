@@ -1,5 +1,4 @@
 <div class="page-wrap" *ngIf="shipment">
-
   <div class="adm-header">
     <div>
       <h1 class="adm-title">Shipment #{{ shipment.id }}</h1>
@@ -75,7 +74,6 @@
 
   <!-- Row 2: Driver + Timeline -->
   <div class="two-col-grid">
-
     <div class="adm-card">
       <div class="adm-card-head">
         <h3 class="adm-card-title"><i class="bi bi-person-badge"></i> Driver Info</h3>
@@ -135,7 +133,6 @@
         </div>
       </div>
     </div>
-
   </div>
 
   <!-- Orders -->
@@ -152,6 +149,8 @@
             <tr>
               <th>Order ID</th>
               <th>Type</th>
+              <th>Vendor</th>         <!-- ✅ جديد -->
+              <th>Vendor Phone</th>   <!-- ✅ جديد -->
               <th>Total</th>
               <th>Commission</th>
               <th>Payout</th>
@@ -170,6 +169,17 @@
                   {{ o.orderType || '—' }}
                 </span>
               </td>
+
+              <!-- ✅ Vendor Name -->
+              <td>
+                <span class="cell-main">{{ o.vendorName || '—' }}</span>
+              </td>
+
+              <!-- ✅ Vendor Phone -->
+              <td>
+                <span class="cell-muted">{{ o.vendorPhoneNumber || '—' }}</span>
+              </td>
+
               <td><span class="cell-main">{{ o.totalAmount | number:'1.2-2' }} EGP</span></td>
               <td><span class="cell-muted">{{ o.commission | number:'1.2-2' }} EGP</span></td>
               <td><span class="cell-main" style="color:#10b981">{{ o.payout | number:'1.2-2' }} EGP</span></td>
@@ -200,5 +210,4 @@
       </div>
     </div>
   </div>
-
 </div>
