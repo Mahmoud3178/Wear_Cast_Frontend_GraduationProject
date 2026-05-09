@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Shipment, ShipmentDetails, AssignShipmentRequest, ShipmentStatus } from '../models/shipment.model';
@@ -20,10 +20,16 @@ export class ShippingService {
   }
 
   // Shipments
-  getAllShipments(): Observable<Shipment[]> {
-    return this.http.get<PaginatedResponse<Shipment>>(`${this.apiUrl}/Shipments`).pipe(
-      map(response => response.items || [])
-    );
+  getAllShipments(params?: any): Observable<PaginatedResponse<Shipment>> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined) {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get<PaginatedResponse<Shipment>>(`${this.apiUrl}/Shipments`, { params: httpParams });
   }
 
   getShipmentById(id: number): Observable<ShipmentDetails> {

@@ -23,6 +23,7 @@ export class ShippingProfileComponent implements OnInit {
   // Edit states
   isEditingCompany = false;
   isEditingManager = false;
+  managerImageUrl: string | null = null;
 
   // Form states
   companyForm: UpdateShippingCompanyRequest = {
@@ -50,6 +51,7 @@ export class ShippingProfileComponent implements OnInit {
   ngOnInit() {
     this.loadCompanyProfile();
     this.loadManagerProfile();
+    this.managerImageUrl = localStorage.getItem('managerImageUrl');
   }
 
   loadCompanyProfile() {
@@ -174,6 +176,18 @@ export class ShippingProfileComponent implements OnInit {
           alert('Failed to upload image.');
         }
       });
+    }
+  }
+
+  onManagerImageSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.managerImageUrl = e.target.result;
+        localStorage.setItem('managerImageUrl', this.managerImageUrl!);
+      };
+      reader.readAsDataURL(file);
     }
   }
 }

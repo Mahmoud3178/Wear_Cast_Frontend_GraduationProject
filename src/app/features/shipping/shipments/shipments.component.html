@@ -5,28 +5,82 @@
       <p class="text-muted-custom">Track and manage all orders and logistics</p>
     </div>
     <div class="d-flex gap-2">
-      <!-- <button class="btn btn-premium-outline" (click)="loadShipments()"><i class="bi bi-arrow-clockwise me-2"></i>Refresh</button> -->
-      <!-- <button class="btn btn-premium" (click)="openCreateShipmentModal()"><i class="bi bi-plus-lg me-2"></i>New Shipment</button> -->
     </div>
   </div>
 
   <div class="premium-card">
     <div class="premium-card-header border-0 pb-0">
+      <!-- Row 1: Text Filters and Status -->
+      <div class="row align-items-center g-3 mb-3">
+        <div class="col-12 col-md-3">
+          <input type="text" class="form-control py-2 shadow-none" 
+                 placeholder="Customer Name" 
+                 [(ngModel)]="searchCustomerName" 
+                 (input)="loadShipments()">
+        </div>
+        <div class="col-12 col-md-3">
+          <input type="text" class="form-control py-2 shadow-none" 
+                 placeholder="City" 
+                 [(ngModel)]="searchCity" 
+                 (input)="loadShipments()">
+        </div>
+        <div class="col-12 col-md-3">
+          <input type="text" class="form-control py-2 shadow-none" 
+                 placeholder="Driver Name" 
+                 [(ngModel)]="searchDriverName" 
+                 (input)="loadShipments()">
+        </div>
+        <div class="col-12 col-md-3">
+          <select class="form-select py-2 shadow-none" 
+                  [(ngModel)]="statusFilter" 
+                  (change)="loadShipments()">
+            <option value="All">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Unassigned">Unassigned</option>
+            <option value="Assigned">Assigned</option>
+            <option value="OutForDelivery">In Transit</option>
+            <option value="Delivered">Delivered</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 2: Ranges and Actions -->
       <div class="row align-items-center g-3">
-        <div class="col-12 col-md-6 col-lg-4">
-          <div class="search-box position-relative">
-            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-            <input type="text" class="form-control ps-5 py-2 shadow-none" placeholder="Search by ID, Customer, or Destination..." [(ngModel)]="searchTerm" (input)="filterShipments()">
+        <div class="col-12 col-md-3">
+          <div class="input-group">
+            <input type="number" class="form-control py-2 shadow-none" 
+                   placeholder="Min Price" 
+                   [(ngModel)]="minPrice" 
+                   (input)="loadShipments()">
+            <input type="number" class="form-control py-2 shadow-none" 
+                   placeholder="Max Price" 
+                   [(ngModel)]="maxPrice" 
+                   (input)="loadShipments()">
           </div>
         </div>
-        <div class="col-12 col-md-6 col-lg-8 d-flex justify-content-md-end gap-2">
-          <div class="btn-group shadow-sm rounded-3 overflow-hidden">
-            <button class="btn btn-sm" [ngClass]="statusFilter === 'All' ? 'btn-primary' : 'btn-white'" (click)="statusFilter = 'All'; filterShipments()">All</button>
-            <button class="btn btn-sm" [ngClass]="statusFilter === ShipmentStatusEnum.Unassigned ? 'btn-primary' : 'btn-white'" (click)="statusFilter = ShipmentStatusEnum.Unassigned; filterShipments()">Unassigned</button>
-            <button class="btn btn-sm" [ngClass]="statusFilter === ShipmentStatusEnum.Assigned ? 'btn-primary' : 'btn-white'" (click)="statusFilter = ShipmentStatusEnum.Assigned; filterShipments()">Assigned</button>
-            <button class="btn btn-sm" [ngClass]="statusFilter === ShipmentStatusEnum.OutForDelivery ? 'btn-primary' : 'btn-white'" (click)="statusFilter = ShipmentStatusEnum.OutForDelivery; filterShipments()">In Transit</button>
-            <button class="btn btn-sm" [ngClass]="statusFilter === ShipmentStatusEnum.Delivered ? 'btn-primary' : 'btn-white'" (click)="statusFilter = ShipmentStatusEnum.Delivered; filterShipments()">Delivered</button>
+        <div class="col-12 col-md-3">
+          <div class="input-group">
+            <input type="number" class="form-control py-2 shadow-none" 
+                   placeholder="Min Order" 
+                   [(ngModel)]="minOrders" 
+                   (input)="loadShipments()">
+            <input type="number" class="form-control py-2 shadow-none" 
+                   placeholder="Max Order" 
+                   [(ngModel)]="maxOrders" 
+                   (input)="loadShipments()">
           </div>
+        </div>
+        <div class="col-12 col-md-3">
+          <select class="form-select py-2 shadow-none" 
+                  [(ngModel)]="sortBy" 
+                  (change)="loadShipments()">
+            <option *ngFor="let opt of sortOptions" [value]="opt.value">{{opt.label}}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <button class="btn btn-outline-secondary py-2 w-100" (click)="searchCustomerName=''; searchCity=''; searchState=''; searchStreet=''; searchDriverName=''; minPrice=null; maxPrice=null; minOrders=null; maxOrders=null; startDate=null; endDate=null; sortBy='Newest'; statusFilter='All'; loadShipments()">
+            Clear All Filters
+          </button>
         </div>
       </div>
     </div>
@@ -108,6 +162,20 @@
           </tbody>
         </table>
       </div>
+      <!-- Pagination Controls -->
+      <div class="d-flex justify-content-between align-items-center p-3 border-top">
+        <div class="text-muted text-sm">
+          Showing page <span class="fw-bold">{{ currentPage }}</span> of <span class="fw-bold">{{ totalPages }}</span>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-white" [disabled]="currentPage === 1" (click)="previousPage()">
+            <i class="bi bi-chevron-left me-1"></i>Previous
+          </button>
+          <button class="btn btn-sm btn-white" [disabled]="currentPage === totalPages" (click)="nextPage()">
+            Next<i class="bi bi-chevron-right ms-1"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -181,6 +249,24 @@
                     {{ selectedShipmentDetails.deliveryAddress.street }}
                   </p>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-section mt-4">
+            <h6 class="text-uppercase text-muted fw-bold ls-1 mb-3">Included Orders</h6>
+            <div class="orders-list">
+              <div *ngFor="let order of selectedShipmentDetails.orders" class="order-item p-3 bg-light rounded-3 mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <p class="fw-bold mb-0">Order #{{ order.orderId }}</p>
+                    <p class="text-muted text-xs mb-0">Store: {{ order.storeName }}</p>
+                  </div>
+                  <span class="badge bg-primary-light text-primary rounded-pill">{{ order.itemsCount }} Items</span>
+                </div>
+              </div>
+              <div *ngIf="selectedShipmentDetails.orders.length === 0" class="text-muted text-sm italic">
+                No orders found in this shipment.
               </div>
             </div>
           </div>

@@ -11,83 +11,41 @@
     </button>
   </div>
 
-  <!-- Stats Grid -->
-  <div class="row g-4 mb-4">
-    <div class="col-md-3">
-      <div class="premium-card stat-card stat-card-primary p-3 d-flex align-items-center gap-3">
-        <div class="stat-icon-small bg-soft-primary">
-          <i class="bi bi-people-fill text-primary"></i>
-        </div>
-        <div>
-          <p class="text-muted-custom text-xs fw-bold text-uppercase mb-0 ls-1">Total Fleet</p>
-          <h4 class="fw-extrabold mb-0">{{stats.total}}</h4>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="premium-card stat-card stat-card-success p-3 d-flex align-items-center gap-3">
-        <div class="stat-icon-small bg-soft-success">
-          <i class="bi bi-person-check-fill text-success"></i>
-        </div>
-        <div>
-          <p class="text-muted-custom text-xs fw-bold text-uppercase mb-0 ls-1">Active Drivers</p>
-          <h4 class="fw-extrabold mb-0">{{stats.active}}</h4>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="premium-card stat-card stat-card-info p-3 d-flex align-items-center gap-3">
-        <div class="stat-icon-small bg-soft-info">
-          <i class="bi bi-truck text-info"></i>
-        </div>
-        <div>
-          <p class="text-muted-custom text-xs fw-bold text-uppercase mb-0 ls-1">On Trip</p>
-          <h4 class="fw-extrabold mb-0">{{stats.onTrip}}</h4>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="premium-card stat-card stat-card-warning p-3 d-flex align-items-center gap-3">
-        <div class="stat-icon-small bg-soft-warning">
-          <i class="bi bi-star-fill text-warning"></i>
-        </div>
-        <div>
-          <p class="text-muted-custom text-xs fw-bold text-uppercase mb-0 ls-1">Avg. Rating</p>
-          <h4 class="fw-extrabold mb-0">{{stats.avgRating}}</h4>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Main Table Card -->
   <div class="premium-card">
-    <!--<div class="premium-card-header border-bottom">
+    <div class="premium-card-header border-bottom">
       <div class="row align-items-center g-3">
-        <div class="col-md-4">
-          <div class="search-box position-relative">
-            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-            <input type="text" class="form-control ps-5 py-2 shadow-none" 
-                   placeholder="Search name, city..." 
-                   [(ngModel)]="searchQuery" 
-                   (input)="onSearchChange()">
-          </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control py-2 shadow-none" 
+                 placeholder="First Name" 
+                 [(ngModel)]="searchFirstName" 
+                 (input)="loadDrivers()">
         </div>
-        <div class="col-md-8">
-          <div class="d-flex justify-content-md-end gap-2">
-            <select class="form-select w-auto py-2 shadow-none" 
-                    [(ngModel)]="selectedFilter" 
-                    (change)="onFilterChange($event)">
-              <option value="all">All Status</option>
-              <option value="online">Online Only</option>
-              <option value="offline">Offline Only</option>
-            </select>
-            <button class="btn btn-white btn-icon-premium" (click)="loadInitialData()" [disabled]="loading">
-              <i class="bi bi-arrow-clockwise" [class.spinner-border-sm]="loading"></i>
-            </button>
-          </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control py-2 shadow-none" 
+                 placeholder="Last Name" 
+                 [(ngModel)]="searchLastName" 
+                 (input)="loadDrivers()">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control py-2 shadow-none" 
+                 placeholder="City" 
+                 [(ngModel)]="searchCity" 
+                 (input)="loadDrivers()">
+        </div>
+        <div class="col-md-3">
+          <select class="form-select py-2 shadow-none" 
+                  [(ngModel)]="sortBy" 
+                  (change)="loadDrivers()">
+            <option *ngFor="let opt of sortOptions" [value]="opt.value">{{opt.label}}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          
         </div>
       </div>
-    </div>-->
+    </div>
 
     <div class="table-responsive">
       <table class="table custom-table table-hover align-middle mb-0">
@@ -97,7 +55,6 @@
             <th>Location</th>
             <th>Vehicle</th>
             <th>Status</th>
-            <th>Rating</th>
             <th class="text-end pe-4">Actions</th>
           </tr>
         </thead>
@@ -105,8 +62,9 @@
           <tr *ngFor="let driver of filteredDrivers">
             <td class="ps-4">
               <div class="d-flex align-items-center gap-3">
-                <div class="driver-avatar-small bg-soft-primary text-primary fw-bold">
-                  {{getInitials(driver.driverName)}}
+                <div class="driver-avatar-small bg-soft-primary text-primary fw-bold overflow-hidden">
+                  <img *ngIf="driver.profileImageUrl" [src]="driver.profileImageUrl" class="img-fluid w-100 h-100 object-fit-cover">
+                  <span *ngIf="!driver.profileImageUrl">{{getInitials(driver.driverName)}}</span>
                 </div>
                 <div>
                   <div class="fw-bold text-dark">{{driver.driverName}}</div>
@@ -129,19 +87,13 @@
             </td>
             <td>
               <span class="status-badge" [ngClass]="getStatusBadgeClass(driver.status)">
-                <span class="status-dot"></span>
                 {{getStatusName(driver.status)}}
               </span>
             </td>
-            <td>
-              <div class="d-flex align-items-center text-warning gap-1">
-                <i class="bi bi-star-fill small"></i>
-                <span class="fw-bold text-dark">{{stats.avgRating}}</span>
-              </div>
-            </td>
+
             <td class="text-end pe-4">
               <div class="d-flex justify-content-end gap-2">
-                <button class="btn btn-icon-premium" (click)="openUpdateModal(driver)" title="Update Status">
+                <button class="btn btn-icon-premium" (click)="openEditModal(driver)" title="Edit Driver">
                   <i class="bi bi-pencil-square text-primary"></i>
                 </button>
                 <button class="btn btn-icon-premium" (click)="confirmDelete(driver)" title="Remove Driver">
@@ -173,21 +125,45 @@
         </tbody>
       </table>
     </div>
+      <!-- Pagination Controls -->
+      <div class="d-flex justify-content-between align-items-center p-3 border-top">
+        <div class="text-muted text-sm">
+          Showing page <span class="fw-bold">{{ pageIndex }}</span> of <span class="fw-bold">{{ totalPages }}</span>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-white" [disabled]="pageIndex === 1" (click)="previousPage()">
+            <i class="bi bi-chevron-left me-1"></i>Previous
+          </button>
+          <button class="btn btn-sm btn-white" [disabled]="pageIndex === totalPages" (click)="nextPage()">
+            Next<i class="bi bi-chevron-right ms-1"></i>
+          </button>
+        </div>
+      </div>
   </div>
 </div>
 
-<!-- Register Modal Overlay -->
+<!-- Register/Edit Modal Overlay -->
 <div class="modal-overlay" *ngIf="isRegisterModalOpen" (click)="closeRegisterModal()">
   <div class="modal-card wide-modal" (click)="$event.stopPropagation()">
     <div class="modal-header-premium">
-      <h4 class="fw-bold mb-0">Register New Driver</h4>
+      <h4 class="fw-bold mb-0">{{isEditMode ? 'Edit Driver' : 'Register New Driver'}}</h4>
       <button class="btn-close-premium" (click)="closeRegisterModal()">
         <i class="bi bi-x-lg"></i>
       </button>
     </div>
     
     <div class="p-4 p-md-5">
-      <form (ngSubmit)="onRegisterDriver()" #regForm="ngForm">
+      <form (ngSubmit)="isEditMode ? onUpdateDriver() : onRegisterDriver()" #regForm="ngForm">
+        <!-- Backend Validation Errors -->
+        <div class="alert alert-danger mb-4" *ngIf="backendErrors">
+          <div class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please correct the following errors:</div>
+          <ul class="mb-0">
+            <li *ngFor="let err of backendErrors | keyvalue">
+              <strong>{{err.key}}:</strong> {{err.value}}
+            </li>
+          </ul>
+        </div>
+
         <div class="row g-4">
           <!-- Profile Photo & Basic Info -->
           <div class="col-md-4 text-center">
@@ -209,17 +185,43 @@
               <div class="col-12">
                 <label class="form-label fw-bold small text-uppercase">Full Name</label>
                 <input type="text" class="form-control premium-input" placeholder="e.g. John Doe" 
-                       name="name" [(ngModel)]="newDriver.name" required>
+                       name="name" [(ngModel)]="newDriver.name" required #name="ngModel"
+                       [class.is-invalid]="name.invalid && (name.dirty || name.touched)">
+                <div class="invalid-feedback" *ngIf="name.invalid && (name.dirty || name.touched)">
+                  Full name is required.
+                </div>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold small text-uppercase">Phone Number</label>
-                <input type="tel" class="form-control premium-input" placeholder="+20 123 456 789" 
-                       name="phone" [(ngModel)]="newDriver.phoneNumber" required>
+                <input type="tel" class="form-control premium-input" placeholder="e.g. 01012345678" 
+                       name="phone" [(ngModel)]="newDriver.phoneNumber" required 
+                       pattern="^(01[0125]\d{8})$" #phone="ngModel"
+                       [class.is-invalid]="phone.invalid && (phone.dirty || phone.touched)">
+                <div class="invalid-feedback" *ngIf="phone.invalid && (phone.dirty || phone.touched)">
+                  <div *ngIf="phone.errors?.['required']">Phone number is required.</div>
+                  <div *ngIf="phone.errors?.['pattern']">Invalid Egyptian phone number format (must be 11 digits starting with 010, 011, 012, or 015).</div>
+                </div>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold small text-uppercase">National ID</label>
                 <input type="text" class="form-control premium-input" placeholder="14-digit ID" 
-                       name="nationalId" [(ngModel)]="newDriver.nationalId" required>
+                       name="nationalId" [(ngModel)]="newDriver.nationalId" required
+                       pattern="^\d{14}$" #nationalId="ngModel"
+                       [class.is-invalid]="nationalId.invalid && (nationalId.dirty || nationalId.touched)">
+                <div class="invalid-feedback" *ngIf="nationalId.invalid && (nationalId.dirty || nationalId.touched)">
+                  <div *ngIf="nationalId.errors?.['required']">National ID is required.</div>
+                  <div *ngIf="nationalId.errors?.['pattern']">National ID must be exactly 14 digits.</div>
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-bold small text-uppercase">Email</label>
+                <input type="email" class="form-control premium-input" placeholder="e.g. driver@example.com" 
+                       name="email" [(ngModel)]="newDriver.email" required email #email="ngModel"
+                       [class.is-invalid]="email.invalid && (email.dirty || email.touched)">
+                <div class="invalid-feedback" *ngIf="email.invalid && (email.dirty || email.touched)">
+                  <div *ngIf="email.errors?.['required']">Email is required.</div>
+                  <div *ngIf="email.errors?.['email']">Invalid email address.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -228,7 +230,7 @@
             <div class="section-divider my-2">Vehicle Information</div>
           </div>
 
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label class="form-label fw-bold small text-uppercase">Vehicle Type</label>
             <select class="form-select premium-input" name="vType" [(ngModel)]="newDriver.vehicleType">
               <option [value]="DeliveryVehicleType.Motorcycle">Motorcycle</option>
@@ -237,10 +239,17 @@
               <option [value]="DeliveryVehicleType.Bicycle">Bicycle</option>
             </select>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label class="form-label fw-bold small text-uppercase">Plate Number</label>
             <input type="text" class="form-control premium-input" placeholder="e.g. ABC 123" 
                    name="plate" [(ngModel)]="newDriver.vehiclePlateNumber">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold small text-uppercase">Status</label>
+            <select class="form-select premium-input" name="status" [(ngModel)]="newDriver.status">
+              <option [value]="DriverStatus.Available">Available</option>
+              <option [value]="DriverStatus.NotAvailable">Not Available</option>
+            </select>
           </div>
 
           <div class="col-12">
@@ -262,7 +271,7 @@
         <div class="mt-5 d-flex gap-3 justify-content-end">
           <button type="button" class="btn btn-white px-4" (click)="closeRegisterModal()">Cancel</button>
           <button type="submit" class="btn btn-premium px-5" [disabled]="!regForm.valid || isSubmitting">
-            <span *ngIf="!isSubmitting">Complete Registration</span>
+            <span *ngIf="!isSubmitting">{{isEditMode ? 'Save Changes' : 'Complete Registration'}}</span>
             <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
           </button>
         </div>
@@ -301,7 +310,7 @@
                  [class.active]="selectedDriver.status === DriverStatus.Available">
               <div class="status-dot-large bg-success"></div>
               <div>
-                <div class="fw-bold">Available (Online)</div>
+                <div class="fw-bold">Available </div>
                 <div class="text-muted small">Visible for new shipments</div>
               </div>
               <i class="bi bi-check-circle-fill ms-auto text-success fs-4" *ngIf="selectedDriver.status === DriverStatus.Available"></i>
@@ -314,7 +323,7 @@
                  [class.active]="selectedDriver.status === DriverStatus.NotAvailable">
               <div class="status-dot-large bg-secondary"></div>
               <div>
-                <div class="fw-bold">Busy / Offline</div>
+                <div class="fw-bold">Not Available</div>
                 <div class="text-muted small">Not visible for new shipments</div>
               </div>
               <i class="bi bi-check-circle-fill ms-auto text-secondary fs-4" *ngIf="selectedDriver.status === DriverStatus.NotAvailable"></i>

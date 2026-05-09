@@ -10,13 +10,8 @@
           </ol>
         </nav>
         <h2 class="fw-bold text-slate-900 mb-1 tracking-tight">System Configuration</h2>
-        <p class="text-slate-500 mb-0">Manage your organization's identity and administrative credentials.</p>
       </div>
-      <div class="header-actions">
-        <button class="btn btn-outline-slate rounded-pill px-4 py-2 fw-bold transition-all">
-          <i class="bi bi-download me-2"></i>Export Profile
-        </button>
-      </div>
+
     </div>
   </div>
 
@@ -53,8 +48,8 @@
             <div class="branding-header mb-5 d-flex flex-column flex-md-row align-items-center gap-5">
               <div class="logo-uploader-container">
                 <div class="logo-frame shadow-lg">
-                  <img *ngIf="company?.profileImageUrl" [src]="company?.profileImageUrl" alt="Logo" class="logo-preview">
-                  <div *ngIf="!company?.profileImageUrl" class="logo-placeholder bg-slate-50">
+                  <img *ngIf="company?.logoUrl" [src]="company?.logoUrl" alt="Logo" class="logo-preview">
+                  <div *ngIf="!company?.logoUrl" class="logo-placeholder bg-slate-50">
                     <i class="bi bi-image text-slate-300 fs-1"></i>
                   </div>
                   <label for="logoUpload" class="uploader-overlay">
@@ -100,6 +95,12 @@
                     <input type="number" name="deliveryFee" [(ngModel)]="companyForm.deliveryFee" [readonly]="!isEditingCompany" required>
                   </div>
                 </div>
+                <div class="col-12">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>Description</label>
+                    <textarea name="description" [(ngModel)]="companyForm.description" [readonly]="!isEditingCompany" rows="2" class="form-control"></textarea>
+                  </div>
+                </div>
                 
                 <div class="col-12 mt-5 mb-2">
                   <div class="section-divider">
@@ -126,22 +127,28 @@
                   </div>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-field-premium" [class.is-editing]="isEditingCompany">
                     <label>Province / State</label>
                     <input type="text" name="state" [(ngModel)]="companyForm.address.state" [readonly]="!isEditingCompany">
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-field-premium" [class.is-editing]="isEditingCompany">
                     <label>City</label>
                     <input type="text" name="city" [(ngModel)]="companyForm.address.city" [readonly]="!isEditingCompany">
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-field-premium" [class.is-editing]="isEditingCompany">
                     <label>Street Address</label>
                     <input type="text" name="street" [(ngModel)]="companyForm.address.street" [readonly]="!isEditingCompany">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-field-premium" [class.is-editing]="isEditingCompany">
+                    <label>Building Number</label>
+                    <input type="text" name="buildingNumber" [(ngModel)]="companyForm.address.buildingNumber" [readonly]="!isEditingCompany">
                   </div>
                 </div>
 
@@ -162,12 +169,15 @@
         <div class="premium-card shadow-premium mb-4 overflow-hidden">
           <div class="manager-header p-5 text-center position-relative">
             <div class="manager-bg-decoration"></div>
-            <div class="avatar-manager-frame shadow-lg mx-auto mb-4">
-              <span class="display-6 fw-bold text-white">{{ manager?.firstName?.charAt(0) || 'M' }}</span>
-              <div class="status-badge-online"></div>
+            <div class="avatar-manager-frame shadow-lg mx-auto mb-4 position-relative">
+              <img *ngIf="managerImageUrl" [src]="managerImageUrl" alt="Manager" class="avatar-manager-img">
+              <span *ngIf="!managerImageUrl" class="display-6 fw-bold text-white">{{ manager?.firstName?.charAt(0) || 'M' }}</span>
+              <label for="managerUpload" class="uploader-overlay-avatar" *ngIf="isEditingManager">
+                <i class="bi bi-camera-fill text-white"></i>
+              </label>
+              <input type="file" id="managerUpload" class="d-none" (change)="onManagerImageSelected($event)" accept="image/*">
             </div>
             <h4 class="fw-bold text-slate-900 mb-1">{{ manager?.firstName }} {{ manager?.lastName }}</h4>
-            <p class="text-primary text-xs fw-bold uppercase-tracking mb-0">Senior Operations Manager</p>
           </div>
 
           <div class="card-body p-4 pt-0">
@@ -205,29 +215,6 @@
                 </div>
               </div>
             </form>
-          </div>
-        </div>
-
-        <!-- Security & Sessions -->
-        <div class="premium-card shadow-premium border-0 bg-slate-900 text-white p-5 position-relative overflow-hidden">
-          <div class="glass-decoration"></div>
-          <div class="position-relative z-index-1">
-            <div class="d-flex align-items-center gap-3 mb-4">
-              <div class="icon-box-refined bg-white bg-opacity-10 text-white shadow-none">
-                <i class="bi bi-shield-lock-fill fs-5"></i>
-              </div>
-              <h5 class="mb-0 fw-bold">Account Security</h5>
-            </div>
-            <p class="text-slate-400 small mb-5">Your security is our priority. Last password change was 3 months ago. We recommend rotating keys every 90 days.</p>
-            
-            <div class="security-actions d-grid gap-3">
-              <button class="btn btn-white-glass rounded-pill py-2.5 fw-bold transition-all">
-                Change Secret Password
-              </button>
-              <button class="btn btn-outline-slate-dark rounded-pill py-2.5 fw-bold transition-all">
-                Setup 2FA Authentication
-              </button>
-            </div>
           </div>
         </div>
       </div>

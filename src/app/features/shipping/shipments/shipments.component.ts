@@ -27,6 +27,31 @@ export class ShipmentsComponent implements OnInit {
   availableDrivers: Driver[] = [];
   isLoading = true;
 
+  currentPage: number = 1;
+  pageSize: number = 10;
+  totalRecords: number = 0;
+  totalPages: number = 0;
+  searchCustomerName = '';
+  searchCity = '';
+  sortBy = 'Newest';
+  
+  searchState = '';
+  searchStreet = '';
+  searchDriverName = '';
+  minPrice: number | null = null;
+  maxPrice: number | null = null;
+  minOrders: number | null = null;
+  maxOrders: number | null = null;
+  startDate: string | null = null;
+  endDate: string | null = null;
+  
+  sortOptions = [
+    { value: 'Newest', label: 'Newest' },
+    { value: 'PriceAsc', label: 'Price (Low to High)' },
+    { value: 'PriceDesc', label: 'Price (High to Low)' },
+    { value: 'NumberOfOrdersDesc', label: 'Orders (High to Low)' }
+  ];
+
   // View Details Modal
   showDetailsModal = false;
   selectedShipmentDetails: ShipmentDetails | null = null;
@@ -48,9 +73,33 @@ export class ShipmentsComponent implements OnInit {
 
   public loadShipments() {
     this.isLoading = true;
-    this.shippingService.getAllShipments().subscribe({
+    const params: any = {
+      PageIndex: this.currentPage,
+      PageSize: this.pageSize,
+      SortBy: this.sortBy
+    };
+
+    if (this.searchCustomerName.trim()) params.CustomerFirstName = this.searchCustomerName.trim();
+    if (this.searchCity.trim()) params.DeliveryCity = this.searchCity.trim();
+    if (this.searchState.trim()) params.DeliveryState = this.searchState.trim();
+    if (this.searchStreet.trim()) params.DeliveryStreet = this.searchStreet.trim();
+    if (this.searchDriverName.trim()) params.DriverFirstName = this.searchDriverName.trim();
+    
+    if (this.minPrice !== null) params.MinPrice = this.minPrice;
+    if (this.maxPrice !== null) params.MaxPrice = this.maxPrice;
+    if (this.minOrders !== null) params.MinNumberOfOrders = this.minOrders;
+    if (this.maxOrders !== null) params.MaxNumberOfOrders = this.maxOrders;
+    
+    if (this.startDate) params.StartDate = this.startDate;
+    if (this.endDate) params.EndDate = this.endDate;
+
+    if (this.statusFilter !== 'All') params.ShipmentStatus = this.statusFilter;
+
+    this.shippingService.getAllShipments(params).subscribe({
       next: (data) => {
-        this.allShipments = data;
+        this.allShipments = data.items;
+        this.totalRecords = data.records;
+        this.totalPages = data.pages;
         this.filterShipments();
         this.isLoading = false;
       },
@@ -64,9 +113,10 @@ export class ShipmentsComponent implements OnInit {
   public loadDrivers() {
     this.driverService.getAllDrivers().subscribe({
       next: (data) => {
-        this.drivers = data;
+        const drivers = data.items || [];
+        this.drivers = drivers;
         // Filter only available drivers for the assignment dropdown
-        this.availableDrivers = data.filter(d => {
+        this.availableDrivers = drivers.filter((d: any) => {
           const status = this.getNumericStatus(d.status, DriverStatus);
           return status === DriverStatus.Available;
         });
@@ -76,17 +126,28 @@ export class ShipmentsComponent implements OnInit {
   }
 
   public filterShipments() {
-    this.filteredShipments = this.allShipments.filter(s => {
-      const matchesSearch = !this.searchTerm || 
-        s.id.toString().toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        (s.customerName && s.customerName.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        (s.deliveryCity && s.deliveryCity.toLowerCase().includes(this.searchTerm.toLowerCase()));
+    this.filteredShipments = this.allShipments;
+  }
 
-      const currentStatus = this.getNumericStatus(s.shipmentStatus, ShipmentStatus);
-      const matchesStatus = this.statusFilter === 'All' || currentStatus === this.statusFilter;
-      
-      return matchesSearch && matchesStatus;
-    });
+  public nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadShipments();
+    }
+  }
+
+  public previousPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadShipments();
+    }
+  }
+
+  public goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.loadShipments();
+    }
   }
 
   public openDetailsModal(shipment: Shipment) {

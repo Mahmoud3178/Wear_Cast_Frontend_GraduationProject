@@ -86,18 +86,7 @@ import { RouterModule } from '@angular/router';
 
       <!-- Sidebar Footer -->
       <div class="sidebar-footer p-4" *ngIf="!isCollapsed">
-        <div class="support-card p-3 rounded-4 shadow-lg border border-slate-700 bg-slate-800 bg-opacity-50 backdrop-blur">
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <div class="bg-primary bg-opacity-20 p-1.5 rounded-2">
-              <i class="bi bi-headset text-primary"></i>
-            </div>
-            <p class="mb-0 small fw-bold text-white">Need Help?</p>
-          </div>
-          <p class="text-slate-400 small mb-3" style="font-size: 0.7rem; line-height: 1.4;">Access our 24/7 support documentation and help desk.</p>
-          <button class="btn btn-sm btn-primary w-100 py-2 rounded-3 shadow-primary transition-all fw-bold" style="font-size: 0.75rem;">
-            Contact Support
-          </button>
-        </div>
+
       </div>
     </div>
   `,

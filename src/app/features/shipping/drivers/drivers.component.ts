@@ -1,8 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { DriverService } from '../../../core/services/driver.service';
-import { Driver, DriverStatus, DeliveryVehicleType, CreateDriverRequest } from '../../../core/models/driver.model';
+import { Driver, DriverStatus, DeliveryVehicleType, CreateDriverRequest, UpdateDriverRequest } from '../../../core/models/driver.model';
 import { ShippingStats } from '../../../core/models/shipping-stats.model';
 
 @Component({
@@ -24,12 +25,33 @@ export class DriversComponent implements OnInit {
     onTrip: 0,
     avgRating: 4.8
   };
-  
+
   loading = true;
   isSubmitting = false;
   searchQuery = '';
   selectedFilter = 'all';
+  searchFirstName = '';
+  searchLastName = '';
+  searchCity = '';
+  sortBy = 'Newest';
+  pageIndex = 1;
+  pageSize = 10;
+  totalPages = 2;
+  totalCount = 0;
+
+  sortOptions = [
+    { value: 'Newest', label: 'Newest' },
+    { value: 'NumberOfAssignedShipmentsAsc', label: 'Assigned Shipments (Asc)' },
+    { value: 'NumberOfAssignedShipmentsDesc', label: 'Assigned Shipments (Desc)' },
+    { value: 'NumberOfDeliveredShipmentsAsc', label: 'Delivered Shipments (Asc)' },
+    { value: 'NumberOfDeliveredShipmentsDesc', label: 'Delivered Shipments (Desc)' },
+    { value: 'NumberOfActiveShipmentsAsc', label: 'Active Shipments (Asc)' },
+    { value: 'NumberOfActiveShipmentsDesc', label: 'Active Shipments (Desc)' }
+  ];
   previewImage: string | null = null;
+  selectedFile: File | null = null;
+  isEditMode = false;
+  backendErrors: any = null;
 
   // Modals
   isRegisterModalOpen = false;
@@ -47,7 +69,8 @@ export class DriversComponent implements OnInit {
     state: '',
     city: '',
     street: '',
-    buildingNumber: ''
+    buildingNumber: '',
+    status: DriverStatus.Available
   };
 
   DriverStatus = DriverStatus;
@@ -59,37 +82,105 @@ export class DriversComponent implements OnInit {
 
   loadInitialData() {
     this.loadDrivers();
-    this.loadStats();
+    // this.loadStats(); // Disabled because endpoint /api/Shipments/stats does not exist
   }
 
   loadStats() {
     this.driverService.getShippingStats().subscribe({
-      next: (data) => {
-        if (data) {
-          // Since data is ShippingStats, it has activeDrivers but not totalDrivers
-          this.stats.active = data.activeDrivers || 0;
-          // We'll update stats.total in loadDrivers()
-          this.stats.onTrip = Math.floor(this.stats.active * 0.7); 
+      next: (data) => console.log('Stats data:', data),
+      error: (err) => {
+        console.error('Stats error details:', err);
+        if (err.error) {
+          console.error('Stats error body:', err.error);
         }
-      },
-      error: (err) => console.error('Stats error', err)
+      }
     });
   }
 
   loadDrivers() {
     this.loading = true;
-    this.driverService.getAllDrivers().subscribe({
-      next: (data) => {
-        this.drivers = data;
-        this.stats.total = this.drivers.length;
-        this.applyFilters();
-        this.loading = false;
+    const params: any = {
+      PageIndex: this.pageIndex,
+      PageSize: this.pageSize,
+      SortBy: this.sortBy
+    };
+
+    if (this.searchFirstName.trim()) params.DriverFirstName = this.searchFirstName.trim();
+    if (this.searchLastName.trim()) params.DriverLastName = this.searchLastName.trim();
+    if (this.searchCity.trim()) params.DriverCity = this.searchCity.trim();
+
+    if (this.selectedFilter !== 'all') {
+      params.driverStatus = this.selectedFilter === 'Available' ? DriverStatus.Available : DriverStatus.NotAvailable;
+    }
+
+    this.driverService.getAllDrivers(params).subscribe({
+      next: (response) => {
+        console.log('GetAllDrivers response:', response);
+        const data = response.items || [];
+        this.totalPages = response.pages || 1;
+        this.totalCount = response.records || 0;
+        this.pageIndex = response.pageIndex || 1;
+
+        if (data.length === 0) {
+          this.drivers = [];
+          this.loading = false;
+          this.applyFilters();
+          return;
+        }
+
+        const requests = data.map((d: any) => this.driverService.getDriverById(d.id));
+        forkJoin(requests).subscribe({
+          next: (profiles: any) => {
+            this.drivers = data.map((d: any, index: number) => {
+              const profile = profiles[index];
+              return {
+                ...d,
+                driverPhone: profile.phoneNumber,
+                profileImageUrl: profile.profileImageUrl
+              };
+            });
+
+            this.stats.total = this.totalCount; // Use totalCount from backend
+            this.stats.active = this.drivers.filter(d => d.status === DriverStatus.Available).length; // This is only for the current page though
+            this.stats.onTrip = this.drivers.filter(d => d.numberOfActiveShipments > 0).length;
+
+            const totalRating = this.drivers.reduce((acc, d) => acc + this.getDriverRating(d), 0);
+            this.stats.avgRating = this.drivers.length > 0 ? (totalRating / this.drivers.length).toFixed(1) : '4.8';
+
+            this.applyFilters();
+            this.loading = false;
+          },
+          error: (err) => {
+            console.error('Profiles load error', err);
+            this.drivers = data; // fallback
+            this.applyFilters();
+            this.loading = false;
+          }
+        });
       },
       error: (err) => {
         console.error('Drivers load error', err);
         this.loading = false;
       }
     });
+  }
+
+  nextPage() {
+    if (this.pageIndex < this.totalPages) {
+      this.pageIndex++;
+      this.loadDrivers();
+    }
+  }
+
+  previousPage() {
+    if (this.pageIndex > 1) {
+      this.pageIndex--;
+      this.loadDrivers();
+    }
+  }
+
+  getDriverRating(driver: Driver): number {
+    return driver.numberOfDeliveredShipments > 5 ? 5.0 : 4.5;
   }
 
   onSearchChange() {
@@ -112,15 +203,15 @@ export class DriversComponent implements OnInit {
     // Search filter
     if (this.searchQuery.trim()) {
       const q = this.searchQuery.toLowerCase();
-      result = result.filter(d => 
-        d.driverName.toLowerCase().includes(q) || 
+      result = result.filter(d =>
+        d.driverName.toLowerCase().includes(q) ||
         d.driverCity.toLowerCase().includes(q)
       );
     }
 
     // Status filter
     if (this.selectedFilter !== 'all') {
-      const statusNum = this.selectedFilter === 'online' ? DriverStatus.Available : DriverStatus.NotAvailable;
+      const statusNum = this.selectedFilter === 'NotAvailable' ? DriverStatus.Available : DriverStatus.NotAvailable;
       result = result.filter(d => d.status === statusNum);
     }
 
@@ -128,13 +219,102 @@ export class DriversComponent implements OnInit {
   }
 
   openRegisterModal() {
+    this.isEditMode = false;
     this.isRegisterModalOpen = true;
+    this.backendErrors = null;
+  }
+
+  openEditModal(driver: Driver) {
+    this.isEditMode = true;
+    this.selectedDriver = driver;
+    this.driverService.getDriverById(driver.id).subscribe({
+      next: (profile: any) => {
+        this.newDriver = {
+          name: profile.firstName + ' ' + profile.lastName,
+          phoneNumber: profile.phoneNumber || '',
+          nationalId: profile.nationalId || '',
+          vehicleType: this.getNumericStatus(profile.vehicleType, DeliveryVehicleType),
+          vehiclePlateNumber: profile.vehiclePlateNumber || '',
+          email: profile.email || '',
+          state: profile.address?.state || '',
+          city: profile.address?.city || '',
+          street: profile.address?.street || '',
+          buildingNumber: profile.address?.buildingNumber || '',
+          status: this.getNumericStatus(profile.status, DriverStatus)
+        };
+        this.previewImage = profile.profileImageUrl || null;
+        this.isRegisterModalOpen = true;
+      },
+      error: (err) => console.error('Fetch profile error', err)
+    });
+  }
+
+  onUpdateDriver() {
+    if (!this.selectedDriver) return;
+
+    this.isSubmitting = true;
+    const names = this.newDriver.name.split(' ');
+    const request: UpdateDriverRequest = {
+      firstName: names[0] || 'New',
+      lastName: names.slice(1).join(' ') || 'Driver',
+      phoneNumber: this.newDriver.phoneNumber,
+      nationalId: this.newDriver.nationalId,
+      vehicleType: this.newDriver.vehicleType,
+      vehiclePlateNumber: this.newDriver.vehiclePlateNumber,
+      address: {
+        state: this.newDriver.state || 'Cairo',
+        city: this.newDriver.city || 'Cairo',
+        street: this.newDriver.street || 'Main St',
+        buildingNumber: this.newDriver.buildingNumber || '1'
+      },
+      providedDriverId: this.selectedDriver.id
+    };
+
+    this.driverService.updateDriver(request).subscribe({
+      next: () => {
+        if (this.selectedDriver && this.newDriver.status !== this.selectedDriver.status) {
+          this.driverService.changeDriverStatus(this.selectedDriver.id, {
+            driverId: this.selectedDriver.id,
+            newStatus: this.newDriver.status
+          }).subscribe({
+            next: () => {
+              this.isSubmitting = false;
+              this.closeRegisterModal();
+              this.loadInitialData();
+            },
+            error: (err: any) => {
+              this.isSubmitting = false;
+              console.error('Update status error', err);
+              alert('Profile updated, but failed to update status.');
+              this.closeRegisterModal();
+              this.loadInitialData();
+            }
+          });
+        } else {
+          this.isSubmitting = false;
+          this.closeRegisterModal();
+          this.loadInitialData();
+        }
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        console.error('Update error', err);
+        if (err.error && err.error.validationErrors) {
+          this.backendErrors = err.error.validationErrors;
+        } else if (err.error && err.error.error && err.error.error.description) {
+          this.backendErrors = { "Error": err.error.error.description };
+        } else {
+          alert('Failed to update driver.');
+        }
+      }
+    });
   }
 
   closeRegisterModal() {
     this.isRegisterModalOpen = false;
     this.previewImage = null;
     this.resetNewDriver();
+    this.backendErrors = null;
   }
 
   resetNewDriver() {
@@ -155,6 +335,7 @@ export class DriversComponent implements OnInit {
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
+      this.selectedFile = file;
       const reader = new FileReader();
       reader.onload = (e) => this.previewImage = e.target?.result as string;
       reader.readAsDataURL(file);
@@ -162,6 +343,11 @@ export class DriversComponent implements OnInit {
   }
 
   onRegisterDriver() {
+    if (!this.selectedFile) {
+      alert('Profile image is required by the backend!');
+      return;
+    }
+
     this.isSubmitting = true;
     // Map UI model to API model
     const names = this.newDriver.name.split(' ');
@@ -178,7 +364,8 @@ export class DriversComponent implements OnInit {
       street: this.newDriver.street || 'Main St',
       buildingNumber: this.newDriver.buildingNumber || '1',
       password: 'WearCast@2024',
-      confirmPassword: 'WearCast@2024'
+      confirmPassword: 'WearCast@2024',
+      profileImage: this.selectedFile
     };
 
     this.driverService.createDriver(request).subscribe({
@@ -187,10 +374,16 @@ export class DriversComponent implements OnInit {
         this.closeRegisterModal();
         this.loadInitialData();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isSubmitting = false;
         console.error('Create error', err);
-        alert('Failed to register driver.');
+        if (err.error && err.error.validationErrors) {
+          this.backendErrors = err.error.validationErrors;
+        } else if (err.error && err.error.error && err.error.error.description) {
+          this.backendErrors = { "Error": err.error.error.description };
+        } else {
+          alert('Failed to register driver.');
+        }
       }
     });
   }
@@ -207,7 +400,7 @@ export class DriversComponent implements OnInit {
 
   onUpdateStatus() {
     if (!this.selectedDriver) return;
-    
+
     this.isSubmitting = true;
     this.driverService.changeDriverStatus(this.selectedDriver.id, {
       driverId: this.selectedDriver.id,
@@ -218,7 +411,7 @@ export class DriversComponent implements OnInit {
         this.closeUpdateModal();
         this.loadInitialData();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isSubmitting = false;
         console.error('Update status error', err);
         const errorMsg = err.error?.detail || err.error?.message || 'Failed to update status.';
@@ -231,7 +424,7 @@ export class DriversComponent implements OnInit {
     if (confirm(`Are you sure you want to remove ${driver.driverName}?`)) {
       this.driverService.deleteDriver(driver.id).subscribe({
         next: () => this.loadInitialData(),
-        error: (err) => {
+        error: (err: any) => {
           console.error('Delete error', err);
           alert('Failed to delete driver.');
         }
@@ -240,7 +433,7 @@ export class DriversComponent implements OnInit {
   }
 
   getStatusText(status: DriverStatus): string {
-    return status === DriverStatus.Available ? 'online' : 'offline';
+    return status === DriverStatus.Available ? 'Available' : 'NotAvailable';
   }
 
   getInitials(name: string): string {
@@ -253,7 +446,7 @@ export class DriversComponent implements OnInit {
     const s = this.getNumericStatus(status, DriverStatus);
     switch (s) {
       case DriverStatus.Available: return 'Available';
-      case DriverStatus.NotAvailable: return 'Busy / Offline';
+      case DriverStatus.NotAvailable: return 'Not Available';
       default: return 'Unknown';
     }
   }

@@ -93,7 +93,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }).subscribe({
       next: ({ stats, shipments }) => {
         this.dashboardStats = stats;
-        
+
         // Update stats array for UI
         this.stats[0].value = this.dashboardStats.totalShipments.toLocaleString();
         this.stats[0].trend = (this.dashboardStats.totalShipmentsGrowth >= 0 ? '+' : '') + this.dashboardStats.totalShipmentsGrowth + '%';
@@ -111,10 +111,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         this.stats[3].trend = (this.dashboardStats.pendingDeliveriesGrowth >= 0 ? '+' : '') + this.dashboardStats.pendingDeliveriesGrowth + '%';
         this.stats[3].trendUp = this.dashboardStats.pendingDeliveriesGrowth <= 0; // Fewer pending is usually good
 
-        this.recentShipments = this.shippingService.getRecentShipments(shipments, 4);
-        
+        this.recentShipments = this.shippingService.getRecentShipments(shipments.items, 4);
+
         this.isLoading = false;
-        
+
         // Update revenue chart with backend data
         if (this.chartInstance && this.dashboardStats.monthlyRevenue) {
           this.chartInstance.data.labels = this.dashboardStats.monthlyRevenue.map(m => m.month);
@@ -162,7 +162,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       if (s.orderTime && s.price) {
         const orderDate = new Date(s.orderTime);
         const diffMonths = (currentDate.getFullYear() - orderDate.getFullYear()) * 12 + (currentDate.getMonth() - orderDate.getMonth());
-        
+
         if (diffMonths >= 0 && diffMonths < 6) {
           const index = 5 - diffMonths;
           monthlyRevenue[index] += s.price;
@@ -273,7 +273,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   getStatusName(status: any): string {
     const s = typeof status === 'string' ? ShipmentStatus[status as keyof typeof ShipmentStatus] : status;
-    
+
     switch (s) {
       case ShipmentStatus.Pending: return 'Pending';
       case ShipmentStatus.Unassigned: return 'Unassigned';
@@ -287,7 +287,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   getStatusClass(status: any): string {
     const s = typeof status === 'string' ? ShipmentStatus[status as keyof typeof ShipmentStatus] : status;
-    
+
     if (s === ShipmentStatus.Delivered) return 'status-success';
     if (s === ShipmentStatus.Pending) return 'status-warning';
     if (s === ShipmentStatus.Unassigned) return 'status-danger';

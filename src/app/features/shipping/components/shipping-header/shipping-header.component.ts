@@ -15,7 +15,7 @@ import { ShippingService } from '../../../../core/services/shipping.service';
     <header class="shipping-header d-flex align-items-center justify-content-between px-4 py-2 border-bottom shadow-sm sticky-top">
       <div class="d-flex align-items-center flex-grow-1">
         <!-- Search Bar -->
-        <div class="search-container position-relative d-none d-lg-block">
+        <!--<div class="search-container position-relative d-none d-lg-block">
           <div class="search-bar d-flex align-items-center px-3 py-2 rounded-4 border transition-all" 
                [class.focused]="isSearchFocused">
             <i class="bi bi-search text-slate-400 me-2"></i>
@@ -28,12 +28,12 @@ import { ShippingService } from '../../../../core/services/shipping.service';
               <i class="bi bi-command small me-1"></i>K
             </span>
           </div>
-        </div>
+        </div>-->
       </div>
       
       <div class="d-flex align-items-center gap-2 gap-md-3">
         <!-- Quick Stats (Optional) -->
-        <div class="d-none d-xl-flex align-items-center gap-4 me-4">
+        <!-- <div class="d-none d-xl-flex align-items-center gap-4 me-4">
           <div class="stat-item">
             <span class="text-slate-500 text-xs fw-bold text-uppercase d-block mb-0">Active Shipments</span>
             <span class="text-dark fw-bold h6 mb-0">{{ stats?.pendingDeliveries || 0 }}</span>
@@ -42,13 +42,9 @@ import { ShippingService } from '../../../../core/services/shipping.service';
             <span class="text-slate-500 text-xs fw-bold text-uppercase d-block mb-0">Online Drivers</span>
             <span class="text-success fw-bold h6 mb-0">{{ stats?.activeDrivers || 0 }}</span>
           </div>
-        </div>
+        </div> -->
 
         <div class="header-action-btns d-flex align-items-center gap-2">
-          <button class="btn-icon p-2 rounded-circle hover-bg-slate transition-all border-0 bg-transparent position-relative">
-            <i class="bi bi-chat-dots fs-5 text-slate-600"></i>
-            <span class="dot-indicator bg-primary"></span>
-          </button>
           
           <button class="btn-icon p-2 rounded-circle hover-bg-slate transition-all border-0 bg-transparent position-relative">
             <i class="bi bi-bell fs-5 text-slate-600"></i>
@@ -63,7 +59,8 @@ import { ShippingService } from '../../../../core/services/shipping.service';
           <div class="user-trigger d-flex align-items-center gap-2 cursor-pointer p-1 rounded-pill hover-bg-slate transition-all dropdown-toggle" 
                data-bs-toggle="dropdown" aria-expanded="false">
             <div class="avatar-box shadow-sm border border-2 border-white">
-              <div class="avatar-gradient d-flex align-items-center justify-content-center fw-bold text-white">
+              <img *ngIf="managerImageUrl" [src]="managerImageUrl" alt="User" class="w-100 h-100" style="object-fit: cover;">
+              <div *ngIf="!managerImageUrl" class="avatar-gradient d-flex align-items-center justify-content-center fw-bold text-white">
                 {{ userName.charAt(0) || 'U' }}
               </div>
             </div>
@@ -90,17 +87,7 @@ import { ShippingService } from '../../../../core/services/shipping.service';
                 </div>
               </a>
             </li>
-            <li>
-              <a class="dropdown-item d-flex align-items-center gap-3 py-2.5 rounded-3" routerLink="dashboard">
-                <div class="dropdown-icon bg-slate-100 text-slate-600">
-                  <i class="bi bi-shield-check"></i>
-                </div>
-                <div class="dropdown-text">
-                  <p class="mb-0 fw-bold">Security</p>
-                  <p class="mb-0 text-xs text-slate-500">Manage account safety</p>
-                </div>
-              </a>
-            </li>
+           
             <li><hr class="dropdown-divider opacity-50 mx-2"></li>
             <li>
               <a class="dropdown-item d-flex align-items-center gap-3 py-2.5 rounded-3 text-danger" href="javascript:void(0)" (click)="logout()">
@@ -251,10 +238,12 @@ export class ShippingHeaderComponent implements OnInit, OnDestroy {
   userRole = 'Shipping Manager';
   isSearchFocused = false;
   stats?: any;
+  managerImageUrl: string | null = null;
   private profileSub?: Subscription;
   private statsSub?: Subscription;
 
   ngOnInit(): void {
+    this.managerImageUrl = localStorage.getItem('managerImageUrl');
     // Initial fetch from AuthService
     const profile = this.authService.getCustomerProfile();
     if (profile && profile.firstName) {
@@ -275,18 +264,18 @@ export class ShippingHeaderComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Fetch real-time stats
-    this.loadStats();
+    // Fetch real-time stats (Disabled as endpoint doesn't exist)
+    // this.loadStats();
   }
 
-  loadStats(): void {
-    this.statsSub = this.shippingService.getShippingStats().subscribe({
-      next: (stats) => {
-        this.stats = stats;
-      },
-      error: (err) => console.error('Error loading header stats:', err)
-    });
-  }
+  // loadStats(): void {
+  //   this.statsSub = this.shippingService.getShippingStats().subscribe({
+  //     next: (stats) => {
+  //       this.stats = stats;
+  //     },
+  //     error: (err) => console.error('Error loading header stats:', err)
+  //   });
+  // }
 
   ngOnDestroy(): void {
     this.profileSub?.unsubscribe();

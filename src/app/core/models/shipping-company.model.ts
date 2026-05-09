@@ -14,6 +14,7 @@ export interface ShippingCompany {
     buildingNumber: string;
   };
   profileImageUrl?: string;
+  logoUrl?: string;
   managersCount: number;
 }
 
