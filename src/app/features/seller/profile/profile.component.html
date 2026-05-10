@@ -163,7 +163,45 @@
     <!-- RIGHT SIDE -->
     <div class="col-lg-4">
 
+      <!-- Wallet -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0"><i class="bi bi-wallet2 me-2"></i>Wallet</h6>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill" (click)="loadWallet()" [disabled]="walletLoading">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+
+          <div *ngIf="walletError" class="alert alert-danger py-2 small">{{ walletError }}</div>
+          <div *ngIf="walletLoading" class="text-muted small">Loading wallet...</div>
+
+          <ng-container *ngIf="!walletLoading && wallet">
+            <div class="border rounded-3 p-3 bg-light mb-3">
+              <span class="text-muted small d-block">Current Balance</span>
+              <strong class="fs-4">EGP {{ wallet.balance | number:'1.2-2' }}</strong>
+            </div>
+
+            <h6 class="small fw-semibold mb-2">Recent Transactions</h6>
+            <div *ngIf="!wallet.recentTransactions?.length" class="text-muted small">No transactions yet.</div>
+            <div class="list-group" *ngIf="wallet.recentTransactions?.length">
+              <div class="list-group-item px-2 py-2" *ngFor="let tx of wallet.recentTransactions">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div>
+                    <div class="fw-semibold small">{{ tx.type }} · EGP {{ tx.amount | number:'1.2-2' }}</div>
+                    <div class="small text-muted">{{ tx.description }}</div>
+                    <div class="small text-muted" *ngIf="tx.referenceOrderId">Order #{{ tx.referenceOrderId }}</div>
+                  </div>
+                  <span class="small text-muted text-nowrap">{{ tx.createdOn | date:'shortDate' }}</span>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
       <!-- Security -->
+      <div class="card border-0 shadow-sm">
       <div class="card border-0 shadow-sm">
         <div class="card-body">
           <h6 class="fw-bold mb-3">Security</h6>

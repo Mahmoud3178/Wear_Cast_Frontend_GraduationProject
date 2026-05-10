@@ -1,19 +1,19 @@
 import { Component } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-seller-layout',
   standalone: true,
-  imports: [RouterOutlet,RouterLink],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './seller-layout.component.html',
   styleUrl: './seller-layout.component.css'
 })
 export class SellerLayoutComponent {
-    constructor(private router: Router) {}
+  constructor(private router: Router) {}
 
-logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  this.router.navigate(['/login']);
-}
+  logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    this.router.navigate(['/login']);
+  }
 }

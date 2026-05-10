@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SallerProfileService } from '../../../core/services/saller-profile.service';
@@ -6,7 +6,7 @@ import { SallerProfileService } from '../../../core/services/saller-profile.serv
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
@@ -39,8 +39,13 @@ export class ProfileComponent implements OnInit {
 
   isLoading = false;
 
+  wallet: any = null;
+  walletLoading = false;
+  walletError = '';
+
   ngOnInit(): void {
     this.loadProfile();
+    this.loadWallet();
   }
 
   getSellerIdFromToken(): number {
@@ -173,6 +178,28 @@ updatePassword() {
     error: (err) => {
       console.log(err);
       alert(err.error?.message || 'Failed to change password ❌');
+    }
+  });
+}
+
+loadWallet() {
+  this.walletLoading = true;
+  this.walletError = '';
+  this.profileService.getWallet().subscribe({
+    next: (res: any) => {
+      const data = res?.data ?? res ?? {};
+      const txRows = Array.isArray(data?.recentTransactions ?? data?.RecentTransactions)
+        ? (data.recentTransactions ?? data.RecentTransactions)
+        : [];
+      this.wallet = {
+        balance: data?.balance ?? data?.Balance ?? 0,
+        recentTransactions: txRows
+      };
+      this.walletLoading = false;
+    },
+    error: (err) => {
+      this.walletLoading = false;
+      this.walletError = err?.error?.message || 'Failed to load wallet.';
     }
   });
 }
