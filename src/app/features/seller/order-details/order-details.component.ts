@@ -14,10 +14,8 @@ export class OrderDetailsComponent implements OnInit {
   orderId!: number;
   order: any = {};
   items: any[] = [];
+  designedItems: any[] = [];
   subtotal = 0;
-  shipping = 15;
-  tax = 0;
-  total = 0;
 
   constructor(
     private route: ActivatedRoute,
@@ -35,39 +33,44 @@ export class OrderDetailsComponent implements OnInit {
         id: res.id,
         status: res.status,
         placedAt: res.createdOn,
+        totalAmount: res.totalAmount,
+        commission: res.commission,
+        payout: res.payout,
+        totalOrderItems: res.totalOrderItems,
+
         recipientName: res.recipientName,
-        items: res.items || [],
-        totalAmount: res.totalAmount
+        recipientPhone: res.recipientPhoneNumber,
+        recipientExtraPhone: res.recipientAdditionalPhoneNumber,
+
+        vendorName: res.vendorName,
+        vendorPhone: res.vendorPhoneNumber,
+
+        shippingAddress: res.shippingAddress,
+        pickUpAddress: res.pickUpAddress,
       };
 
-      this.items = res.items.map((item: any) => ({
+      this.items = (res.items || []).map((item: any) => ({
         productName: item.productName,
         productImage: item.imageUrl,
+        colorName: item.colorName,
+        orderItemType: item.orderItemType,
         price: item.unitPrice,
-        qty: item.quantity,
-        total: item.totalPrice
+        qty: item.totalQuantity,
+        total: item.totalPrice,
+        sizes: item.sizes || [],
       }));
 
-      this.calculateTotals();
+      this.designedItems = res.designedItems || [];
+
+      this.subtotal = this.items.reduce((sum, i) => sum + i.total, 0);
     });
   }
 
-  calculateTotals() {
-    this.subtotal = this.items.reduce((sum, i) => sum + i.total, 0);
-    this.tax = this.subtotal * 0.14;
-    this.total = this.subtotal + this.shipping + this.tax;
-  }
-
   confirmOrder() {
-    // ال API يريد "Ready" وليس رقم
-    this.orderService.updateOrderStatus(this.orderId, { newStatus: "Ready" })
+    this.orderService.updateOrderStatus(this.orderId, { newStatus: 'Ready' })
       .subscribe({
-        next: () => {
-          this.order.status = 'Ready';
-        },
-        error: err => {
-          console.error('Error updating order status:', err);
-        }
+        next: () => { this.order.status = 'Ready'; },
+        error: err => { console.error('Error updating order status:', err); }
       });
   }
 }

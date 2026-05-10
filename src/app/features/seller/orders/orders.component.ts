@@ -9,6 +9,7 @@ import { SallerOrderService } from '../../../core/services/saller-order.service'
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './orders.component.html',
+  styleUrl: './orders.component.css'
 })
 export class OrdersComponent implements OnInit {
 
@@ -19,63 +20,55 @@ export class OrdersComponent implements OnInit {
   totalCount = 0;
 
   stats = [
-    { title: 'Total Orders', value: 0, icon: 'bi-cart', color: 'text-primary' },
-    { title: 'Pending', value: 0, icon: 'bi-truck', color: 'text-warning' },
-    { title: 'Returns', value: 0, icon: 'bi-arrow-counterclockwise', color: 'text-danger' },
-    { title: 'Revenue', value: '$0', icon: 'bi-currency-dollar', color: 'text-success' }
+    { title: 'Total Orders', value: 0,   icon: 'bi-cart',                  bg: 'bg-indigo' },
+    { title: 'Pending',      value: 0,   icon: 'bi-truck',                  bg: 'bg-yellow' },
+    { title: 'Returns',      value: 0,   icon: 'bi-arrow-counterclockwise', bg: 'bg-red'    },
+    { title: 'Revenue',      value: '0 EGP', icon: 'bi-cash-coin',          bg: 'bg-green'  },
   ];
 
   constructor(private orderService: SallerOrderService) {}
 
-  ngOnInit() {
-    this.loadOrders();
-  }
+  ngOnInit() { this.loadOrders(); }
 
   loadOrders() {
     this.orderService.getSellerOrders(this.currentPage, this.pageSize)
       .subscribe((res: any) => {
-        this.orders = res.items || [];
+        this.orders     = res.items   || [];
         this.totalCount = res.records || this.orders.length;
         this.calculateStats();
       });
   }
 
   calculateStats() {
+    const revenue = this.orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     this.stats[0].value = this.totalCount;
     this.stats[1].value = this.orders.filter(o => o.status === 'Pending').length;
     this.stats[2].value = 0;
-    const totalRevenue = this.orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-    this.stats[3].value = `$${totalRevenue}`;
+    this.stats[3].value = `${revenue.toLocaleString()} EGP`;
   }
 
-get filteredOrders() {
-  const text = this.searchText.toLowerCase();
-  return this.orders.filter(o =>
-    o.id.toString().includes(text) ||
-    (o.recipientName || '').toLowerCase().includes(text)
-  );
-}
+  get filteredOrders() {
+    const text = this.searchText.toLowerCase();
+    return this.orders.filter(o =>
+      o.id?.toString().includes(text) ||
+      (o.recipientName || '').toLowerCase().includes(text)
+    );
+  }
 
   get totalPages(): number[] {
-    return Array.from({ length: Math.ceil(this.totalCount / this.pageSize) }, (_, i) => i + 1);
+    return Array.from(
+      { length: Math.ceil(this.totalCount / this.pageSize) },
+      (_, i) => i + 1
+    );
   }
 
-  goToPage(page: number) {
-    this.currentPage = page;
-    this.loadOrders();
-  }
+  goToPage(page: number) { this.currentPage = page; this.loadOrders(); }
 
   nextPage() {
-    if (this.currentPage < this.totalPages.length) {
-      this.currentPage++;
-      this.loadOrders();
-    }
+    if (this.currentPage < this.totalPages.length) { this.currentPage++; this.loadOrders(); }
   }
 
   prevPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.loadOrders();
-    }
+    if (this.currentPage > 1) { this.currentPage--; this.loadOrders(); }
   }
 }

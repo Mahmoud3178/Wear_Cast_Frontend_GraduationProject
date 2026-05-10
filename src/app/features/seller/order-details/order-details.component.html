@@ -2,133 +2,151 @@
 
   <!-- Header -->
   <div class="mb-4 d-flex justify-content-between align-items-center">
-
     <div>
       <h4 class="fw-bold">
         Order #{{ order.id }}
-
-        <span class="badge bg-primary-subtle text-primary ms-2">
-          {{ order.status }}
-        </span>
+        <span class="badge bg-primary-subtle text-primary ms-2">{{ order.status }}</span>
       </h4>
-
-      <small class="text-muted">
-        {{ order.placedAt | date:'medium' }}
-      </small>
+      <small class="text-muted">{{ order.placedAt | date:'medium' }}</small>
     </div>
-
     <button
       *ngIf="order.status === 'Pending'"
       class="btn btn-success"
       (click)="confirmOrder()">
-
       Confirm Order
     </button>
-
   </div>
 
-  <!-- Progress -->
-  <div class="card border-0 shadow-sm mb-4 p-3">
-
-    <div class="d-flex justify-content-between text-center">
-
-      <div *ngFor="let step of order.steps; let i = index" class="flex-fill">
-
-        <div
-          class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
-          [class.bg-primary]="i <= order.currentStep"
-          [class.bg-light]="i > order.currentStep"
-          style="width:32px;height:32px;color:white">
-
-          ✓
-
-        </div>
-
-        <small class="fw-semibold">{{ step }}</small>
-
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm p-3 text-center">
+        <small class="text-muted">Total Amount</small>
+        <h5 class="fw-bold mb-0 text-primary">{{ order.totalAmount | number:'1.2-2' }} EGP</h5>
       </div>
-
     </div>
-
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm p-3 text-center">
+        <small class="text-muted">Commission</small>
+        <h5 class="fw-bold mb-0 text-danger">{{ order.commission | number:'1.2-2' }} EGP</h5>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm p-3 text-center">
+        <small class="text-muted">Payout</small>
+        <h5 class="fw-bold mb-0 text-success">{{ order.payout | number:'1.2-2' }} EGP</h5>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm p-3 text-center">
+        <small class="text-muted">Total Items</small>
+        <h5 class="fw-bold mb-0">{{ order.totalOrderItems }}</h5>
+      </div>
+    </div>
   </div>
 
   <div class="row g-4">
 
-    <!-- Items -->
+    <!-- Left Column -->
     <div class="col-lg-8">
 
-      <div class="card border-0 shadow-sm p-3">
-
+      <!-- Order Items -->
+      <div class="card border-0 shadow-sm p-3 mb-4">
         <div class="d-flex justify-content-between mb-3">
           <h6 class="fw-bold mb-0">Order Items</h6>
           <small class="text-muted">{{ items.length }} items</small>
         </div>
 
         <table class="table align-middle">
-
           <thead class="table-light">
             <tr>
               <th>Product</th>
+              <th>Color</th>
+              <th>Sizes</th>
               <th>Price</th>
               <th>Qty</th>
               <th>Total</th>
             </tr>
           </thead>
-
           <tbody>
-
             <tr *ngFor="let item of items">
-
               <td>
                 <div class="d-flex align-items-center gap-2">
-                  <img
-                    [src]="item.productImage || 'https://via.placeholder.com/40'"
-                    width="40">
-                  <div>{{ item.productName }}</div>
+                  <img [src]="item.productImage || 'https://via.placeholder.com/40'" width="40" class="rounded">
+                  <div>
+                    <div>{{ item.productName }}</div>
+                    <small class="text-muted">{{ item.orderItemType }}</small>
+                  </div>
                 </div>
               </td>
-
-              <td>${{ item.price }}</td>
+              <td>{{ item.colorName }}</td>
+              <td>
+                <span
+                  *ngFor="let s of item.sizes"
+                  class="badge bg-secondary me-1">
+                  {{ s.sizeName }} × {{ s.quantity }}
+                </span>
+              </td>
+              <td>{{ item.price | number:'1.2-2' }} EGP</td>
               <td>{{ item.qty }}</td>
-              <td class="fw-semibold">${{ item.total }}</td>
-
+              <td class="fw-semibold">{{ item.total | number:'1.2-2' }} EGP</td>
             </tr>
-
           </tbody>
-
         </table>
 
         <!-- Summary -->
-        <div class="text-end mt-3">
-
-          <div>
-            Subtotal:
-            <strong>${{ subtotal }}</strong>
-          </div>
-
-          <div>
-            Shipping: ${{ shipping }}
-          </div>
-
-          <div>
-            Tax: ${{ tax | number:'1.2-2' }}
-          </div>
-
+        <div class="text-end mt-2 border-top pt-3">
+          <div>Subtotal: <strong>{{ subtotal | number:'1.2-2' }} EGP</strong></div>
+          <div>Commission: <span class="text-danger">-{{ order.commission | number:'1.2-2' }} EGP</span></div>
           <hr>
-
-          <h6>
-            Total:
-            <span class="text-primary">
-              ${{ total | number:'1.2-2' }}
-            </span>
-          </h6>
-
+          <h6>Payout: <span class="text-success">{{ order.payout | number:'1.2-2' }} EGP</span></h6>
         </div>
+      </div>
 
+      <!-- Designed Items -->
+      <div class="card border-0 shadow-sm p-3 mb-4" *ngIf="designedItems.length > 0">
+        <h6 class="fw-bold mb-3">Designed Items</h6>
+        <!-- نفس جدول الـ items لو احتجته -->
+      </div>
+
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+
+      <!-- Recipient Info -->
+      <div class="card border-0 shadow-sm p-3 mb-3">
+        <h6 class="fw-bold mb-3"><i class="bi bi-person me-1"></i> Recipient</h6>
+        <p class="mb-1"><strong>Name:</strong> {{ order.recipientName }}</p>
+        <p class="mb-1"><strong>Phone:</strong> {{ order.recipientPhone }}</p>
+        <p class="mb-0">
+          <strong>Alt. Phone:</strong>
+          {{ order.recipientExtraPhone ?? '—' }}
+        </p>
+      </div>
+
+      <!-- Vendor Info -->
+      <div class="card border-0 shadow-sm p-3 mb-3">
+        <h6 class="fw-bold mb-3"><i class="bi bi-shop me-1"></i> Vendor</h6>
+        <p class="mb-1"><strong>Name:</strong> {{ order.vendorName }}</p>
+        <p class="mb-0"><strong>Phone:</strong> {{ order.vendorPhone }}</p>
+      </div>
+
+      <!-- Shipping Address -->
+      <div class="card border-0 shadow-sm p-3 mb-3">
+        <h6 class="fw-bold mb-3"><i class="bi bi-geo-alt me-1"></i> Shipping Address</h6>
+        <p class="mb-1">{{ order.shippingAddress?.street }}, Building {{ order.shippingAddress?.buildingNumber }}</p>
+        <p class="mb-0">{{ order.shippingAddress?.city }}, {{ order.shippingAddress?.state }}</p>
+      </div>
+
+      <!-- Pickup Address -->
+      <div class="card border-0 shadow-sm p-3">
+        <h6 class="fw-bold mb-3"><i class="bi bi-box-seam me-1"></i> Pickup Address</h6>
+        <p class="mb-1">{{ order.pickUpAddress?.street }}, Building {{ order.pickUpAddress?.buildingNumber }}</p>
+        <p class="mb-0">{{ order.pickUpAddress?.city }}, {{ order.pickUpAddress?.state }}</p>
       </div>
 
     </div>
 
   </div>
-
 </div>

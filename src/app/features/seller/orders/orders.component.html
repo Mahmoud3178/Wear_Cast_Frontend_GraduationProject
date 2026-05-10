@@ -1,200 +1,104 @@
-<div class="container-fluid">
-
-  <!-- Navbar -->
-  <nav class="navbar bg-white shadow-sm px-3">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-
-      <h1 class="navbar-brand fw-bold">Orders</h1>
-
-      <div class="d-flex align-items-center gap-3">
-
-        <!-- Search -->
-        <form class="d-flex">
-          <input
-            class="form-control"
-            type="search"
-            placeholder="Search"
-          />
-        </form>
-
-        <!-- Notifications -->
-        <a [routerLink]="['../saller-notifications']" class="btn btn-light position-relative">
-          <i class="bi bi-bell-fill fs-5"></i>
-        </a>
-
-        <!-- Seller -->
-        <div class="d-flex align-items-center gap-2">
-          <img
-            src="https://i.pravatar.cc/40"
-            class="rounded-circle"
-            style="width:40px; height:40px;"
-          >
-          <span>Seller Name</span>
-        </div>
-
-      </div>
-    </div>
-  </nav>
+<div class="page-wrap">
 
   <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center pt-5">
+  <div class="adm-header">
     <div>
-      <h2 class="fw-bold">Orders 👋</h2>
-      <p class="text-muted mb-0">
-        Manage your orders, products, and shipping status
-      </p>
+      <h1 class="adm-title">Orders</h1>
+      <p class="adm-subtitle">Track and manage all your store orders</p>
     </div>
   </div>
 
-  <!-- Stats -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3" *ngFor="let stat of stats">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body d-flex justify-content-between align-items-center">
-          <div>
-            <small class="text-muted">{{ stat.title }}</small>
-            <h4 class="fw-bold mb-0">{{ stat.value }}</h4>
-          </div>
-          <i class="bi {{ stat.icon }} fs-2" [ngClass]="stat.color"></i>
-        </div>
+  <!-- KPI Stats -->
+  <div class="kpi-grid">
+    <div class="kpi-card" *ngFor="let stat of stats">
+      <div class="kpi-icon" [ngClass]="stat.bg">
+        <i class="bi {{ stat.icon }}"></i>
+      </div>
+      <div>
+        <div class="kpi-value">{{ stat.value }}</div>
+        <div class="kpi-label">{{ stat.title }}</div>
       </div>
     </div>
   </div>
 
-  <!-- Search -->
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-      <input
-        type="text"
-        class="form-control w-25"
-        placeholder="Search Order ID or Customer..."
-        [(ngModel)]="searchText"
-      />
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <i class="bi bi-search"></i>
+      <input type="text" placeholder="Search by order ID or customer..." [(ngModel)]="searchText">
     </div>
   </div>
 
-  <!-- Orders Table -->
-  <div class="card border-0 shadow-sm">
-    <div class="table-responsive">
+  <!-- Table -->
+  <div class="tbl-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Address</th>
+          <th>Items</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of filteredOrders" [routerLink]="['/seller/orders', order.id]">
+          <td><span class="c-main" style="color:#6366f1">#{{ order.id }}</span></td>
+          <td>
+            <div class="c-main">{{ order.recipientName }}</div>
+            <div class="c-sub">{{ order.recipientPhoneNumber }}</div>
+          </td>
+          <td class="c-muted" style="font-size:12.5px">
+            {{ order.shippingAddress?.state }}, {{ order.shippingAddress?.city }}
+          </td>
+          <td>
+            <span class="badge badge-indigo">{{ order.items?.length || 0 }} items</span>
+          </td>
+          <td class="c-muted">{{ order.createdOn | date:'dd MMM yyyy' }}</td>
+          <td><span class="c-main" style="color:#10b981">{{ order.totalAmount | number:'1.2-2' }} EGP</span></td>
+          <td>
+            <span class="badge"
+              [class.badge-active]="order.status === 'Delivered'"
+              [class.badge-pending]="order.status === 'Pending'"
+              [class.badge-info]="order.status === 'Shipped'"
+              [class.badge-dark]="order.status === 'Confirmed'">
+              {{ order.status }}
+            </span>
+          </td>
+        </tr>
 
-      <table class="table table-hover align-middle mb-0">
-
-        <thead class="table-light">
-          <tr>
-            <th>Order ID</th>
-            <th>Customer</th>
-            <th>Items</th>
-            <th>Date</th>
-            <th>Amount</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          <tr
-            *ngFor="let order of filteredOrders"
-            class="cursor-pointer"
-            [routerLink]="['/seller/orders', order.id]"
-          >
-
-            <!-- Order ID -->
-            <td class="fw-semibold text-primary">
-              #{{ order.id }}
-            </td>
-
-    <!-- Customer -->
-<td>
-  <div class="fw-semibold">
-    {{ order.recipientName }}
-  </div>
-  <small class="text-muted">
-    {{ order.recipientPhoneNumber }}
-  </small>
-  <div class="text-muted">
-    {{ order.shippingAddress?.state }}, {{ order.shippingAddress?.city }},
-    {{ order.shippingAddress?.street }} #{{ order.shippingAddress?.buildingNumber }}
-  </div>
-</td>
-
-<!-- Items -->
-<td class="fw-semibold">
-  <span class="badge bg-secondary-subtle text-secondary">
-    {{ order.items?.length || 0 }} Items
-  </span>
-</td>
-   <!-- Date -->
-<td>
-  {{ order.createdOn | date:'medium' }}
-</td>
-
-            <!-- Amount -->
-            <td class="fw-semibold">
-              ${{ order.totalAmount || order.amount }}
-            </td>
-
-            <!-- Status -->
-            <td>
-              <span
-                class="badge rounded-pill text-dark"
-                [ngClass]="{
-                  'bg-success-subtle text-success': order.status === 'Delivered',
-                  'bg-warning-subtle text-warning': order.status === 'Pending',
-                  'bg-primary-subtle text-primary': order.status === 'Shipped',
-                  'bg-secondary-subtle text-secondary': order.status === 'Confirmed'
-                }"
-              >
-                {{ order.status }}
-              </span>
-            </td>
-
-          </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
+        <tr *ngIf="!filteredOrders.length" class="empty-row">
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="bi bi-bag-x"></i>
+              <p>No orders found</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
     <!-- Pagination -->
-    <div class="d-flex justify-content-between align-items-center p-3 border-top">
-
-      <small class="text-muted">
-        Showing page {{ currentPage }}
-      </small>
-
-      <nav>
-        <ul class="pagination mb-0">
-
-          <!-- Prev -->
-          <li class="page-item" [class.disabled]="currentPage === 1">
-            <button class="page-link" (click)="prevPage()">Prev</button>
-          </li>
-
-          <!-- Pages -->
-          <li
-            class="page-item"
-            *ngFor="let page of totalPages"
-            [class.active]="page === currentPage"
-          >
-            <button class="page-link" (click)="goToPage(page)">
-              {{ page }}
-            </button>
-          </li>
-
-          <!-- Next -->
-          <li
-            class="page-item"
-            [class.disabled]="currentPage === totalPages.length"
-          >
-            <button class="page-link" (click)="nextPage()">Next</button>
-          </li>
-
-        </ul>
-      </nav>
-
+    <div class="pag-row">
+      <span class="pag-info">
+        Showing page {{ currentPage }} of {{ totalPages.length }} — {{ totalCount }} orders
+      </span>
+      <div class="pager">
+        <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="page-btn" *ngFor="let page of totalPages"
+          [class.cur]="page === currentPage"
+          (click)="goToPage(page)">
+          {{ page }}
+        </button>
+        <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages.length">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
-
   </div>
 
 </div>

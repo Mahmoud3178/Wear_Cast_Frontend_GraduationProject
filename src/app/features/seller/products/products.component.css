@@ -1,0 +1,91 @@
+.page-wrap { max-width:1300px; animation:fadeUp .3s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── Header ── */
+.adm-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+.adm-title { font-size:24px; font-weight:800; color:#0f172a; margin:0; }
+.adm-subtitle { font-size:13.5px; color:#64748b; margin:4px 0 0; }
+
+/* ── KPI ── */
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; margin-bottom:20px; }
+.kpi-card { background:white; border-radius:14px; border:1px solid #f1f5f9; box-shadow:0 1px 4px rgba(0,0,0,.05); padding:18px; display:flex; align-items:center; gap:14px; transition:transform .2s,box-shadow .2s; }
+.kpi-card:hover { transform:translateY(-3px); box-shadow:0 6px 20px rgba(0,0,0,.09); }
+.kpi-icon { width:44px; height:44px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.kpi-icon.bg-indigo { background:rgba(99,102,241,.1); color:#6366f1; }
+.kpi-icon.bg-yellow { background:rgba(245,158,11,.1);  color:#f59e0b; }
+.kpi-icon.bg-red    { background:rgba(239,68,68,.1);   color:#ef4444; }
+.kpi-icon.bg-green  { background:rgba(16,185,129,.1);  color:#10b981; }
+.kpi-value { font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.4px; }
+.kpi-label { font-size:12px; color:#64748b; margin-top:2px; }
+
+/* ── Toolbar ── */
+.toolbar { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+.search-wrap { position:relative; min-width:200px; max-width:260px; }
+.search-wrap i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none; }
+.search-wrap input { width:100%; padding:9px 14px 9px 36px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13.5px; color:#1e293b; background:white; outline:none; transition:border-color .2s,box-shadow .2s; box-sizing:border-box; }
+.search-wrap input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+.search-wrap input::placeholder { color:#cbd5e1; }
+
+/* ── Pills ── */
+.pills-wrap { display:flex; gap:6px; flex-wrap:wrap; }
+.pill-btn { padding:5px 14px; border-radius:999px; border:1.5px solid #e2e8f0; background:white; font-size:13px; cursor:pointer; color:#374151; transition:all .15s; white-space:nowrap; font-weight:500; }
+.pill-btn:hover { border-color:#6366f1; color:#6366f1; }
+.pill-btn.active { background:#111827; color:#fff; border-color:#111827; }
+.pill-badge { background:#6366f1; color:#fff; border-radius:999px; padding:1px 7px; font-size:11px; margin-left:4px; }
+
+/* ── Filters ── */
+.filters-wrap { display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; }
+.filter-select, .filter-input { padding:6px 10px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#374151; background:white; height:36px; outline:none; transition:border-color .2s; }
+.filter-select:focus, .filter-input:focus { border-color:#6366f1; }
+
+/* ── Add button ── */
+.btn-primary-adm { padding:9px 20px; background:#6366f1; color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; transition:background .15s; }
+.btn-primary-adm:hover { background:#4f46e5; }
+
+/* ── Table ── */
+.tbl-card { background:white; border-radius:16px; border:1px solid #f1f5f9; box-shadow:0 1px 4px rgba(0,0,0,.05); overflow:hidden; }
+.tbl-card table { width:100%; border-collapse:collapse; }
+.tbl-card thead tr { background:#f8fafc; }
+.tbl-card th { padding:12px 18px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.8px; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+.tbl-card td { padding:13px 18px; font-size:13.5px; color:#1e293b; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+.tbl-card tbody tr:last-child td { border-bottom:none; }
+.tbl-card tbody tr { transition:background .14s; cursor:pointer; }
+.tbl-card tbody tr:hover { background:#fafbff; }
+
+.c-main  { font-weight:600; color:#0f172a; font-size:14px; }
+.c-sub   { font-size:12px; color:#94a3b8; margin-top:2px; }
+.c-muted { color:#64748b; font-size:13px; }
+
+/* ── Badges ── */
+.badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600; }
+.badge-active  { background:#dcfce7; color:#166534; }
+.badge-pending { background:#fef3c7; color:#92400e; }
+.badge-danger  { background:#fee2e2; color:#b91c1c; }
+.badge-info    { background:#dbeafe; color:#1e40af; }
+.badge-indigo  { background:rgba(99,102,241,.1); color:#6366f1; }
+
+/* ── Edit button ── */
+.icon-btn { padding:5px 10px; border:1.5px solid #e2e8f0; border-radius:8px; background:white; cursor:pointer; font-size:14px; color:#374151; transition:all .15s; }
+.icon-btn:hover { background:#f1f5f9; border-color:#6366f1; color:#6366f1; }
+
+/* ── Pagination ── */
+.pag-row { display:flex; justify-content:space-between; align-items:center; padding:13px 18px; border-top:1px solid #f1f5f9; flex-wrap:wrap; gap:10px; }
+.pag-info { font-size:12.5px; color:#64748b; }
+.pager { display:flex; gap:4px; }
+.page-btn { width:32px; height:32px; border:1.5px solid #e2e8f0; background:white; border-radius:8px; font-size:13px; color:#374151; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; font-weight:500; }
+.page-btn:hover:not(:disabled) { border-color:#6366f1; color:#6366f1; }
+.page-btn.cur { background:#6366f1; border-color:#6366f1; color:#fff; }
+.page-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+/* ── Empty ── */
+.empty-row:hover { background:transparent !important; cursor:default !important; }
+.empty-state { text-align:center; padding:52px 20px; color:#94a3b8; }
+.empty-state i { font-size:40px; margin-bottom:12px; display:block; }
+.empty-state p { font-size:14px; margin:0; }
+
+@media(max-width:768px) {
+  .toolbar { flex-direction:column; align-items:stretch; }
+  .search-wrap { max-width:100%; }
+  .filters-wrap { margin-left:0; }
+  .tbl-card { overflow-x:auto; }
+}
