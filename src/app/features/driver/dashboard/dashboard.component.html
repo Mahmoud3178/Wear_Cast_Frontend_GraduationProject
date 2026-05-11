@@ -1,94 +1,165 @@
-<div class="container-fluid py-4 driver-view">
-  <!-- Header Profile Area -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center">
-      <div class="driver-avatar bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-        <i class="bi bi-person-fill fs-3"></i>
-      </div>
-      <div>
-        <h4 class="mb-0 fw-bold">Hello, {{ driverName }}!</h4>
-        <span class="text-muted-custom text-sm">Have a safe drive today.</span>
-      </div>
+<div class="dashboard-page-container animate-fade-in p-4">
+  <!-- Header Section -->
+  <header class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+    <div>
+      <h1 class="fw-bold tracking-tight mb-1 text-slate-900">Welcome Back, {{ userName }}</h1>
+      <p class="text-slate-500 mb-0">Here's what's happening with your deliveries today.</p>
     </div>
-    <button class="btn btn-light rounded-circle p-2 position-relative">
-      <i class="bi bi-bell fs-5"></i>
-      <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
-    </button>
-  </div>
-
-  <!-- Stats -->
-  <div class="row g-3 mb-4">
-    <div class="col-4" *ngFor="let stat of driverStats">
-      <div class="premium-card text-center py-3 h-100">
-        <i class="bi {{ stat.icon }} fs-4 mb-2 {{ stat.colorClass }}"></i>
-        <h5 class="fw-bold mb-1">{{ stat.value }}</h5>
-        <span class="text-muted-custom text-sm" style="font-size: 0.7rem;">{{ stat.title }}</span>
+    <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border border-slate-100">
+      <div class="icon-box-xs bg-primary-soft text-primary rounded-circle">
+        <i class="bi bi-calendar3"></i>
       </div>
+      <span class="text-sm fw-semibold text-slate-600">{{ today | date:'longDate' }}</span>
     </div>
-  </div>
+  </header>
 
-  <!-- Loading State -->
-  <div *ngIf="isLoading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="text-muted mt-2">Loading dashboard...</p>
-  </div>
-
-  <div *ngIf="!isLoading">
-    <!-- Current Route Card -->
-    <h5 class="fw-semibold mb-3">Current Route</h5>
-    <div class="premium-card mb-4 bg-primary text-white border-0 shadow-lg route-card" *ngIf="currentRoute">
-      <div class="premium-card-body">
-        <div class="d-flex justify-content-between align-items-start mb-3">
-          <span class="badge bg-white text-primary text-uppercase px-3 py-2 rounded-pill shadow-sm">
-            <i class="bi bi-geo-alt-fill me-1"></i> {{ getStatusName(currentRoute.shipmentStatus) }}
-          </span>
-          <div class="text-end">
-            <h4 class="mb-0 fw-bold">~15 mins</h4>
-            <span class="text-white-50 text-sm">ETA</span>
+  <!-- Stats Grid -->
+  <div class="row g-4 mb-5">
+    <div class="col-12 col-md-6 col-xl-3" *ngFor="let stat of stats; let i = index">
+      <div class="premium-card p-4 h-100 shadow-premium border-0 position-relative overflow-hidden">
+        <div class="card-bg-decoration"></div>
+        <div class="d-flex justify-content-between align-items-start mb-3 position-relative">
+          <div class="stat-icon-box" [ngClass]="'bg-soft-' + i">
+            <i class="bi" [ngClass]="stat.icon"></i>
           </div>
+          <div class="trend-badge" [class.trend-up]="stat.trendUp" [class.trend-down]="!stat.trendUp">
+            <i class="bi" [ngClass]="stat.trendUp ? 'bi-arrow-up' : 'bi-arrow-down'"></i>
+            <span>{{ stat.trend }}</span>
+          </div>
+        </div>
+        <div class="position-relative">
+          <p class="uppercase-tracking text-slate-400 fw-bold mb-1">{{ stat.title }}</p>
+          <h2 class="fw-bold text-slate-900 mb-0">{{ stat.value }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="row g-4">
+    <!-- Left Column: Charts -->
+    <div class="col-12 col-xl-8">
+      <!-- Revenue Chart Card -->
+      <div class="premium-card p-4 shadow-premium mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h5 class="fw-bold text-slate-900 mb-1">Earnings Performance</h5>
+            <p class="text-xs text-slate-500 mb-0">Monthly gross earnings overview</p>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-light-soft btn-sm px-3 rounded-pill" type="button">
+              Last 6 Months <i class="bi bi-chevron-down ms-1"></i>
+            </button>
+          </div>
+        </div>
+        <div class="chart-container" style="height: 300px;">
+          <canvas #revenueChart></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Shipments Table -->
+      <div class="premium-card shadow-premium overflow-hidden">
+        <div class="p-4 d-flex justify-content-between align-items-center border-bottom border-slate-100">
+          <h5 class="fw-bold text-slate-900 mb-0">Recent Deliveries</h5>
+          <button class="btn btn-link-premium text-sm p-0">View All</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0">Tracking ID</th>
+                <th class="py-3 uppercase-tracking text-slate-500 border-0">Destination</th>
+                <th class="py-3 uppercase-tracking text-slate-500 border-0">Status</th>
+                <th class="py-3 uppercase-tracking text-slate-500 border-0">Date</th>
+                <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0 text-end">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let shipment of recentShipments" class="cursor-pointer">
+                <td class="px-4">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="pkg-icon bg-slate-100 text-slate-500 rounded-circle">
+                      <i class="bi bi-box"></i>
+                    </div>
+                    <span class="fw-bold text-slate-700">#{{ shipment.id }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="text-sm fw-medium text-slate-900">{{ shipment.deliveryCity }}</div>
+                  <div class="text-xs text-slate-500">{{ shipment.deliveryStreet }}</div>
+                </td>
+                <td>
+                  <span class="badge-status" [ngClass]="getStatusClass(shipment.shipmentStatus)">
+                    {{ getStatusName(shipment.shipmentStatus) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="text-sm text-slate-500">{{ shipment.orderTime | date:'MMM d, HH:mm' }}</span>
+                </td>
+                <td class="px-4 text-end">
+                  <span class="fw-bold text-slate-900">${{ shipment.price | number:'1.2-2' }}</span>
+                </td>
+              </tr>
+              <tr *ngIf="recentShipments.length === 0">
+                <td colspan="5" class="text-center py-5 text-muted">No recent shipments found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Distribution & Quick Actions -->
+    <div class="col-12 col-xl-4">
+      <!-- Status Distribution Chart -->
+      <div class="premium-card p-4 shadow-premium mb-4">
+        <h5 class="fw-bold text-slate-900 mb-4">Shipment Status</h5>
+        <div class="chart-container d-flex align-items-center justify-content-center" style="height: 250px;">
+          <canvas #statusChart></canvas>
         </div>
         
-        <h3 class="fw-bold mb-1">{{ currentRoute.deliveryCity }}</h3>
-        <p class="text-white-50 mb-4"><i class="bi bi-signpost me-2"></i>{{ currentRoute.deliveryStreet }}</p>
-        
-        <button class="btn btn-light w-100 fw-bold py-3 shadow-sm rounded-pill d-flex align-items-center justify-content-center gap-2">
-          <i class="bi bi-cursor-fill text-primary"></i>
-          <span class="text-primary">View Shipment Details</span>
-        </button>
+        <div class="status-legend mt-4">
+          <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
+            <div class="d-flex align-items-center gap-2">
+              <span class="dot bg-warning"></span>
+              <span class="text-sm text-slate-600">Pending</span>
+            </div>
+            <span class="fw-bold text-slate-900">{{ dashboardStats.statusBreakdown['Pending'] || 0 }}</span>
+          </div>
+          <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
+            <div class="d-flex align-items-center gap-2">
+              <span class="dot bg-primary"></span>
+              <span class="text-sm text-slate-600">Assigned</span>
+            </div>
+            <span class="fw-bold text-slate-900">{{ dashboardStats.statusBreakdown['Assigned'] || 0 }}</span>
+          </div>
+          <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
+            <div class="d-flex align-items-center gap-2">
+              <span class="dot bg-success"></span>
+              <span class="text-sm text-slate-600">Delivered</span>
+            </div>
+            <span class="fw-bold text-slate-900">{{ dashboardStats.statusBreakdown['Delivered'] || 0 }}</span>
+          </div>
+        </div>
       </div>
-    </div>
-    
-    <div class="premium-card mb-4 border-0 shadow-sm" *ngIf="!currentRoute">
-      <div class="premium-card-body text-center py-5">
-        <i class="bi bi-check2-circle text-success fs-1 mb-2"></i>
-        <h5 class="fw-bold">No Active Route</h5>
-        <p class="text-muted mb-0">You have completed all deliveries or don't have any assigned right now.</p>
-      </div>
-    </div>
-  </div>
 
-  <!-- Quick Actions -->
-  <h5 class="fw-semibold mb-3">Quick Actions</h5>
-  <div class="row g-3">
-    <div class="col-6">
-      <button routerLink="../deliveries" class="btn premium-card w-100 py-3 text-start border-0">
-        <div class="d-flex flex-column align-items-center text-center gap-2">
-          <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle">
-            <i class="bi bi-box-seam fs-4"></i>
-          </div>
-          <span class="fw-medium text-main">View Deliveries</span>
+      <!-- Quick Actions -->
+      <div class="premium-card p-4 shadow-premium">
+        <h6 class="uppercase-tracking text-slate-400 fw-bold mb-3">Quick Actions</h6>
+        <div class="d-grid gap-3">
+          <button class="btn btn-primary-premium py-3 rounded-4 shadow-sm">
+            <i class="bi bi-geo-alt me-2"></i> Update Current Location
+          </button>
+          <button class="btn btn-outline-slate py-3 rounded-4">
+            <i class="bi bi-clock me-2"></i> Go Offline
+          </button>
         </div>
-      </button>
-    </div>
-    <div class="col-6">
-      <button class="btn premium-card w-100 py-3 text-start border-0">
-        <div class="d-flex flex-column align-items-center text-center gap-2">
-          <div class="bg-danger bg-opacity-10 text-danger p-3 rounded-circle">
-            <i class="bi bi-exclamation-triangle fs-4"></i>
-          </div>
-          <span class="fw-medium text-main">Report Issue</span>
-        </div>
-      </button>
+      </div>
     </div>
   </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" *ngIf="isLoading">
+  <div class="spinner-premium"></div>
 </div>

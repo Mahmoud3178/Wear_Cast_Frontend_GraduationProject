@@ -445,6 +445,17 @@ export class AuthService {
     return localStorage.getItem('role');
   }
 
+  getDriverId(): number | null {
+    const t = this.getToken();
+    if (!t) return null;
+    const payload = this.decodeJwtPayload(t);
+    if (!payload) return null;
+    const did = payload['DriverId'] ?? payload['driverId'];
+    if (typeof did === 'number') return did;
+    if (typeof did === 'string') return parseInt(did, 10);
+    return null;
+  }
+
   getCurrentUserId(): string | null {
     const t = this.getToken();
     if (!t) return null;

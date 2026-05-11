@@ -1,11 +1,20 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './dashboard/dashboard.component';
-import { DeliveriesComponent } from './deliveries/deliveries.component';
-import { DriverProfileComponent } from './profile/profile.component';
+import { ProfileComponent } from './profile/profile.component';
+import { DriverLayoutComponent } from './driver-layout/driver-layout.component';
+import { ShipmentsListComponent } from './shipments/shipments-list/shipments-list.component';
+import { ShipmentDetailsComponent } from './shipments/shipment-details/shipment-details.component';
 
 export const DRIVER_ROUTES: Routes = [
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'deliveries', component: DeliveriesComponent },
-  { path: 'profile', component: DriverProfileComponent }
+  {
+    path: '',
+    component: DriverLayoutComponent,
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: DashboardComponent },
+      { path: 'profile', component: ProfileComponent },
+      { path: 'shipments', component: ShipmentsListComponent },
+      { path: 'shipments/:id', component: ShipmentDetailsComponent }
+    ]
+  }
 ];

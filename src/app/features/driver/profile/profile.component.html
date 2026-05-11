@@ -1,114 +1,198 @@
-<div class="profile-container">
-  <div class="header-section">
-    <div>
-      <h2>My Profile</h2>
-      <p class="subtitle">Manage your personal information and preferences</p>
+<div class="profile-page-container p-4">
+  <!-- Page Header -->
+  <div class="header-section mb-5 animate-fade-in">
+    <div class="d-flex justify-content-between align-items-end">
+      <div>
+        <nav aria-label="breadcrumb" class="mb-2">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="#" class="text-slate-500 text-decoration-none small fw-bold">DASHBOARD</a></li>
+            <li class="breadcrumb-item active text-primary small fw-bold" aria-current="page">MY PROFILE</li>
+          </ol>
+        </nav>
+        <h2 class="fw-bold text-slate-900 mb-1 tracking-tight">Driver Profile</h2>
+      </div>
     </div>
   </div>
 
-  <div *ngIf="isLoading" class="loading-state">
-    <div class="spinner"></div>
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''" aria-label="Close"></button>
+  </div>
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''" aria-label="Close"></button>
   </div>
 
-  <div *ngIf="!isLoading && profile" class="profile-content">
-    <div class="profile-card">
-      <div class="card-header">
-        <div class="header-title">
-          <i class="fas fa-user"></i>
-          <h3>Personal Information</h3>
-        </div>
-        <button class="action-btn outline" (click)="toggleEdit()">
-          <i class="fas" [ngClass]="isEditing ? 'fa-times' : 'fa-edit'"></i>
-          {{ isEditing ? 'Cancel' : 'Edit Profile' }}
-        </button>
-      </div>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-overlay d-flex flex-column align-items-center justify-content-center p-5">
+    <div class="spinner-premium mb-3"></div>
+    <p class="text-slate-500 fw-medium">Processing...</p>
+  </div>
 
-      <div class="card-body">
-        <div class="profile-header-info">
-          <div class="image-section">
-            <div class="image-wrapper">
-              <img *ngIf="profile.profileImageUrl" [src]="profile.profileImageUrl" alt="Profile" class="profile-img">
-              <div *ngIf="!profile.profileImageUrl" class="image-placeholder">
-                <i class="fas fa-user-circle"></i>
+  <!-- Main Content -->
+  <div *ngIf="!isLoading" class="content-grid animate-fade-in">
+    <div class="row g-4">
+      <!-- Left Column: Personal Details -->
+      <div class="col-xl-8">
+        <div class="premium-card shadow-premium h-100">
+          <div class="card-header-premium p-4 d-flex justify-content-between align-items-center border-bottom border-slate-100">
+            <div class="d-flex align-items-center gap-3">
+              <div class="icon-box-refined bg-primary-soft text-primary">
+                <i class="bi bi-person-fill fs-5"></i>
+              </div>
+              <div>
+                <h5 class="mb-0 fw-bold text-slate-900">Personal Information</h5>
+                <p class="mb-0 text-xs text-slate-500 fw-medium uppercase-tracking">Public & Contact Details</p>
               </div>
             </div>
-            <div class="image-upload" *ngIf="isEditing">
-              <label for="profileImage" class="upload-btn">
-                <i class="fas fa-camera"></i> Change Photo
-              </label>
-              <input type="file" id="profileImage" (change)="onImageSelected($event)" accept="image/*" class="hidden-input">
-            </div>
+            <button class="btn btn-edit-premium" (click)="toggleEdit()">
+              <i class="bi" [class.bi-pencil-square]="!isEditing" [class.bi-x-lg]="isEditing"></i>
+              <span>{{ isEditing ? 'Discard Changes' : 'Modify Information' }}</span>
+            </button>
           </div>
-          
-          <div class="quick-stats" *ngIf="!isEditing">
-            <div class="stat-badge status-badge" [ngClass]="'status-' + profile.status">
-              {{ DriverStatusEnum[profile.status] }}
-            </div>
-            <div class="stat-badge vehicle-badge">
-              <i class="fas fa-motorcycle"></i> {{ VehicleTypeEnum[profile.vehicleType] }}
-            </div>
+
+          <div class="card-body p-4 p-md-5">
+            <form #profileFormRef="ngForm" (ngSubmit)="saveProfile()">
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>First Name</label>
+                    <input type="text" name="firstName" [(ngModel)]="driverForm.firstName" [readonly]="!isEditing" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>Last Name</label>
+                    <input type="text" name="lastName" [(ngModel)]="driverForm.lastName" [readonly]="!isEditing" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>Business Email</label>
+                    <input type="email" name="email" [(ngModel)]="driverForm.email" [readonly]="true" required>
+                    <small class="text-muted" *ngIf="isEditing">Email cannot be changed.</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>Contact Number</label>
+                    <input type="text" name="phoneNumber" [(ngModel)]="driverForm.phoneNumber" [readonly]="!isEditing" required>
+                  </div>
+                </div>
+                
+                <div class="col-12 mt-5 mb-2">
+                  <div class="section-divider">
+                    <span class="bg-white px-3 text-slate-400 text-xs fw-bold uppercase-tracking">Professional Details</span>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>National ID / License</label>
+                    <input type="text" name="nationalId" [(ngModel)]="driverForm.nationalId" [readonly]="!isEditing" required>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>Vehicle Type</label>
+                    <select name="vehicleType" [(ngModel)]="driverForm.vehicleType" [disabled]="!isEditing" class="form-select border-0 shadow-none bg-transparent" required>
+                      <option *ngFor="let type of vehicleTypes" [value]="type.value">{{ type.label }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>Plate Number</label>
+                    <input type="text" name="vehiclePlateNumber" [(ngModel)]="driverForm.vehiclePlateNumber" [readonly]="!isEditing">
+                  </div>
+                </div>
+
+                <div class="col-12 mt-5 mb-2">
+                  <div class="section-divider">
+                    <span class="bg-white px-3 text-slate-400 text-xs fw-bold uppercase-tracking">Address Information</span>
+                  </div>
+                </div>
+
+                <div class="col-md-3">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>State</label>
+                    <input type="text" name="state" [(ngModel)]="driverForm.address.state" [readonly]="!isEditing" required>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>City</label>
+                    <input type="text" name="city" [(ngModel)]="driverForm.address.city" [readonly]="!isEditing" required>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>Street</label>
+                    <input type="text" name="street" [(ngModel)]="driverForm.address.street" [readonly]="!isEditing" required>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-field-premium" [class.is-editing]="isEditing">
+                    <label>Building</label>
+                    <input type="text" name="buildingNumber" [(ngModel)]="driverForm.address.buildingNumber" [readonly]="!isEditing" required>
+                  </div>
+                </div>
+
+                <div *ngIf="isEditing" class="col-12 d-flex justify-content-end mt-5">
+                  <button type="submit" class="btn btn-save-premium" [disabled]="!profileFormRef.valid">
+                    <i class="bi bi-check2-circle me-2"></i>Apply Changes
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
+      </div>
 
-        <form *ngIf="isEditing" (ngSubmit)="saveProfile()" #profileNgForm="ngForm">
-          <div class="form-row">
-            <div class="form-group half">
-              <label>First Name</label>
-              <input type="text" [(ngModel)]="editForm.firstName" name="firstName" required class="form-control">
+      <!-- Right Column: Avatar & Summary -->
+      <div class="col-xl-4">
+        <div class="premium-card shadow-premium mb-4 overflow-hidden">
+          <div class="manager-header p-5 text-center position-relative">
+            <div class="manager-bg-decoration"></div>
+            <div class="avatar-manager-frame shadow-lg mx-auto mb-4 position-relative">
+              <span class="display-6 fw-bold text-white">{{ driver.firstName ? driver.firstName.charAt(0) : 'D' }}</span>
             </div>
-            <div class="form-group half">
-              <label>Last Name</label>
-              <input type="text" [(ngModel)]="editForm.lastName" name="lastName" required class="form-control">
-            </div>
+            <h4 class="fw-bold text-slate-900 mb-1">{{ driver.firstName }} {{ driver.lastName }}</h4>
+            <span class="badge-premium bg-primary-soft text-primary">Active Driver</span>
           </div>
-          <div class="form-row">
-            <div class="form-group half">
-              <label>City</label>
-              <input type="text" [(ngModel)]="editForm.address.city" name="city" required class="form-control">
+          <div class="card-body p-4 pt-0">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-slate-100 pb-3">
+              <h6 class="text-slate-900 fw-bold mb-0">Account Summary</h6>
             </div>
-          </div>
+            
+            <div class="summary-items d-flex flex-column gap-3 mb-4">
+              <!-- Vehicle Item -->
+              <div class="summary-item d-flex align-items-center gap-3 p-3 bg-slate-50 rounded-4 transition-all">
+                <div class="icon-box-sm bg-primary-soft text-primary rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="bi bi-truck fs-5"></i>
+                </div>
+                <div>
+                  <p class="mb-0 text-xs text-slate-500 fw-bold uppercase-tracking">Vehicle</p>
+                  <p class="mb-0 fw-bold text-slate-900">{{ getVehicleTypeName(driver.vehicleType) }} <span class="text-slate-500 fw-medium" *ngIf="driver.vehiclePlateNumber">({{ driver.vehiclePlateNumber }})</span></p>
+                </div>
+              </div>
+              
+              <!-- Location Item -->
+              <div class="summary-item d-flex align-items-center gap-3 p-3 bg-slate-50 rounded-4 transition-all">
+                <div class="icon-box-sm bg-success-soft text-success rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="bi bi-geo-alt fs-5"></i>
+                </div>
+                <div>
+                  <p class="mb-0 text-xs text-slate-500 fw-bold uppercase-tracking">Location</p>
+                  <p class="mb-0 fw-bold text-slate-900">{{ driver.address.city || 'N/A' }}, {{ driver.address.state || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
 
-          <div class="form-row">
-            <div class="form-group half">
-              <label>Phone Number</label>
-              <input type="text" [(ngModel)]="editForm.phoneNumber" name="phone" class="form-control">
+            <div class="text-sm text-slate-500 bg-slate-50 p-3 rounded-4 border border-slate-100">
+              <p class="mb-0"><i class="bi bi-info-circle me-2"></i>Welcome to your driver profile. Here you can view and update your personal information.</p>
             </div>
-            <div class="form-group half">
-              <label>Vehicle Type</label>
-              <select [(ngModel)]="editForm.vehicleType" name="vehicle" class="form-control">
-                <option [ngValue]="VehicleTypeEnum.Bicycle">Bicycle</option>
-                <option [ngValue]="VehicleTypeEnum.Motorcycle">Motorcycle</option>
-                <option [ngValue]="VehicleTypeEnum.Car">Car</option>
-                <option [ngValue]="VehicleTypeEnum.Van">Van</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="primary-btn" [disabled]="!profileNgForm.form.valid">Save Changes</button>
-          </div>
-        </form>
-
-        <div *ngIf="!isEditing" class="info-grid">
-          <div class="info-item">
-            <span class="label">Full Name</span>
-            <span class="value">{{ profile.driverName }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">City</span>
-            <span class="value">{{ profile.driverCity }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Phone Number</span>
-            <span class="value">{{ profile.phoneNumber || 'Not provided' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Email</span>
-            <span class="value">{{ profile.email || 'Not provided' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">National ID</span>
-            <span class="value">{{ profile.nationalId || 'Not provided' }}</span>
           </div>
         </div>
       </div>

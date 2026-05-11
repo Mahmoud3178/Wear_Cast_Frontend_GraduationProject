@@ -1,15 +1,16 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/login/login.component';
 import { shippingRoleGuard } from './core/guards/shipping-role.guard';
+import { driverRoleGuard } from './core/guards/driver-role.guard';
 
 export const routes: Routes = [
 
-{
-  path: 'admin',
-  loadChildren: () =>
-    import('./features/admin/admin.routes')
-      .then(m => m.ADMIN_ROUTES)
-},
+  {
+    path: 'admin',
+    loadChildren: () =>
+      import('./features/admin/admin.routes')
+        .then(m => m.ADMIN_ROUTES)
+  },
   {
     path: 'seller',
     redirectTo: 'login',
@@ -23,12 +24,12 @@ export const routes: Routes = [
       import('./features/seller/seller.routes')
         .then(m => m.SELLER_ROUTES)
   },
-{
-  path: 'customer',
-  loadChildren: () =>
-    import('./features/customer/customer.routes')
-      .then(m => m.CUSTOMER_ROUTES)
-},
+  {
+    path: 'customer',
+    loadChildren: () =>
+      import('./features/customer/customer.routes')
+        .then(m => m.CUSTOMER_ROUTES)
+  },
   {
     path: 'login',
     component: LoginComponent
@@ -81,6 +82,7 @@ export const routes: Routes = [
   },
   {
     path: 'driver',
+    canActivate: [driverRoleGuard],
     loadChildren: () =>
       import('./features/driver/driver.routes').then(m => m.DRIVER_ROUTES)
   },

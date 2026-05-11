@@ -1,0 +1,206 @@
+<div class="details-page-container p-4">
+  <!-- Page Header -->
+  <div class="header-section mb-5 animate-fade-in">
+    <div class="d-flex justify-content-between align-items-end">
+      <div>
+        <nav aria-label="breadcrumb" class="mb-2">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="#" class="text-slate-500 text-decoration-none small fw-bold">DASHBOARD</a></li>
+            <li class="breadcrumb-item"><a routerLink="/driver/shipments" class="text-slate-500 text-decoration-none small fw-bold">MY SHIPMENTS</a></li>
+            <li class="breadcrumb-item active text-primary small fw-bold" aria-current="page">DETAILS</li>
+          </ol>
+        </nav>
+        <h2 class="fw-bold text-slate-900 mb-1 tracking-tight">Shipment #{{ shipmentId }}</h2>
+        <p class="text-slate-500 mb-0">Manage status and view details for this delivery.</p>
+      </div>
+      <div>
+        <button routerLink="/driver/shipments" class="btn btn-light-soft rounded-pill px-4">
+          <i class="bi bi-arrow-left me-2"></i>Back to List
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-premium mb-3"></div>
+    <p class="text-slate-500 fw-medium">Loading details...</p>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="alert alert-danger mb-4" role="alert">
+    {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage" class="alert alert-success mb-4" role="alert">
+    {{ successMessage }}
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading && shipment" class="content-grid animate-fade-in">
+    <div class="row g-4">
+      <!-- Left Column: Shipment Info -->
+      <div class="col-xl-8">
+        <!-- Status Card -->
+        <div class="premium-card shadow-premium p-4 mb-4 border-0">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+              <p class="mb-1 text-xs text-slate-500 fw-bold uppercase-tracking">Current Status</p>
+              <span class="badge-status px-4 py-2 rounded-pill text-sm fw-bold d-inline-block" [ngClass]="getStatusClass(shipment.shipmentStatus)">
+                {{ getStatusName(shipment.shipmentStatus) }}
+              </span>
+            </div>
+            
+            <div class="d-flex gap-2 align-items-center">
+              <span class="text-sm fw-bold text-slate-700 me-2">Update To:</span>
+              <div class="d-flex gap-2">
+                <button *ngFor="let option of statusOptions" 
+                        class="btn btn-sm btn-premium-action rounded-pill px-3"
+                        [disabled]="shipment.shipmentStatus === option.value"
+                        (click)="updateStatus(option.value)">
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details Card -->
+        <div class="premium-card shadow-premium border-0 mb-4">
+          <div class="card-header-premium p-4 border-bottom border-slate-100 d-flex align-items-center gap-3">
+            <div class="icon-box-refined bg-primary-soft text-primary">
+              <i class="bi bi-box-seam fs-5"></i>
+            </div>
+            <div>
+              <h5 class="mb-0 fw-bold text-slate-900">Shipment Details</h5>
+              <p class="mb-0 text-xs text-slate-500 fw-medium uppercase-tracking">Order & Tracking</p>
+            </div>
+          </div>
+          
+          <div class="card-body p-4">
+            <div class="row g-4">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Tracking ID</p>
+                  <p class="fw-bold text-slate-900 mb-0">#{{ shipment.id }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Order Time</p>
+                  <p class="fw-bold text-slate-900 mb-0">{{ shipment.orderedAt | date:'MMM d, yyyy HH:mm' }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Customer Name</p>
+                  <p class="fw-bold text-slate-900 mb-0">{{ shipment.customerName || 'N/A' }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Customer Phone</p>
+                  <p class="fw-bold text-slate-900 mb-0">{{ shipment.customerPhoneNumber || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="premium-card shadow-premium border-0">
+          <div class="card-header-premium p-4 border-bottom border-slate-100">
+            <h6 class="mb-0 fw-bold text-slate-900">Package Contents (Orders)</h6>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0">Store</th>
+                  <th class="py-3 uppercase-tracking text-slate-500 border-0 text-center">Items Count</th>
+                  <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0 text-end">Order ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let order of shipment.orders" class="cursor-pointer">
+                  <td class="px-4">
+                    <span class="fw-bold text-slate-700">{{ order.storeName }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-slate-100 text-slate-700 rounded-pill px-2.5 py-1.5">{{ order.itemsCount || 0 }}</span>
+                  </td>
+                  <td class="px-4 text-end">
+                    <span class="fw-bold text-slate-900">#{{ order.orderId }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Delivery Address -->
+      <div class="col-xl-4">
+        <div class="premium-card shadow-premium border-0 sticky-top" style="top: 2rem;">
+          <div class="card-header-premium p-4 border-bottom border-slate-100 d-flex align-items-center gap-3">
+            <div class="icon-box-refined bg-success-soft text-success">
+              <i class="bi bi-geo-alt fs-5"></i>
+            </div>
+            <div>
+              <h5 class="mb-0 fw-bold text-slate-900">Delivery Address</h5>
+              <p class="mb-0 text-xs text-slate-500 fw-medium uppercase-tracking">Destination</p>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <div class="d-flex flex-column gap-3">
+              <div class="p-3 bg-slate-50 rounded-4">
+                <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">State</p>
+                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress.state }}</p>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-4">
+                <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">City</p>
+                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress.city }}</p>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-4">
+                <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Street</p>
+                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress.street }}</p>
+              </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-primary-soft rounded-4 text-primary d-flex align-items-center gap-3">
+              <i class="bi bi-truck fs-3"></i>
+              <div>
+                <p class="mb-0 text-xs fw-bold uppercase-tracking">Action Required</p>
+                <p class="mb-0 text-sm fw-medium">Deliver to receiver and update status.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delivery Code Modal -->
+<div *ngIf="showCodePrompt" class="custom-modal-overlay">
+  <div class="custom-modal-content premium-card shadow-premium p-4 border-0">
+    <div class="text-center mb-4">
+      <div class="icon-box-refined bg-primary-soft text-primary mx-auto mb-3">
+        <i class="bi bi-shield-lock fs-4"></i>
+      </div>
+      <h5 class="fw-bold text-slate-900 mb-1">Enter Delivery Code</h5>
+      <p class="text-slate-500 text-sm mb-0">Ask the customer for the 6-digit code to complete delivery.</p>
+    </div>
+
+    <div class="mb-4">
+      <input type="text" class="form-control form-control-lg text-center fw-bold letter-spacing-lg" 
+             [(ngModel)]="enteredCode" 
+             placeholder="123456" 
+             maxlength="6">
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-light-soft rounded-pill flex-fill py-2.5" (click)="cancelDelivery()">Cancel</button>
+      <button class="btn btn-primary rounded-pill flex-fill py-2.5" (click)="confirmDelivery()">Confirm Delivery</button>
+    </div>
+  </div>
+</div>

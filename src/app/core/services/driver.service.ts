@@ -68,8 +68,12 @@ export class DriverService {
   }
 
   // --- Driver Shipments ---
-  getAllDriverShipments(): Observable<DriverShipment[]> {
-    return this.http.get<PaginatedResponse<DriverShipment>>(`${this.apiUrl}/DriverShipments`).pipe(
+  getAllDriverShipments(driverId: number, status?: string): Observable<DriverShipment[]> {
+    let params = new HttpParams().set('DriverId', driverId.toString());
+    if (status) {
+      params = params.set('ShipmentStatus', status);
+    }
+    return this.http.get<PaginatedResponse<DriverShipment>>(`${this.apiUrl}/DriverShipments`, { params }).pipe(
       map(response => response.items || [])
     );
   }

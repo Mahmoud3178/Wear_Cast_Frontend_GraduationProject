@@ -1,71 +1,89 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DriverService } from '../../../core/services/driver.service';
-import { DriverProfile, UpdateDriverRequest, DriverStatus, DeliveryVehicleType } from '../../../core/models/driver.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { DriverService } from '../../../core/services/driver.service';
+import { DeliveryVehicleType, UpdateDriverRequest } from '../../../core/models/driver.model';
 
 @Component({
   selector: 'app-driver-profile',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.css']
+  styleUrl: './profile.component.css'
 })
-export class DriverProfileComponent implements OnInit {
-  private driverService = inject(DriverService);
+export class ProfileComponent implements OnInit {
   private authService = inject(AuthService);
+  private driverService = inject(DriverService);
 
-  profile: DriverProfile | null = null;
-  isLoading = true;
+  isLoading = false;
   isEditing = false;
+  errorMessage = '';
+  successMessage = '';
 
-  DriverStatusEnum = DriverStatus;
-  VehicleTypeEnum = DeliveryVehicleType;
-
-  editForm: UpdateDriverRequest = {
+  driver: any = {
     firstName: '',
     lastName: '',
-    vehicleType: DeliveryVehicleType.Motorcycle,
+    email: '',
     phoneNumber: '',
     nationalId: '',
-    address: { state: '', city: '', street: '', buildingNumber: '' }
+    vehicleType: DeliveryVehicleType.Car,
+    vehiclePlateNumber: '',
+    address: {
+      state: '',
+      city: '',
+      street: '',
+      buildingNumber: ''
+    }
   };
 
-  ngOnInit() {
-    this.loadProfile();
+  driverForm: any = { ...this.driver, address: { ...this.driver.address } };
+
+  vehicleTypes = [
+    { value: DeliveryVehicleType.Bicycle, label: 'Bicycle' },
+    { value: DeliveryVehicleType.Motorcycle, label: 'Motorcycle' },
+    { value: DeliveryVehicleType.Car, label: 'Car' },
+    { value: DeliveryVehicleType.Van, label: 'Van' }
+  ];
+
+  ngOnInit(): void {
+    this.loadDriverProfile();
   }
 
-  loadProfile() {
-    this.isLoading = true;
-    const userId = this.authService.getCurrentUserId();
-    // Assuming driver id is the same or we have an endpoint to get "my profile".
-    // For now, let's use the ID from token or a placeholder.
-    const driverId = userId ? parseInt(userId, 10) : 1; 
+  loadDriverProfile() {
+    const driverId = this.authService.getDriverId();
+    if (!driverId) {
+      this.errorMessage = 'No Driver ID found in token.';
+      return;
+    }
 
+    this.isLoading = true;
     this.driverService.getDriverById(driverId).subscribe({
-      next: (data) => {
-        // Map Driver to DriverProfile temporarily or if backend returns full details
-        this.profile = data as any as DriverProfile;
-        const names = this.profile.driverName ? this.profile.driverName.split(' ') : [''];
-        this.editForm = {
-          providedDriverId: this.profile.id,
-          firstName: names[0] || '',
-          lastName: names.slice(1).join(' ') || '',
-          vehicleType: this.profile.vehicleType,
-          phoneNumber: this.profile.phoneNumber || '',
-          nationalId: this.profile.nationalId || '',
-          address: {
-            state: '',
-            city: this.profile.driverCity || '',
-            street: '',
-            buildingNumber: ''
+      next: (profile: any) => {
+        let vehicleType = profile.vehicleType;
+        if (typeof vehicleType === 'string') {
+          const mapped = DeliveryVehicleType[vehicleType as keyof typeof DeliveryVehicleType];
+          if (mapped !== undefined) {
+            vehicleType = mapped;
           }
+        }
+
+        this.driver = {
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          email: profile.email,
+          phoneNumber: profile.phoneNumber,
+          nationalId: profile.nationalId,
+          vehicleType: vehicleType,
+          vehiclePlateNumber: profile.vehiclePlateNumber,
+          address: profile.address || { state: '', city: '', street: '', buildingNumber: '' }
         };
+        this.driverForm = { ...this.driver, address: { ...this.driver.address } };
         this.isLoading = false;
       },
       error: (err) => {
         console.error('Failed to load driver profile', err);
+        this.errorMessage = 'Failed to load profile data.';
         this.isLoading = false;
       }
     });
@@ -73,52 +91,60 @@ export class DriverProfileComponent implements OnInit {
 
   toggleEdit() {
     this.isEditing = !this.isEditing;
-    if (!this.isEditing && this.profile) {
-      const names = this.profile.driverName ? this.profile.driverName.split(' ') : [''];
-      this.editForm = {
-        providedDriverId: this.profile.id,
-        firstName: names[0] || '',
-        lastName: names.slice(1).join(' ') || '',
-        vehicleType: this.profile.vehicleType,
-        phoneNumber: this.profile.phoneNumber || '',
-        nationalId: this.profile.nationalId || '',
-        address: {
-          state: '',
-          city: this.profile.driverCity || '',
-          street: '',
-          buildingNumber: ''
-        }
-      };
+    if (!this.isEditing) {
+      this.driverForm = { ...this.driver, address: { ...this.driver.address } };
     }
   }
 
   saveProfile() {
-    this.driverService.updateDriver(this.editForm).subscribe({
+    const driverId = this.authService.getDriverId();
+    if (!driverId) return;
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const request: UpdateDriverRequest = {
+      firstName: this.driverForm.firstName,
+      lastName: this.driverForm.lastName,
+      phoneNumber: this.driverForm.phoneNumber,
+      nationalId: this.driverForm.nationalId,
+      vehicleType: this.driverForm.vehicleType,
+      vehiclePlateNumber: this.driverForm.vehiclePlateNumber,
+      address: {
+        state: this.driverForm.address.state,
+        city: this.driverForm.address.city,
+        street: this.driverForm.address.street,
+        buildingNumber: this.driverForm.address.buildingNumber
+      }
+    };
+
+    this.driverService.updateDriver(request).subscribe({
       next: () => {
+        this.driver = { ...this.driverForm, address: { ...this.driverForm.address } };
         this.isEditing = false;
-        this.loadProfile();
+        this.isLoading = false;
+        this.successMessage = 'Profile updated successfully!';
+        setTimeout(() => this.successMessage = '', 3000);
       },
       error: (err) => {
         console.error('Failed to update driver profile', err);
-        alert('Failed to update driver profile.');
+        this.errorMessage = 'Failed to update profile.';
+        this.isLoading = false;
       }
     });
   }
 
-  onImageSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      this.driverService.updateProfileImage(formData).subscribe({
-        next: () => {
-          this.loadProfile();
-        },
-        error: (err) => {
-          console.error('Failed to upload image', err);
-          alert('Failed to upload image.');
-        }
-      });
+  getVehicleTypeName(type: any): string {
+    if (typeof type === 'string') {
+      return type;
+    }
+    switch (type) {
+      case DeliveryVehicleType.Bicycle: return 'Bicycle';
+      case DeliveryVehicleType.Motorcycle: return 'Motorcycle';
+      case DeliveryVehicleType.Car: return 'Car';
+      case DeliveryVehicleType.Van: return 'Van';
+      default: return 'Unknown';
     }
   }
 }
