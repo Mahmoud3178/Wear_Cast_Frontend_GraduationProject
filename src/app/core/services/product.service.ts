@@ -69,4 +69,26 @@ getAll(
   delete(data: any): Observable<any> {
     return this.http.delete(`${this.api}/api/FixedProduct/Delete`, { body: data });
   }
+
+  // 🔹 Get Seller Products
+getSellerProducts(pageIndex = 1, pageSize = 1000): Observable<any> {
+  const token = localStorage.getItem('token') || '';
+  return this.http.get(
+    `${this.api}/api/FixedProduct/GetAllFixedProductsForSeller`,
+    {
+      params: { PageIndex: pageIndex, PageSize: pageSize },
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+}
+
+getSellerProductsStatus(): Observable<any> {
+  const token = localStorage.getItem('token') || '';
+  return this.http.get(
+    `${this.api}/api/FixedProduct/GetAllFixedProductsStatusForSeller`,
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+}
 }

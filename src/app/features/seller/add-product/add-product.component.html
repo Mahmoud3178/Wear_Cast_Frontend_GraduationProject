@@ -1,28 +1,45 @@
 <div class="ap-page">
 
-  <!-- ══════════════════════════════════════
-       STEP 1 — Product Info
-  ══════════════════════════════════════ -->
+  <!-- ════════ CATEGORY PREVIEW MODAL ════════ -->
+  <div *ngIf="previewCat" class="ap-modal-overlay" (click)="previewCat = null">
+    <div class="ap-modal" (click)="$event.stopPropagation()">
+      <button class="ap-modal-close" (click)="previewCat = null">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <img *ngIf="previewCat.imageUrl" [src]="previewCat.imageUrl" [alt]="previewCat.name" class="ap-modal-img">
+      <div class="ap-modal-body">
+        <h5 class="ap-modal-title">{{ previewCat.name }}</h5>
+        <p class="ap-modal-hint">
+          Use this image as a guide to fill in the size measurements (A, B, C) in the table below.
+          Each measurement point is labelled on the image.
+        </p>
+        <div class="ap-modal-actions">
+          <button class="ap-btn-outline" (click)="previewCat = null">Cancel</button>
+          <button class="ap-btn-primary" (click)="confirmCatSelect()">
+            <i class="bi bi-check-circle me-2"></i> Select {{ previewCat.name }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ STEP 1 — Product Info ════════ -->
   <div *ngIf="currentStep === 1" class="ap-card">
 
     <div class="ap-card-header">
       <div class="ap-step-badge">Step 1 of 2</div>
       <h2 class="ap-title">Add New Product</h2>
-      <p class="ap-subtitle">Fill in the product details, then add colors & images in the next step.</p>
+      <p class="ap-subtitle">Fill in details and measurements, then add colors & stock in the next step.</p>
     </div>
 
     <div class="ap-card-body">
 
-      <!-- General error -->
+      <!-- Errors -->
       <div *ngIf="validationErrors['_general']" class="ap-alert-error">
         <i class="bi bi-exclamation-circle-fill me-2"></i>{{ validationErrors['_general'] }}
       </div>
-
-      <!-- Validation summary -->
       <div *ngIf="validationErrorKeys.length > 0 && !validationErrors['_general']" class="ap-alert-error">
-        <div class="fw-semibold mb-1">
-          <i class="bi bi-exclamation-circle-fill me-2"></i>Please fix the following errors:
-        </div>
+        <div class="fw-semibold mb-1"><i class="bi bi-exclamation-circle-fill me-2"></i>Please fix the following:</div>
         <ul class="mb-0 ps-3 mt-1">
           <li *ngFor="let key of validationErrorKeys">{{ validationErrors[key] }}</li>
         </ul>
@@ -32,26 +49,17 @@
       <div class="ap-row-2">
         <div class="ap-field">
           <label class="ap-label">Product Name <span class="ap-required">*</span></label>
-          <input
-            class="ap-input"
-            [class.ap-input-error]="validationErrors['Name']"
-            placeholder="e.g. Classic Cotton T-Shirt"
-            [(ngModel)]="name"
+          <input class="ap-input" [class.ap-input-error]="validationErrors['Name']"
+            placeholder="e.g. Classic Cotton T-Shirt" [(ngModel)]="name"
             (input)="validationErrors['Name'] = ''">
           <div *ngIf="validationErrors['Name']" class="ap-field-error">
             <i class="bi bi-exclamation-circle me-1"></i>{{ validationErrors['Name'] }}
           </div>
         </div>
-
         <div class="ap-field">
           <label class="ap-label">Price (EGP) <span class="ap-required">*</span></label>
-          <input
-            type="number"
-            class="ap-input"
-            [class.ap-input-error]="validationErrors['Price']"
-            placeholder="0.00"
-            [(ngModel)]="price"
-            (input)="validationErrors['Price'] = ''">
+          <input type="number" class="ap-input" [class.ap-input-error]="validationErrors['Price']"
+            placeholder="0.00" [(ngModel)]="price" (input)="validationErrors['Price'] = ''">
           <div *ngIf="validationErrors['Price']" class="ap-field-error">
             <i class="bi bi-exclamation-circle me-1"></i>{{ validationErrors['Price'] }}
           </div>
@@ -61,18 +69,15 @@
       <!-- Description -->
       <div class="ap-field">
         <label class="ap-label">Description <span class="ap-required">*</span></label>
-        <textarea
-          class="ap-input ap-textarea"
-          [class.ap-input-error]="validationErrors['Description']"
-          placeholder="Describe your product..."
-          [(ngModel)]="description"
+        <textarea class="ap-input ap-textarea" [class.ap-input-error]="validationErrors['Description']"
+          placeholder="Describe your product..." [(ngModel)]="description"
           (input)="validationErrors['Description'] = ''"></textarea>
         <div *ngIf="validationErrors['Description']" class="ap-field-error">
           <i class="bi bi-exclamation-circle me-1"></i>{{ validationErrors['Description'] }}
         </div>
       </div>
 
-      <!-- Audience + DressStyle -->
+      <!-- Audience + Style -->
       <div class="ap-row-2">
         <div class="ap-field">
           <label class="ap-label">Target Audience</label>
@@ -82,14 +87,10 @@
             <option [value]="3">Kids</option>
           </select>
         </div>
-
         <div class="ap-field">
           <label class="ap-label">Dress Style <span class="ap-required">*</span></label>
-          <select
-            class="ap-select"
-            [class.ap-input-error]="validationErrors['DressStyle']"
-            [(ngModel)]="dressStyle"
-            (change)="validationErrors['DressStyle'] = ''">
+          <select class="ap-select" [class.ap-input-error]="validationErrors['DressStyle']"
+            [(ngModel)]="dressStyle" (change)="validationErrors['DressStyle'] = ''">
             <option [value]="null" disabled>Select style...</option>
             <option [value]="1">Casual</option>
             <option [value]="2">Formal</option>
@@ -101,9 +102,11 @@
         </div>
       </div>
 
-      <!-- Category picker with images -->
+      <!-- Category -->
       <div class="ap-field">
-        <label class="ap-label">Category <span class="ap-required">*</span></label>
+        <label class="ap-label">Category <span class="ap-required">*</span>
+          <span class="ap-hint-inline"> — click a category to preview the measurement guide image</span>
+        </label>
         <div *ngIf="validationErrors['CategoryId']" class="ap-field-error mb-1">
           <i class="bi bi-exclamation-circle me-1"></i>{{ validationErrors['CategoryId'] }}
         </div>
@@ -113,41 +116,73 @@
         </div>
 
         <div class="ap-cat-grid" *ngIf="categories.length > 0">
-          <button
-            type="button"
-            *ngFor="let cat of categories"
+          <button type="button" *ngFor="let cat of categories"
             class="ap-cat-card"
-            [class.ap-cat-selected]="categoryId == cat.id"
+            [class.ap-cat-selected]="categoryId === cat.id"
             [class.ap-cat-error]="!!validationErrors['CategoryId']"
-            (click)="selectCategory(cat.id)">
-            <img
-              *ngIf="cat.imageUrl"
-              [src]="cat.imageUrl"
-              [alt]="cat.name"
-              class="ap-cat-img"
-              onerror="this.style.display='none'">
+            (click)="selectCategory(cat)">
+            <img *ngIf="cat.imageUrl" [src]="cat.imageUrl" [alt]="cat.name"
+              class="ap-cat-img" onerror="this.style.display='none'">
             <div *ngIf="!cat.imageUrl" class="ap-cat-img-fallback">
               <i class="bi bi-tag"></i>
             </div>
             <span class="ap-cat-name">{{ cat.name }}</span>
             <i class="bi bi-check-circle-fill ap-cat-check"></i>
+            <span class="ap-cat-zoom"><i class="bi bi-zoom-in"></i></span>
+          </button>
+        </div>
+
+        <!-- ✅ FIX: use getter instead of .find() in template -->
+        <div *ngIf="categoryId" class="ap-cat-selected-pill">
+          <i class="bi bi-check-circle-fill text-success me-2"></i>
+          Selected: <strong>{{ selectedCategoryName }}</strong>
+          <button type="button" class="ap-cat-clear" (click)="categoryId = null">
+            <i class="bi bi-x"></i>
           </button>
         </div>
       </div>
 
-      <!-- Next button -->
+      <!-- Size Measurements -->
+      <div class="ap-field">
+        <label class="ap-label">Size Measurements (A / B / C)</label>
+        <p class="ap-hint">
+          Enter the measurements for each size based on the category guide image.
+          These will apply to all colors. You set <strong>stock quantities per color</strong> in the next step.
+        </p>
+        <div class="ap-table-wrap">
+          <table class="ap-table">
+            <thead>
+              <tr>
+                <th>Size</th>
+                <th>A <span class="ap-dim">(cm)</span></th>
+                <th>B <span class="ap-dim">(cm)</span></th>
+                <th>C <span class="ap-dim">(cm)</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of globalSizes"
+                  [class.ap-row-active]="s.a > 0 || s.b > 0 || s.c > 0">
+                <td><span class="ap-size-badge">{{ s.name }}</span></td>
+                <td><input type="number" class="ap-input ap-input-sm" [(ngModel)]="s.a" min="0"></td>
+                <td><input type="number" class="ap-input ap-input-sm" [(ngModel)]="s.b" min="0"></td>
+                <td><input type="number" class="ap-input ap-input-sm" [(ngModel)]="s.c" min="0"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Next -->
       <button class="ap-btn-primary w-100" (click)="createProduct()" [disabled]="isCreating">
         <span *ngIf="isCreating" class="spinner-border spinner-border-sm me-2"></span>
         <i *ngIf="!isCreating" class="bi bi-arrow-right-circle me-2"></i>
-        {{ isCreating ? 'Creating...' : 'Next — Add Colors & Images' }}
+        {{ isCreating ? 'Creating...' : 'Next — Add Colors & Stock' }}
       </button>
 
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════
-       STEP 2 — Colors & Images
-  ══════════════════════════════════════ -->
+  <!-- ════════ STEP 2 — Colors & Quantities ════════ -->
   <div *ngIf="currentStep === 2">
 
     <div class="ap-step2-header">
@@ -156,15 +191,13 @@
       </button>
       <div>
         <div class="ap-step-badge">Step 2 of 2</div>
-        <h2 class="ap-title mb-0">Colors & Images</h2>
+        <h2 class="ap-title mb-0">Colors & Stock Quantities</h2>
       </div>
     </div>
 
-    <!-- ── Save errors (shown in UI, not alert) ── -->
+    <!-- Step 2 save errors -->
     <div *ngIf="saveErrors.length > 0" class="ap-alert-error mb-4">
-      <div class="fw-semibold mb-1">
-        <i class="bi bi-exclamation-circle-fill me-2"></i>Could not save product:
-      </div>
+      <div class="fw-semibold mb-1"><i class="bi bi-exclamation-circle-fill me-2"></i>Could not save product:</div>
       <ul class="mb-0 ps-3 mt-1">
         <li *ngFor="let e of saveErrors">{{ e }}</li>
       </ul>
@@ -175,21 +208,15 @@
 
       <div class="ap-color-card-header">
         <div class="ap-color-preview" [style.background]="c.colorCode"></div>
-        <span class="fw-semibold">
-          Color {{ i + 1 }}{{ c.colorName ? ' — ' + c.colorName : '' }}
-        </span>
-        <button
-          *ngIf="colors.length > 1"
-          type="button"
-          class="ap-remove-btn ms-auto"
-          (click)="removeColor(i)">
+        <span class="fw-semibold">Color {{ i + 1 }}{{ c.colorName ? ' — ' + c.colorName : '' }}</span>
+        <button *ngIf="colors.length > 1" type="button" class="ap-remove-btn ms-auto" (click)="removeColor(i)">
           <i class="bi bi-trash3"></i> Remove
         </button>
       </div>
 
       <div class="ap-card-body">
 
-        <!-- Color name + swatch -->
+        <!-- Name + swatch -->
         <div class="ap-row-2">
           <div class="ap-field">
             <label class="ap-label">Color Name</label>
@@ -204,27 +231,32 @@
           </div>
         </div>
 
-        <!-- Image uploads -->
+        <!-- Images -->
         <div class="ap-row-2">
           <div class="ap-field">
             <label class="ap-label">
               <i class="bi bi-stars text-warning me-1"></i>
               AI Tool Image <span class="ap-badge-main">Main</span>
             </label>
-            <p class="ap-hint">Primary product image shown to customers.</p>
+            <p class="ap-hint">Primary image shown to customers.</p>
+            <div class="ap-white-bg-note">
+  <i class="bi bi-info-circle-fill"></i>
+  <span>
+    <strong>White background required.</strong>
+    The product image must have a plain white background
+    for a consistent look across the platform.
+  </span>
+</div>
             <label class="ap-file-drop">
               <input type="file" accept="image/*" hidden (change)="onMainImage($event, i)">
               <i class="bi bi-cloud-upload fs-4 d-block mb-1"></i>
               <span *ngIf="!c.mainImage">Click to upload main image</span>
-              <span *ngIf="c.mainImage" class="text-success fw-semibold">
-                ✅ {{ c.mainImage.name }}
-              </span>
+              <span *ngIf="c.mainImage" class="text-success fw-semibold">✅ {{ c.mainImage.name }}</span>
             </label>
           </div>
-
           <div class="ap-field">
             <label class="ap-label">Additional Images</label>
-            <p class="ap-hint">Gallery photos, angles, etc.</p>
+            <p class="ap-hint">Gallery, angles, etc.</p>
             <label class="ap-file-drop">
               <input type="file" accept="image/*" multiple hidden (change)="onAdditionalImages($event, i)">
               <i class="bi bi-images fs-4 d-block mb-1"></i>
@@ -236,30 +268,35 @@
           </div>
         </div>
 
-        <!-- Sizes per color -->
+        <!-- Per-color stock quantities -->
         <div class="ap-field">
-          <label class="ap-label">Size Measurements</label>
+          <label class="ap-label">Stock Quantities per Size</label>
           <p class="ap-hint">
-            Enter A / B / C measurements for each size.
-            <strong>Sizes left at 0 will be skipped.</strong>
+            How many units of this color do you have per size?
+            <strong>Sizes left at 0 will not be saved.</strong>
           </p>
           <div class="ap-table-wrap">
             <table class="ap-table">
               <thead>
                 <tr>
                   <th>Size</th>
-                  <th>A <span class="ap-dim">(cm)</span></th>
-                  <th>B <span class="ap-dim">(cm)</span></th>
-                  <th>C <span class="ap-dim">(cm)</span></th>
+                  <th>Measurements (A / B / C cm)</th>
+                  <th>Quantity in Stock</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let s of c.sizes"
-                    [class.ap-row-active]="s.a > 0 || s.b > 0 || s.c > 0">
-                  <td><span class="ap-size-badge">{{ s.name }}</span></td>
-                  <td><input type="number" class="ap-input ap-input-sm" [(ngModel)]="s.a" min="0"></td>
-                  <td><input type="number" class="ap-input ap-input-sm" [(ngModel)]="s.b" min="0"></td>
-                  <td><input type="number" class="ap-input ap-input-sm" [(ngModel)]="s.c" min="0"></td>
+                <tr *ngFor="let q of c.quantities; let qi = index"
+                    [class.ap-row-active]="q.quantity > 0">
+                  <td><span class="ap-size-badge">{{ q.name }}</span></td>
+                  <td>
+                    <span class="ap-meas-preview">
+                      {{ globalSizes[qi].a }} / {{ globalSizes[qi].b }} / {{ globalSizes[qi].c }}
+                    </span>
+                  </td>
+                  <td>
+                    <input type="number" class="ap-input ap-input-sm ap-qty-input"
+                      [(ngModel)]="q.quantity" min="0" placeholder="0">
+                  </td>
                 </tr>
               </tbody>
             </table>

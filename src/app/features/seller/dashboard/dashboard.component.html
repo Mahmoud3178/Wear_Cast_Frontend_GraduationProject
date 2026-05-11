@@ -50,8 +50,12 @@
       <div class="top-products">
         <div class="top-product-row" *ngFor="let p of products; let i = index">
           <div class="tp-rank">{{ i + 1 }}</div>
-          <img [src]="p.image" class="tp-img" [alt]="p.name">
-          <div class="tp-info">
+<!-- في الـ top-product-row، الصورة كانت كده: -->
+<!-- خليها كده عشان تتعامل مع الـ broken image: -->
+<img [src]="p.image || 'assets/placeholder.png'"
+     class="tp-img"
+     [alt]="p.name"
+     onerror="this.src='https://placehold.co/36x36/f1f5f9/94a3b8?text=?'">          <div class="tp-info">
             <div class="tp-name">{{ p.name }}</div>
             <div class="tp-cat">{{ p.category }}</div>
           </div>

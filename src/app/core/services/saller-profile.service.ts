@@ -44,19 +44,19 @@ export class SallerProfileService {
     return this.http.put(`${this.baseUrl}/api/sellers/profile-image`, formData);
   }
 
-  changePassword(data: any) {
-    const token = localStorage.getItem('token') || '';
-    return this.http.put(
-      `${this.baseUrl}/api/sellers/change-password`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+changePassword(data: any) {
+  const token = localStorage.getItem('token') || '';
+  return this.http.put(
+    `${this.baseUrl}/me/change-password`,
+    data,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
-    );
-  }
+    }
+  );
+}
 
   getWallet() {
     return this.http.get(`${this.baseUrl}/api/sellers/wallet`);

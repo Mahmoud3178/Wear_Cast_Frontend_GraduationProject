@@ -6,7 +6,7 @@ import { SallerProfileService } from '../../../core/services/saller-profile.serv
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
+  imports: [CommonModule, FormsModule, DecimalPipe],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })

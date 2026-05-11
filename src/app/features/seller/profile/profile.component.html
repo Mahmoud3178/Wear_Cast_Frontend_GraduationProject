@@ -192,7 +192,7 @@
                     <div class="small text-muted">{{ tx.description }}</div>
                     <div class="small text-muted" *ngIf="tx.referenceOrderId">Order #{{ tx.referenceOrderId }}</div>
                   </div>
-                  <span class="small text-muted text-nowrap">{{ tx.createdOn | date:'shortDate' }}</span>
+<span class="small text-muted text-nowrap">{{ tx.createdOn | date:'dd/MM/yyyy' }}</span>
                 </div>
               </div>
             </div>
