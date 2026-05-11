@@ -1,6 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-shipping-sidebar',
@@ -73,7 +74,7 @@ import { RouterModule } from '@angular/router';
             </li>
             <li class="nav-item mt-2">
               <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 transition-all text-slate-400 logout-link" 
-                 href="javascript:void(0)" [title]="isCollapsed ? 'Sign Out' : ''">
+                 href="javascript:void(0)" (click)="logout()" [title]="isCollapsed ? 'Sign Out' : ''">
                  <div class="icon-wrapper d-flex align-items-center justify-content-center">
                    <i class="bi bi-box-arrow-left"></i>
                  </div>
@@ -171,4 +172,12 @@ import { RouterModule } from '@angular/router';
 })
 export class ShippingSidebarComponent {
   @Input() isCollapsed = false;
+
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/']);
+  }
 }

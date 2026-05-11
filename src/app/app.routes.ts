@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/login/login.component';
+import { shippingRoleGuard } from './core/guards/shipping-role.guard';
 
 export const routes: Routes = [
 
@@ -74,6 +75,7 @@ export const routes: Routes = [
   },
   {
     path: 'shipping',
+    canActivate: [shippingRoleGuard],
     loadChildren: () =>
       import('./features/shipping/shipping.routes').then(m => m.SHIPPING_ROUTES)
   },

@@ -95,7 +95,7 @@ export class AuthService {
   constructor(
     private readonly http: HttpClient,
     private readonly router: Router
-  ) {}
+  ) { }
 
   login(data: { email: string; password: string }): Observable<AuthSession> {
     const url = `${this.apiUrl}/api/auth/login`;
@@ -510,7 +510,7 @@ export class AuthService {
   }
 
   logout(): void {
-    this.revokeRefreshToken().subscribe({ error: () => {} });
+    this.revokeRefreshToken().subscribe({ error: () => { } });
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('role');
@@ -521,7 +521,7 @@ export class AuthService {
 
   /** Factory portal sign-out → factory login screen. */
   logoutFactory(): void {
-    this.revokeRefreshToken().subscribe({ error: () => {} });
+    this.revokeRefreshToken().subscribe({ error: () => { } });
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('role');

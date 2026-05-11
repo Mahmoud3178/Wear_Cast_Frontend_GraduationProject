@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ShippingCompanyService } from '../../../../core/services/shipping-company.service';
@@ -14,6 +14,10 @@ import { ShippingService } from '../../../../core/services/shipping.service';
   template: `
     <header class="shipping-header d-flex align-items-center justify-content-between px-4 py-2 border-bottom shadow-sm sticky-top">
       <div class="d-flex align-items-center flex-grow-1">
+        <!-- Hamburger Button -->
+        <button class="btn-icon p-2 rounded-circle hover-bg-slate transition-all border-0 bg-transparent d-lg-none me-2" (click)="toggleSidebar.emit()">
+          <i class="bi bi-list fs-4 text-slate-600"></i>
+        </button>
         <!-- Search Bar -->
         <!--<div class="search-container position-relative d-none d-lg-block">
           <div class="search-bar d-flex align-items-center px-3 py-2 rounded-4 border transition-all" 
@@ -229,6 +233,8 @@ import { ShippingService } from '../../../../core/services/shipping.service';
   `]
 })
 export class ShippingHeaderComponent implements OnInit, OnDestroy {
+  @Output() toggleSidebar = new EventEmitter<void>();
+
   private authService = inject(AuthService);
   private shippingCompanyService = inject(ShippingCompanyService);
   private shippingService = inject(ShippingService);
@@ -284,7 +290,7 @@ export class ShippingHeaderComponent implements OnInit, OnDestroy {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/']);
   }
 }
 

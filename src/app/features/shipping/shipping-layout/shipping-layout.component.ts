@@ -18,8 +18,12 @@ import { ShippingFooterComponent } from '../components/shipping-footer/shipping-
   templateUrl: './shipping-layout.component.html',
   styleUrls: ['./shipping-layout.component.css']
 })
-export class ShippingLayoutComponent {
+export class ShippingLayoutComponent implements OnInit {
   isSidebarCollapsed = false;
+
+  ngOnInit() {
+    this.isSidebarCollapsed = window.innerWidth < 992;
+  }
 
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
