@@ -321,17 +321,28 @@ export class CartComponent implements OnInit {
 
     let req$: Observable<unknown>;
     if (item.type === 'fixed' && item.colorId != null) {
-      // Decrement: PUT adjusts one size without re-validating whole POST payload (avoids bogus StockExceeded on −).
-      if (
-        delta < 0 &&
-        item.cartItemId != null &&
-        actualSizeEnum != null
-      ) {
-        req$ = this.cartService.updateItemQuantity(
-          item.cartItemId,
-          actualSizeEnum,
-          absNext
-        );
+      // Required behavior:
+      // - increment => POST AddOrUpdateFixedColorToCart with +1 delta only
+      // - decrement => PUT UpdateItemQuantity with absolute quantity
+      if (delta > 0) {
+        if (actualSizeEnum == null) {
+          req$ = of(null);
+        } else {
+          req$ = this.cartService.addOrUpdateFixed({
+            colorId: item.colorId,
+            sizes: [{ size: actualSizeEnum, quantity: 1 }]
+          });
+        }
+      } else if (item.cartItemId != null && actualSizeEnum != null) {
+        if (absNext <= 0) {
+          req$ = this.cartService.deleteItem(item.cartItemId);
+        } else {
+          req$ = this.cartService.updateItemQuantity(
+            item.cartItemId,
+            actualSizeEnum,
+            absNext
+          );
+        }
       } else {
         const payload = rebuildFixedSizesPayload();
         if (payload === null) {

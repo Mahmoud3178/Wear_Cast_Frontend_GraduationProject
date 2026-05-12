@@ -152,7 +152,7 @@ export class CartService {
     );
   }
 
-  /** POST /api/Cart/AddOrUpdateFixedColorToCart — full `Sizes` list; avoid duplicating only `sizes[0]` at root when multiple lines (that misled the API). */
+  /** POST /api/Cart/AddOrUpdateFixedColorToCart */
   addOrUpdateFixed(req: AddOrUpdateFixedColorToCartRequest): Observable<unknown> {
     const sizes = (req.sizes ?? []).map(s => ({
       size: s.size,
@@ -166,13 +166,6 @@ export class CartService {
       sizes,
       Sizes: sizes
     };
-    if (sizes.length === 1) {
-      const only = sizes[0] as Record<string, unknown>;
-      body['size'] = only['size'];
-      body['Size'] = only['Size'];
-      body['quantity'] = only['quantity'];
-      body['Quantity'] = only['Quantity'];
-    }
     return cartHttpObservable(
       this.http.post<unknown>(`${this.base}/AddOrUpdateFixedColorToCart`, body)
     );
