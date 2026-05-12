@@ -775,11 +775,39 @@ export class AuthService {
   }
 
   /** ASP.NET ProblemDetails and similar shapes (often on 4xx/5xx). */
+  private messageFromValidationErrors(body: unknown): string | null {
+    if (!body || typeof body !== 'object') {
+      return null;
+    }
+    const o = body as Record<string, unknown>;
+    const errors =
+      o['errors'] ??
+      o['Errors'] ??
+      o['validationErrors'] ??
+      o['ValidationErrors'];
+    if (!errors || typeof errors !== 'object') {
+      return null;
+    }
+    const parts = Object.entries(errors as Record<string, unknown>)
+      .map(([k, v]) => {
+        const msgs = Array.isArray(v) ? v.map(x => String(x)) : [String(v)];
+        const cleaned = msgs.map(x => x.trim()).filter(Boolean);
+        return cleaned.length ? `${k}: ${cleaned.join(', ')}` : '';
+      })
+      .filter(Boolean);
+    return parts.length ? parts.join('; ') : null;
+  }
+
+  /** ASP.NET ProblemDetails and similar shapes (often on 4xx/5xx). */
   private messageFromProblemDetails(body: unknown): string | null {
     if (!body || typeof body !== 'object') {
       return null;
     }
     const o = body as Record<string, unknown>;
+    const validationMsg = this.messageFromValidationErrors(o);
+    if (validationMsg) {
+      return validationMsg;
+    }
     const detail = o['detail'] ?? o['Detail'];
     if (typeof detail === 'string' && detail.trim()) {
       return detail.trim();
@@ -796,6 +824,10 @@ export class AuthService {
       return null;
     }
     const o = body as Record<string, unknown>;
+    const validationMsg = this.messageFromValidationErrors(o);
+    if (validationMsg) {
+      return validationMsg;
+    }
     const errObj = o['error'];
     if (errObj && typeof errObj === 'object') {
       const e = errObj as Record<string, unknown>;

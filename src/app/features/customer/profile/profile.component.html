@@ -101,8 +101,8 @@
               <ng-container *ngIf="addressForm.street || addressForm.buildingNumber">
                 {{ addressForm.street }}<ng-container *ngIf="addressForm.street && addressForm.buildingNumber">, </ng-container>{{ addressForm.buildingNumber }}<br>
               </ng-container>
-              <ng-container *ngIf="addressForm.city || addressForm.state || addressForm.country">
-                {{ addressForm.city }}<ng-container *ngIf="addressForm.city && addressForm.state">, </ng-container>{{ addressForm.state }}<ng-container *ngIf="(addressForm.city || addressForm.state) && addressForm.country">, </ng-container>{{ addressForm.country }}
+              <ng-container *ngIf="addressForm.city || addressForm.state">
+                {{ addressForm.city }}<ng-container *ngIf="addressForm.city && addressForm.state">, </ng-container>{{ addressForm.state }}
               </ng-container>
             </p>
             <p *ngIf="!hasAddress" class="text-muted small">No address saved yet.</p>
@@ -111,10 +111,6 @@
         </div>
         <ng-template #editAddress>
           <div class="card-body security-form">
-            <div class="field">
-              <label>Country</label>
-              <input class="form-control" [(ngModel)]="addressForm.country" />
-            </div>
             <div class="field">
               <label>State / Province</label>
               <input class="form-control" [(ngModel)]="addressForm.state" />

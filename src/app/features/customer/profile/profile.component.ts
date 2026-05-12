@@ -102,7 +102,6 @@ export class ProfileComponent implements OnInit {
   };
 
   addressForm = {
-    country: '',
     state: '',
     city: '',
     street: '',
@@ -175,7 +174,6 @@ export class ProfileComponent implements OnInit {
           
           if (data.address) {
             this.addressForm = {
-              country: data.address.country || '',
               state: data.address.state || '',
               city: data.address.city || '',
               street: data.address.street || '',
