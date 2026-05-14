@@ -166,13 +166,21 @@ export class AuthService {
   }
 
   /** Ask the API to send another confirmation email (same address used at registration). */
-  resendConfirmationEmail(email: string): Observable<void> {
+  resendConfirmationEmail(email: string): Observable<{ userId?: string }> {
     const url = `${this.apiUrl}/api/auth/resend-confirmation-email`;
-    return this.http.post<ApiEnvelope>(url, { email: email.trim() }).pipe(
+    return this.http.post<ApiEnvelope<any>>(url, { email: email.trim() }).pipe(
       map(body => {
         if (!body.isSuccess) {
           throw this.apiFailure(body);
         }
+        const d = body.data;
+        let userId: string | undefined;
+        if (typeof d === 'string') {
+          userId = d;
+        } else if (d && typeof d === 'object') {
+          userId = d['userId'] ?? d['UserId'] ?? d['userid'];
+        }
+        return { userId: typeof userId === 'string' ? userId : undefined };
       }),
       catchError(err => this.handleHttpError(err))
     );

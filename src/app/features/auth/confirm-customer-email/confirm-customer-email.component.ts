@@ -99,10 +99,14 @@ export class ConfirmCustomerEmailComponent implements OnInit, OnDestroy {
     this.resendSubmitting = true;
     this.errorMessage = '';
     this.auth.resendConfirmationEmail(em).subscribe({
-      next: () => {
+      next: (res) => {
         this.resendSubmitting = false;
         this.successMessage =
           'If this address is registered, a new email was sent. Check spam.';
+        if (res.userId) {
+          this.userId = res.userId;
+          sessionStorage.setItem(pendingCustomerUserIdStorageKey(em), res.userId);
+        }
       },
       error: (e: Error) => {
         this.resendSubmitting = false;
