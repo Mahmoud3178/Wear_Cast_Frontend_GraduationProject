@@ -1,99 +1,359 @@
-<div class="container mt-4" [formGroup]="productForm">
+<div class="ep-page" *ngIf="!isLoading; else loadingTpl">
 
-  <h3 class="fw-bold mb-4">Edit Product</h3>
-
-  <!-- STEP 1 -->
-  <div class="card p-4 shadow-sm mb-4">
-
-    <div class="mb-3">
-      <label>Product Name</label>
-      <input class="form-control" formControlName="name">
+  <!-- Adjust Quantities Modal -->
+  <div class="ep-modal-overlay" *ngIf="adjustingColor" (click)="closeAdjust()">
+    <div class="ep-modal" (click)="$event.stopPropagation()">
+      <div class="ep-modal-head">
+        <h5>Adjust Stock — {{ adjustingColor.colorName }}</h5>
+        <button class="ep-modal-close" (click)="closeAdjust()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="ep-modal-body">
+        <table class="ep-table">
+          <thead><tr><th>Size</th><th>Current Qty</th><th>New Qty</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let s of adjustSizes">
+              <td><span class="ep-size-badge">{{ sizeLabels[s.size] ?? s.size }}</span></td>
+              <td class="text-muted">{{ s.currentQty }}</td>
+              <td><input type="number" class="ep-input ep-input-sm" [(ngModel)]="s.newQty" min="0"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ep-modal-foot">
+        <button class="ep-btn-outline" (click)="closeAdjust()">Cancel</button>
+        <button class="ep-btn-primary" (click)="saveAdjust()">Save Quantities</button>
+      </div>
     </div>
-
-    <div class="mb-3">
-      <label>Description</label>
-      <textarea class="form-control" formControlName="description"></textarea>
-    </div>
-
-    <div class="mb-3">
-      <label>Price</label>
-      <input type="number" class="form-control" formControlName="price">
-    </div>
-
-    <div class="mb-3">
-      <label>Category</label>
-      <select class="form-select" formControlName="categoryId">
-        <option *ngFor="let c of categories" [value]="c.id">
-          {{c.name}}
-        </option>
-      </select>
-    </div>
-
-    <!-- Sizes -->
-    <label class="fw-bold">Size Details</label>
-
-    <table class="table table-bordered text-center mt-2">
-      <thead>
-        <tr>
-          <th>Size</th>
-          <th>A</th>
-          <th>B</th>
-          <th>C</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-
-      <tbody formArrayName="sizeDetails">
-        <tr *ngFor="let s of sizeDetails.controls; let i = index" [formGroupName]="i">
-
-          <td><input class="form-control" formControlName="size"></td>
-          <td><input class="form-control" formControlName="a"></td>
-          <td><input class="form-control" formControlName="b"></td>
-          <td><input class="form-control" formControlName="c"></td>
-
-          <td>
-            <button class="btn btn-danger btn-sm" (click)="removeSize(i)">X</button>
-          </td>
-
-        </tr>
-      </tbody>
-    </table>
-
-    <button class="btn btn-secondary btn-sm" (click)="addSize()">+ Add Size</button>
-
   </div>
 
-  <!-- STEP 2 -->
-  <div class="card p-4 shadow-sm">
+  <!-- Page Header -->
+  <div class="ep-header">
+    <button class="ep-back-btn" (click)="router.navigate(['/seller/products'])">
+      <i class="bi bi-arrow-left"></i>
+    </button>
+    <div>
+      <h1 class="ep-title">Edit Product</h1>
+      <p class="ep-subtitle">ID #{{ productId }}</p>
+    </div>
+  </div>
 
-    <!-- Main Image -->
-    <div class="mb-3">
-      <label>Main Image</label>
-      <input type="file" class="form-control" (change)="onMainImageChange($event)">
+  <div class="ep-layout">
 
-      <img *ngIf="mainImagePreview"
-           [src]="mainImagePreview"
-           width="120"
-           class="mt-2 rounded">
+    <!-- ══ LEFT ══ -->
+    <div class="ep-col-main">
+
+      <!-- Product Info Card -->
+      <div class="ep-card">
+        <div class="ep-card-head">
+          <i class="bi bi-info-circle me-2"></i> Product Information
+        </div>
+        <div class="ep-card-body">
+
+          <div class="ep-row-2">
+            <div class="ep-field">
+              <label class="ep-label">Product Name <span class="ep-req">*</span></label>
+              <input class="ep-input" [(ngModel)]="product.name" placeholder="Product name">
+            </div>
+            <div class="ep-field">
+              <label class="ep-label">Price (EGP) <span class="ep-req">*</span></label>
+              <input type="number" class="ep-input" [(ngModel)]="product.price">
+            </div>
+          </div>
+
+          <div class="ep-field">
+            <label class="ep-label">Description</label>
+            <textarea class="ep-input ep-textarea" [(ngModel)]="product.description"></textarea>
+          </div>
+
+          <div class="ep-row-2">
+            <div class="ep-field">
+              <label class="ep-label">Category</label>
+              <select class="ep-select" [(ngModel)]="product.categoryId">
+                <option *ngFor="let c of categories" [value]="c.id">{{ c.name }}</option>
+              </select>
+            </div>
+            <div class="ep-field">
+              <label class="ep-label">Target Audience</label>
+              <select class="ep-select" [(ngModel)]="product.targetAudience">
+                <option [value]="1">Men</option>
+                <option [value]="2">Women</option>
+                <option [value]="3">Kids</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="ep-field">
+            <label class="ep-label">Dress Style</label>
+            <select class="ep-select" [(ngModel)]="product.dressStyle">
+              <option [value]="1">Casual</option>
+              <option [value]="2">Formal</option>
+              <option [value]="3">Sport</option>
+            </select>
+          </div>
+
+          <!-- Size Measurements -->
+          <div class="ep-field">
+            <label class="ep-label">Size Measurements (A / B / C)</label>
+            <div class="ep-table-wrap">
+              <table class="ep-table">
+                <thead>
+                  <tr><th>Size</th><th>A (cm)</th><th>B (cm)</th><th>C (cm)</th></tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let s of sizeDetails">
+                    <td><span class="ep-size-badge">{{ sizeLabels[s.size] ?? s.size }}</span></td>
+                    <td><input type="number" class="ep-input ep-input-sm" [(ngModel)]="s.a" min="0"></td>
+                    <td><input type="number" class="ep-input ep-input-sm" [(ngModel)]="s.b" min="0"></td>
+                    <td><input type="number" class="ep-input ep-input-sm" [(ngModel)]="s.c" min="0"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div *ngIf="saveError" class="ep-alert-error">
+            <i class="bi bi-exclamation-circle me-2"></i>{{ saveError }}
+          </div>
+          <div *ngIf="saveMsg" class="ep-alert-success">
+            <i class="bi bi-check-circle me-2"></i>{{ saveMsg }}
+          </div>
+
+          <button class="ep-btn-primary w-100" (click)="saveProduct()" [disabled]="isSaving">
+            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!isSaving" class="bi bi-floppy me-2"></i>
+            {{ isSaving ? 'Saving...' : 'Save Product Info' }}
+          </button>
+
+        </div>
+      </div>
+
+      <!-- ══ Add New Color Card ══ -->
+      <div class="ep-card mt-4">
+        <div class="ep-card-head">
+          <i class="bi bi-plus-circle me-2"></i> Add New Color
+        </div>
+        <div class="ep-card-body">
+
+          <div class="ep-row-2">
+            <div class="ep-field">
+              <label class="ep-label">Color Name</label>
+              <input class="ep-input" [(ngModel)]="newColor.colorName" placeholder="e.g. Navy Blue">
+            </div>
+            <div class="ep-field">
+              <label class="ep-label">Color Swatch</label>
+              <div class="ep-color-wrap">
+                <input type="color" class="ep-color-picker" [(ngModel)]="newColor.colorCode">
+                <span class="ep-color-hex">{{ newColor.colorCode }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Image -->
+          <div class="ep-field">
+            <label class="ep-label">
+              <i class="bi bi-stars text-warning me-1"></i> Main Image (AI Tool — white background)
+            </label>
+            <label class="ep-file-drop">
+              <input type="file" accept="image/*" hidden (change)="onNewColorImage($event)">
+              <i class="bi bi-cloud-upload fs-5 d-block mb-1"></i>
+              <span *ngIf="!newColor.mainImage">Click to upload main image</span>
+              <span *ngIf="newColor.mainImage" class="text-success fw-semibold">
+                ✅ {{ newColor.mainImage.name }}
+              </span>
+            </label>
+          </div>
+
+          <!-- ✅ Additional Images — multiple uploads, preview list, remove per file -->
+          <div class="ep-field">
+            <label class="ep-label">
+              Additional Images
+              <span class="ep-hint-inline" *ngIf="newColor.additionalImages.length">
+                — {{ newColor.additionalImages.length }} file(s) selected
+              </span>
+            </label>
+
+            <!-- Upload button -->
+            <label class="ep-file-drop">
+              <input type="file" accept="image/*" multiple hidden
+                     (change)="onNewColorAdditionalImages($event)">
+              <i class="bi bi-images fs-5 d-block mb-1"></i>
+              <span>Click to add more images</span>
+            </label>
+
+            <!-- ✅ File list with remove button per file -->
+            <div class="ep-added-files" *ngIf="newColor.additionalImages.length">
+              <div class="ep-added-file" *ngFor="let f of newColor.additionalImages; let i = index">
+                <i class="bi bi-file-image"></i>
+                <span class="ep-added-file-name">{{ f.name }}</span>
+                <button type="button" class="ep-added-file-remove"
+                        (click)="removeAdditionalImage(i)" title="Remove">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stock Quantities -->
+          <div class="ep-field">
+            <label class="ep-label">Stock Quantities</label>
+            <div class="ep-table-wrap">
+              <table class="ep-table">
+                <thead><tr><th>Size</th><th>Quantity</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let s of newColorSizes" [class.ep-row-active]="s.quantity > 0">
+                    <td><span class="ep-size-badge">{{ sizeLabels[s.name] ?? s.name }}</span></td>
+                    <td><input type="number" class="ep-input ep-input-sm"
+                               [(ngModel)]="s.quantity" min="0"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <button class="ep-btn-primary w-100" (click)="addNewColor()" [disabled]="isAddingColor">
+            <span *ngIf="isAddingColor" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!isAddingColor" class="bi bi-plus-circle me-2"></i>
+            {{ isAddingColor ? 'Adding...' : 'Add Color' }}
+          </button>
+
+        </div>
+      </div>
+
     </div>
 
-    <!-- Additional Images -->
-    <div class="mb-3">
-      <label>Additional Images</label>
-      <input type="file" multiple class="form-control" (change)="onAdditionalImagesChange($event)">
+    <!-- ══ RIGHT: Colors ══ -->
+    <div class="ep-col-side">
+      <div class="ep-card">
+        <div class="ep-card-head">
+          <i class="bi bi-palette me-2"></i> Colors ({{ colors.length }})
+        </div>
 
-      <div class="d-flex gap-2 mt-2">
-        <img *ngFor="let img of additionalImagesPreview"
-             [src]="img"
-             width="80">
+        <div *ngFor="let color of colors" class="ep-color-block">
+
+          <div class="ep-color-hdr" (click)="toggleColor(color.id)">
+            <div class="ep-color-dot" [style.background]="color.colorCode"></div>
+            <span class="fw-semibold flex-1">{{ color.colorName }}</span>
+            <span class="ep-color-stock">{{ color.availableSizes?.length ?? 0 }} sizes</span>
+            <i class="bi"
+               [class.bi-chevron-down]="expandedColorId !== color.id"
+               [class.bi-chevron-up]="expandedColorId === color.id"></i>
+          </div>
+
+          <div class="ep-color-body" *ngIf="expandedColorId === color.id">
+
+            <!-- Main image -->
+            <div class="ep-field">
+              <label class="ep-label">Main Image</label>
+              <div class="ep-img-row">
+                <img [src]="color.newMainPreview" class="ep-thumb-main"
+                     onerror="this.src='https://placehold.co/80x80/f1f5f9/94a3b8?text=?'">
+                <label class="ep-file-drop ep-file-sm">
+                  <input type="file" accept="image/*" hidden (change)="onColorMainImage($event, color)">
+                  <i class="bi bi-camera"></i> Change
+                </label>
+              </div>
+            </div>
+
+            <!-- Name + code -->
+            <div class="ep-row-2">
+              <div class="ep-field">
+                <label class="ep-label">Color Name</label>
+                <input class="ep-input" [(ngModel)]="color.editName">
+              </div>
+              <div class="ep-field">
+                <label class="ep-label">Swatch</label>
+                <div class="ep-color-wrap">
+                  <input type="color" class="ep-color-picker" [(ngModel)]="color.editCode">
+                  <span class="ep-color-hex">{{ color.editCode }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="colorMsg[color.id]" class="ep-msg">{{ colorMsg[color.id] }}</div>
+
+            <div class="ep-btn-row">
+              <button class="ep-btn-outline ep-btn-sm flex-1" (click)="saveColor(color)"
+                      [disabled]="colorSaving[color.id]">
+                <span *ngIf="colorSaving[color.id]"
+                      class="spinner-border spinner-border-sm me-1"></span>
+                Save Color
+              </button>
+              <button class="ep-btn-danger ep-btn-sm" (click)="deleteColor(color)">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </div>
+
+            <!-- Stock -->
+            <div class="ep-field mt-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="ep-label mb-0">Stock per Size</label>
+                <button class="ep-btn-outline ep-btn-xs" (click)="openAdjust(color)">
+                  <i class="bi bi-sliders me-1"></i> Adjust
+                </button>
+              </div>
+              <div class="ep-sizes-row">
+                <div class="ep-size-chip" *ngFor="let s of color.availableSizes">
+                  <span class="ep-size-badge">{{ sizeLabels[s.size] ?? s.size }}</span>
+                  <span class="ep-size-qty">{{ s.quantity }}</span>
+                </div>
+                <div *ngIf="!color.availableSizes?.length" class="text-muted small">
+                  No sizes yet
+                </div>
+              </div>
+            </div>
+
+            <!-- Gallery images -->
+            <div class="ep-field mt-3">
+              <label class="ep-label">Gallery Images</label>
+              <div class="ep-gallery" *ngIf="color.images?.length">
+                <div class="ep-gallery-item" *ngFor="let img of color.images">
+                  <img [src]="img.imageUrl" class="ep-thumb"
+                       onerror="this.src='https://placehold.co/60x60/f1f5f9/94a3b8?text=?'">
+                  <button class="ep-del-img" (click)="deleteImage(img.id, color)">
+                    <i class="bi bi-x"></i>
+                  </button>
+                </div>
+              </div>
+              <div *ngIf="!color.images?.length" class="text-muted small mb-2">
+                No gallery images
+              </div>
+
+              <label class="ep-file-drop ep-file-sm mt-1">
+                <input type="file" accept="image/*" multiple hidden
+                       (change)="onAddImages($event, color)">
+                <i class="bi bi-images me-1"></i>
+                <span *ngIf="!color.addImageFiles?.length">Add images</span>
+                <span *ngIf="color.addImageFiles?.length" class="text-success">
+                  {{ color.addImageFiles.length }} selected
+                </span>
+              </label>
+              <button *ngIf="color.addImageFiles?.length"
+                      class="ep-btn-outline ep-btn-sm w-100 mt-1"
+                      (click)="uploadAdditionalImages(color)"
+                      [disabled]="colorSaving[color.id]">
+                <i class="bi bi-upload me-1"></i> Upload Images
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <div *ngIf="!colors.length" class="ep-empty">
+          <i class="bi bi-palette"></i>
+          <p>No colors yet — add one below</p>
+        </div>
+
       </div>
     </div>
 
-    <!-- Save -->
-    <button class="btn btn-success" (click)="saveChanges()">
-      Save Changes
-    </button>
-
   </div>
-
 </div>
+
+<ng-template #loadingTpl>
+  <div class="ep-loading">
+    <span class="spinner-border text-primary me-3"></span> Loading product...
+  </div>
+</ng-template>
+
+
+

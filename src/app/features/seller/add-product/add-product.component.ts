@@ -29,19 +29,37 @@ export class AddProductComponent implements OnInit {
   validationErrors: { [key: string]: string } = {};
   isCreating = false;
 
-  // Category preview modal
   previewCat: any = null;
 
-  // Global sizes table (Step 1) — A/B/C measurements
-  readonly sizeNames = ['2XS', 'XS', 'S', 'M', 'L', 'XL', '2XL'];
-  readonly sizeMapping: Record<string, number> = {
-    '2XS': 11, 'XS': 12, 'S': 13, 'M': 14, 'L': 15, 'XL': 16, '2XL': 17
-  };
+readonly sizeNames = [
+  '2XS',
+  'XS',
+  'S',
+  'M',
+  'L',
+  'XL',
+  '2XL',
+  '3XL',
+  '4XL',
+  '5XL'
+];
+
+readonly sizeMapping: Record<string, number> = {
+  '2XS': 11,
+  'XS': 12,
+  'S': 13,
+  'M': 14,
+  'L': 15,
+  'XL': 16,
+  '2XL': 17,
+  '3XL': 18,
+  '4XL': 19,
+  '5XL': 20
+};
 
   globalSizes: { name: string; a: number; b: number; c: number }[] =
     this.sizeNames.map(n => ({ name: n, a: 0, b: 0, c: 0 }));
 
-  // ✅ FIX: getter replaces .find() in the template
   get selectedCategoryName(): string {
     return this.categories.find(c => c.id === this.categoryId)?.name ?? '';
   }
@@ -67,9 +85,7 @@ export class AddProductComponent implements OnInit {
     });
   }
 
-  openCatPreview(cat: any) {
-    this.previewCat = cat;
-  }
+  openCatPreview(cat: any) { this.previewCat = cat; }
 
   confirmCatSelect() {
     if (this.previewCat) {
@@ -147,7 +163,20 @@ export class AddProductComponent implements OnInit {
   }
 
   onAdditionalImages(event: any, i: number) {
-    this.colors[i].additionalImages = Array.from(event.target.files);
+    const newFiles: File[] = Array.from(event.target.files);
+    this.colors[i].additionalImages = [
+      ...this.colors[i].additionalImages,
+      ...newFiles
+    ];
+    event.target.value = '';
+  }
+
+  removeAdditionalImage(colorIndex: number, imgIndex: number) {
+    this.colors[colorIndex].additionalImages.splice(imgIndex, 1);
+  }
+
+  getObjectUrl(file: File): string {
+    return URL.createObjectURL(file);
   }
 
   // ── Step 2 save ────────────────────────────────────

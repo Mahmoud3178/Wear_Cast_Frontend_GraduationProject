@@ -132,7 +132,6 @@
           </button>
         </div>
 
-        <!-- ✅ FIX: use getter instead of .find() in template -->
         <div *ngIf="categoryId" class="ap-cat-selected-pill">
           <i class="bi bi-check-circle-fill text-success me-2"></i>
           Selected: <strong>{{ selectedCategoryName }}</strong>
@@ -233,39 +232,57 @@
 
         <!-- Images -->
         <div class="ap-row-2">
+
+          <!-- Main Image -->
           <div class="ap-field">
             <label class="ap-label">
               <i class="bi bi-stars text-warning me-1"></i>
-              AI Tool Image <span class="ap-badge-main">Main</span>
+              Main Image <span class="ap-badge-main">Main</span>
             </label>
             <p class="ap-hint">Primary image shown to customers.</p>
             <div class="ap-white-bg-note">
-  <i class="bi bi-info-circle-fill"></i>
-  <span>
-    <strong>White background required.</strong>
-    The product image must have a plain white background
-    for a consistent look across the platform.
-  </span>
-</div>
-            <label class="ap-file-drop">
+              <i class="bi bi-info-circle-fill"></i>
+              <span>
+                <strong>White background required.</strong>
+                The product image must have a plain white background
+                for a consistent look across the platform.
+              </span>
+            </div>
+            <label class="ap-file-drop mt-2">
               <input type="file" accept="image/*" hidden (change)="onMainImage($event, i)">
               <i class="bi bi-cloud-upload fs-4 d-block mb-1"></i>
               <span *ngIf="!c.mainImage">Click to upload main image</span>
               <span *ngIf="c.mainImage" class="text-success fw-semibold">✅ {{ c.mainImage.name }}</span>
             </label>
           </div>
+
+          <!-- Additional Images -->
           <div class="ap-field">
             <label class="ap-label">Additional Images</label>
             <p class="ap-hint">Gallery, angles, etc.</p>
+
             <label class="ap-file-drop">
               <input type="file" accept="image/*" multiple hidden (change)="onAdditionalImages($event, i)">
               <i class="bi bi-images fs-4 d-block mb-1"></i>
-              <span *ngIf="!c.additionalImages?.length">Click to upload more images</span>
-              <span *ngIf="c.additionalImages?.length" class="text-success fw-semibold">
-                ✅ {{ c.additionalImages.length }} file(s) selected
-              </span>
+              <span>Click to add images</span>
             </label>
+
+            <!-- Thumbnails -->
+            <div *ngIf="c.additionalImages?.length" class="ap-img-preview-grid">
+              <div *ngFor="let file of c.additionalImages; let fi = index" class="ap-img-thumb">
+                <img [src]="getObjectUrl(file)" [alt]="file.name">
+                <button type="button" class="ap-img-remove" (click)="removeAdditionalImage(i, fi)">
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="c.additionalImages?.length" class="ap-img-count">
+              <i class="bi bi-check-circle-fill text-success me-1"></i>
+              {{ c.additionalImages.length }} image(s) selected
+            </div>
           </div>
+
         </div>
 
         <!-- Per-color stock quantities -->

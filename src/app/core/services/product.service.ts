@@ -55,10 +55,16 @@ getAll(
     return this.http.get(`${this.api}/api/FixedProductColor/GetAllColorByProductId/${productId}`);
   }
 
-  // 🔹 Create Product Color
-  createProductColor(formData: FormData): Observable<any> {
-    return this.http.post(`${this.api}/api/FixedProductColor/CreateProductColor`, formData);
-  }
+// 🔹 Create Product Color
+createProductColor(formData: FormData, token?: string): Observable<any> {
+  const headers: any = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return this.http.post(
+    `${this.api}/api/FixedProductColor/CreateProductColor`,
+    formData,
+    { headers }
+  );
+}
 
   // 🔹 Update Product
   update(data: any): Observable<any> {
@@ -90,5 +96,35 @@ getSellerProductsStatus(): Observable<any> {
       headers: { Authorization: `Bearer ${token}` }
     }
   );
+}
+
+// 🔹 Get Product Details (full with colors)
+getDetails(id: number): Observable<any> {
+  return this.http.get(`${this.api}/api/FixedProduct/GetDetailsById/${id}`);
+}
+
+// 🔹 Update Color
+updateColor(formData: FormData): Observable<any> {
+  return this.http.put(`${this.api}/api/FixedProductColor/UpdateColor`, formData);
+}
+
+// 🔹 Delete Color
+deleteColor(colorId: number): Observable<any> {
+  return this.http.delete(`${this.api}/api/FixedProductColor/DeleteColor/${colorId}`);
+}
+
+// 🔹 Add Image to Color
+addImage(formData: FormData): Observable<any> {
+  return this.http.post(`${this.api}/api/FixedProductColor/AddImage`, formData);
+}
+
+// 🔹 Delete Image
+deleteImage(imageId: number): Observable<any> {
+  return this.http.delete(`${this.api}/api/FixedProductColor/DeleteImage/${imageId}`);
+}
+
+// 🔹 Adjust Size Quantity
+adjustSizeQuantity(data: any): Observable<any> {
+  return this.http.post(`${this.api}/api/FixedProductColor/AdjustSizeQuantity`, data);
 }
 }

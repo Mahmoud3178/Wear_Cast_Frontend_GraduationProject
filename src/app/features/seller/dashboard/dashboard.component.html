@@ -16,32 +16,66 @@
     </div>
   </div>
 
-  <!-- KPI Stats -->
-  <div class="kpi-grid">
-    <div class="kpi-card" *ngFor="let stat of stats">
-      <div class="kpi-body">
-        <div class="kpi-label">{{ stat.title }}</div>
-        <div class="kpi-value">{{ stat.value }}</div>
-        <span *ngIf="stat.change" class="kpi-change" [class.positive]="stat.positive" [class.negative]="!stat.positive">
-          <i class="bi" [class.bi-arrow-up-short]="stat.positive" [class.bi-arrow-down-short]="!stat.positive"></i>
-          {{ stat.change }}
-        </span>
-      </div>
+<!-- KPI Stats -->
+<div class="kpi-grid">
+  <div class="kpi-card" *ngFor="let stat of stats">
+    <div class="kpi-icon" [ngClass]="stat.iconBg">
+      <i class="bi" [ngClass]="stat.icon"></i>
+    </div>
+    <div class="kpi-body">
+      <div class="kpi-label">{{ stat.title }}</div>
+      <div class="kpi-value">{{ stat.value }}</div>
+      <span *ngIf="stat.change" class="kpi-change"
+        [class.positive]="stat.positive"
+        [class.negative]="!stat.positive">
+        <i class="bi"
+          [class.bi-arrow-up-short]="stat.positive"
+          [class.bi-arrow-down-short]="!stat.positive"></i>
+        {{ stat.change }}
+      </span>
     </div>
   </div>
-
+</div>
   <!-- Charts Row -->
   <div class="charts-row">
-    <div class="chart-card wide">
+
+    <div class="chart-card">
       <div class="chart-head">
         <div>
-          <div class="chart-title">Revenue Performance</div>
-          <div class="chart-sub">Monthly revenue trend</div>
+          <div class="chart-title">Top Products by Sales</div>
+          <div class="chart-sub">Units sold per product</div>
         </div>
       </div>
-      <canvas id="revenueChart"></canvas>
+      <div class="chart-wrap">
+        <canvas id="productsChart"></canvas>
+      </div>
     </div>
 
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Orders by Status</div>
+          <div class="chart-sub">Current order breakdown</div>
+        </div>
+      </div>
+      <div class="doughnut-wrap">
+        <canvas id="statusChart"></canvas>
+      </div>
+      <div class="status-legend">
+        <div class="legend-item" *ngFor="let s of statusSummary">
+          <span class="legend-dot" [style.background]="s.color"></span>
+          <span class="legend-label">{{ s.label }}</span>
+          <span class="legend-val">{{ s.count }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Row -->
+  <div class="bottom-row">
+
+    <!-- Top Products List -->
     <div class="chart-card">
       <div class="chart-head">
         <div class="chart-title">Top Products</div>
@@ -50,82 +84,85 @@
       <div class="top-products">
         <div class="top-product-row" *ngFor="let p of products; let i = index">
           <div class="tp-rank">{{ i + 1 }}</div>
-<!-- في الـ top-product-row، الصورة كانت كده: -->
-<!-- خليها كده عشان تتعامل مع الـ broken image: -->
-<img [src]="p.image || 'assets/placeholder.png'"
-     class="tp-img"
-     [alt]="p.name"
-     onerror="this.src='https://placehold.co/36x36/f1f5f9/94a3b8?text=?'">          <div class="tp-info">
+          <img [src]="p.image || 'assets/placeholder.png'"
+               class="tp-img" [alt]="p.name"
+               onerror="this.src='https://placehold.co/36x36/f1f5f9/94a3b8?text=?'">
+          <div class="tp-info">
             <div class="tp-name">{{ p.name }}</div>
-            <div class="tp-cat">{{ p.category }}</div>
+            <div class="tp-cat">{{ p.category }} · {{ p.price | number:'1.0-0' }} EGP</div>
           </div>
           <div class="tp-sold">{{ p.sold }} <span>sold</span></div>
         </div>
+        <div *ngIf="!products.length" class="empty-state" style="padding:24px">
+          <i class="bi bi-box-seam"></i><p>No products yet</p>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Recent Orders -->
-  <div class="tbl-card">
-    <div class="tbl-card-head">
-      <div>
-        <div class="chart-title">Recent Orders</div>
-        <div class="chart-sub">Latest activity from your store</div>
+    <!-- Recent Orders -->
+    <div class="tbl-card table-responsive">
+      <div class="tbl-card-head">
+        <div>
+          <div class="chart-title">Recent Orders</div>
+          <div class="chart-sub">Latest activity from your store</div>
+        </div>
+        <a routerLink="../orders" class="adm-btn-secondary"
+           style="font-size:13px;padding:7px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+          View All <i class="bi bi-arrow-right"></i>
+        </a>
       </div>
-      <a routerLink="../orders" class="adm-btn-secondary" style="font-size:13px;padding:7px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
-        View All <i class="bi bi-arrow-right"></i>
-      </a>
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of paginatedProducts"
+              [routerLink]="['/seller/orders', order.id]">
+            <td><span class="c-main" style="color:#6366f1">#{{ order.id }}</span></td>
+            <td><span class="c-main">{{ order.recipientName || 'N/A' }}</span></td>
+            <td><span class="c-main" style="color:#10b981">{{ order.totalAmount | number:'1.2-2' }} EGP</span></td>
+            <td>
+              <span class="badge"
+                [class.badge-active]="order.status === 'Delivered' || order.status === 'Paid'"
+                [class.badge-pending]="order.status === 'Pending' || order.status === 'Ready'"
+                [class.badge-info]="order.status === 'Shipped'"
+                [class.badge-dark]="order.status === 'Confirmed'">
+                {{ order.status }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="!paginatedProducts.length" class="empty-row">
+            <td colspan="4">
+              <div class="empty-state" style="padding:32px 20px">
+                <i class="bi bi-bag-x"></i><p>No orders yet</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pag-row">
+        <span class="pag-info">
+          Showing {{ (currentPage-1)*itemsPerPage + 1 }}–{{ (currentPage-1)*itemsPerPage + paginatedProducts.length }} of {{ orders.length }}
+        </span>
+        <div class="pager">
+          <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button class="page-btn" *ngFor="let page of pages"
+            [class.cur]="page === currentPage"
+            (click)="goToPage(page)">{{ page }}</button>
+          <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Order ID</th>
-          <th>Customer</th>
-          <th>Amount</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let order of paginatedProducts" [routerLink]="['/seller/orders', order.id]">
-          <td><span class="c-main" style="color:#6366f1">#{{ order.id }}</span></td>
-          <td><span class="c-main">{{ order.recipientName || order.customerName || 'N/A' }}</span></td>
-          <td><span class="c-main" style="color:#10b981">{{ order.totalAmount | number:'1.2-2' }} EGP</span></td>
-          <td>
-            <span class="badge"
-              [class.badge-active]="order.status === 'Delivered'"
-              [class.badge-pending]="order.status === 'Pending'"
-              [class.badge-info]="order.status === 'Shipped'">
-              {{ order.status }}
-            </span>
-          </td>
-        </tr>
-        <tr *ngIf="!paginatedProducts.length" class="empty-row">
-          <td colspan="4">
-            <div class="empty-state" style="padding:32px 20px">
-              <i class="bi bi-bag-x"></i>
-              <p>No orders yet</p>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Pagination -->
-    <div class="pag-row">
-      <span class="pag-info">
-        Showing {{ (currentPage-1)*itemsPerPage + 1 }}–{{ (currentPage-1)*itemsPerPage + paginatedProducts.length }} of {{ orders.length }}
-      </span>
-      <div class="pager">
-        <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 1">
-          <i class="bi bi-chevron-left"></i>
-        </button>
-        <button class="page-btn" *ngFor="let page of pages" [class.cur]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
-        <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
-          <i class="bi bi-chevron-right"></i>
-        </button>
-      </div>
-    </div>
   </div>
 
 </div>

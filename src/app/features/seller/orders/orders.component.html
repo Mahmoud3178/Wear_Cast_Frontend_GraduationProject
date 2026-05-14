@@ -1,6 +1,5 @@
 <div class="page-wrap">
 
-  <!-- Header -->
   <div class="adm-header">
     <div>
       <h1 class="adm-title">Orders</h1>
@@ -8,79 +7,73 @@
     </div>
   </div>
 
-  <!-- KPI Stats -->
-  <div class="kpi-grid">
-    <div class="kpi-card" *ngFor="let stat of stats">
-      <div class="kpi-icon" [ngClass]="stat.bg">
-        <i class="bi {{ stat.icon }}"></i>
-      </div>
-      <div>
-        <div class="kpi-value">{{ stat.value }}</div>
-        <div class="kpi-label">{{ stat.title }}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toolbar -->
   <div class="toolbar">
     <div class="search-wrap">
       <i class="bi bi-search"></i>
       <input type="text" placeholder="Search by order ID or customer..." [(ngModel)]="searchText">
     </div>
+    <select class="status-filter" [(ngModel)]="selectedStatus">
+      <option value="">All statuses</option>
+      <option value="Paid">Paid</option>
+      <option value="Ready">Ready</option>
+      <option value="Pending">Pending</option>
+      <option value="Shipped">Shipped</option>
+      <option value="Delivered">Delivered</option>
+      <option value="Confirmed">Confirmed</option>
+    </select>
   </div>
 
-  <!-- Table -->
   <div class="tbl-card">
-    <table>
-      <thead>
-        <tr>
-          <th>Order</th>
-          <th>Customer</th>
-          <th>Address</th>
-          <th>Items</th>
-          <th>Date</th>
-          <th>Amount</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let order of filteredOrders" [routerLink]="['/seller/orders', order.id]">
-          <td><span class="c-main" style="color:#6366f1">#{{ order.id }}</span></td>
-          <td>
-            <div class="c-main">{{ order.recipientName }}</div>
-            <div class="c-sub">{{ order.recipientPhoneNumber }}</div>
-          </td>
-          <td class="c-muted" style="font-size:12.5px">
-            {{ order.shippingAddress?.state }}, {{ order.shippingAddress?.city }}
-          </td>
-          <td>
-            <span class="badge badge-indigo">{{ order.items?.length || 0 }} items</span>
-          </td>
-          <td class="c-muted">{{ order.createdOn | date:'dd MMM yyyy' }}</td>
-          <td><span class="c-main" style="color:#10b981">{{ order.totalAmount | number:'1.2-2' }} EGP</span></td>
-          <td>
-            <span class="badge"
-              [class.badge-active]="order.status === 'Delivered'"
-              [class.badge-pending]="order.status === 'Pending'"
-              [class.badge-info]="order.status === 'Shipped'"
-              [class.badge-dark]="order.status === 'Confirmed'">
-              {{ order.status }}
-            </span>
-          </td>
-        </tr>
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Customer</th>
+            <th>Address</th>
+            <th>Items</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of filteredOrders" [routerLink]="['/seller/orders', order.id]">
+            <td><span class="c-main" style="color:#6366f1">#{{ order.id }}</span></td>
+            <td>
+              <div class="c-main">{{ order.recipientName }}</div>
+              <div class="c-sub">{{ order.recipientPhoneNumber }}</div>
+            </td>
+            <td class="c-muted" style="font-size:12.5px">
+              {{ order.shippingAddress?.state }}, {{ order.shippingAddress?.city }}
+            </td>
+            <td>
+              <span class="badge badge-indigo">{{ order.totalOrderItems || 0 }} items</span>
+            </td>
+            <td class="c-muted">{{ order.createdOn | date:'dd MMM yyyy' }}</td>
+            <td><span class="c-main" style="color:#10b981">{{ order.totalAmount | number:'1.2-2' }} EGP</span></td>
+            <td>
+              <span class="badge"
+                [class.badge-active]="order.status === 'Delivered' || order.status === 'Paid'"
+                [class.badge-pending]="order.status === 'Pending' || order.status === 'Ready'"
+                [class.badge-info]="order.status === 'Shipped'"
+                [class.badge-dark]="order.status === 'Confirmed'">
+                {{ order.status }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="!filteredOrders.length" class="empty-row">
+            <td colspan="7">
+              <div class="empty-state">
+                <i class="bi bi-bag-x"></i>
+                <p>No orders found</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-        <tr *ngIf="!filteredOrders.length" class="empty-row">
-          <td colspan="7">
-            <div class="empty-state">
-              <i class="bi bi-bag-x"></i>
-              <p>No orders found</p>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Pagination -->
     <div class="pag-row">
       <span class="pag-info">
         Showing page {{ currentPage }} of {{ totalPages.length }} — {{ totalCount }} orders

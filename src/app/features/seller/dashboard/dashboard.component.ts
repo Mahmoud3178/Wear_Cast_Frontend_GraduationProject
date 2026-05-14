@@ -19,67 +19,108 @@ export class DashboardComponent implements AfterViewInit, OnInit {
     private orderService: SallerOrderService
   ) {}
 
-  stats = [
-    { title: 'Total Revenue',    value: '—', change: '', positive: true  },
-    { title: 'Total Orders',     value: '—', change: '', positive: true  },
-    { title: 'Pending Orders',   value: '—', change: '', positive: false },
-    { title: 'Products',         value: '—', change: '', positive: true  },
-    { title: 'Inventory Items',  value: '—', change: '', positive: true  },
-  ];
+stats: any[] = [
+  { title: 'Total Revenue',   value: '—', change: '', positive: true,  icon: 'bi-cash-coin',       iconBg: 'icon-green'  },
+  { title: 'Total Orders',    value: '—', change: '', positive: true,  icon: 'bi-bag-check',       iconBg: 'icon-indigo' },
+  { title: 'Pending Orders',  value: '—', change: '', positive: false, icon: 'bi-hourglass-split', iconBg: 'icon-yellow' },
+  { title: 'Products',        value: '—', change: '', positive: true,  icon: 'bi-box-seam',        iconBg: 'icon-purple' },
+  { title: 'Inventory Items', value: '—', change: '', positive: true,  icon: 'bi-archive',         iconBg: 'icon-cyan'   },
+];
 
-  // top selling products from API
   products: any[] = [];
+  orders:   any[] = [];
 
-  // orders table
-  orders: any[] = [];
   currentPage  = 1;
   itemsPerPage = 5;
   searchText   = '';
+  isLoading    = true;
 
-  isLoading = true;
+  // للـ doughnut chart
+  statusSummary: { label: string; count: number; color: string }[] = [];
 
-  // ── Init ──────────────────────────────────────────────
+  private productsChart: Chart | null = null;
+  private statusChart:   Chart | null = null;
+
   ngOnInit() {
     this.loadDashboardStats();
     this.loadOrders();
   }
 
-  // ── Dashboard stats + top products ───────────────────
+  ngAfterViewInit() {}
+
+  // ── Dashboard stats ───────────────────────────────────
   loadDashboardStats() {
     this.dashService.getStats().subscribe({
       next: (res: any) => {
         const d = res?.data ?? res;
 
-        this.stats = [
-          { title: 'Total Revenue',   value: `${d.totalRevenue ?? 0} EGP`, change: '', positive: true  },
-          { title: 'Total Orders',    value: d.totalOrders       ?? 0,     change: '', positive: true  },
-          { title: 'Pending Orders',  value: d.pendingOrders     ?? 0,     change: '', positive: false },
-          { title: 'Products',        value: d.uniqueProductsCount ?? 0,   change: '', positive: true  },
-          { title: 'Inventory Items', value: d.totalInventoryItems ?? 0,   change: '', positive: true  },
-        ];
+  this.stats = [
+  {
+    title: 'Total Revenue',
+    value: `${d.totalRevenue ?? 0} EGP`,
+    change: '',
+    positive: true,
+    icon: 'bi-cash-coin',
+    iconBg: 'icon-green'
+  },
+  {
+    title: 'Total Orders',
+    value: d.totalOrders ?? 0,
+    change: '',
+    positive: true,
+    icon: 'bi-bag-check',
+    iconBg: 'icon-indigo'
+  },
+  {
+    title: 'Pending Orders',
+    value: d.pendingOrders ?? 0,
+    change: '',
+    positive: false,
+    icon: 'bi-hourglass-split',
+    iconBg: 'icon-yellow'
+  },
+  {
+    title: 'Products',
+    value: d.uniqueProductsCount ?? 0,
+    change: '',
+    positive: true,
+    icon: 'bi-box-seam',
+    iconBg: 'icon-purple'
+  },
+  {
+    title: 'Inventory Items',
+    value: d.totalInventoryItems ?? 0,
+    change: '',
+    positive: true,
+    icon: 'bi-archive',
+    iconBg: 'icon-cyan'
+  }
+];
 
-        // top selling products
         this.products = (d.topSellingProducts ?? []).map((p: any) => ({
-          name:      p.name,
-          category:  p.targetAudience ?? '',
-          sold:      p.totalSold ?? 0,
-          image:     p.mainImageUrl ?? p.imageUrl ?? '',
-          price:     p.price ?? 0,
-          inStock:   p.isRejected === false
+          name:     p.name,
+          category: p.targetAudience ?? '',
+          sold:     p.totalSold ?? 0,
+          image:    p.mainImageUrl ?? '',
+          price:    p.price ?? 0,
         }));
 
         this.isLoading = false;
-        this.rebuildChart();
+        setTimeout(() => {
+          this.buildProductsChart();
+          this.buildStatusChart();
+        }, 0);
       },
       error: () => { this.isLoading = false; }
     });
   }
 
-  // ── Orders table ──────────────────────────────────────
+  // ── Orders ────────────────────────────────────────────
   loadOrders() {
     this.orderService.getSellerOrders(1, 100).subscribe({
       next: (res: any) => {
         this.orders = res?.items ?? res ?? [];
+        this.buildStatusChart();
       },
       error: () => { this.orders = []; }
     });
@@ -89,7 +130,7 @@ export class DashboardComponent implements AfterViewInit, OnInit {
     const t = this.searchText.toLowerCase();
     return this.orders.filter(o =>
       o.id?.toString().includes(t) ||
-      (o.recipientName ?? o.customerName ?? '').toLowerCase().includes(t)
+      (o.recipientName ?? '').toLowerCase().includes(t)
     );
   }
 
@@ -107,45 +148,112 @@ export class DashboardComponent implements AfterViewInit, OnInit {
   }
 
   goToPage(p: number) { this.currentPage = p; }
-  nextPage()  { if (this.currentPage < this.totalPages) this.currentPage++; }
-  prevPage()  { if (this.currentPage > 1) this.currentPage--; }
+  nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; }
+  prevPage() { if (this.currentPage > 1) this.currentPage--; }
 
-  // ── Chart ─────────────────────────────────────────────
-  private chart: Chart | null = null;
+  // ── Bar Chart — Top Products ──────────────────────────
+  buildProductsChart() {
+    const ctx = document.getElementById('productsChart') as HTMLCanvasElement;
+    if (!ctx || !this.products.length) return;
+    if (this.productsChart) { this.productsChart.destroy(); }
 
-  rebuildChart() {
-    const ctx = document.getElementById('revenueChart') as HTMLCanvasElement;
-    if (!ctx) return;
-    if (this.chart) { this.chart.destroy(); this.chart = null; }
+    const labels = this.products.map(p => p.name);
+    const data   = this.products.map(p => p.sold);
+    const colors = ['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b'];
 
-    this.chart = new Chart(ctx, {
-      type: 'line',
+    this.productsChart = new Chart(ctx, {
+      type: 'bar',
       data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        labels,
         datasets: [{
-          label: 'Revenue (EGP)',
-          data: [1200, 1900, 3000, 2500, 3200, 4100],
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99,102,241,0.08)',
-          borderWidth: 2,
-          pointBackgroundColor: '#6366f1',
-          tension: 0.4,
-          fill: true
+          label: 'Units Sold',
+          data,
+          backgroundColor: colors.slice(0, data.length),
+          borderRadius: 8,
+          borderSkipped: false,
         }]
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${ctx.parsed.y} units sold`
+            }
+          }
+        },
         scales: {
-          y: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8' } },
-          x: { grid: { display: false },   ticks: { color: '#94a3b8' } }
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, color: '#94a3b8' },
+            grid: { color: '#f1f5f9' }
+          },
+          x: {
+            ticks: { color: '#64748b', font: { size: 12 } },
+            grid: { display: false }
+          }
         }
       }
     });
   }
 
-  ngAfterViewInit() {
-    // chart يتبني بعد ما الـ stats ترجع من الـ API
-    // rebuildChart بتتستدعى في loadDashboardStats
+  // ── Doughnut Chart — Orders by Status ────────────────
+  buildStatusChart() {
+    const ctx = document.getElementById('statusChart') as HTMLCanvasElement;
+    if (!ctx || !this.orders.length) return;
+    if (this.statusChart) { this.statusChart.destroy(); }
+
+    const statusColors: Record<string, string> = {
+      'Paid':      '#10b981',
+      'Ready':     '#f59e0b',
+      'Pending':   '#6366f1',
+      'Shipped':   '#06b6d4',
+      'Delivered': '#22c55e',
+      'Confirmed': '#8b5cf6',
+      'Cancelled': '#ef4444',
+    };
+
+    // احسب عدد كل status
+    const counts: Record<string, number> = {};
+    this.orders.forEach(o => {
+      const s = o.status ?? 'Unknown';
+      counts[s] = (counts[s] ?? 0) + 1;
+    });
+
+    const labels = Object.keys(counts);
+    const data   = Object.values(counts);
+    const colors = labels.map(l => statusColors[l] ?? '#94a3b8');
+
+    this.statusSummary = labels.map((l, i) => ({
+      label: l,
+      count: data[i],
+      color: colors[i]
+    }));
+
+    this.statusChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: colors,
+          borderWidth: 0,
+          hoverOffset: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${ctx.label}: ${ctx.parsed} orders`
+            }
+          }
+        }
+      }
+    });
   }
 }

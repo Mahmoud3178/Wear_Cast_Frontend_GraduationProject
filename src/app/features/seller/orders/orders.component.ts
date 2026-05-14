@@ -14,16 +14,17 @@ import { SallerOrderService } from '../../../core/services/saller-order.service'
 export class OrdersComponent implements OnInit {
 
   orders: any[] = [];
+  selectedStatus = '';
   searchText = '';
   pageSize = 10;
   currentPage = 1;
   totalCount = 0;
 
   stats = [
-    { title: 'Total Orders', value: 0,   icon: 'bi-cart',                  bg: 'bg-indigo' },
-    { title: 'Pending',      value: 0,   icon: 'bi-truck',                  bg: 'bg-yellow' },
-    { title: 'Returns',      value: 0,   icon: 'bi-arrow-counterclockwise', bg: 'bg-red'    },
-    { title: 'Revenue',      value: '0 EGP', icon: 'bi-cash-coin',          bg: 'bg-green'  },
+    { title: 'Total Orders', value: 0,        icon: 'bi-cart',                  bg: 'bg-indigo' },
+    { title: 'Pending',      value: 0,        icon: 'bi-truck',                  bg: 'bg-yellow' },
+    { title: 'Returns',      value: 0,        icon: 'bi-arrow-counterclockwise', bg: 'bg-red'    },
+    { title: 'Revenue',      value: '0 EGP',  icon: 'bi-cash-coin',              bg: 'bg-green'  },
   ];
 
   constructor(private orderService: SallerOrderService) {}
@@ -50,8 +51,9 @@ export class OrdersComponent implements OnInit {
   get filteredOrders() {
     const text = this.searchText.toLowerCase();
     return this.orders.filter(o =>
-      o.id?.toString().includes(text) ||
-      (o.recipientName || '').toLowerCase().includes(text)
+      (o.id?.toString().includes(text) ||
+       (o.recipientName || '').toLowerCase().includes(text)) &&
+      (this.selectedStatus === '' || o.status === this.selectedStatus)
     );
   }
 

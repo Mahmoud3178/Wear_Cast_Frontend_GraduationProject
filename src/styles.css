@@ -1124,6 +1124,17 @@ h1, h2, h3, h4, h5, h6 {
   .top-bar { padding:0 16px; }
 }
 
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* أضف ده بعدها مباشرة */
+.content-area {
+  min-width: 0;
+  overflow: hidden;
+}
+
 /* ---- 480px ---- */
 @media (max-width: 480px) {
   .adm-title { font-size:18px; }
