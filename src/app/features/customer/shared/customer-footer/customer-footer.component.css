@@ -1,8 +1,9 @@
 .wc-footer {
-  background: #111827;
-  color: #d1d5db;
+  background: #f9fafb;
+  color: #111827;
   font-family: 'Inter', system-ui, sans-serif;
   margin-top: 48px;
+  border-top: 1px solid #e5e7eb;
 }
 
 /* ─── Top section: brand + columns ─── */
@@ -27,13 +28,13 @@
   font-size: 20px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: #fff;
+  color: #111827;
   margin: 0;
 }
 
 .wc-footer-tagline {
   font-size: 13px;
-  color: #9ca3af;
+  color: #4b5563;
   margin: 0;
 }
 
@@ -50,14 +51,14 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.08);
-  color: #d1d5db;
+  background: #e5e7eb;
+  color: #4b5563;
   transition: background 0.2s, color 0.2s, transform 0.2s;
 }
 
 .wc-footer-social a:hover {
-  background: rgba(255,255,255,0.16);
-  color: #fff;
+  background: #d1d5db;
+  color: #111827;
   transform: translateY(-2px);
 }
 
@@ -79,26 +80,26 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #fff;
+  color: #111827;
   margin: 0 0 4px;
 }
 
 .wc-footer-col a {
   font-size: 13px;
-  color: #9ca3af;
+  color: #4b5563;
   text-decoration: none;
   transition: color 0.15s;
 }
 
 .wc-footer-col a:hover {
-  color: #fff;
+  color: #111827;
 }
 
 /* Divider */
 .wc-footer-divider {
   max-width: 1200px;
   margin: 0 auto;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid #e5e7eb;
 }
 
 /* Bottom bar */
@@ -127,7 +128,7 @@
 }
 
 .wc-footer-bottom-links a:hover {
-  color: #d1d5db;
+  color: #111827;
 }
 
 /* Responsive */
