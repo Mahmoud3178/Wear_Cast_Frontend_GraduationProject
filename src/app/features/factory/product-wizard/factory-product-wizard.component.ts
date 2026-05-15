@@ -65,6 +65,10 @@ export interface SavedColor {
   name: string;
   hexCode: string;
   imageUrl: string | null;
+  frontImageUrl?: string | null;
+  backImageUrl?: string | null;
+  rightImageUrl?: string | null;
+  leftImageUrl?: string | null;
 }
 
 export interface ExistingSizeRow {
@@ -286,7 +290,7 @@ export class FactoryProductWizardComponent implements OnInit {
       next: ({ colorId }) => {
         this.busy = false;
         this.currentColorId = colorId;
-        this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null });
+        this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null, frontImageUrl: null, backImageUrl: null, rightImageUrl: null, leftImageUrl: null });
         this.currentStep = 'photos';
         this.message = `Color "${this.colorForm.name}" added! Now upload view photos for it.`;
       },
@@ -466,12 +470,35 @@ export class FactoryProductWizardComponent implements OnInit {
   private extractColorsFromDto(dto: Record<string, unknown>): void {
     const colors = dto['colors'] ?? dto['Colors'] ?? dto['productColors'] ?? dto['ProductColors'];
     if (Array.isArray(colors) && colors.length > 0) {
-      this.savedColors = colors.map((c: any) => ({
-        colorId: c.id ?? c.colorId ?? c.Id ?? c.ColorId ?? 0,
-        name: c.name ?? c.Name ?? '',
-        hexCode: c.hexCode ?? c.HexCode ?? '',
-        imageUrl: c.imageUrl ?? c.ImageUrl ?? c.mainImageUrl ?? c.MainImageUrl ?? null
-      }));
+      this.savedColors = colors.map((c: any) => {
+        let front = c.frontImageUrl ?? c.FrontImageUrl ?? null;
+        let back = c.backImageUrl ?? c.BackImageUrl ?? null;
+        let right = c.rightImageUrl ?? c.RightImageUrl ?? null;
+        let left = c.leftImageUrl ?? c.LeftImageUrl ?? null;
+        
+        const imgs = c.images ?? c.Images;
+        if (Array.isArray(imgs)) {
+          imgs.forEach((img: any) => {
+             const side = img.viewSide ?? img.ViewSide;
+             const url = img.imageUrl ?? img.ImageUrl;
+             if (side === 'Front' || side === 1) front = url;
+             if (side === 'Back' || side === 2) back = url;
+             if (side === 'Right' || side === 3) right = url;
+             if (side === 'Left' || side === 4) left = url;
+          });
+        }
+
+        return {
+          colorId: c.id ?? c.colorId ?? c.Id ?? c.ColorId ?? 0,
+          name: c.name ?? c.Name ?? '',
+          hexCode: c.hexCode ?? c.HexCode ?? '',
+          imageUrl: c.imageUrl ?? c.ImageUrl ?? c.mainImageUrl ?? c.MainImageUrl ?? null,
+          frontImageUrl: front,
+          backImageUrl: back,
+          rightImageUrl: right,
+          leftImageUrl: left
+        };
+      });
     }
   }
 
@@ -599,7 +626,7 @@ export class FactoryProductWizardComponent implements OnInit {
         if (this.leftImageFile) uploads.push(this.factory.replaceColorViewImage(colorId, this.leftImageFile, 4));
         if (uploads.length === 0) {
           this.busy = false;
-          this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null });
+          this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null, frontImageUrl: null, backImageUrl: null, rightImageUrl: null, leftImageUrl: null });
           this.message = `Color "${this.colorForm.name}" added!`;
           this._resetColorForms();
           return;
@@ -607,13 +634,13 @@ export class FactoryProductWizardComponent implements OnInit {
         forkJoin(uploads).subscribe({
           next: () => {
             this.busy = false;
-            this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null });
+            this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null, frontImageUrl: null, backImageUrl: null, rightImageUrl: null, leftImageUrl: null });
             this.message = `Color "${this.colorForm.name}" added with photos!`;
             this._resetColorForms();
           },
           error: (e: Error) => {
             this.busy = false;
-            this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null });
+            this.savedColors.push({ colorId, name: this.colorForm.name.trim(), hexCode: hex, imageUrl: null, frontImageUrl: null, backImageUrl: null, rightImageUrl: null, leftImageUrl: null });
             this.message = `Color added (id ${colorId}) but photo upload failed: ${e.message}`;
             this._resetColorForms();
           }

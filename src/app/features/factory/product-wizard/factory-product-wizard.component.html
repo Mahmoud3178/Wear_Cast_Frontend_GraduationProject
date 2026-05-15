@@ -358,7 +358,28 @@
                     <small class="text-muted">{{ color.hexCode }} · id {{ color.colorId }}</small>
                   </div>
                 </div>
-                <img *ngIf="color.imageUrl" [src]="color.imageUrl" [alt]="color.name" class="img-thumbnail mb-2" style="max-height:80px; object-fit:cover">
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <div *ngIf="color.imageUrl" class="text-center">
+                    <img [src]="color.imageUrl" [alt]="color.name + ' main'" class="img-thumbnail" style="max-height:80px; object-fit:cover">
+                    <div class="small text-muted" style="font-size: 0.7rem;">Main</div>
+                  </div>
+                  <div *ngIf="color.frontImageUrl" class="text-center">
+                    <img [src]="color.frontImageUrl" [alt]="color.name + ' front'" class="img-thumbnail" style="max-height:80px; object-fit:cover">
+                    <div class="small text-muted" style="font-size: 0.7rem;">Front</div>
+                  </div>
+                  <div *ngIf="color.backImageUrl" class="text-center">
+                    <img [src]="color.backImageUrl" [alt]="color.name + ' back'" class="img-thumbnail" style="max-height:80px; object-fit:cover">
+                    <div class="small text-muted" style="font-size: 0.7rem;">Back</div>
+                  </div>
+                  <div *ngIf="color.rightImageUrl" class="text-center">
+                    <img [src]="color.rightImageUrl" [alt]="color.name + ' right'" class="img-thumbnail" style="max-height:80px; object-fit:cover">
+                    <div class="small text-muted" style="font-size: 0.7rem;">Right</div>
+                  </div>
+                  <div *ngIf="color.leftImageUrl" class="text-center">
+                    <img [src]="color.leftImageUrl" [alt]="color.name + ' left'" class="img-thumbnail" style="max-height:80px; object-fit:cover">
+                    <div class="small text-muted" style="font-size: 0.7rem;">Left</div>
+                  </div>
+                </div>
 
                 <!-- Inline edit form -->
                 <ng-container *ngIf="editingColorId === color.colorId">

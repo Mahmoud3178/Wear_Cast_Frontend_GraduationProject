@@ -186,6 +186,30 @@ export class AuthService {
     );
   }
 
+  forgetPassword(email: string): Observable<void> {
+    const url = `${this.apiUrl}/api/auth/forget-password`;
+    return this.http.post<ApiEnvelope>(url, { email: email.trim() }).pipe(
+      map(body => {
+        if (!body.isSuccess) {
+          throw this.apiFailure(body);
+        }
+      }),
+      catchError(err => this.handleHttpError(err))
+    );
+  }
+
+  resetPassword(payload: any): Observable<void> {
+    const url = `${this.apiUrl}/api/auth/reset-password`;
+    return this.http.post<ApiEnvelope>(url, payload).pipe(
+      map(body => {
+        if (!body.isSuccess) {
+          throw this.apiFailure(body);
+        }
+      }),
+      catchError(err => this.handleHttpError(err))
+    );
+  }
+
   /** Customer: POST /api/auth/confirm-email — body { userId, code }. */
   confirmCustomerEmail(userId: string, code: string): Observable<void> {
     const url = `${this.apiUrl}/api/auth/confirm-email`;

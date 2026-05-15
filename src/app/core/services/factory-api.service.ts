@@ -595,7 +595,7 @@ export class FactoryApiService {
   }
 
   /** GET /api/factories/products/{productId}/colors — get all colors for a product. */
-  getProductColors(productId: number): Observable<{ colorId: number; name: string; hexCode: string; imageUrl: string | null }[]> {
+  getProductColors(productId: number): Observable<{ colorId: number; name: string; hexCode: string; imageUrl: string | null; frontImageUrl?: string | null; backImageUrl?: string | null; rightImageUrl?: string | null; leftImageUrl?: string | null; }[]> {
     const url = `${this.base}/api/factories/products/${productId}/colors`;
     console.log('Fetching colors from:', url);
     return this.http.get<ApiEnvelope | any>(url).pipe(
@@ -603,12 +603,35 @@ export class FactoryApiService {
         console.log('Colors API response:', res);
         const list = this.unwrapPayload<any[]>(res) ?? [];
         console.log('Extracted colors list:', list);
-        const mapped = list.map(c => ({
-          colorId: c.id ?? c.colorId ?? c.Id ?? c.ColorId ?? 0,
-          name: c.name ?? c.Name ?? '',
-          hexCode: c.hexCode ?? c.HexCode ?? '',
-          imageUrl: c.imageUrl ?? c.ImageUrl ?? c.image ?? c.Image ?? null
-        }));
+        const mapped = list.map(c => {
+          let front = c.frontImageUrl ?? c.FrontImageUrl ?? null;
+          let back = c.backImageUrl ?? c.BackImageUrl ?? null;
+          let right = c.rightImageUrl ?? c.RightImageUrl ?? null;
+          let left = c.leftImageUrl ?? c.LeftImageUrl ?? null;
+          
+          const imgs = c.images ?? c.Images;
+          if (Array.isArray(imgs)) {
+            imgs.forEach((img: any) => {
+               const side = img.viewSide ?? img.ViewSide;
+               const url = img.imageUrl ?? img.ImageUrl;
+               if (side === 'Front' || side === 1) front = url;
+               if (side === 'Back' || side === 2) back = url;
+               if (side === 'Right' || side === 3) right = url;
+               if (side === 'Left' || side === 4) left = url;
+            });
+          }
+
+          return {
+            colorId: c.id ?? c.colorId ?? c.Id ?? c.ColorId ?? 0,
+            name: c.name ?? c.Name ?? '',
+            hexCode: c.hexCode ?? c.HexCode ?? '',
+            imageUrl: c.imageUrl ?? c.ImageUrl ?? c.mainImageUrl ?? c.MainImageUrl ?? c.image ?? c.Image ?? null,
+            frontImageUrl: front,
+            backImageUrl: back,
+            rightImageUrl: right,
+            leftImageUrl: left
+          };
+        });
         console.log('Mapped colors:', mapped);
         return mapped;
       }),
