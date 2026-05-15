@@ -46,6 +46,9 @@ export class FactoryLoginComponent {
         this.submitting = false;
         this.errorMessage = e.message || 'Sign-in failed';
         this.emailNotConfirmed = /email is not confirmed/i.test(this.errorMessage);
+        if (this.emailNotConfirmed) {
+          this.resendConfirmation();
+        }
       }
     });
   }

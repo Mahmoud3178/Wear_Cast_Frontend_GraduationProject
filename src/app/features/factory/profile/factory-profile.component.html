@@ -138,7 +138,7 @@
         <h4 class="h6">Recent transactions</h4>
         <div *ngIf="!w.recentTransactions.length" class="text-muted small">No transactions yet.</div>
         <div class="list-group" *ngIf="w.recentTransactions.length">
-          <div class="list-group-item" *ngFor="let tx of w.recentTransactions">
+          <div class="list-group-item" *ngFor="let tx of paginatedTransactions">
             <div class="d-flex justify-content-between align-items-start gap-3">
               <div>
                 <div class="fw-semibold">{{ tx.type }} · EGP {{ tx.amount | number:'1.2-2' }}</div>
@@ -151,6 +151,16 @@
               <span class="small text-muted">{{ tx.createdOn | date:'medium' }}</span>
             </div>
           </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="w.recentTransactions.length > walletPageSize">
+          <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" (click)="prevWalletPage()" [disabled]="walletPage === 1">
+            <i class="bi bi-chevron-left me-1"></i> Previous
+          </button>
+          <span class="small text-muted fw-medium">Page {{ walletPage }} of {{ walletTotalPages }}</span>
+          <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" (click)="nextWalletPage()" [disabled]="walletPage === walletTotalPages">
+            Next <i class="bi bi-chevron-right ms-1"></i>
+          </button>
         </div>
       </ng-container>
     </div>

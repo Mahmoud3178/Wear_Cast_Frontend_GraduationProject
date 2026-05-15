@@ -8,24 +8,7 @@
         {{ errorMessage }}
       </div>
 
-      <div *ngIf="emailNotConfirmed" class="alert alert-light border py-2 small mb-3" role="status">
-        <p class="small text-muted mb-2">
-          Confirm your email with the code WearCast sent you, then try signing in again.
-        </p>
-        <a
-          class="btn btn-primary btn-sm w-100 mb-2"
-          [routerLink]="['/confirm-email/factory-manager']"
-          [queryParams]="form.email ? { email: form.email } : {}">
-          Enter confirmation code
-        </a>
-        <button
-          type="button"
-          class="btn btn-outline-secondary btn-sm w-100"
-          [disabled]="resendSubmitting || !form.email"
-          (click)="resendConfirmation()">
-          {{ resendSubmitting ? 'Sending…' : 'Resend email' }}
-        </button>
-      </div>
+
 
       <div *ngIf="resendInfoMessage" class="alert alert-info py-2 small mb-3" role="status">
         {{ resendInfoMessage }}

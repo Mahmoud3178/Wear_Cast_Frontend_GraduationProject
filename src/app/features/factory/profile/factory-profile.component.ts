@@ -6,7 +6,8 @@ import {
   FactoryProfile,
   FactoryManager,
   FactoryManagerProfile,
-  FactoryWalletSummary
+  FactoryWalletSummary,
+  FactoryWalletTransaction
 } from '../../../core/services/factory-api.service';
 
 @Component({
@@ -22,6 +23,8 @@ export class FactoryProfileComponent implements OnInit {
   wallet: FactoryWalletSummary | null = null;
   walletLoading = false;
   walletError = '';
+  walletPage = 1;
+  walletPageSize = 10;
   loading = false;
   saving = false;
   errorMsg = '';
@@ -120,6 +123,7 @@ export class FactoryProfileComponent implements OnInit {
   loadWallet(): void {
     this.walletLoading = true;
     this.walletError = '';
+    this.walletPage = 1;
     this.factoryApi.getFactoryWallet().subscribe({
       next: wallet => {
         this.wallet = wallet;
@@ -130,6 +134,25 @@ export class FactoryProfileComponent implements OnInit {
         this.walletError = err.message || 'Failed to load wallet.';
       }
     });
+  }
+
+  get paginatedTransactions(): FactoryWalletTransaction[] {
+    if (!this.wallet) return [];
+    const startIndex = (this.walletPage - 1) * this.walletPageSize;
+    return this.wallet.recentTransactions.slice(startIndex, startIndex + this.walletPageSize);
+  }
+
+  get walletTotalPages(): number {
+    if (!this.wallet) return 1;
+    return Math.max(1, Math.ceil(this.wallet.recentTransactions.length / this.walletPageSize));
+  }
+
+  nextWalletPage(): void {
+    if (this.walletPage < this.walletTotalPages) this.walletPage++;
+  }
+
+  prevWalletPage(): void {
+    if (this.walletPage > 1) this.walletPage--;
   }
 
   startEdit(): void {

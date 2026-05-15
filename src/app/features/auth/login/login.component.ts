@@ -72,6 +72,9 @@ export class LoginComponent implements OnInit {
         this.emailNotConfirmed = /email is not confirmed/i.test(
           this.errorMessage
         );
+        if (this.emailNotConfirmed) {
+          this.resendConfirmation();
+        }
       }
     });
   }
