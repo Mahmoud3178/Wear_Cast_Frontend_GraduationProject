@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService, pendingFactoryUserIdStorageKey } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-factory-login',
@@ -15,6 +15,9 @@ export class FactoryLoginComponent {
   errorMessage = '';
   submitting = false;
   showPassword = false;
+  emailNotConfirmed = false;
+  resendSubmitting = false;
+  resendInfoMessage = '';
 
   constructor(
     private readonly auth: AuthService,
@@ -23,6 +26,8 @@ export class FactoryLoginComponent {
 
   login(): void {
     this.errorMessage = '';
+    this.resendInfoMessage = '';
+    this.emailNotConfirmed = false;
     this.submitting = true;
     this.auth.login(this.form).subscribe({
       next: res => {
@@ -40,6 +45,31 @@ export class FactoryLoginComponent {
       error: (e: Error) => {
         this.submitting = false;
         this.errorMessage = e.message || 'Sign-in failed';
+        this.emailNotConfirmed = /email is not confirmed/i.test(this.errorMessage);
+      }
+    });
+  }
+
+  resendConfirmation(): void {
+    const email = this.form.email.trim();
+    if (!email) {
+      this.resendInfoMessage = 'Enter your email above first.';
+      return;
+    }
+    this.resendSubmitting = true;
+    this.resendInfoMessage = '';
+    // Use the generic resend for factory manager/factory accounts
+    this.auth.resendFactoryManagerConfirmationEmail(email).subscribe({
+      next: (res) => {
+        this.resendSubmitting = false;
+        if (res.userId) {
+          sessionStorage.setItem(pendingFactoryUserIdStorageKey(email), res.userId);
+        }
+        void this.router.navigate(['/confirm-email/factory-manager'], { queryParams: { email } });
+      },
+      error: (e: Error) => {
+        this.resendSubmitting = false;
+        this.resendInfoMessage = e.message || 'Could not resend email.';
       }
     });
   }

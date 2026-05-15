@@ -226,7 +226,12 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.error?.description || 'Failed to change password.';
+        let msg = err.error?.error?.description || err.error?.message;
+        const validationErrors = err.error?.validationErrors || err.error?.ValidationErrors;
+        if (validationErrors) {
+          msg = Object.values(validationErrors).flat().join(' ');
+        }
+        this.errorMessage = msg || 'Failed to change password.';
       }
     });
   }

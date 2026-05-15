@@ -3,7 +3,7 @@ import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService, pendingFactoryUserIdStorageKey } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-confirm-factory-manager-email',
@@ -36,7 +36,13 @@ export class ConfirmFactoryManagerEmailComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.sub = this.route.queryParamMap.subscribe(params => {
       this.email = params.get('email')?.trim() ?? '';
-      const uid = params.get('userId')?.trim() ?? '';
+      let uid = params.get('userId')?.trim() ?? '';
+      if (!uid && this.email) {
+        const stored = sessionStorage.getItem(pendingFactoryUserIdStorageKey(this.email));
+        if (stored) {
+          uid = stored;
+        }
+      }
       this.userId = uid;
       this.userIdFromQuery = !!uid;
     });
@@ -90,10 +96,14 @@ export class ConfirmFactoryManagerEmailComponent implements OnInit, OnDestroy {
     this.resendSubmitting = true;
     this.errorMessage = '';
     this.auth.resendFactoryManagerConfirmationEmail(em).subscribe({
-      next: () => {
+      next: (res) => {
         this.resendSubmitting = false;
         this.successMessage =
           'If this account exists, a new confirmation email was sent.';
+        if (res.userId) {
+          this.userId = res.userId;
+          sessionStorage.setItem(pendingFactoryUserIdStorageKey(em), res.userId);
+        }
       },
       error: (e: Error) => {
         this.resendSubmitting = false;

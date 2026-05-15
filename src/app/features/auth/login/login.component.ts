@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CustomerNavComponent } from '../../customer/shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../../customer/shared/customer-footer/customer-footer.component';
+import { pendingCustomerUserIdStorageKey } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -84,10 +85,12 @@ export class LoginComponent implements OnInit {
     this.resendSubmitting = true;
     this.resendInfoMessage = '';
     this.auth.resendConfirmationEmail(email).subscribe({
-      next: () => {
+      next: (res) => {
         this.resendSubmitting = false;
-        this.resendInfoMessage =
-          'If this email is registered, a new confirmation message was sent. Check inbox and spam. If nothing arrives, the server may not be configured to send mail yet—ask the API team.';
+        if (res.userId) {
+          sessionStorage.setItem(pendingCustomerUserIdStorageKey(email), res.userId);
+        }
+        void this.router.navigate(['/confirm-email/customer'], { queryParams: { email } });
       },
       error: (e: Error) => {
         this.resendSubmitting = false;
