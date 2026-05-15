@@ -68,7 +68,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   loading = true;
   error = '';
   product: FixedProductDetail | null = null;
-  colors: FixedProductColor[] = [];
+  colors: FixedProductColorDetail[] = [];
   selectedColorId: number | null = null;
   colorDetail: FixedProductColorDetail | null = null;
   colorDetailLoading = false;
@@ -131,17 +131,22 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.isAuthenticated = !!this.auth.getToken();
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!id || isNaN(id)) {
-      this.loading = false;
-      this.error = 'Invalid product ID';
-      return;
-    }
-    this.loadProduct(id);
-    this.loadReviews(id);
-    if (this.isAuthenticated) {
-      this.loadMyReview(id);
-    }
+    this.route.paramMap.subscribe(params => {
+      const id = Number(params.get('id'));
+      if (!id || isNaN(id)) {
+        this.loading = false;
+        this.error = 'Invalid product ID';
+        return;
+      }
+      this.loading = true;
+      this.error = '';
+      this.product = null;
+      this.loadProduct(id);
+      this.loadReviews(id);
+      if (this.isAuthenticated) {
+        this.loadMyReview(id);
+      }
+    });
     this.loadBestSellers();
   }
 
@@ -154,7 +159,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
         if (!product) { this.error = 'Product not found'; return; }
         this.product = product;
         this.mainImage = product.imageUrl;
-        this.colors = product.colors ?? [];
+        this.colors = (product.colors as FixedProductColorDetail[]) ?? [];
         if (this.colors.length > 0) {
           this.selectColor(this.colors[0].id);
         } else {
@@ -178,33 +183,27 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   selectColor(colorId: number): void {
     this.selectedColorId = colorId;
-    this.colorDetailLoading = true;
-    this.fixedProductService.getColorById(colorId).subscribe({
-      next: detail => {
-        this.colorDetailLoading = false;
-        this.colorDetail = detail;
-        if (detail) {
-          this.galleryImages = [];
-          if (detail.imageUrl) this.galleryImages.push(detail.imageUrl);
-          for (const img of detail.additionalImages) {
-            if (img.imageUrl) this.galleryImages.push(img.imageUrl);
-          }
-          this.galleryIndex = 0;
-          this.mainImage = this.galleryImages[0] ?? this.product?.imageUrl ?? null;
-          // Build sizeRows for the cart modal
-          this.sizeRows = detail.sizes.map(s => ({
-            size: s.size,
-            quantity: s.quantity,
-            cartQty: 0
-          }));
-          // Check if this color is in favourites
-          this.checkIfInFavourites();
-        }
-      },
-      error: () => {
-        this.colorDetailLoading = false;
+    this.colorDetailLoading = false;
+    const detail = this.colors.find(c => c.id === colorId);
+    this.colorDetail = detail ?? null;
+    
+    if (detail) {
+      this.galleryImages = [];
+      if (detail.imageUrl) this.galleryImages.push(detail.imageUrl);
+      for (const img of detail.additionalImages || []) {
+        if (img.imageUrl) this.galleryImages.push(img.imageUrl);
       }
-    });
+      this.galleryIndex = 0;
+      this.mainImage = this.galleryImages[0] ?? this.product?.imageUrl ?? null;
+      // Build sizeRows for the cart modal
+      this.sizeRows = (detail.sizes || []).map(s => ({
+        size: s.size,
+        quantity: s.quantity,
+        cartQty: 0
+      }));
+      // Check if this color is in favourites
+      this.checkIfInFavourites();
+    }
   }
 
   selectGalleryImage(index: number): void {

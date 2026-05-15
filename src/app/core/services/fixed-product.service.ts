@@ -38,7 +38,7 @@ export interface FixedProductDetail {
   targetAudience: number | string;
   dressStyle: number | string;
   imageUrl: string | null;
-  colors: FixedProductColor[];
+  colors: FixedProductColorDetail[];
   sellerName?: string;
   sizeDetails?: { size: string; a: number; b: number; c: number }[];
 }
@@ -134,7 +134,16 @@ export class FixedProductService {
           colors: (d.colors ?? d.Colors ?? []).map((c: any) => ({
             id: c.id ?? c.Id ?? 0,
             colorName: c.colorName ?? c.ColorName ?? c.name ?? '',
-            colorCode: c.colorCode ?? c.ColorCode ?? c.hexCode ?? ''
+            colorCode: c.colorCode ?? c.ColorCode ?? c.hexCode ?? '',
+            imageUrl: c.imageUrl ?? c.ImageUrl ?? '',
+            sizes: (c.availableSizes ?? c.sizes ?? c.Sizes ?? []).map((s: any) => ({
+              size: s.size ?? s.Size ?? '',
+              quantity: s.quantity ?? s.Quantity ?? 0
+            })),
+            additionalImages: (c.images ?? c.additionalImages ?? c.AdditionalImages ?? []).map((img: any) => ({
+              id: img.id ?? img.Id ?? 0,
+              imageUrl: img.imageUrl ?? img.ImageUrl ?? ''
+            }))
           })),
           sellerName: d.sellerName ?? d.SellerName ?? '',
           sizeDetails: (d.sizeDetails ?? d.SizeDetails ?? []).map((sd: any) => ({
