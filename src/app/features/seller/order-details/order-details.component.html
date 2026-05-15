@@ -9,12 +9,12 @@
       </h4>
       <small class="text-muted">{{ order.placedAt | date:'medium' }}</small>
     </div>
-    <button
-      *ngIf="order.status === 'Pending'"
-      class="btn btn-success"
-      (click)="confirmOrder()">
-      Confirm Order
-    </button>
+ <button
+  *ngIf="order.status === 'Paid'"
+  class="btn btn-success"
+  (click)="confirmOrder()">
+  Confirm Order
+</button>
   </div>
 
   <!-- Summary Cards -->

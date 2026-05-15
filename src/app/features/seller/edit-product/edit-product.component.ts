@@ -159,10 +159,18 @@ this.sizeDetails = this.allSizes.map(sz => {
         this.saveMsg  = 'Product updated successfully ✅';
         setTimeout(() => this.saveMsg = '', 3000);
       },
-      error: (err: any) => {
-        this.isSaving  = false;
-        this.saveError = err?.error?.message || 'Update failed ❌';
-      }
+error: (err: any) => {
+  this.isSaving  = false;
+  const errBody  = err?.error;
+
+  if (errBody?.validationErrors) {
+    this.saveError = Object.entries(errBody.validationErrors)
+      .map(([field, msg]) => `${field}: ${msg}`)
+      .join(' | ');
+  } else {
+    this.saveError = errBody?.description || errBody?.message || errBody?.title || 'Update failed ❌';
+  }
+}
     });
   }
 
@@ -196,10 +204,18 @@ this.sizeDetails = this.allSizes.map(sz => {
         color.colorCode = color.editCode;
         setTimeout(() => this.colorMsg[color.id] = '', 2500);
       },
-      error: (err: any) => {
-        this.colorSaving[color.id] = false;
-        this.colorMsg[color.id]    = '❌ ' + (err?.error?.message || 'Failed');
-      }
+error: (err: any) => {
+  this.colorSaving[color.id] = false;
+  const errBody = err?.error;
+
+  if (errBody?.validationErrors) {
+    this.colorMsg[color.id] = '❌ ' + Object.entries(errBody.validationErrors)
+      .map(([field, msg]) => `${field}: ${msg}`)
+      .join(' | ');
+  } else {
+    this.colorMsg[color.id] = '❌ ' + (errBody?.description || errBody?.message || 'Failed');
+  }
+}
     });
   }
 
