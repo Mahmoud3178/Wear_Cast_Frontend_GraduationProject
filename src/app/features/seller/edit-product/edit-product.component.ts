@@ -268,23 +268,34 @@ this.sizeDetails = this.allSizes.map(sz => {
 
   closeAdjust() { this.adjustingColor = null; }
 
-  saveAdjust() {
-    const changed = this.adjustSizes.filter(s => s.newQty !== s.currentQty && s.newQty > 0);
-    if (!changed.length) { this.closeAdjust(); return; }
+saveAdjust() {
 
-const requests = changed.map(s =>
-  this.productService.adjustSizeQuantity({
-    colorId: this.adjustingColor.id,   // 👈 جرّب بدل fixedProductColorId
-    size: this.sizeMapping[s.size] ?? s.size,
-    quantity: Number(s.newQty)
-  }).toPromise()
-);
+  const changed = this.adjustSizes
+    .filter(s => s.newQty !== s.currentQty);
 
-    Promise.all(requests)
-      .then(() => { this.closeAdjust(); this.loadProduct(); })
-      .catch(() => alert('Failed to adjust quantities'));
+  if (!changed.length) {
+    this.closeAdjust();
+    return;
   }
 
+  const body = {
+    colorId: this.adjustingColor.id,
+    adjustments: changed.map(s => ({
+      size: this.sizeMapping[s.size],
+      quantity: Number(s.newQty)
+    }))
+  };
+
+  this.productService.adjustSizeQuantity(body).subscribe({
+    next: () => {
+      this.closeAdjust();
+      this.loadProduct();
+    },
+    error: () => {
+      alert('Failed to adjust quantities');
+    }
+  });
+}
   // ── Add new color ─────────────────────────────────────
   onNewColorImage(event: any) {
     this.newColor.mainImage = event.target.files[0];
