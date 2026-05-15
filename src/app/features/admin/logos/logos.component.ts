@@ -22,7 +22,6 @@ export class LogosComponent implements OnInit {
   searchTerm: string = '';
   newCategoryName: string = '';
 
-  // 🔥 ADD LOGO MODEL
   newLogo = {
     name: '',
     widthPx: 100,
@@ -79,7 +78,6 @@ export class LogosComponent implements OnInit {
   }
 
   createLogo() {
-
     const formData = new FormData();
 
     formData.append('Name', this.newLogo.name || '');
@@ -95,7 +93,6 @@ export class LogosComponent implements OnInit {
       next: () => {
         this.loadLogos();
 
-        // reset
         this.newLogo = {
           name: '',
           widthPx: 100,
@@ -111,15 +108,13 @@ export class LogosComponent implements OnInit {
   openLogo(logo: any) {
     this.selectedLogo = {
       ...logo,
+      categoryId: logo.categoryId ?? 0,
       widthPx: logo.widthPx || 100,
       heightPx: logo.heightPx || 100
     };
   }
 
   closePanel() {
-    const panel = document.getElementById('logoPanel');
-    const bs = (window as any).bootstrap?.Offcanvas.getInstance(panel!);
-    bs?.hide();
     this.selectedLogo = null;
   }
 
@@ -142,7 +137,6 @@ export class LogosComponent implements OnInit {
   }
 
   updateLogo() {
-
     const formData = new FormData();
 
     formData.append('Name', this.selectedLogo.name || '');

@@ -59,20 +59,37 @@
 <div class="adm-drawer" [class.open]="!!selectedLogo">
   <div class="adm-drawer-head">
     <h5 class="adm-drawer-title">Logo Details</h5>
-    <button class="adm-drawer-close" (click)="selectedLogo=null"><i class="bi bi-x-lg"></i></button>
+    <button class="adm-drawer-close" (click)="selectedLogo=null">
+      <i class="bi bi-x-lg"></i>
+    </button>
   </div>
 
   <div class="adm-drawer-body" *ngIf="selectedLogo">
+
     <div class="logo-preview-box">
       <img [src]="selectedLogo.imageUrl" class="logo-preview-img"
            onerror="this.src='https://via.placeholder.com/200?text=Logo'">
     </div>
 
     <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px">
+
+      <!-- Name -->
       <div class="adm-form-group">
         <label>Name</label>
-        <input class="adm-field" placeholder="Logo name" [(ngModel)]="selectedLogo.name">
+        <input class="adm-field" [(ngModel)]="selectedLogo.name" placeholder="Logo name">
       </div>
+
+      <!-- Category (NEW) -->
+      <div class="adm-form-group">
+        <label>Category</label>
+        <select class="adm-field" [(ngModel)]="selectedLogo.categoryId">
+          <option *ngFor="let c of categories" [value]="c.id">
+            {{ c.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Width / Height -->
       <div class="adm-form-grid">
         <div class="adm-form-group">
           <label>Width (px)</label>
@@ -83,10 +100,13 @@
           <input type="number" class="adm-field" [(ngModel)]="selectedLogo.heightPx">
         </div>
       </div>
+
+      <!-- Replace Image -->
       <div class="adm-form-group">
         <label>Replace Image</label>
         <input type="file" class="adm-field" (change)="onLogoFileChange($event)">
       </div>
+
     </div>
   </div>
 
@@ -94,7 +114,9 @@
     <button class="adm-btn-danger" (click)="deleteLogo(selectedLogo.id)">
       <i class="bi bi-trash"></i> Delete
     </button>
-    <button class="adm-btn-primary" style="flex:2;justify-content:center" (click)="updateLogo()">
+
+    <button class="adm-btn-primary" style="flex:2;justify-content:center"
+            (click)="updateLogo()">
       <i class="bi bi-check2"></i> Update Logo
     </button>
   </div>

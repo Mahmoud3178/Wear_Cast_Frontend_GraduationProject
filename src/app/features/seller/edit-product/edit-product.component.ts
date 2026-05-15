@@ -27,7 +27,7 @@ export class EditProductComponent implements OnInit {
   categories:  any[] = [];
   sizeDetails: any[] = [];
   colors:      any[] = [];
-
+private allSizes = ['_2XS','_XS','_S','_M','_L','_XL','_2XL','_3XL','_4XL','_5XL'];
 readonly sizeLabels: Record<string, string> = {
   '_2XS':'2XS',
   '_XS':'XS',
@@ -110,8 +110,16 @@ newColorSizes: { name: string; quantity: number }[] =
           categoryId:     res.category?.id ?? 0,
           dressStyle:     res.dressStyle ?? 1
         };
-        this.sizeDetails = (res.sizeDetails ?? []).map((s: any) => ({ ...s }));
-        this.colors = (res.colors ?? []).map((c: any) => ({
+this.sizeDetails = this.allSizes.map(sz => {
+  const found = (res.sizeDetails ?? []).find((s: any) => s.size === sz);
+
+  return {
+    size: sz,
+    a: found?.a ?? 0,
+    b: found?.b ?? 0,
+    c: found?.c ?? 0
+  };
+});        this.colors = (res.colors ?? []).map((c: any) => ({
           ...c,
           editName:       c.colorName,
           editCode:       c.colorCode,
@@ -243,18 +251,20 @@ newColorSizes: { name: string; quantity: number }[] =
 
   // ── Adjust quantities ─────────────────────────────────
   openAdjust(color: any) {
-    this.adjustingColor = color;
-    this.adjustSizes = (color.availableSizes ?? []).map((s: any) => ({
-      size:       s.size,
-      currentQty: s.quantity,
-      newQty:     s.quantity
-    }));
-    const existing = new Set(this.adjustSizes.map((s: any) => s.size));
-    ['_2XS','_XS','_S','_M','_L','_XL','_2XL'].forEach(sz => {
-      if (!existing.has(sz))
-        this.adjustSizes.push({ size: sz, currentQty: 0, newQty: 0 });
-    });
-  }
+  this.adjustingColor = color;
+  this.adjustSizes = (color.availableSizes ?? []).map((s: any) => ({
+    size:       s.size,
+    currentQty: s.quantity,
+    newQty:     s.quantity
+  }));
+
+  const existing = new Set(this.adjustSizes.map((s: any) => s.size));
+
+  ['_2XS','_XS','_S','_M','_L','_XL','_2XL','_3XL','_4XL','_5XL'].forEach(sz => {
+    if (!existing.has(sz))
+      this.adjustSizes.push({ size: sz, currentQty: 0, newQty: 0 });
+  });
+}
 
   closeAdjust() { this.adjustingColor = null; }
 
@@ -262,13 +272,13 @@ newColorSizes: { name: string; quantity: number }[] =
     const changed = this.adjustSizes.filter(s => s.newQty !== s.currentQty && s.newQty > 0);
     if (!changed.length) { this.closeAdjust(); return; }
 
-    const requests = changed.map(s =>
-      this.productService.adjustSizeQuantity({
-        fixedProductColorId: this.adjustingColor.id,
-        size:                this.sizeMapping[s.size] ?? s.size,
-        quantity:            Number(s.newQty)
-      }).toPromise()
-    );
+const requests = changed.map(s =>
+  this.productService.adjustSizeQuantity({
+    colorId: this.adjustingColor.id,   // 👈 جرّب بدل fixedProductColorId
+    size: this.sizeMapping[s.size] ?? s.size,
+    quantity: Number(s.newQty)
+  }).toPromise()
+);
 
     Promise.all(requests)
       .then(() => { this.closeAdjust(); this.loadProduct(); })
@@ -323,8 +333,9 @@ newColorSizes: { name: string; quantity: number }[] =
           mainImage:        null,
           additionalImages: []
         };
-        this.newColorSizes = ['_2XS','_XS','_S','_M','_L','_XL','_2XL']
-          .map(n => ({ name: n, quantity: 0 }));
+  this.newColorSizes = [
+  '_2XS','_XS','_S','_M','_L','_XL','_2XL','_3XL','_4XL','_5XL'
+].map(n => ({ name: n, quantity: 0 }));
         this.loadProduct();
       },
       error: (err: any) => {
