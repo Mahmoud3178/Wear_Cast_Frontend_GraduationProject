@@ -35,17 +35,24 @@
              [(ngModel)]="searchText" (input)="onFilterChange()">
     </div>
 
-    <div class="pills-wrap">
-      <button class="pill-btn" [class.active]="activeFilter === 'all'" (click)="setFilter('all')">
-        All Items
-      </button>
-      <button class="pill-btn" [class.active]="activeFilter === 'low'" (click)="setFilter('low')">
-        Low Stock <span class="pill-badge">{{ lowStockCount }}</span>
-      </button>
-      <button class="pill-btn" [class.active]="activeFilter === 'out'" (click)="setFilter('out')">
-        Out of Stock <span class="pill-badge">{{ outOfStockCount }}</span>
-      </button>
-    </div>
+<div class="pills-wrap">
+  <button class="pill-btn" [class.active]="activeFilter === 'all'" (click)="setFilter('all')">
+    All Items
+  </button>
+  <button class="pill-btn" [class.active]="activeFilter === 'low'" (click)="setFilter('low')">
+    Low Stock <span class="pill-badge">{{ lowStockCount }}</span>
+  </button>
+  <button class="pill-btn" [class.active]="activeFilter === 'out'" (click)="setFilter('out')">
+    Out of Stock <span class="pill-badge">{{ outOfStockCount }}</span>
+  </button>
+  <!-- ✅ الجديد -->
+  <button class="pill-btn" [class.active]="activeFilter === 'approved'" (click)="setFilter('approved')">
+    Approved <span class="pill-badge" style="background:#10b981">{{ approvedCount }}</span>
+  </button>
+  <button class="pill-btn" [class.active]="activeFilter === 'rejected'" (click)="setFilter('rejected')">
+    Rejected <span class="pill-badge" style="background:#ef4444">{{ rejectedCount }}</span>
+  </button>
+</div>
 
     <div class="filters-wrap">
       <select class="filter-select" [(ngModel)]="selectedCategory" (change)="onFilterChange()">

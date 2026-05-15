@@ -50,6 +50,11 @@ getSellerOrders(pageNumber = 1, pageSize = 10, statusFilter?: number) {
 
   // 🔹 Update Order Status
 updateOrderStatus(orderId: number, payload: any) {
-  return this.http.put(`api/Orders/${orderId}/status`, payload);
+  const token = localStorage.getItem('token') || '';
+  return this.http.put(`${this.baseUrl}/${orderId}/status`, payload, {
+    headers: new HttpHeaders({
+      Authorization: `Bearer ${token}`
+    })
+  });
 }
 }

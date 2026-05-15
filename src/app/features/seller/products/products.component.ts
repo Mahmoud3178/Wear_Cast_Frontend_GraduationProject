@@ -20,8 +20,7 @@ export class ProductsComponent implements OnInit {
   selectedCategory: number | null = null;
   minPrice: number | null = null;
   maxPrice: number | null = null;
-  activeFilter: 'all' | 'low' | 'out' = 'all';
-
+activeFilter: 'all' | 'low' | 'out' | 'approved' | 'rejected' = 'all';
   stats = [
     { title: 'Total Products', value: 0, icon: 'bi-box-seam',         color: 'text-primary' },
     { title: 'Approved',       value: 0, icon: 'bi-check-circle',      color: 'text-success' },
@@ -71,42 +70,49 @@ export class ProductsComponent implements OnInit {
   }
 
   // ── Filtering (client-side) ────────────────────────────
-  get filteredProducts(): any[] {
-    let data = [...this.products];
+get filteredProducts(): any[] {
+  let data = [...this.products];
 
-    if (this.searchText)
-      data = data.filter(p =>
-        p.name.toLowerCase().includes(this.searchText.toLowerCase())
-      );
+  if (this.searchText)
+    data = data.filter(p =>
+      p.name.toLowerCase().includes(this.searchText.toLowerCase())
+    );
 
-    if (this.activeFilter === 'low')
-      data = data.filter(p => p.stock > 0 && p.stock < 10);
+  if (this.activeFilter === 'low')
+    data = data.filter(p => p.stock > 0 && p.stock < 10);
 
-    if (this.activeFilter === 'out')
-      data = data.filter(p => p.stock === 0);
+  if (this.activeFilter === 'out')
+    data = data.filter(p => p.stock === 0);
 
-    if (this.minPrice != null)
-      data = data.filter(p => p.price >= this.minPrice!);
+  // ✅ الجديد
+  if (this.activeFilter === 'approved')
+    data = data.filter(p => p.approval === 'Approved');
 
-    if (this.maxPrice != null)
-      data = data.filter(p => p.price <= this.maxPrice!);
+  if (this.activeFilter === 'rejected')
+    data = data.filter(p => p.approval === 'Rejected');
 
-    if (this.selectedCategory === 1)
-      data = data.filter(p => p.targetAudience === 'Men');
-    else if (this.selectedCategory === 2)
-      data = data.filter(p => p.targetAudience === 'Women');
-    else if (this.selectedCategory === 3)
-      data = data.filter(p => p.targetAudience === 'Kids');
+  if (this.minPrice != null)
+    data = data.filter(p => p.price >= this.minPrice!);
 
-    return data;
-  }
+  if (this.maxPrice != null)
+    data = data.filter(p => p.price <= this.maxPrice!);
+
+  if (this.selectedCategory === 1)
+    data = data.filter(p => p.targetAudience === 'Men');
+  else if (this.selectedCategory === 2)
+    data = data.filter(p => p.targetAudience === 'Women');
+  else if (this.selectedCategory === 3)
+    data = data.filter(p => p.targetAudience === 'Kids');
+
+  return data;
+}
 
   onFilterChange() { this.currentPage = 1; }
 
-  setFilter(type: 'all' | 'low' | 'out') {
-    this.activeFilter = type;
-    this.currentPage  = 1;
-  }
+setFilter(type: 'all' | 'low' | 'out' | 'approved' | 'rejected') {
+  this.activeFilter = type;
+  this.currentPage  = 1;
+}
 
   // ── Counts for pills ───────────────────────────────────
   get lowStockCount():  number { return this.products.filter(p => p.stock > 0  && p.stock < 10).length; }
@@ -123,7 +129,8 @@ export class ProductsComponent implements OnInit {
   get startIndex(): number { return (this.currentPage - 1) * this.pageSize; }
   get endIndex():   number { return Math.min(this.startIndex + this.pageSize, this.filteredProducts.length); }
   get pagedProducts(): any[] { return this.filteredProducts.slice(this.startIndex, this.endIndex); }
-
+get approvedCount(): number { return this.products.filter(p => p.approval === 'Approved').length; }
+get rejectedCount(): number { return this.products.filter(p => p.approval === 'Rejected').length; }
   goToPage(page: number) { this.currentPage = page; }
   prevPage() { if (this.currentPage > 1)                      this.currentPage--; }
   nextPage() { if (this.currentPage < this.totalPages.length)  this.currentPage++; }

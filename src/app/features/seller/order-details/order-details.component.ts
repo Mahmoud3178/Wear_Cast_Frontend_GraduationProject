@@ -65,12 +65,15 @@ export class OrderDetailsComponent implements OnInit {
       this.subtotal = this.items.reduce((sum, i) => sum + i.total, 0);
     });
   }
+confirmOrder() {
+  if (this.order.status !== 'Paid') return;
 
-  confirmOrder() {
-    this.orderService.updateOrderStatus(this.orderId, { newStatus: 'Ready' })
-      .subscribe({
-        next: () => { this.order.status = 'Ready'; },
-        error: err => { console.error('Error updating order status:', err); }
-      });
-  }
+  this.orderService.updateOrderStatus(this.orderId, { newStatus: 'Ready' })
+    .subscribe({
+      next: () => {
+        this.order.status = 'Ready';
+      },
+      error: err => { console.error('Error updating order status:', err); }
+    });
+}
 }
