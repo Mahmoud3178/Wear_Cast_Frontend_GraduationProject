@@ -40,7 +40,6 @@ export class LoginComponent implements OnInit {
 
   login(): void {
     this.errorMessage = '';
-    this.resendInfoMessage = '';
     this.emailNotConfirmed = false;
     this.submitting = true;
     this.auth.login(this.form).subscribe({
