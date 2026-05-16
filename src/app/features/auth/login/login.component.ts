@@ -23,8 +23,6 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   submitting = false;
   emailNotConfirmed = false;
-  resendSubmitting = false;
-  resendInfoMessage = '';
   showPassword = false;
 
   constructor(
@@ -73,32 +71,12 @@ export class LoginComponent implements OnInit {
           this.errorMessage
         );
         if (this.emailNotConfirmed) {
-          this.resendConfirmation();
+          void this.router.navigate(['/resend-confirmation/customer'], {
+            queryParams: { email: this.form.email.trim() }
+          });
         }
       }
     });
   }
 
-  resendConfirmation(): void {
-    const email = this.form.email.trim();
-    if (!email) {
-      this.resendInfoMessage = 'Enter your email above first.';
-      return;
-    }
-    this.resendSubmitting = true;
-    this.resendInfoMessage = '';
-    this.auth.resendConfirmationEmail(email).subscribe({
-      next: (res) => {
-        this.resendSubmitting = false;
-        if (res.userId) {
-          sessionStorage.setItem(pendingCustomerUserIdStorageKey(email), res.userId);
-        }
-        void this.router.navigate(['/confirm-email/customer'], { queryParams: { email } });
-      },
-      error: (e: Error) => {
-        this.resendSubmitting = false;
-        this.resendInfoMessage = e.message || 'Could not resend email.';
-      }
-    });
-  }
 }

@@ -1,9 +1,9 @@
 <div class="min-vh-100 d-flex align-items-center justify-content-center bg-light py-5 px-3">
   <div class="card shadow-lg border-0 w-100" style="max-width: 420px; border-radius: 16px;">
     <div class="card-body p-4 p-md-5">
-      <h3 class="text-center fw-bold mb-2">Verify factory manager email</h3>
+      <h1 class="h4 fw-bold text-center mb-2">Confirm manager email</h1>
       <p class="text-center text-muted small mb-4">
-        Use the <strong>factory manager</strong> email and the code sent to your inbox.
+        Enter the verification code WearCast sent to <span class="fw-medium text-dark">{{ email }}</span>
       </p>
 
       <div *ngIf="errorMessage" class="alert alert-danger py-2 small" role="alert">
@@ -40,13 +40,7 @@
         {{ submitting ? 'Verifying…' : 'Confirm email' }}
       </button>
 
-      <button
-        type="button"
-        class="btn btn-outline-secondary w-100 btn-sm mb-3"
-        [disabled]="resendSubmitting || !email"
-        (click)="resend()">
-        {{ resendSubmitting ? 'Sending…' : 'Resend code' }}
-      </button>
+
 
       <p class="text-center small text-muted mb-0">
         <a routerLink="/factory/login" class="text-decoration-none">Sign in</a>

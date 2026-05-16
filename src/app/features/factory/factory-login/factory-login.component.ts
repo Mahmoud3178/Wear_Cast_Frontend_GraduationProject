@@ -16,8 +16,6 @@ export class FactoryLoginComponent {
   submitting = false;
   showPassword = false;
   emailNotConfirmed = false;
-  resendSubmitting = false;
-  resendInfoMessage = '';
 
   constructor(
     private readonly auth: AuthService,
@@ -47,33 +45,12 @@ export class FactoryLoginComponent {
         this.errorMessage = e.message || 'Sign-in failed';
         this.emailNotConfirmed = /email is not confirmed/i.test(this.errorMessage);
         if (this.emailNotConfirmed) {
-          this.resendConfirmation();
+          void this.router.navigate(['/resend-confirmation/factory-manager'], {
+            queryParams: { email: this.form.email.trim() }
+          });
         }
       }
     });
   }
 
-  resendConfirmation(): void {
-    const email = this.form.email.trim();
-    if (!email) {
-      this.resendInfoMessage = 'Enter your email above first.';
-      return;
-    }
-    this.resendSubmitting = true;
-    this.resendInfoMessage = '';
-    // Use the generic resend for factory manager/factory accounts
-    this.auth.resendFactoryManagerConfirmationEmail(email).subscribe({
-      next: (res) => {
-        this.resendSubmitting = false;
-        if (res.userId) {
-          sessionStorage.setItem(pendingFactoryUserIdStorageKey(email), res.userId);
-        }
-        void this.router.navigate(['/confirm-email/factory-manager'], { queryParams: { email } });
-      },
-      error: (e: Error) => {
-        this.resendSubmitting = false;
-        this.resendInfoMessage = e.message || 'Could not resend email.';
-      }
-    });
-  }
 }

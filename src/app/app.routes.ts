@@ -70,6 +70,13 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'resend-confirmation/:type',
+    loadComponent: () =>
+      import('./features/auth/resend-confirmation/resend-confirmation.component').then(
+        m => m.ResendConfirmationComponent
+      )
+  },
+  {
     path: 'factory/login',
     loadComponent: () =>
       import('./features/factory/factory-login/factory-login.component').then(

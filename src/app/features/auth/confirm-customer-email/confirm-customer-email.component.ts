@@ -22,7 +22,6 @@ export class ConfirmCustomerEmailComponent implements OnInit, OnDestroy {
   errorMessage = '';
   successMessage = '';
   submitting = false;
-  resendSubmitting = false;
 
   private sub?: Subscription;
 
@@ -90,28 +89,4 @@ export class ConfirmCustomerEmailComponent implements OnInit, OnDestroy {
     });
   }
 
-  resend(): void {
-    const em = this.email.trim();
-    if (!em) {
-      this.errorMessage = 'Enter your email in the field below first.';
-      return;
-    }
-    this.resendSubmitting = true;
-    this.errorMessage = '';
-    this.auth.resendConfirmationEmail(em).subscribe({
-      next: (res) => {
-        this.resendSubmitting = false;
-        this.successMessage =
-          'If this address is registered, a new email was sent. Check spam.';
-        if (res.userId) {
-          this.userId = res.userId;
-          sessionStorage.setItem(pendingCustomerUserIdStorageKey(em), res.userId);
-        }
-      },
-      error: (e: Error) => {
-        this.resendSubmitting = false;
-        this.errorMessage = e.message || 'Could not resend.';
-      }
-    });
-  }
 }

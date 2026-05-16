@@ -23,7 +23,6 @@ export class ConfirmFactoryManagerEmailComponent implements OnInit, OnDestroy {
   errorMessage = '';
   successMessage = '';
   submitting = false;
-  resendSubmitting = false;
 
   private sub?: Subscription;
 
@@ -87,28 +86,4 @@ export class ConfirmFactoryManagerEmailComponent implements OnInit, OnDestroy {
     });
   }
 
-  resend(): void {
-    const em = this.email.trim();
-    if (!em) {
-      this.errorMessage = 'Enter your factory manager email first.';
-      return;
-    }
-    this.resendSubmitting = true;
-    this.errorMessage = '';
-    this.auth.resendFactoryManagerConfirmationEmail(em).subscribe({
-      next: (res) => {
-        this.resendSubmitting = false;
-        this.successMessage =
-          'If this account exists, a new confirmation email was sent.';
-        if (res.userId) {
-          this.userId = res.userId;
-          sessionStorage.setItem(pendingFactoryUserIdStorageKey(em), res.userId);
-        }
-      },
-      error: (e: Error) => {
-        this.resendSubmitting = false;
-        this.errorMessage = e.message || 'Could not resend.';
-      }
-    });
-  }
 }
