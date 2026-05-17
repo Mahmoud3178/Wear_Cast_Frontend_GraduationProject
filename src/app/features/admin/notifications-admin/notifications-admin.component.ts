@@ -3,42 +3,47 @@ import { Component, OnInit } from '@angular/core';
 import { NotificationsService } from '../../../core/services/notifications.service';
 
 @Component({
-  selector: 'app-saller-notifications',
+  selector: 'app-notifications-admin',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './saller-notifications.component.html',
-  styleUrl: './saller-notifications.component.css'
+  templateUrl: './notifications-admin.component.html',
+  styleUrl: './notifications-admin.component.css'
 })
-export class SallerNotificationsComponent implements OnInit {
+export class NotificationsAdminComponent implements OnInit {
 
   notifications: any[] = [];
   isLoading = false;
   selectedType: number | undefined = undefined;
 
-  pageIndex = 1;
-  pageSize  = 20;
-
   constructor(private notifService: NotificationsService) {}
 ngOnInit() {
   this.notifService.receiveAll().subscribe(() => {
-    window.dispatchEvent(new CustomEvent('notif-delivered'));
+    // بعد ما الكل اتعمل delivered صفر الكونتر في الـ layout
+    this.resetParentCounter();
   });
   this.load();
 }
 
+resetParentCounter() {
+  // نروح للـ layout ونصفر الكونتر
+  const layoutComp = document.querySelector('app-admin-layout') as any;
+  if (layoutComp?.__ngContext__) return;
+
+  // الطريقة الأبسط: نبعت event
+  window.dispatchEvent(new CustomEvent('notif-delivered'));
+}
   load() {
     this.isLoading = true;
-    this.notifService.getAll(this.pageIndex, this.pageSize, this.selectedType)
-      .subscribe({
-        next: (res: any) => {
-          this.notifications = res?.items ?? res?.data ?? res ?? [];
-          this.isLoading = false;
-        },
-        error: () => { this.isLoading = false; }
-      });
+    this.notifService.getAll(1, 50, this.selectedType).subscribe({
+      next: (res: any) => {
+        this.notifications = res?.items ?? res?.data ?? res ?? [];
+        this.isLoading = false;
+      },
+      error: () => { this.isLoading = false; }
+    });
   }
 
-  get unread()  { return this.notifications.filter(n => !n.isRead).length; }
+  get unread() { return this.notifications.filter(n => !n.isRead).length; }
 
   markRead(n: any) {
     if (n.isRead) return;
@@ -59,28 +64,21 @@ ngOnInit() {
 
   filterBy(type: number | undefined) {
     this.selectedType = type;
-    this.pageIndex = 1;
     this.load();
   }
 
   typeLabel(type: number): string {
-    const map: Record<number, string> = {
-      1: 'Shipment Update',
-    };
+    const map: Record<number, string> = { 1: 'Shipment Update' };
     return map[type] ?? 'Notification';
   }
 
   typeIcon(type: number): string {
-    const map: Record<number, string> = {
-      1: 'bi-truck',
-    };
+    const map: Record<number, string> = { 1: 'bi-truck' };
     return map[type] ?? 'bi-bell';
   }
 
   typeColor(type: number): string {
-    const map: Record<number, string> = {
-      1: 'bg-indigo',
-    };
-    return map[type] ?? 'bg-secondary';
+    const map: Record<number, string> = { 1: 'icon-indigo' };
+    return map[type] ?? 'icon-gray';
   }
 }

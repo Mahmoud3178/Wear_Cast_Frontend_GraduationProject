@@ -164,41 +164,69 @@
     <div class="col-lg-4">
 
       <!-- Wallet -->
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="fw-bold mb-0"><i class="bi bi-wallet2 me-2"></i>Wallet</h6>
-            <button class="btn btn-sm btn-outline-secondary rounded-pill" (click)="loadWallet()" [disabled]="walletLoading">
-              <i class="bi bi-arrow-clockwise"></i>
-            </button>
+  <div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-bold mb-0"><i class="bi bi-wallet2 me-2"></i>Wallet</h6>
+      <button class="btn btn-sm btn-outline-secondary rounded-pill" (click)="loadWallet()" [disabled]="walletLoading">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+    </div>
+
+    <div *ngIf="walletError" class="alert alert-danger py-2 small">{{ walletError }}</div>
+    <div *ngIf="walletLoading" class="text-muted small">Loading wallet...</div>
+
+    <ng-container *ngIf="!walletLoading && wallet">
+      <div class="border rounded-3 p-3 bg-light mb-3">
+        <span class="text-muted small d-block">Current Balance</span>
+        <strong class="fs-4">EGP {{ wallet.balance | number:'1.2-2' }}</strong>
+      </div>
+
+      <!-- ✅ الجديد هنا -->
+      <h6 class="small fw-semibold mb-2">Recent Transactions</h6>
+      <div *ngIf="!wallet.recentTransactions?.length" class="text-muted small">No transactions yet.</div>
+      <div class="list-group" *ngIf="wallet.recentTransactions?.length">
+        <div class="list-group-item px-2 py-2" *ngFor="let tx of walletPagedTransactions">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <div class="fw-semibold small">{{ tx.type }} · EGP {{ tx.amount | number:'1.2-2' }}</div>
+              <div class="small text-muted">{{ tx.description }}</div>
+              <div class="small text-muted" *ngIf="tx.referenceOrderId">Order #{{ tx.referenceOrderId }}</div>
+            </div>
+            <span class="small text-muted text-nowrap">{{ tx.createdOn | date:'dd/MM/yyyy' }}</span>
           </div>
-
-          <div *ngIf="walletError" class="alert alert-danger py-2 small">{{ walletError }}</div>
-          <div *ngIf="walletLoading" class="text-muted small">Loading wallet...</div>
-
-          <ng-container *ngIf="!walletLoading && wallet">
-            <div class="border rounded-3 p-3 bg-light mb-3">
-              <span class="text-muted small d-block">Current Balance</span>
-              <strong class="fs-4">EGP {{ wallet.balance | number:'1.2-2' }}</strong>
-            </div>
-
-            <h6 class="small fw-semibold mb-2">Recent Transactions</h6>
-            <div *ngIf="!wallet.recentTransactions?.length" class="text-muted small">No transactions yet.</div>
-            <div class="list-group" *ngIf="wallet.recentTransactions?.length">
-              <div class="list-group-item px-2 py-2" *ngFor="let tx of wallet.recentTransactions">
-                <div class="d-flex justify-content-between align-items-start gap-2">
-                  <div>
-                    <div class="fw-semibold small">{{ tx.type }} · EGP {{ tx.amount | number:'1.2-2' }}</div>
-                    <div class="small text-muted">{{ tx.description }}</div>
-                    <div class="small text-muted" *ngIf="tx.referenceOrderId">Order #{{ tx.referenceOrderId }}</div>
-                  </div>
-<span class="small text-muted text-nowrap">{{ tx.createdOn | date:'dd/MM/yyyy' }}</span>
-                </div>
-              </div>
-            </div>
-          </ng-container>
         </div>
       </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="walletTotalPages > 1">
+        <span class="text-muted" style="font-size:11px">
+          Page {{ walletPage }} of {{ walletTotalPages }}
+        </span>
+        <div class="d-flex gap-1">
+          <button class="btn btn-sm btn-outline-secondary px-2 py-1"
+                  (click)="walletGoTo(walletPage - 1)"
+                  [disabled]="walletPage === 1">
+            <i class="bi bi-chevron-left" style="font-size:11px"></i>
+          </button>
+          <button class="btn btn-sm px-2 py-1"
+                  *ngFor="let p of [].constructor(walletTotalPages); let i = index"
+                  [class.btn-dark]="walletPage === i + 1"
+                  [class.btn-outline-secondary]="walletPage !== i + 1"
+                  (click)="walletGoTo(i + 1)">
+            {{ i + 1 }}
+          </button>
+          <button class="btn btn-sm btn-outline-secondary px-2 py-1"
+                  (click)="walletGoTo(walletPage + 1)"
+                  [disabled]="walletPage === walletTotalPages">
+            <i class="bi bi-chevron-right" style="font-size:11px"></i>
+          </button>
+        </div>
+      </div>
+      <!-- ✅ نهاية الجديد -->
+
+    </ng-container>
+  </div>
+</div>
 
       <!-- Security -->
       <div class="card border-0 shadow-sm">

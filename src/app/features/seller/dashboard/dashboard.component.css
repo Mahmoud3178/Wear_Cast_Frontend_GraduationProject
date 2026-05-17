@@ -201,4 +201,14 @@
     font-size:20px;
   }
 
+
+}
+.notif-badge {
+  position:absolute; top:-6px; right:-6px;
+  background:#ef4444; color:#fff;
+  font-size:10px; font-weight:700;
+  width:18px; height:18px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid white;
 }

@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
+import { NotificationsService } from '../../../../core/services/notifications.service';
+
+
 
 // ── الصلاحيات لكل role ──────────────────────────────────────────
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -27,6 +30,7 @@ export class AdminLayoutComponent implements OnInit {
   adminInitials   = 'A';
   adminRole       = 'SuperAdmin';
   currentPageTitle = 'Dashboard';
+undeliveredCount = 0;
 
   private readonly routeTitles: Record<string, string> = {
     'dashboard':           'Dashboard',
@@ -48,15 +52,28 @@ export class AdminLayoutComponent implements OnInit {
     'reports':             'Reports',
   };
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private notifService: NotificationsService) {}
 
-  ngOnInit() {
-    this.loadAdminInfo();
-    this.updatePageTitle(this.router.url);
-    this.router.events
-      .pipe(filter(e => e instanceof NavigationEnd))
-      .subscribe((e: any) => this.updatePageTitle(e.urlAfterRedirects || e.url));
-  }
+ngOnInit() {
+  this.loadAdminInfo();
+  this.loadUndeliveredCount();
+
+  window.addEventListener('notif-delivered', () => {
+    this.undeliveredCount = 0;
+  });
+
+  this.updatePageTitle(this.router.url);
+  this.router.events
+    .pipe(filter(e => e instanceof NavigationEnd))
+    .subscribe((e: any) => {
+      this.updatePageTitle(e.urlAfterRedirects || e.url);
+
+      // ✅ لو خش صفحة الـ notifications اعمل reload للكونتر
+      if ((e.urlAfterRedirects || e.url).includes('/notifications')) {
+        setTimeout(() => this.loadUndeliveredCount(), 500);
+      }
+    });
+}
 
   // ── صلاحية: هل الـ route ده مسموح للرول الحالي؟ ──────────────
   canAccess(route: string): boolean {
@@ -116,7 +133,14 @@ export class AdminLayoutComponent implements OnInit {
 
     } catch { /* keep defaults */ }
   }
-
+loadUndeliveredCount() {
+  this.notifService.getUndeliveredCount().subscribe({
+    next: (res: any) => {
+      this.undeliveredCount = res?.count ?? res?.data ?? res ?? 0;
+    },
+    error: () => {}
+  });
+}
   private updatePageTitle(url: string): void {
     const segments = url.split('/').filter(Boolean);
     const adminIdx = segments.indexOf('admin');

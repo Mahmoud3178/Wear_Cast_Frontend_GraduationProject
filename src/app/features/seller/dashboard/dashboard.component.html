@@ -7,9 +7,10 @@
       <p class="adm-subtitle">Your store performance at a glance</p>
     </div>
     <div style="display:flex;gap:10px;align-items:center">
-      <a [routerLink]="['../saller-notifications']" class="notif-btn">
-        <i class="bi bi-bell-fill"></i>
-      </a>
+<a [routerLink]="['../saller-notifications']" class="notif-btn" style="position:relative">
+  <i class="bi bi-bell-fill"></i>
+  <span *ngIf="undeliveredCount > 0" class="notif-badge">{{ undeliveredCount }}</span>
+</a>
       <button routerLink="../add-product" class="adm-btn-primary">
         <i class="bi bi-plus-lg"></i> Add Product
       </button>

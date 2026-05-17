@@ -1,23 +1,20 @@
 <div class="notif-page">
 
-  <!-- Header -->
   <div class="notif-header">
     <div>
       <h1 class="notif-title">Notifications</h1>
-      <p class="notif-sub">Stay updated on your orders and products</p>
+      <p class="notif-sub">All your alerts and system updates</p>
     </div>
     <button class="btn-mark-all" (click)="markAllRead()" [disabled]="!unread">
       <i class="bi bi-check2-all me-1"></i> Mark all as read
     </button>
   </div>
 
-  <!-- Filters -->
   <div class="notif-filters">
     <button class="filter-pill" [class.active]="selectedType === undefined" (click)="filterBy(undefined)">
-      All
-      <span class="pill-count">{{ notifications.length }}</span>
+      All <span class="pill-count">{{ notifications.length }}</span>
     </button>
-    <button class="filter-pill" [class.active]="selectedType === undefined && unread > 0" (click)="filterBy(undefined)">
+    <button class="filter-pill" (click)="filterBy(undefined)">
       Unread <span class="pill-count unread">{{ unread }}</span>
     </button>
     <button class="filter-pill" [class.active]="selectedType === 1" (click)="filterBy(1)">
@@ -25,32 +22,26 @@
     </button>
   </div>
 
-  <!-- Loading -->
   <div *ngIf="isLoading" class="notif-loading">
     <span class="spinner-border text-primary me-2"></span> Loading...
   </div>
 
-  <!-- List -->
   <div *ngIf="!isLoading">
-
     <div *ngIf="!notifications.length" class="notif-empty">
       <i class="bi bi-bell-slash"></i>
       <p>No notifications yet</p>
     </div>
 
     <div class="notif-list">
-      <div
-        *ngFor="let n of notifications"
-        class="notif-item"
-        [class.unread]="!n.isRead"
-        (click)="markRead(n)">
+      <div *ngFor="let n of notifications"
+           class="notif-item"
+           [class.unread]="!n.isRead"
+           (click)="markRead(n)">
 
-        <!-- Icon -->
         <div class="notif-icon" [ngClass]="typeColor(n.notificationType)">
           <i class="bi" [ngClass]="typeIcon(n.notificationType)"></i>
         </div>
 
-        <!-- Content -->
         <div class="notif-content">
           <div class="notif-item-title">
             {{ n.title }}
@@ -63,11 +54,9 @@
           </div>
         </div>
 
-        <!-- Delete -->
         <button class="notif-del" (click)="$event.stopPropagation(); delete(n)" title="Delete">
           <i class="bi bi-trash3"></i>
         </button>
-
       </div>
     </div>
   </div>

@@ -172,6 +172,13 @@ export const ADMIN_ROUTES: Routes = [
     import('./shipments-details-items/shipments-details-items.component')
       .then(m => m.ShipmentsDetailsItemsComponent)
 },
+
+{
+  path: 'notifications',
+  loadComponent: () =>
+    import('./notifications-admin/notifications-admin.component')
+      .then(m => m.NotificationsAdminComponent)
+},
       {
         path: '',
         redirectTo: 'dashboard',

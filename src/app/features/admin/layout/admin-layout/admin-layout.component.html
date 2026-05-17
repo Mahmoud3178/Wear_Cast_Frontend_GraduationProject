@@ -141,6 +141,17 @@
         </div>
       </div>
       <div class="top-bar-right">
+        <div class="top-bar-right" style="display:flex;align-items:center;gap:12px">
+
+  <a routerLink="notifications" class="notif-btn" style="position:relative">
+    <i class="bi bi-bell-fill"></i>
+    <span *ngIf="undeliveredCount > 0" class="notif-badge">{{ undeliveredCount }}</span>
+  </a>
+
+  <div class="admin-info">
+    <!-- باقي الكود زي ما هو -->
+  </div>
+</div>
         <div class="admin-info">
           <div class="avatar-ring">
             <div class="avatar-inner">{{ adminInitials }}</div>

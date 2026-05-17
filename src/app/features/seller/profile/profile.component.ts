@@ -13,7 +13,8 @@ import { SallerProfileService } from '../../../core/services/saller-profile.serv
 export class ProfileComponent implements OnInit {
 
   constructor(private profileService: SallerProfileService) {}
-
+walletPage = 1;
+walletPageSize = 5;
   seller: any = {
     id: 0,
     name: '',
@@ -203,4 +204,19 @@ loadWallet() {
     }
   });
 }
+get walletPagedTransactions() {
+  if (!this.wallet?.recentTransactions) return [];
+  const start = (this.walletPage - 1) * this.walletPageSize;
+  return this.wallet.recentTransactions.slice(start, start + this.walletPageSize);
+}
+
+get walletTotalPages(): number {
+  if (!this.wallet?.recentTransactions) return 1;
+  return Math.max(1, Math.ceil(this.wallet.recentTransactions.length / this.walletPageSize));
+}
+
+walletGoTo(page: number) {
+  if (page >= 1 && page <= this.walletTotalPages) this.walletPage = page;
+}
+
 }

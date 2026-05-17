@@ -4,7 +4,9 @@ import { RouterLink } from '@angular/router';
 import Chart from 'chart.js/auto';
 import { DashboardSellerService } from '../../../core/services/dashboard-seller.service';
 import { SallerOrderService } from '../../../core/services/saller-order.service';
-
+import { NotificationsService } from '../../../core/services/notifications.service';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -14,10 +16,12 @@ import { SallerOrderService } from '../../../core/services/saller-order.service'
 })
 export class DashboardComponent implements AfterViewInit, OnInit {
 
-  constructor(
-    private dashService: DashboardSellerService,
-    private orderService: SallerOrderService
-  ) {}
+constructor(
+  private dashService: DashboardSellerService,
+  private orderService: SallerOrderService,
+  private notifService: NotificationsService,
+  private router: Router
+) {}
 
 stats: any[] = [
   { title: 'Total Revenue',   value: '—', change: '', positive: true,  icon: 'bi-cash-coin',       iconBg: 'icon-green'  },
@@ -29,7 +33,7 @@ stats: any[] = [
 
   products: any[] = [];
   orders:   any[] = [];
-
+undeliveredCount = 0;
   currentPage  = 1;
   itemsPerPage = 5;
   searchText   = '';
@@ -41,13 +45,34 @@ stats: any[] = [
   private productsChart: Chart | null = null;
   private statusChart:   Chart | null = null;
 
-  ngOnInit() {
-    this.loadDashboardStats();
-    this.loadOrders();
-  }
+ngOnInit() {
+  this.loadDashboardStats();
+  this.loadOrders();
+  this.loadUndeliveredCount();
+
+  window.addEventListener('notif-delivered', () => {
+    this.undeliveredCount = 0;
+  });
+
+  // ✅ لو رجع من صفحة الـ notifications يعمل reload للكونتر
+  this.router.events
+    .pipe(filter((e: any) => e instanceof NavigationEnd))
+    .subscribe((e: any) => {
+      if ((e.urlAfterRedirects || e.url).includes('/saller-notifications')) {
+        setTimeout(() => this.loadUndeliveredCount(), 500);
+      }
+    });
+}
 
   ngAfterViewInit() {}
-
+loadUndeliveredCount() {
+  this.notifService.getUndeliveredCount().subscribe({
+    next: (res: any) => {
+      this.undeliveredCount = res?.count ?? res?.data ?? res ?? 0;
+    },
+    error: () => {}
+  });
+}
   // ── Dashboard stats ───────────────────────────────────
   loadDashboardStats() {
     this.dashService.getStats().subscribe({
