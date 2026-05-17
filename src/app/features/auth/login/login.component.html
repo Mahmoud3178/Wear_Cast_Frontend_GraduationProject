@@ -93,13 +93,6 @@
               <a routerLink="/seller/register" class="btn btn-outline-secondary btn-sm rounded-pill">Seller registration</a>
             </div>
           </div>
-          <div class="login-footer-block">
-            <div class="login-footer-block__title">Confirm your email</div>
-            <div class="login-footer-block__links">
-              <a [routerLink]="['/confirm-email/customer']" [queryParams]="form.email ? { email: form.email } : {}">Customer code</a>
-              <a routerLink="/confirm-email/seller">Seller code</a>
-            </div>
-          </div>
           <div class="login-footer-block login-footer-block--compact">
             <a routerLink="/factory/login" class="login-footer-factory-link">
               <i class="bi bi-building" aria-hidden="true"></i>

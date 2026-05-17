@@ -179,24 +179,6 @@
   gap: 8px;
 }
 
-.login-footer-block__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-}
-
-.login-footer-block__links a {
-  font-size: 0.875rem;
-  color: #4c8fea;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.login-footer-block__links a:hover {
-  text-decoration: underline;
-  color: #17324d;
-}
-
 .login-footer-block--compact {
   padding-top: 4px;
 }
