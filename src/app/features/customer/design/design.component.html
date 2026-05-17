@@ -57,7 +57,7 @@
         <canvas id="design-canvas"></canvas>
       </div>
     </div>
-    <div class="view-angles">
+    <div class="view-angles" id="view-angles" aria-label="Product views">
       <button type="button" class="view-btn active" data-view="front">Front</button>
       <button type="button" class="view-btn" data-view="back">Back</button>
       <button type="button" class="view-btn" data-view="right">Right</button>
@@ -226,46 +226,6 @@
           </div>
         </div>
         <button type="button" class="btn delete-btn" id="delete-selected-btn">Remove selected</button>
-      </div>
-
-      <div id="image-options-panel" class="text-options-panel hidden">
-        <div class="panel-header">
-          <h3 class="panel-title">Image effects</h3>
-          <p class="panel-subtitle">Adjust selected logo/photo style</p>
-        </div>
-
-        <div class="option-group">
-          <div class="label-with-value">
-            <label class="option-label">Brightness</label>
-            <span class="badge-value" id="img-brightness-value">100%</span>
-          </div>
-          <input type="range" id="img-brightness" class="modern-range" min="0" max="200" value="100">
-        </div>
-
-        <div class="option-group">
-          <div class="label-with-value">
-            <label class="option-label">Contrast</label>
-            <span class="badge-value" id="img-contrast-value">100%</span>
-          </div>
-          <input type="range" id="img-contrast" class="modern-range" min="0" max="200" value="100">
-        </div>
-
-        <div class="option-group">
-          <div class="label-with-value">
-            <label class="option-label">Saturation</label>
-            <span class="badge-value" id="img-saturation-value">100%</span>
-          </div>
-          <input type="range" id="img-saturation" class="modern-range" min="0" max="200" value="100">
-        </div>
-
-        <div class="option-group">
-          <label class="option-label">Shape style</label>
-          <select id="img-shape-style" class="modern-select">
-            <option value="normal">Original</option>
-            <option value="circle">Circle</option>
-            <option value="rounded">Rounded</option>
-          </select>
-        </div>
       </div>
 
       <button type="button" class="cta-btn">Choose size &amp; quantity</button>

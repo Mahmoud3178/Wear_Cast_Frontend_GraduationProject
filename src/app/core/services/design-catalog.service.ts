@@ -367,6 +367,15 @@ export class DesignCatalogService {
           bySlug[slug][view] = url;
         }
       });
+      const mainUrl = pickString(co, [
+        'mainImageUrl',
+        'MainImageUrl',
+        'imageUrl',
+        'ImageUrl'
+      ]);
+      if (mainUrl && bySlug[slug] && !VIEW_KEYS.some(k => bySlug[slug][k])) {
+        bySlug[slug]['front'] = this.resolveMediaUrl(mainUrl);
+      }
     });
 
     if (slugs.length === 0) {

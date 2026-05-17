@@ -206,6 +206,46 @@
     syncColorNameLabel();
   }
 
+  function getAvailableViewsForColor(colorKey) {
+    var imgs = getProductImages();
+    if (!imgs) return [];
+    var key = colorKey || currentColor;
+    var row = key && imgs[key] ? imgs[key] : null;
+    if (!row) {
+      var colorKeys = Object.keys(imgs);
+      for (var i = 0; i < colorKeys.length; i++) {
+        var candidate = imgs[colorKeys[i]];
+        if (candidate && VIEW_KEYS.some(function (k) { return !!(candidate[k] && String(candidate[k]).trim()); })) {
+          row = candidate;
+          break;
+        }
+      }
+    }
+    if (!row) return [];
+    return VIEW_KEYS.filter(function (k) {
+      return !!(row[k] && String(row[k]).trim());
+    });
+  }
+
+  function updateViewAngleTabs() {
+    var available = getAvailableViewsForColor(currentColor);
+    var viewAnglesEl = document.getElementById('view-angles');
+    document.querySelectorAll('.view-btn').forEach(function (btn) {
+      var view = btn.getAttribute('data-view');
+      var show = available.length === 0 ? false : available.indexOf(view) !== -1;
+      btn.hidden = !show;
+      btn.disabled = !show;
+      btn.setAttribute('aria-hidden', show ? 'false' : 'true');
+    });
+    if (viewAnglesEl) {
+      viewAnglesEl.hidden = available.length === 0;
+      viewAnglesEl.classList.toggle('view-angles--compact', available.length > 0 && available.length < 4);
+    }
+    if (available.length && available.indexOf(currentView) === -1) {
+      setView(available[0]);
+    }
+  }
+
   function escHtml(s) {
     return String(s)
       .replace(/&/g, '&amp;')
@@ -341,19 +381,10 @@
     } else {
       textOptionsPanel.classList.add('hidden');
     }
-    if (imageOptionsPanel) {
-      if (isImageObject(obj)) {
-        imageOptionsPanel.classList.remove('hidden');
-        syncImageOptionsFromObject(obj);
-      } else {
-        imageOptionsPanel.classList.add('hidden');
-      }
-    }
   }
 
   function onSelectionCleared() {
     textOptionsPanel.classList.add('hidden');
-    if (imageOptionsPanel) imageOptionsPanel.classList.add('hidden');
     var deleteBtn = document.getElementById('delete-selected-btn');
     if (deleteBtn) deleteBtn.classList.add('hidden');
     var actionsPanel = document.getElementById('element-actions-panel');
@@ -1415,6 +1446,8 @@
 
   function setView(viewKey) {
     if (VIEW_KEYS.indexOf(viewKey) === -1 || currentView === viewKey) return;
+    var available = getAvailableViewsForColor(currentColor);
+    if (available.length && available.indexOf(viewKey) === -1) return;
     saveCurrentViewToStore();
     currentView = viewKey;
     document.querySelectorAll('.view-btn').forEach(function (btn) {
@@ -1434,6 +1467,7 @@
       btn.classList.toggle('active', btn.getAttribute('data-color') === currentColor);
     });
     setProductImage();
+    updateViewAngleTabs();
   }
 
   function setDesignState(state) {

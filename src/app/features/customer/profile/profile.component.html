@@ -211,21 +211,33 @@
           </div>
 
           <!-- Shipment rows -->
-          <article *ngFor="let s of shipments" class="order-row shipment-row">
-            <button type="button" class="order-row-toggle" (click)="toggleShipmentDetails(s)">
+          <article
+            *ngFor="let s of shipments; let i = index"
+            class="order-row shipment-row"
+            [class.shipment-row--expanded]="expandedShipmentId === s.id"
+            [style.animation-delay.ms]="i * 60"
+          >
+            <button type="button" class="order-row-toggle" (click)="toggleShipmentDetails(s)" [attr.aria-expanded]="expandedShipmentId === s.id">
               <div class="order-row-main">
+                <div class="shipment-row-icon" aria-hidden="true">
+                  <i class="fa-solid fa-box"></i>
+                </div>
                 <div class="text-start">
                   <p class="order-id">Shipment #{{ s.id }}</p>
                   <p class="order-date" *ngIf="s.createdAt">{{ s.createdAt | date:'medium' }}</p>
-                  <span class="badge" [ngClass]="getShipmentBadgeClass(s.status)">{{ shipmentStatusLabel(s.status) }}</span>
+                  <span class="badge shipment-status-badge" [ngClass]="getShipmentBadgeClass(s.status)">{{ shipmentStatusLabel(s.status) }}</span>
                   <p class="shipment-address small text-muted mb-0" *ngIf="s.deliveryCity || s.deliveryStreet">
+                    <i class="fa-solid fa-location-dot shipment-address-icon"></i>
                     {{ s.deliveryCity }}<span *ngIf="s.deliveryCity && s.deliveryStreet"> · </span>{{ s.deliveryStreet }}
                   </p>
                 </div>
               </div>
               <div class="order-meta text-end">
-                <p>EGP {{ s.total | number:'1.2-2' }}</p>
-                <span class="small text-muted">{{ expandedShipmentId === s.id ? 'Hide' : 'Details' }}</span>
+                <p class="shipment-total">EGP {{ s.total | number:'1.2-2' }}</p>
+                <span class="shipment-toggle-hint">
+                  {{ expandedShipmentId === s.id ? 'Hide details' : 'View details' }}
+                  <i class="fa-solid" [ngClass]="expandedShipmentId === s.id ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                </span>
               </div>
             </button>
 

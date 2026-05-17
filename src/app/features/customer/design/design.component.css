@@ -319,6 +319,32 @@ body {
   box-shadow: 0 4px 12px var(--accent-glow);
 }
 
+.view-btn[hidden] {
+  display: none !important;
+}
+
+.view-angles--compact {
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+.view-angles--compact .view-btn {
+  padding: 8px 18px;
+  animation: viewTabIn 0.28s ease backwards;
+}
+
+@keyframes viewTabIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* --- Right sidebar content --- */
 .product-info {
   padding: 32px 32px;

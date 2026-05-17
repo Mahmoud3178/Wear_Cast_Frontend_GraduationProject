@@ -1,4 +1,11 @@
-<header class="wc-nav">
+<div
+  class="wc-nav-backdrop"
+  [class.wc-nav-backdrop--visible]="isMobileMenuOpen"
+  (click)="closeMobileMenu()"
+  aria-hidden="true"
+></div>
+
+<header class="wc-nav" [class.wc-nav--menu-open]="isMobileMenuOpen">
   <div class="wc-nav-inner">
     <div class="wc-brand">
       <a routerLink="/customer/home" class="wc-logo">WearCast</a>
