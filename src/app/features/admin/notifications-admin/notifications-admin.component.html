@@ -1,5 +1,10 @@
 <div class="notif-page">
 
+  <!-- Toast -->
+  <div class="notif-toast" *ngIf="toastVisible">
+    <i class="bi bi-check-circle-fill me-2"></i>{{ toastMsg }}
+  </div>
+
   <div class="notif-header">
     <div>
       <h1 class="notif-title">Notifications</h1>
@@ -11,14 +16,14 @@
   </div>
 
   <div class="notif-filters">
-    <button class="filter-pill" [class.active]="selectedType === undefined" (click)="filterBy(undefined)">
+    <button class="filter-pill" [class.active]="isReadFilter === undefined" (click)="filterByRead(undefined)">
       All <span class="pill-count">{{ notifications.length }}</span>
     </button>
-    <button class="filter-pill" (click)="filterBy(undefined)">
+    <button class="filter-pill" [class.active]="isReadFilter === false" (click)="filterByRead(false)">
       Unread <span class="pill-count unread">{{ unread }}</span>
     </button>
-    <button class="filter-pill" [class.active]="selectedType === 1" (click)="filterBy(1)">
-      Shipment Updates
+    <button class="filter-pill" [class.active]="isReadFilter === true" (click)="filterByRead(true)">
+      Read
     </button>
   </div>
 
@@ -29,7 +34,7 @@
   <div *ngIf="!isLoading">
     <div *ngIf="!notifications.length" class="notif-empty">
       <i class="bi bi-bell-slash"></i>
-      <p>No notifications yet</p>
+      <p>No notifications found</p>
     </div>
 
     <div class="notif-list">
@@ -57,8 +62,9 @@
         <button class="notif-del" (click)="$event.stopPropagation(); delete(n)" title="Delete">
           <i class="bi bi-trash3"></i>
         </button>
+
       </div>
     </div>
   </div>
 
-</div>
+</div> 

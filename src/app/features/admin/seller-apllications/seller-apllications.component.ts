@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerApllicationsService } from '../../../core/services/seller-apllications.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-seller-apllications',
@@ -25,11 +26,28 @@ export class SellerApllicationsComponent implements OnInit {
   searchTerm: string = '';
   selectedStatus: string | null = null;
 
-  constructor(private service: SellerApllicationsService) {}
+constructor(
+  private service: SellerApllicationsService,
+  private route: ActivatedRoute
+) {}
+ngOnInit() {
+  this.load();
 
-  ngOnInit() {
-    this.load();
+  // لو جاي من notification هيفتح الـ drawer تلقائي
+  const id = this.route.snapshot.queryParamMap.get('openId');
+  if (id) {
+    this.openById(+id);
   }
+}
+
+openById(id: number) {
+  this.service.getById(id).subscribe((res: any) => {
+    this.selectedApplication = res?.data || res;
+    this.showDrawer = true;
+    this.rejectMode = false;
+    this.rejectReason = '';
+  });
+}
 
   // ================= LOAD =================
   load() {

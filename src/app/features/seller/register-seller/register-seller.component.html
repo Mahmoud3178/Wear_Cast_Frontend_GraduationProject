@@ -1,140 +1,164 @@
-<div class="container mt-5">
-  <div class="card shadow p-4">
+<div class="reg-page">
+  <div class="reg-card">
 
-    <h3 class="text-center mb-4">Seller Register</h3>
+    <div class="reg-brand">
+      <span class="brand-logo">WearCast</span>
+      <p class="brand-sub">Seller Application</p>
+    </div>
 
-    <form (ngSubmit)="register()">
+    <div class="reg-alert" *ngIf="errorMsg">
+      <i class="bi bi-exclamation-circle-fill me-2"></i>{{ errorMsg }}
+    </div>
 
-      <!-- 🔵 Manager Info -->
-      <h5 class="mb-3">Manager Information</h5>
+    <form (ngSubmit)="register()" #f="ngForm">
 
-      <div class="row">
-        <div class="col-md-6 mb-3">
+      <div class="reg-section-title">
+        <span class="section-dot dot-blue"></span> Manager Information
+      </div>
+
+      <div class="reg-row">
+        <div class="reg-field">
           <label>First Name</label>
-          <input type="text" class="form-control" [(ngModel)]="form.sellerManagerFirstName" name="sellerManagerFirstName" required>
+          <input type="text" [(ngModel)]="form.sellerManagerFirstName" name="sellerManagerFirstName" required>
+          <span class="field-err" *ngIf="fieldErrors['SellerManagerFirstName']">{{ fieldErrors['SellerManagerFirstName'] }}</span>
         </div>
-
-        <div class="col-md-6 mb-3">
+        <div class="reg-field">
           <label>Last Name</label>
-          <input type="text" class="form-control" [(ngModel)]="form.sellerManagerLastName" name="sellerManagerLastName" required>
+          <input type="text" [(ngModel)]="form.sellerManagerLastName" name="sellerManagerLastName" required>
+          <span class="field-err" *ngIf="fieldErrors['SellerManagerLastName']">{{ fieldErrors['SellerManagerLastName'] }}</span>
         </div>
       </div>
 
-      <div class="mb-3">
+      <div class="reg-field">
         <label>Email</label>
-        <input type="email" class="form-control" [(ngModel)]="form.sellerManagerEmail" name="sellerManagerEmail" required>
+        <input type="email" [(ngModel)]="form.sellerManagerEmail" name="sellerManagerEmail" required>
+        <span class="field-err" *ngIf="fieldErrors['SellerManagerEmail']">{{ fieldErrors['SellerManagerEmail'] }}</span>
       </div>
 
-      <div class="mb-3">
+      <div class="reg-field">
         <label>Phone Number</label>
-        <input type="text" class="form-control" [(ngModel)]="form.sellerManagerPhoneNumber" name="sellerManagerPhoneNumber">
+        <input type="text" [(ngModel)]="form.sellerManagerPhoneNumber" name="sellerManagerPhoneNumber">
+        <span class="field-err" *ngIf="fieldErrors['SellerManagerPhoneNumber']">{{ fieldErrors['SellerManagerPhoneNumber'] }}</span>
       </div>
 
-      <div class="row">
-        <div class="col-md-6 mb-3">
+      <div class="reg-row">
+        <div class="reg-field">
           <label>Password</label>
-          <div class="input-group">
-            <input [type]="showPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="form.sellerManagerPassword" name="sellerManagerPassword" required>
-            <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
+          <div class="input-eye">
+            <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="form.sellerManagerPassword" name="sellerManagerPassword" required>
+            <button type="button" (click)="showPassword = !showPassword" tabindex="-1">
               <i class="bi" [class.bi-eye]="showPassword" [class.bi-eye-slash]="!showPassword"></i>
             </button>
           </div>
+          <span class="field-err" *ngIf="fieldErrors['SellerManagerPassword']">{{ fieldErrors['SellerManagerPassword'] }}</span>
         </div>
-
-        <div class="col-md-6 mb-3">
+        <div class="reg-field">
           <label>Confirm Password</label>
-          <div class="input-group">
-            <input [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="form.sellerManagerConfirmPassword" name="sellerManagerConfirmPassword" required>
-            <button type="button" class="btn btn-outline-secondary" (click)="showConfirmPassword = !showConfirmPassword" tabindex="-1" aria-label="Toggle confirm password visibility">
+          <div class="input-eye">
+            <input [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="form.sellerManagerConfirmPassword" name="sellerManagerConfirmPassword" required>
+            <button type="button" (click)="showConfirmPassword = !showConfirmPassword" tabindex="-1">
               <i class="bi" [class.bi-eye]="showConfirmPassword" [class.bi-eye-slash]="!showConfirmPassword"></i>
             </button>
           </div>
+          <span class="field-err" *ngIf="fieldErrors['sellerManagerConfirmPassword']">{{ fieldErrors['sellerManagerConfirmPassword'] }}</span>
         </div>
       </div>
 
-      <hr>
+      <div class="reg-section-title">
+        <span class="section-dot dot-green"></span> Seller Information
+      </div>
 
-      <!-- 🟢 Seller Info -->
-      <h5 class="mb-3">Seller Information</h5>
-
-      <div class="mb-3">
+      <div class="reg-field">
         <label>Seller Name</label>
-        <input type="text" class="form-control" [(ngModel)]="form.sellerName" name="sellerName" required>
+        <input type="text" [(ngModel)]="form.sellerName" name="sellerName" required>
+        <span class="field-err" *ngIf="fieldErrors['SellerName']">{{ fieldErrors['SellerName'] }}</span>
       </div>
 
-      <div class="mb-3">
-        <label>Seller Email</label>
-        <input type="email" class="form-control" [(ngModel)]="form.sellerEmail" name="sellerEmail">
+      <div class="reg-row">
+        <div class="reg-field">
+          <label>Seller Email</label>
+          <input type="email" [(ngModel)]="form.sellerEmail" name="sellerEmail">
+          <span class="field-err" *ngIf="fieldErrors['SellerEmail']">{{ fieldErrors['SellerEmail'] }}</span>
+        </div>
+        <div class="reg-field">
+          <label>Seller Phone</label>
+          <input type="text" [(ngModel)]="form.sellerPhoneNumber" name="sellerPhoneNumber">
+          <span class="field-err" *ngIf="fieldErrors['SellerPhoneNumber']">{{ fieldErrors['SellerPhoneNumber'] }}</span>
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label>Seller Phone</label>
-        <input type="text" class="form-control" [(ngModel)]="form.sellerPhoneNumber" name="sellerPhoneNumber">
-      </div>
-
-      <div class="row">
-        <div class="col-md-6 mb-3">
+      <div class="reg-row">
+        <div class="reg-field">
           <label>Commercial Register No.</label>
-          <input type="text" class="form-control" [(ngModel)]="form.sellerCommercialRegisterNumber" name="sellerCommercialRegisterNumber">
+          <input type="text" [(ngModel)]="form.sellerCommercialRegisterNumber" name="sellerCommercialRegisterNumber">
+          <span class="field-err" *ngIf="fieldErrors['SellerCommercialRegisterNumber']">{{ fieldErrors['SellerCommercialRegisterNumber'] }}</span>
         </div>
-
-        <div class="col-md-6 mb-3">
+        <div class="reg-field">
           <label>Tax ID</label>
-          <input type="text" class="form-control" [(ngModel)]="form.sellerTaxIdNumber" name="sellerTaxIdNumber">
+          <input type="text" [(ngModel)]="form.sellerTaxIdNumber" name="sellerTaxIdNumber">
+          <span class="field-err" *ngIf="fieldErrors['SellerTaxIdNumber']">{{ fieldErrors['SellerTaxIdNumber'] }}</span>
         </div>
       </div>
 
-      <div class="mb-3">
+      <div class="reg-field">
         <label>Description</label>
-        <textarea class="form-control" [(ngModel)]="form.sellerDescription" name="sellerDescription"></textarea>
+        <textarea [(ngModel)]="form.sellerDescription" name="sellerDescription" rows="3"></textarea>
+        <span class="field-err" *ngIf="fieldErrors['SellerDescription']">{{ fieldErrors['SellerDescription'] }}</span>
       </div>
 
-      <div class="mb-3">
+      <div class="reg-field">
         <label>Seller Logo</label>
-       <input type="file"
-       class="form-control"
-       name="sellerLogo"
-       (change)="onFileChange($event)">
+        <div class="file-upload">
+          <label class="file-label">
+            <i class="bi bi-cloud-upload me-2"></i>
+            {{ form.sellerLogo ? form.sellerLogo.name : 'Choose logo image' }}
+            <input type="file" accept="image/*" (change)="onFileChange($event)" hidden>
+          </label>
+        </div>
+        <span class="field-err" *ngIf="fieldErrors['SellerLogo']">{{ fieldErrors['SellerLogo'] }}</span>
       </div>
 
-      <hr>
+      <div class="reg-section-title">
+        <span class="section-dot dot-yellow"></span> Address
+      </div>
 
-      <!-- 🟡 Address -->
-      <h5 class="mb-3">Address</h5>
-
-      <div class="row">
-        <div class="col-md-6 mb-3">
+      <div class="reg-row">
+        <div class="reg-field">
           <label>State</label>
-          <input type="text" class="form-control" [(ngModel)]="form.sellerState" name="sellerState">
+          <input type="text" [(ngModel)]="form.sellerState" name="sellerState">
+          <span class="field-err" *ngIf="fieldErrors['SellerState']">{{ fieldErrors['SellerState'] }}</span>
         </div>
-
-        <div class="col-md-6 mb-3">
+        <div class="reg-field">
           <label>City</label>
-          <input type="text" class="form-control" [(ngModel)]="form.sellerCity" name="sellerCity">
+          <input type="text" [(ngModel)]="form.sellerCity" name="sellerCity">
+          <span class="field-err" *ngIf="fieldErrors['SellerCity']">{{ fieldErrors['SellerCity'] }}</span>
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-md-8 mb-3">
+      <div class="reg-row">
+        <div class="reg-field" style="flex: 2">
           <label>Street</label>
-          <input type="text" class="form-control" [(ngModel)]="form.sellerStreet" name="sellerStreet">
+          <input type="text" [(ngModel)]="form.sellerStreet" name="sellerStreet">
+          <span class="field-err" *ngIf="fieldErrors['SellerStreet']">{{ fieldErrors['SellerStreet'] }}</span>
         </div>
-
-        <div class="col-md-4 mb-3">
+        <div class="reg-field" style="flex: 1">
           <label>Building No.</label>
-          <input type="text" class="form-control" [(ngModel)]="form.sellerBuildingNumber" name="sellerBuildingNumber">
+          <input type="text" [(ngModel)]="form.sellerBuildingNumber" name="sellerBuildingNumber">
+          <span class="field-err" *ngIf="fieldErrors['SellerBuildingNumber']">{{ fieldErrors['SellerBuildingNumber'] }}</span>
         </div>
       </div>
 
-      <!-- Submit -->
-      <button class="btn btn-success w-100">Register Seller</button>
+      <button type="submit" class="reg-btn" [disabled]="isLoading">
+        <span *ngIf="!isLoading"><i class="bi bi-send me-2"></i>Submit Application</span>
+        <span *ngIf="isLoading"><span class="spinner-border spinner-border-sm me-2"></span>Submitting...</span>
+      </button>
 
     </form>
 
-    <p class="text-center small text-muted mt-3 mb-0">
-      <a routerLink="/login" class="text-decoration-none">Sign in</a>
-      ·
-      <a routerLink="/confirm-email/seller" class="text-decoration-none">Have a seller code?</a>
+    <p class="reg-footer">
+      Already have an account? <a routerLink="/login">Sign in</a>
+      &nbsp;·&nbsp;
+      <a routerLink="/confirm-email/seller">Have a seller code?</a>
     </p>
 
   </div>

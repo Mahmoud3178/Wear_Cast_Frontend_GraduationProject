@@ -50,58 +50,59 @@
     <!-- Left Column -->
     <div class="col-lg-8">
 
-      <!-- Order Items -->
-      <div class="card border-0 shadow-sm p-3 mb-4">
-        <div class="d-flex justify-content-between mb-3">
-          <h6 class="fw-bold mb-0">Order Items</h6>
-          <small class="text-muted">{{ items.length }} items</small>
-        </div>
+<!-- Order Items -->
+<div class="card border-0 shadow-sm p-3 mb-4">
+  <div class="d-flex justify-content-between mb-3">
+    <h6 class="fw-bold mb-0">Order Items</h6>
+    <small class="text-muted">{{ items.length }} items</small>
+  </div>
 
-        <table class="table align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>Product</th>
-              <th>Color</th>
-              <th>Sizes</th>
-              <th>Price</th>
-              <th>Qty</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of items">
-              <td>
-                <div class="d-flex align-items-center gap-2">
-                  <img [src]="item.productImage || 'https://via.placeholder.com/40'" width="40" class="rounded">
-                  <div>
-                    <div>{{ item.productName }}</div>
-                    <small class="text-muted">{{ item.orderItemType }}</small>
-                  </div>
-                </div>
-              </td>
-              <td>{{ item.colorName }}</td>
-              <td>
-                <span
-                  *ngFor="let s of item.sizes"
-                  class="badge bg-secondary me-1">
-                  {{ s.sizeName }} × {{ s.quantity }}
-                </span>
-              </td>
-              <td>{{ item.price | number:'1.2-2' }} EGP</td>
-              <td>{{ item.qty }}</td>
-              <td class="fw-semibold">{{ item.total | number:'1.2-2' }} EGP</td>
-            </tr>
-          </tbody>
-        </table>
+  <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+    <table class="table align-middle" style="min-width: 600px;">
+      <thead class="table-light">
+        <tr>
+          <th>Product</th>
+          <th>Color</th>
+          <th>Sizes</th>
+          <th>Price</th>
+          <th>Qty</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of items">
+          <td style="min-width: 160px;">
+            <div class="d-flex align-items-center gap-2">
+              <img [src]="item.productImage || 'https://via.placeholder.com/40'"
+                   width="40" height="40"
+                   style="object-fit:cover; border-radius:6px; flex-shrink:0;">
+              <div>
+                <div style="font-size:13px; font-weight:500;">{{ item.productName }}</div>
+                <small class="text-muted">{{ item.orderItemType }}</small>
+              </div>
+            </div>
+          </td>
+          <td style="white-space:nowrap;">{{ item.colorName }}</td>
+          <td style="min-width: 120px;">
+            <span *ngFor="let s of item.sizes" class="badge bg-secondary me-1">
+              {{ s.sizeName }} × {{ s.quantity }}
+            </span>
+          </td>
+          <td style="white-space:nowrap;">{{ item.price | number:'1.2-2' }} EGP</td>
+          <td>{{ item.qty }}</td>
+          <td class="fw-semibold" style="white-space:nowrap;">{{ item.total | number:'1.2-2' }} EGP</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-        <!-- Summary -->
-        <div class="text-end mt-2 border-top pt-3">
-          <div>Subtotal: <strong>{{ subtotal | number:'1.2-2' }} EGP</strong></div>
-          <div>Commission: <span class="text-danger">-{{ order.commission | number:'1.2-2' }} EGP</span></div>
-          <hr>
-          <h6>Payout: <span class="text-success">{{ order.payout | number:'1.2-2' }} EGP</span></h6>
-        </div>
-      </div>
+  <div class="text-end mt-2 border-top pt-3">
+    <div>Subtotal: <strong>{{ subtotal | number:'1.2-2' }} EGP</strong></div>
+    <div>Commission: <span class="text-danger">-{{ order.commission | number:'1.2-2' }} EGP</span></div>
+    <hr>
+    <h6>Payout: <span class="text-success">{{ order.payout | number:'1.2-2' }} EGP</span></h6>
+  </div>
+</div>
 
       <!-- Designed Items -->
       <div class="card border-0 shadow-sm p-3 mb-4" *ngIf="designedItems.length > 0">

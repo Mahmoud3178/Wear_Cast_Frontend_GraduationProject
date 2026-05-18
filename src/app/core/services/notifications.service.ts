@@ -3,7 +3,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-/** Backend `SortBy` for notifications: Newest = 0, Oldest = 1 (per API enum). */
 export const NOTIFICATION_SORT_NEWEST = 0;
 export const NOTIFICATION_SORT_OLDEST = 1;
 
