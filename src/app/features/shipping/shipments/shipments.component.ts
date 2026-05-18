@@ -122,7 +122,7 @@ export class ShipmentsComponent implements OnInit {
 
     this.shippingService.getAllShipments(params).subscribe({
       next: (data) => {
-        this.allShipments = data.items;
+        this.allShipments = data.items || [];
         this.totalRecords = data.records;
         this.totalPages = data.pages;
         this.filterShipments();
@@ -235,7 +235,7 @@ export class ShipmentsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to assign driver', err);
-        const errorMessage = err.error?.message || err.error || 'Failed to assign driver. Please ensure the driver is available.';
+        const errorMessage = err.error?.message || err.error || 'Failed to assign driver. Please ensure the driver is available and the shipment is Unassigned.';
         alert(errorMessage);
       }
     });
@@ -268,6 +268,7 @@ export class ShipmentsComponent implements OnInit {
   public getStatusBadgeClass(status: any): string {
     const s = this.getNumericStatus(status, ShipmentStatus);
     switch (s) {
+      case ShipmentStatus.Pending: return 'status-pending';
       case ShipmentStatus.Unassigned: return 'status-unassigned';
       case ShipmentStatus.Assigned: return 'status-assigned';
       case ShipmentStatus.PickingUp:

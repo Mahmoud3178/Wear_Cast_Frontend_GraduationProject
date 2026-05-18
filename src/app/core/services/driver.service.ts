@@ -82,33 +82,20 @@ export class DriverService {
     return this.http.get<DriverShipmentDetails>(`${this.apiUrl}/drivers/shipments/${id}`);
   }
 
+  getShipmentItems(shipmentId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/Orders/shipment/${shipmentId}/items`);
+  }
+
   updateShipmentStatus(id: number, request: UpdateShipmentStatusRequest): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/Shipments/${id}/status`, request);
   }
 
-  // Dashboard calculations
-  getDashboardStats(shipments: DriverShipment[]): DriverDashboardStats {
-    const today = new Date().toDateString();
-    const todayDeliveries = shipments.filter(s => {
-      const status = typeof s.shipmentStatus === 'string' ? ShipmentStatus[s.shipmentStatus as keyof typeof ShipmentStatus] : s.shipmentStatus;
-      return status === ShipmentStatus.Delivered && 
-             new Date(s.orderTime).toDateString() === today;
-    }).length;
+  updateOrderStatus(orderId: number, newStatus: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/Orders/${orderId}/status`, { newStatus });
+  }
 
-    const completedDeliveries = shipments.filter(s => {
-      const status = typeof s.shipmentStatus === 'string' ? ShipmentStatus[s.shipmentStatus as keyof typeof ShipmentStatus] : s.shipmentStatus;
-      return status === ShipmentStatus.Delivered;
-    }).length;
-    
-    // We don't have earnings in DTO, mock it based on completed
-    const totalEarnings = completedDeliveries * 15.5; 
-
-    return {
-      todayDeliveries,
-      totalEarnings,
-      completedDeliveries,
-      activeHours: '8h 30m' // Mocked for now
-    };
+  getDriverDashboard(): Observable<DriverDashboardStats> {
+    return this.http.get<DriverDashboardStats>(`${this.apiUrl}/Drivers/Dashboard`);
   }
 
   getCurrentRoute(shipments: DriverShipment[]): DriverShipment | null {

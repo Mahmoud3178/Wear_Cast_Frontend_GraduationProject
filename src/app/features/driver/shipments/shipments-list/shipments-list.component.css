@@ -3,6 +3,7 @@
   --primary-soft: rgba(37, 99, 235, 0.08);
   --success-soft: rgba(16, 185, 129, 0.08);
   --warning-soft: rgba(245, 158, 11, 0.08);
+  --info-soft: rgba(6, 182, 212, 0.08);
   --slate-50: #f8fafc;
   --slate-100: #f1f5f9;
   --slate-200: #e2e8f0;
@@ -53,6 +54,7 @@
 .bg-primary-soft { background-color: var(--primary-soft); }
 .bg-success-soft { background-color: var(--success-soft); }
 .bg-warning-soft { background-color: var(--warning-soft); }
+.bg-info-soft { background-color: var(--info-soft); }
 
 .badge-status {
   display: inline-block;

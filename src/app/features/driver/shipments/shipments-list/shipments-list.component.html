@@ -5,7 +5,7 @@
       <div>
         <nav aria-label="breadcrumb" class="mb-2">
           <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="#" class="text-slate-500 text-decoration-none small fw-bold">DASHBOARD</a></li>
+            <li class="breadcrumb-item"><a routerLink="/driver/dashboard" class="text-slate-500 text-decoration-none small fw-bold">DASHBOARD</a></li>
             <li class="breadcrumb-item active text-primary small fw-bold" aria-current="page">MY SHIPMENTS</li>
           </ol>
         </nav>
@@ -21,7 +21,7 @@
       <div class="col-12 col-md-6">
         <div class="search-bar d-flex align-items-center px-3 py-2 rounded-4 border bg-white">
           <i class="bi bi-search text-slate-400 me-2"></i>
-          <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" class="form-control border-0 bg-transparent shadow-none p-0 text-sm" placeholder="Search by ID or destination...">
+          <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" class="form-control border-0 bg-transparent shadow-none p-0 text-sm" placeholder="Search by ID, destination, or customer...">
         </div>
       </div>
       <div class="col-12 col-md-3">
@@ -57,14 +57,16 @@
         <thead class="bg-slate-50">
           <tr>
             <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0">Tracking ID</th>
+            <th class="py-3 uppercase-tracking text-slate-500 border-0">Customer</th>
             <th class="py-3 uppercase-tracking text-slate-500 border-0">Destination</th>
+            <th class="py-3 uppercase-tracking text-slate-500 border-0">Orders</th>
             <th class="py-3 uppercase-tracking text-slate-500 border-0">Status</th>
             <th class="py-3 uppercase-tracking text-slate-500 border-0">Date</th>
             <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0 text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let shipment of filteredShipments" class="cursor-pointer">
+          <tr *ngFor="let shipment of filteredShipments" class="cursor-pointer" [routerLink]="['/driver/shipments', shipment.id]">
             <td class="px-4">
               <div class="d-flex align-items-center gap-3">
                 <div class="pkg-icon bg-slate-100 text-slate-500 rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
@@ -74,8 +76,15 @@
               </div>
             </td>
             <td>
+              <div class="text-sm fw-semibold text-slate-900">{{ shipment.customerName || 'N/A' }}</div>
+              <div class="text-xs text-slate-500">{{ shipment.customerPhoneNumber || 'N/A' }}</div>
+            </td>
+            <td>
               <div class="text-sm fw-medium text-slate-900">{{ shipment.deliveryCity }}</div>
               <div class="text-xs text-slate-500">{{ shipment.deliveryStreet }}</div>
+            </td>
+            <td>
+              <span class="text-sm fw-semibold text-slate-700">{{ shipment.numberOfOrders || 0 }} {{ (shipment.numberOfOrders === 1) ? 'order' : 'orders' }}</span>
             </td>
             <td>
               <span class="badge-status px-3 py-1.5 rounded-pill text-xs fw-bold" [ngClass]="getStatusClass(shipment.shipmentStatus)">
@@ -83,7 +92,7 @@
               </span>
             </td>
             <td>
-              <span class="text-sm text-slate-500">{{ shipment.orderTime | date:'MMM d, HH:mm' }}</span>
+              <span class="text-sm text-slate-500">{{ shipment.orderTime | date:'MMM d, yyyy HH:mm' }}</span>
             </td>
             <td class="px-4 text-center">
               <button class="btn btn-sm btn-light-soft rounded-pill px-3" [routerLink]="['/driver/shipments', shipment.id]">
@@ -92,7 +101,7 @@
             </td>
           </tr>
           <tr *ngIf="filteredShipments.length === 0">
-            <td colspan="5" class="text-center py-5 text-muted">No shipments found matching the filters.</td>
+            <td colspan="7" class="text-center py-5 text-muted">No shipments found matching the filters.</td>
           </tr>
         </tbody>
       </table>

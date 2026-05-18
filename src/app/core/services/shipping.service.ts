@@ -48,6 +48,19 @@ export class ShippingService {
     return this.http.put<void>(`${this.apiUrl}/Shipments/${request.shipmentId}/assign`, request);
   }
 
+  updateShipmentStatus(shipmentId: number, newStatus: number, deliveryCode?: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/Shipments/${shipmentId}/status`, {
+      newStatus,
+      deliveryCode
+    });
+  }
+
+  updateOrderStatus(orderId: number, newStatus: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/Orders/${orderId}/status`, {
+      newStatus
+    });
+  }
+
   // Dashboard calculations
   getDashboardStats(shipments: Shipment[], drivers: Driver[]): ShippingDashboardStats {
     const activeDrivers = drivers.filter(d => {

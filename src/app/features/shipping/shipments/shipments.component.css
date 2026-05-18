@@ -361,3 +361,64 @@
   border: 2px solid #e2e8f0;
   border-radius: 50%;
 }
+
+/* Premium Edit Forms Styling */
+.shipment-edit-panel {
+  backdrop-filter: blur(8px);
+  background: rgba(248, 250, 252, 0.95);
+  box-shadow: inset 0 0 0 1px rgba(226, 232, 240, 0.8), 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.shipment-edit-panel label, .order-edit-form label {
+  color: #475569;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.shipment-edit-panel .form-control, 
+.shipment-edit-panel .form-select,
+.order-edit-form .form-control,
+.order-edit-form .form-select {
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shipment-edit-panel .form-control:focus, 
+.shipment-edit-panel .form-select:focus,
+.order-edit-form .form-control:focus,
+.order-edit-form .form-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  background-color: #ffffff;
+}
+
+.btn-xs {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.btn-light-soft {
+  background-color: #f1f5f9;
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.btn-light-soft:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.order-edit-form {
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.shadow-premium-sm {
+  box-shadow: 0 4px 10px -2px rgba(59, 130, 246, 0.3);
+}

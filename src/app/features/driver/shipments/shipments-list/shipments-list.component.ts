@@ -65,10 +65,10 @@ export class ShipmentsListComponent implements OnInit {
 
   loadMockData() {
     this.shipments = [
-      { id: 101, deliveryCity: 'Gaza', deliveryStreet: 'Al-Wehda St', shipmentStatus: ShipmentStatus.Delivered, orderTime: new Date().toISOString() },
-      { id: 102, deliveryCity: 'Rafah', deliveryStreet: 'Main St', shipmentStatus: ShipmentStatus.OutForDelivery, orderTime: new Date().toISOString() },
-      { id: 103, deliveryCity: 'Khan Younis', deliveryStreet: 'Al-Bahr St', shipmentStatus: ShipmentStatus.Assigned, orderTime: new Date().toISOString() },
-      { id: 104, deliveryCity: 'Gaza', deliveryStreet: 'Remal', shipmentStatus: ShipmentStatus.PickingUp, orderTime: new Date().toISOString() }
+      { id: 101, deliveryCity: 'Gaza', deliveryStreet: 'Al-Wehda St', shipmentStatus: ShipmentStatus.Delivered, orderTime: new Date().toISOString(), customerName: 'Ahmed Ali', customerPhoneNumber: '+970599112233', numberOfOrders: 3 },
+      { id: 102, deliveryCity: 'Rafah', deliveryStreet: 'Main St', shipmentStatus: ShipmentStatus.OutForDelivery, orderTime: new Date().toISOString(), customerName: 'Sarah Salem', customerPhoneNumber: '+970599445566', numberOfOrders: 2 },
+      { id: 103, deliveryCity: 'Khan Younis', deliveryStreet: 'Al-Bahr St', shipmentStatus: ShipmentStatus.Assigned, orderTime: new Date().toISOString(), customerName: 'Khaled Hassan', customerPhoneNumber: '+970599778899', numberOfOrders: 1 },
+      { id: 104, deliveryCity: 'Gaza', deliveryStreet: 'Remal', shipmentStatus: ShipmentStatus.PickingUp, orderTime: new Date().toISOString(), customerName: 'Fatma Nasr', customerPhoneNumber: '+970599001122', numberOfOrders: 4 }
     ] as any[];
     this.applyFilters();
   }
@@ -77,7 +77,9 @@ export class ShipmentsListComponent implements OnInit {
     this.filteredShipments = this.shipments.filter(s => {
       const matchesSearch = s.id.toString().includes(this.searchTerm) || 
                             s.deliveryCity?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                            s.deliveryStreet?.toLowerCase().includes(this.searchTerm.toLowerCase());
+                            s.deliveryStreet?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                            s.customerName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                            s.customerPhoneNumber?.toLowerCase().includes(this.searchTerm);
       
       const matchesStatus = !this.selectedStatus || s.shipmentStatus.toString() === this.selectedStatus;
       

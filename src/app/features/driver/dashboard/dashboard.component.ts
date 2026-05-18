@@ -3,6 +3,10 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import Chart from 'chart.js/auto';
 import { AuthService } from '../../../core/services/auth.service';
+import { DriverService } from '../../../core/services/driver.service';
+import { DriverDashboardStats } from '../../../core/models/dashboard.model';
+import { DriverStatus, DeliveryVehicleType } from '../../../core/models/driver.model';
+import { DriverShipment, ShipmentStatus } from '../../../core/models/shipment.model';
 
 @Component({
   selector: 'app-driver-dashboard',
@@ -12,119 +16,191 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit, AfterViewInit {
-  @ViewChild('revenueChart') revenueChartRef!: ElementRef;
   @ViewChild('statusChart') statusChartRef!: ElementRef;
 
-  private authService = inject(AuthService);
+  private readonly authService = inject(AuthService);
+  private readonly driverService = inject(DriverService);
 
   isLoading = false;
   userName = 'Driver';
   today = new Date();
 
-  stats = [
-    { title: 'My Deliveries', value: '12', icon: 'bi-box-seam', trend: '+2', trendUp: true },
-    { title: 'Hours Online', value: '45', icon: 'bi-clock', trend: '+5', trendUp: true },
-    { title: 'Earnings', value: '$1,200', icon: 'bi-currency-dollar', trend: '+10%', trendUp: true },
-    { title: 'Rating', value: '4.8', icon: 'bi-star-fill', trend: '+0.1', trendUp: true }
-  ];
-
-  recentShipments: any[] = [
-    { id: 101, deliveryCity: 'Gaza', deliveryStreet: 'Al-Wehda St', shipmentStatus: 'Delivered', orderTime: new Date(), price: 50 },
-    { id: 102, deliveryCity: 'Rafah', deliveryStreet: 'Main St', shipmentStatus: 'OutForDelivery', orderTime: new Date(), price: 30 },
-    { id: 103, deliveryCity: 'Khan Younis', deliveryStreet: 'Al-Bahr St', shipmentStatus: 'Assigned', orderTime: new Date(), price: 40 }
-  ];
-
-  dashboardStats = {
-    statusBreakdown: {
-      'Pending': 2,
-      'Assigned': 5,
-      'Delivered': 12
-    }
+  dashboardStats: DriverDashboardStats | null = null;
+  recentShipments: DriverShipment[] = [];
+  stats: any[] = [];
+  statusBreakdown: { [key: string]: number } = {
+    'Assigned': 0,
+    'Picking Up': 0,
+    'Out For Delivery': 0,
+    'Delivered': 0
   };
 
-  private chartInstance: any = null;
   private statusChartInstance: any = null;
 
   ngOnInit(): void {
     const profile = this.authService.getCustomerProfile();
     if (profile && profile.firstName) {
-      this.userName = profile.firstName;
+      this.userName = `${profile.firstName} ${profile.lastName || ''}`.trim();
     }
+    this.loadDashboardData();
+    this.loadShipments();
   }
 
   ngAfterViewInit(): void {
-    this.initCharts();
+    if (this.dashboardStats) {
+      this.initStatusChart();
+    }
   }
 
-  initCharts() {
-    this.initRevenueChart();
-    this.initStatusChart();
-  }
+  loadDashboardData(): void {
+    this.isLoading = true;
+    this.driverService.getDriverDashboard().subscribe({
+      next: (data) => {
+        this.isLoading = false;
+        this.dashboardStats = data;
+        
+        const activeShipments = (data.assignedShipments || 0) + (data.pickingUpShipments || 0) + (data.outForDeliveryShipments || 0);
 
-  initRevenueChart() {
-    this.chartInstance = new Chart(this.revenueChartRef.nativeElement, {
-      type: 'line',
-      data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        datasets: [{
-          label: 'Earnings',
-          data: [200, 300, 250, 400, 350, 500],
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37, 99, 235, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: '#2563eb',
-          pointBorderColor: '#fff',
-          pointHoverRadius: 6,
-          pointRadius: 4
-        }]
+        this.stats = [
+          { title: 'Pending Orders', value: data.pendingOrders || 0, icon: 'bi-hourglass-split', color: 'warning' },
+          { title: 'Picked Up Orders', value: data.pickedUpOrders || 0, icon: 'bi-box-seam', color: 'info' },
+          { title: 'Active Shipments', value: activeShipments, icon: 'bi-truck', color: 'primary' },
+          { title: 'Completed', value: data.deliveredShipments || 0, icon: 'bi-check-circle-fill', color: 'success' }
+        ];
+
+        this.statusBreakdown = {
+          'Assigned': data.assignedShipments || 0,
+          'Picking Up': data.pickingUpShipments || 0,
+          'Out For Delivery': data.outForDeliveryShipments || 0,
+          'Delivered': data.deliveredShipments || 0
+        };
+
+        // Initialize status chart
+        setTimeout(() => {
+          if (this.statusChartRef) {
+            this.initStatusChart();
+          }
+        }, 50);
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#1e293b',
-            padding: 12,
-            titleFont: { size: 14, weight: 'bold' },
-            bodyFont: { size: 13 },
-            displayColors: false,
-            callbacks: {
-              label: (context: any) => {
-                const value = context.parsed.y !== null && context.parsed.y !== undefined ? context.parsed.y : 0;
-                return `Earnings: $${value.toLocaleString()}`;
-              }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            border: { display: false },
-            grid: { color: 'rgba(0,0,0,0.05)' },
-            ticks: {
-              callback: (value) => '$' + value
-            }
-          },
-          x: {
-            border: { display: false },
-            grid: { display: false }
-          }
-        }
+      error: (err) => {
+        this.isLoading = false;
+        console.error('Failed to load driver dashboard data', err);
       }
     });
   }
 
+  loadShipments(): void {
+    const driverId = this.authService.getDriverId();
+    if (driverId) {
+      this.driverService.getAllDriverShipments(driverId).subscribe({
+        next: (shipments) => {
+          this.recentShipments = (shipments || [])
+            .sort((a, b) => new Date(b.orderTime).getTime() - new Date(a.orderTime).getTime())
+            .slice(0, 5);
+        },
+        error: (err) => {
+          console.error('Failed to load shipments', err);
+        }
+      });
+    }
+  }
+
+  toggleStatus(): void {
+    const driverId = this.authService.getDriverId();
+    if (!driverId || !this.dashboardStats) return;
+
+    const newStatus = this.dashboardStats.driverStatus === DriverStatus.Available 
+      ? DriverStatus.NotAvailable 
+      : DriverStatus.Available;
+
+    this.isLoading = true;
+    this.driverService.changeDriverStatus(driverId, { driverId, newStatus }).subscribe({
+      next: () => {
+        this.isLoading = false;
+        if (this.dashboardStats) {
+          this.dashboardStats.driverStatus = newStatus;
+        }
+        this.loadDashboardData();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        console.error('Failed to change driver status', err);
+      }
+    });
+  }
+
+  getVehicleName(type: DeliveryVehicleType | undefined): string {
+    if (type === undefined) return 'N/A';
+    switch (Number(type)) {
+      case DeliveryVehicleType.Bicycle: return 'Bicycle';
+      case DeliveryVehicleType.Motorcycle: return 'Motorcycle';
+      case DeliveryVehicleType.Car: return 'Car';
+      case DeliveryVehicleType.Van: return 'Van';
+      default: return 'Vehicle';
+    }
+  }
+
+  getVehicleIcon(type: DeliveryVehicleType | undefined): string {
+    if (type === undefined) return 'bi-truck';
+    switch (Number(type)) {
+      case DeliveryVehicleType.Bicycle: return 'bi-bicycle';
+      case DeliveryVehicleType.Motorcycle: return 'bi-bicycle';
+      case DeliveryVehicleType.Car: return 'bi-car-front';
+      case DeliveryVehicleType.Van: return 'bi-truck';
+      default: return 'bi-truck';
+    }
+  }
+
+  getDriverStatusName(status: DriverStatus | undefined): string {
+    if (status === undefined) return 'Unknown';
+    return Number(status) === DriverStatus.Available ? 'Available' : 'Not Available';
+  }
+
+  getStatusName(status: string | ShipmentStatus): string {
+    const statusStr = typeof status === 'number' ? ShipmentStatus[status] : status;
+    switch (statusStr) {
+      case 'Assigned': return 'Assigned';
+      case 'PickingUp': return 'Picking Up';
+      case 'OutForDelivery': return 'Out for Delivery';
+      case 'Delivered': return 'Delivered';
+      default: return statusStr || 'Unknown';
+    }
+  }
+
+  getStatusClass(status: string | ShipmentStatus): string {
+    const statusStr = typeof status === 'number' ? ShipmentStatus[status] : status;
+    if (statusStr === 'Delivered') return 'status-success';
+    if (statusStr === 'Assigned') return 'status-warning';
+    if (statusStr === 'PickingUp') return 'status-info';
+    if (statusStr === 'OutForDelivery') return 'status-primary';
+    return 'status-secondary';
+  }
+
   initStatusChart() {
+    if (this.statusChartInstance) {
+      this.statusChartInstance.destroy();
+    }
+
+    const dataValues = [
+      this.statusBreakdown['Assigned'] || 0,
+      this.statusBreakdown['Picking Up'] || 0,
+      this.statusBreakdown['Out For Delivery'] || 0,
+      this.statusBreakdown['Delivered'] || 0
+    ];
+
+    const allZero = dataValues.every(val => val === 0);
+    const chartData = allZero ? [1, 1, 1, 1] : dataValues;
+    const chartColors = allZero 
+      ? ['#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b'] 
+      : ['#3b82f6', '#f59e0b', '#06b6d4', '#10b981'];
+
     this.statusChartInstance = new Chart(this.statusChartRef.nativeElement, {
       type: 'doughnut',
       data: {
-        labels: ['Pending', 'Assigned', 'Delivered'],
+        labels: ['Assigned', 'Picking Up', 'Out For Delivery', 'Delivered'],
         datasets: [{
-          data: [2, 5, 12],
-          backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'],
+          data: chartData,
+          backgroundColor: chartColors,
           borderWidth: 0,
           hoverOffset: 4
         }]
@@ -135,37 +211,22 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         cutout: '75%',
         plugins: {
           legend: {
-            position: 'bottom',
-            labels: {
-              usePointStyle: true,
-              padding: 20,
-              font: { size: 12 }
-            }
+            display: false
           },
           tooltip: {
             backgroundColor: '#1e293b',
             padding: 12,
-            displayColors: true
+            displayColors: true,
+            callbacks: {
+              label: (context: any) => {
+                const label = context.label || '';
+                const value = allZero ? 0 : context.raw;
+                return ` ${label}: ${value}`;
+              }
+            }
           }
         }
       }
     });
-  }
-
-  getStatusName(status: string): string {
-    switch (status) {
-      case 'Pending': return 'Pending';
-      case 'Assigned': return 'Assigned';
-      case 'OutForDelivery': return 'Out for Delivery';
-      case 'Delivered': return 'Delivered';
-      default: return status;
-    }
-  }
-
-  getStatusClass(status: string): string {
-    if (status === 'Delivered') return 'status-success';
-    if (status === 'Pending') return 'status-warning';
-    if (status === 'OutForDelivery') return 'status-info';
-    return 'status-info';
   }
 }

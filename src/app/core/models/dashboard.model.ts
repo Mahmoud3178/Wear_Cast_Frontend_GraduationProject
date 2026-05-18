@@ -1,3 +1,5 @@
+import { DriverStatus, DeliveryVehicleType } from './driver.model';
+
 export interface ShippingDashboardStats {
   totalShipments: number;
   activeDrivers: number;
@@ -17,8 +19,12 @@ export interface MonthlyRevenueDto {
 }
 
 export interface DriverDashboardStats {
-  todayDeliveries: number;
-  totalEarnings: number;
-  completedDeliveries: number;
-  activeHours: string;
+  pendingOrders: number;
+  pickedUpOrders: number;
+  assignedShipments: number;
+  pickingUpShipments: number;
+  outForDeliveryShipments: number;
+  deliveredShipments: number;
+  driverStatus: DriverStatus;
+  deliveryVehicleType: DeliveryVehicleType;
 }

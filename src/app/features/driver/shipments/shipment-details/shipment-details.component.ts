@@ -39,11 +39,14 @@ export class ShipmentDetailsComponent implements OnInit {
     }
   }
 
+  shipmentItems: any[] = [];
+
   loadShipmentDetails() {
     this.isLoading = true;
     this.driverService.getDriverShipmentById(this.shipmentId).subscribe({
       next: (data) => {
         this.shipment = data;
+        this.loadShipmentItems();
         this.isLoading = false;
       },
       error: (err) => {
@@ -56,23 +59,145 @@ export class ShipmentDetailsComponent implements OnInit {
     });
   }
 
+  loadShipmentItems() {
+    this.driverService.getShipmentItems(this.shipmentId).subscribe({
+      next: (res) => {
+        const items: any[] = [];
+        if (res) {
+          // Parse fixed items
+          const fixedPaged = res.fixedItems;
+          const fixedList = fixedPaged?.items ?? [];
+          fixedList.forEach((i: any) => {
+            const orderId = i.sizes && i.sizes.length > 0 ? i.sizes[0].orderId : null;
+            items.push({
+              productName: i.productName || 'Fixed Product',
+              quantity: i.totalQuantity || 1,
+              unitPrice: i.unitPrice || 0,
+              orderId: orderId,
+              type: 'Fixed',
+              colorName: i.colorName || 'Default',
+              imageUrl: i.imageUrl || null,
+              sizes: i.sizes || []
+            });
+          });
+
+          // Parse designed items
+          const designedPaged = res.designedItems;
+          const designedList = designedPaged?.items ?? [];
+          designedList.forEach((d: any) => {
+            const orderId = d.sizes && d.sizes.length > 0 ? d.sizes[0].orderId : null;
+            items.push({
+              productName: d.productName || 'Designed Product',
+              quantity: d.totalQuantity || 1,
+              unitPrice: d.unitPrice || 0,
+              orderId: orderId,
+              type: 'Designed',
+              colorName: d.colorName || 'Default',
+              imageUrl: d.frontImageUrl || null,
+              sizes: d.sizes || []
+            });
+          });
+        }
+        this.shipmentItems = items;
+
+        // Populate shipment.orders with unique order IDs from the items dynamically
+        if (this.shipment) {
+          const uniqueOrderIds = Array.from(new Set(items.map(x => x.orderId).filter(id => id !== null && id !== undefined)));
+          const currentShipmentStatusStr = this.shipment.shipmentStatus.toString();
+          const isAlreadyPickedUp = currentShipmentStatusStr === 'OutForDelivery' || 
+                                     currentShipmentStatusStr === '5' || 
+                                     currentShipmentStatusStr === 'Delivered' || 
+                                     currentShipmentStatusStr === '6';
+
+          this.shipment.orders = uniqueOrderIds.map(orderId => {
+            const localKey = `shipment_${this.shipmentId}_order_${orderId}_picked`;
+            const wasPickedLocal = localStorage.getItem(localKey) === 'true';
+
+            return {
+              orderId: orderId as number,
+              storeName: items.find(x => x.orderId === orderId)?.type === 'Fixed' ? 'WearCast Store' : 'Design Factory',
+              itemsCount: items.filter(x => x.orderId === orderId).reduce((sum, current) => sum + current.quantity, 0),
+              status: (isAlreadyPickedUp || wasPickedLocal) ? 'PickedUp' : 'Ready'
+            };
+          });
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load shipment items', err);
+      }
+    });
+  }
+
   loadMockData() {
     this.shipment = {
       id: this.shipmentId,
-      trackingId: 'TRK-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+      deliveryAddress: {
+        state: 'Gaza State',
+        city: 'Gaza City',
+        street: 'Al-Wehda Street',
+        postalCode: '99000'
+      },
       shipmentStatus: ShipmentStatus.OutForDelivery,
-      deliveryCity: 'Lake Marco',
-      deliveryStreet: 'Feest Turnpike',
-      deliveryBuildingNumber: '870',
-      receiverName: 'John Doe',
-      receiverPhone: '0123456789',
-      orderTime: new Date(),
-      price: 45.5,
-      items: [
-        { productName: 'Premium T-Shirt', quantity: 2, price: 15 },
-        { productName: 'Classic Jeans', quantity: 1, price: 15.5 }
+      orderedAt: new Date().toISOString(),
+      customerName: 'Ahmed Ali',
+      customerPhoneNumber: '+970599112233',
+      orders: [
+        { orderId: 201, storeName: 'WearCast Palestine Store', itemsCount: 3, status: 'Ready' },
+        { orderId: 202, storeName: 'Google Merch Gaza Store', itemsCount: 1, status: 'Ready' }
       ]
-    } as any;
+    };
+
+    this.shipmentItems = [
+      {
+        productName: 'Premium Casual T-Shirt',
+        quantity: 2,
+        unitPrice: 15.00,
+        orderId: 201,
+        type: 'Fixed',
+        colorName: 'Indigo Blue',
+        imageUrl: null,
+        sizes: [{ sizeName: 'M', quantity: 2 }]
+      },
+      {
+        productName: 'Signature Denim Jacket',
+        quantity: 1,
+        unitPrice: 45.00,
+        orderId: 201,
+        type: 'Fixed',
+        colorName: 'Charcoal Black',
+        imageUrl: null,
+        sizes: [{ sizeName: 'L', quantity: 1 }]
+      },
+      {
+        productName: 'Custom Designed Hoodie',
+        quantity: 1,
+        unitPrice: 35.00,
+        orderId: 202,
+        type: 'Designed',
+        colorName: 'Teal Green',
+        imageUrl: null,
+        sizes: [{ sizeName: 'XL', quantity: 1 }]
+      }
+    ];
+  }
+
+  getNextStatus(): { value: ShipmentStatus; label: string; btnClass: string } | null {
+    if (!this.shipment) return null;
+    const statusStr = typeof this.shipment.shipmentStatus === 'number'
+      ? this.shipment.shipmentStatus
+      : ShipmentStatus[this.shipment.shipmentStatus as keyof typeof ShipmentStatus];
+
+    const currentStatus = Number(statusStr);
+    switch (currentStatus) {
+      case ShipmentStatus.Assigned:
+        return { value: ShipmentStatus.PickingUp, label: 'Start Pickup Trip', btnClass: 'btn-warning bg-warning text-dark' };
+      case ShipmentStatus.PickingUp:
+        return { value: ShipmentStatus.OutForDelivery, label: 'Start Delivery Trip', btnClass: 'btn-primary bg-primary text-white' };
+      case ShipmentStatus.OutForDelivery:
+        return { value: ShipmentStatus.Delivered, label: 'Complete Delivery', btnClass: 'btn-success bg-success text-white' };
+      default:
+        return null;
+    }
   }
 
   updateStatus(newStatus: ShipmentStatus) {
@@ -125,10 +250,10 @@ export class ShipmentDetailsComponent implements OnInit {
       error: (err) => {
         console.error('Failed to update status', err);
         this.isLoading = false;
-        
+
         const errorData = err.error;
         if (errorData && errorData.code) {
-          switch(errorData.code) {
+          switch (errorData.code) {
             case 'Shipment.NotReady':
               this.errorMessage = 'Cannot start trip: Some orders are not marked as "Ready" by the seller yet. Please contact the store.';
               break;
@@ -149,6 +274,39 @@ export class ShipmentDetailsComponent implements OnInit {
         }
       }
     });
+  }
+
+  updateOrderPickedUp(orderId: number) {
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.isLoading = true;
+
+    this.driverService.updateOrderStatus(orderId, 6).subscribe({
+      next: () => {
+        this.isLoading = false;
+        
+        // Find order in our shipment list and update status
+        const order = this.shipment?.orders.find(o => o.orderId === orderId);
+        if (order) {
+          order.status = 'PickedUp';
+          localStorage.setItem(`shipment_${this.shipmentId}_order_${orderId}_picked`, 'true');
+        }
+        
+        this.successMessage = `Order #${orderId} marked as Picked Up!`;
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (err) => {
+        console.error('Failed to update order status', err);
+        this.isLoading = false;
+        this.errorMessage = err.error?.message || `Failed to mark Order #${orderId} as Picked Up.`;
+      }
+    });
+  }
+
+  isPickingUpStatus(): boolean {
+    if (!this.shipment) return false;
+    const s = this.shipment.shipmentStatus.toString();
+    return s === '4' || s === 'PickingUp';
   }
 
   getStatusClass(status: any): string {

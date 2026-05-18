@@ -12,12 +12,14 @@ export interface Address {
   city: string;
   street: string;
   postalCode?: string;
+  buildingNumber?: string;
 }
 
 export interface OrderSummary {
   orderId: number;
   storeName: string;
   itemsCount: number;
+  status?: string;
 }
 
 export interface Shipment {
@@ -86,6 +88,7 @@ export interface DriverShipmentDetails {
   customerName: string;
   customerPhoneNumber: string;
   orders: OrderSummary[];
+  shippingCompany?: any;
 }
 
 export interface UpdateShipmentStatusRequest {

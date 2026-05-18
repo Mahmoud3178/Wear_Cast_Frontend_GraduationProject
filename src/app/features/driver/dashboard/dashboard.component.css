@@ -114,6 +114,8 @@
 .status-warning { background-color: #fef3c7; color: #92400e; }
 .status-danger { background-color: #fee2e2; color: #991b1b; }
 .status-info { background-color: #e0f2fe; color: #075985; }
+.status-primary { background-color: #eff6ff; color: #1d4ed8; }
+.status-secondary { background-color: #f1f5f9; color: #475569; }
 
 /* Buttons */
 .btn-primary-premium {

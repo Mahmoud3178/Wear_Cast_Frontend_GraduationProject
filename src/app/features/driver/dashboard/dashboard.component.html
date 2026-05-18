@@ -5,11 +5,28 @@
       <h1 class="fw-bold tracking-tight mb-1 text-slate-900">Welcome Back, {{ userName }}</h1>
       <p class="text-slate-500 mb-0">Here's what's happening with your deliveries today.</p>
     </div>
-    <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border border-slate-100">
-      <div class="icon-box-xs bg-primary-soft text-primary rounded-circle">
-        <i class="bi bi-calendar3"></i>
+    
+    <div class="d-flex align-items-center gap-3">
+      <!-- Vehicle Type badge -->
+      <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border border-slate-100" *ngIf="dashboardStats">
+        <div class="icon-box-xs bg-primary-soft text-primary rounded-circle">
+          <i class="bi" [ngClass]="getVehicleIcon(dashboardStats.deliveryVehicleType)"></i>
+        </div>
+        <span class="text-sm fw-semibold text-slate-600">Vehicle: {{ getVehicleName(dashboardStats.deliveryVehicleType) }}</span>
       </div>
-      <span class="text-sm fw-semibold text-slate-600">{{ today | date:'longDate' }}</span>
+
+      <!-- Online Status Badge -->
+      <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border border-slate-100" *ngIf="dashboardStats">
+        <span class="dot" [ngClass]="dashboardStats.driverStatus === 1 ? 'bg-success' : 'bg-danger'"></span>
+        <span class="text-sm fw-semibold text-slate-600">Status: {{ getDriverStatusName(dashboardStats.driverStatus) }}</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border border-slate-100">
+        <div class="icon-box-xs bg-primary-soft text-primary rounded-circle">
+          <i class="bi bi-calendar3"></i>
+        </div>
+        <span class="text-sm fw-semibold text-slate-600">{{ today | date:'longDate' }}</span>
+      </div>
     </div>
   </header>
 
@@ -17,14 +34,10 @@
   <div class="row g-4 mb-5">
     <div class="col-12 col-md-6 col-xl-3" *ngFor="let stat of stats; let i = index">
       <div class="premium-card p-4 h-100 shadow-premium border-0 position-relative overflow-hidden">
-        <div class="card-bg-decoration"></div>
+        <div class="card-bg-decoration animate-pulse"></div>
         <div class="d-flex justify-content-between align-items-start mb-3 position-relative">
           <div class="stat-icon-box" [ngClass]="'bg-soft-' + i">
             <i class="bi" [ngClass]="stat.icon"></i>
-          </div>
-          <div class="trend-badge" [class.trend-up]="stat.trendUp" [class.trend-down]="!stat.trendUp">
-            <i class="bi" [ngClass]="stat.trendUp ? 'bi-arrow-up' : 'bi-arrow-down'"></i>
-            <span>{{ stat.trend }}</span>
           </div>
         </div>
         <div class="position-relative">
@@ -37,23 +50,44 @@
 
   <!-- Main Content Grid -->
   <div class="row g-4">
-    <!-- Left Column: Charts -->
+    <!-- Left Column: Shipments & Route info -->
     <div class="col-12 col-xl-8">
-      <!-- Revenue Chart Card -->
-      <div class="premium-card p-4 shadow-premium mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+      <!-- Active Driver Profile Overview Card -->
+      <div class="premium-card p-4 shadow-premium mb-4" *ngIf="dashboardStats">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
           <div>
-            <h5 class="fw-bold text-slate-900 mb-1">Earnings Performance</h5>
-            <p class="text-xs text-slate-500 mb-0">Monthly gross earnings overview</p>
-          </div>
-          <div class="dropdown">
-            <button class="btn btn-light-soft btn-sm px-3 rounded-pill" type="button">
-              Last 6 Months <i class="bi bi-chevron-down ms-1"></i>
-            </button>
+            <h5 class="fw-bold text-slate-900 mb-1">Active Duty Information</h5>
+            <p class="text-xs text-slate-500 mb-0">Live status details and assigned work metrics</p>
           </div>
         </div>
-        <div class="chart-container" style="height: 300px;">
-          <canvas #revenueChart></canvas>
+        
+        <div class="row g-3">
+          <div class="col-6 col-sm-3">
+            <div class="bg-slate-50 p-3 rounded-3 text-center border border-slate-100">
+              <div class="text-xs text-slate-400 fw-semibold mb-1">Pending Orders</div>
+              <h4 class="fw-bold text-slate-900 mb-0">{{ dashboardStats.pendingOrders }}</h4>
+            </div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="bg-slate-50 p-3 rounded-3 text-center border border-slate-100">
+              <div class="text-xs text-slate-400 fw-semibold mb-1">Picked Up</div>
+              <h4 class="fw-bold text-slate-900 mb-0">{{ dashboardStats.pickedUpOrders }}</h4>
+            </div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="bg-slate-50 p-3 rounded-3 text-center border border-slate-100">
+              <div class="text-xs text-slate-400 fw-semibold mb-1">Active Shipments</div>
+              <h4 class="fw-bold text-slate-900 mb-0">
+                {{ (dashboardStats.assignedShipments || 0) + (dashboardStats.pickingUpShipments || 0) + (dashboardStats.outForDeliveryShipments || 0) }}
+              </h4>
+            </div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="bg-slate-50 p-3 rounded-3 text-center border border-slate-100">
+              <div class="text-xs text-slate-400 fw-semibold mb-1">Total Delivered</div>
+              <h4 class="fw-bold text-slate-900 mb-0">{{ dashboardStats.deliveredShipments }}</h4>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -61,21 +95,21 @@
       <div class="premium-card shadow-premium overflow-hidden">
         <div class="p-4 d-flex justify-content-between align-items-center border-bottom border-slate-100">
           <h5 class="fw-bold text-slate-900 mb-0">Recent Deliveries</h5>
-          <button class="btn btn-link-premium text-sm p-0">View All</button>
+          <a routerLink="/driver/shipments" class="btn btn-link-premium text-sm p-0">View All</a>
         </div>
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
             <thead class="bg-slate-50">
               <tr>
                 <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0">Tracking ID</th>
+                <th class="py-3 uppercase-tracking text-slate-500 border-0">Customer</th>
                 <th class="py-3 uppercase-tracking text-slate-500 border-0">Destination</th>
                 <th class="py-3 uppercase-tracking text-slate-500 border-0">Status</th>
-                <th class="py-3 uppercase-tracking text-slate-500 border-0">Date</th>
-                <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0 text-end">Amount</th>
+                <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0 text-end">Date</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let shipment of recentShipments" class="cursor-pointer">
+              <tr *ngFor="let shipment of recentShipments" class="cursor-pointer" [routerLink]="['/driver/shipments', shipment.id]">
                 <td class="px-4">
                   <div class="d-flex align-items-center gap-3">
                     <div class="pkg-icon bg-slate-100 text-slate-500 rounded-circle">
@@ -83,6 +117,10 @@
                     </div>
                     <span class="fw-bold text-slate-700">#{{ shipment.id }}</span>
                   </div>
+                </td>
+                <td>
+                  <div class="text-sm fw-semibold text-slate-900">{{ shipment.customerName || 'N/A' }}</div>
+                  <div class="text-xs text-slate-500">{{ shipment.customerPhoneNumber || 'N/A' }}</div>
                 </td>
                 <td>
                   <div class="text-sm fw-medium text-slate-900">{{ shipment.deliveryCity }}</div>
@@ -93,15 +131,12 @@
                     {{ getStatusName(shipment.shipmentStatus) }}
                   </span>
                 </td>
-                <td>
-                  <span class="text-sm text-slate-500">{{ shipment.orderTime | date:'MMM d, HH:mm' }}</span>
-                </td>
                 <td class="px-4 text-end">
-                  <span class="fw-bold text-slate-900">${{ shipment.price | number:'1.2-2' }}</span>
+                  <span class="text-sm text-slate-500">{{ shipment.orderTime | date:'MMM d, HH:mm' }}</span>
                 </td>
               </tr>
               <tr *ngIf="recentShipments.length === 0">
-                <td colspan="5" class="text-center py-5 text-muted">No recent shipments found.</td>
+                <td colspan="5" class="text-center py-5 text-muted">No recent shipments assigned to you.</td>
               </tr>
             </tbody>
           </table>
@@ -112,8 +147,8 @@
     <!-- Right Column: Distribution & Quick Actions -->
     <div class="col-12 col-xl-4">
       <!-- Status Distribution Chart -->
-      <div class="premium-card p-4 shadow-premium mb-4">
-        <h5 class="fw-bold text-slate-900 mb-4">Shipment Status</h5>
+      <div class="premium-card p-4 shadow-premium mb-4" *ngIf="dashboardStats">
+        <h5 class="fw-bold text-slate-900 mb-4">Shipment Breakdown</h5>
         <div class="chart-container d-flex align-items-center justify-content-center" style="height: 250px;">
           <canvas #statusChart></canvas>
         </div>
@@ -121,38 +156,32 @@
         <div class="status-legend mt-4">
           <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
             <div class="d-flex align-items-center gap-2">
-              <span class="dot bg-warning"></span>
-              <span class="text-sm text-slate-600">Pending</span>
-            </div>
-            <span class="fw-bold text-slate-900">{{ dashboardStats.statusBreakdown['Pending'] || 0 }}</span>
-          </div>
-          <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
-            <div class="d-flex align-items-center gap-2">
               <span class="dot bg-primary"></span>
               <span class="text-sm text-slate-600">Assigned</span>
             </div>
-            <span class="fw-bold text-slate-900">{{ dashboardStats.statusBreakdown['Assigned'] || 0 }}</span>
+            <span class="fw-bold text-slate-900">{{ dashboardStats.assignedShipments || 0 }}</span>
+          </div>
+          <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
+            <div class="d-flex align-items-center gap-2">
+              <span class="dot bg-warning"></span>
+              <span class="text-sm text-slate-600">Picking Up</span>
+            </div>
+            <span class="fw-bold text-slate-900">{{ dashboardStats.pickingUpShipments || 0 }}</span>
+          </div>
+          <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
+            <div class="d-flex align-items-center gap-2">
+              <span class="dot bg-info"></span>
+              <span class="text-sm text-slate-600">Out For Delivery</span>
+            </div>
+            <span class="fw-bold text-slate-900">{{ dashboardStats.outForDeliveryShipments || 0 }}</span>
           </div>
           <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
             <div class="d-flex align-items-center gap-2">
               <span class="dot bg-success"></span>
               <span class="text-sm text-slate-600">Delivered</span>
             </div>
-            <span class="fw-bold text-slate-900">{{ dashboardStats.statusBreakdown['Delivered'] || 0 }}</span>
+            <span class="fw-bold text-slate-900">{{ dashboardStats.deliveredShipments || 0 }}</span>
           </div>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="premium-card p-4 shadow-premium">
-        <h6 class="uppercase-tracking text-slate-400 fw-bold mb-3">Quick Actions</h6>
-        <div class="d-grid gap-3">
-          <button class="btn btn-primary-premium py-3 rounded-4 shadow-sm">
-            <i class="bi bi-geo-alt me-2"></i> Update Current Location
-          </button>
-          <button class="btn btn-outline-slate py-3 rounded-4">
-            <i class="bi bi-clock me-2"></i> Go Offline
-          </button>
         </div>
       </div>
     </div>
