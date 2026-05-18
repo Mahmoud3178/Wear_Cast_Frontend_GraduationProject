@@ -30,16 +30,16 @@ export class SallerNotificationsComponent implements OnInit {
     this.load();
   }
 
-  load() {
-    this.isLoading = true;
-    this.notifService.getAll(1, 50, undefined, this.isReadFilter).subscribe({
-      next: (res: any) => {
-        this.notifications = res?.items ?? res?.data ?? res ?? [];
-        this.isLoading = false;
-      },
-      error: () => { this.isLoading = false; }
-    });
-  }
+load() {
+  this.isLoading = true;
+  this.notifService.getAll(1, 50, undefined, { isRead: this.isReadFilter }).subscribe({
+    next: (res: any) => {
+      this.notifications = res?.items ?? res?.data ?? res ?? [];
+      this.isLoading = false;
+    },
+    error: () => { this.isLoading = false; }
+  });
+}
 
   get unread() { return this.notifications.filter(n => !n.isRead).length; }
 
