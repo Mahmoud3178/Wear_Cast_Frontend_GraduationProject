@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { 
@@ -8,7 +8,9 @@ import {
   UpdateShippingCompanyRequest,
   ShippingCompanyManager,
   CreateManagerRequest,
-  UpdateManagerRequest
+  UpdateManagerRequest,
+  ShippingCompanyDashboardResponse,
+  WalletResponse
 } from '../models/shipping-company.model';
 
 @Injectable({
@@ -61,6 +63,29 @@ export class ShippingCompanyService {
 
   updateManager(request: UpdateManagerRequest): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/shipping-company-managers/profile`, request);
+  }
+
+  // --- Shipping Company Dashboard ---
+  getDashboard(): Observable<ShippingCompanyDashboardResponse> {
+    return this.http.get<ShippingCompanyDashboardResponse>(`${this.apiUrl}/ShippingCompany/Dashboard`);
+  }
+
+  // --- Shipping Company Wallet ---
+  getWallet(): Observable<WalletResponse> {
+    return this.http.get<WalletResponse>(`${this.apiUrl}/shipping-companies/wallet`);
+  }
+
+  // --- Shipping Company Orders (Requests Pipeline) ---
+  getOrders(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined) {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get<any>(`${this.apiUrl}/ShippingCompany/Orders`, { params: httpParams });
   }
 }
 

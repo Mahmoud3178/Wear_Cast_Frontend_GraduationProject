@@ -32,58 +32,94 @@
       </div>
 
       <div class="login-card">
-        <div class="text-center mb-4">
-          <h2 class="h4 fw-bold mb-1">Sign in</h2>
-          <p class="text-muted small mb-0">Use your WearCast account email and password</p>
+        <div *ngIf="!showConfirmBox">
+          <div class="text-center mb-4">
+            <h2 class="h4 fw-bold mb-1">Sign in</h2>
+            <p class="text-muted small mb-0">Use your WearCast account email and password</p>
+          </div>
+
+          <form (ngSubmit)="login()">
+            <div *ngIf="errorMessage" class="alert alert-danger py-2 small" role="alert">
+              {{ errorMessage }}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-medium" for="login-email">Email</label>
+              <input
+                id="login-email"
+                type="email"
+                class="form-control"
+                placeholder="you@example.com"
+                [(ngModel)]="form.email"
+                name="email"
+                autocomplete="email"
+                required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-medium" for="login-password">Password</label>
+              <div class="input-group">
+                <input
+                  id="login-password"
+                  [type]="showPassword ? 'text' : 'password'"
+                  class="form-control"
+                  placeholder="Your password"
+                  [(ngModel)]="form.password"
+                  name="password"
+                  autocomplete="current-password"
+                  required>
+                <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
+                  <i class="bi" [class.bi-eye]="showPassword" [class.bi-eye-slash]="!showPassword"></i>
+                </button>
+              </div>
+              <div class="d-flex justify-content-end mt-1 mb-3">
+                <a routerLink="/forgot-password" class="text-decoration-none small text-muted">Forgot your password?</a>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-dark w-100 py-2 mb-3 rounded-3" [disabled]="submitting">
+              {{ submitting ? 'Signing in…' : 'Sign in' }}
+            </button>
+          </form>
         </div>
 
-        <form (ngSubmit)="login()">
-          <div *ngIf="errorMessage" class="alert alert-danger py-2 small" role="alert">
-            {{ errorMessage }}
+        <div *ngIf="showConfirmBox">
+          <div class="text-center mb-4">
+            <h2 class="h4 fw-bold mb-1">Verify Email</h2>
+            <p class="text-muted small mb-0">We sent a verification code to <strong>{{form.email}}</strong>. Please enter the code below to confirm your account.</p>
           </div>
 
+          <form (ngSubmit)="verifyCode()">
+            <div *ngIf="verificationError" class="alert alert-danger py-2 small" role="alert">
+              {{ verificationError }}
+            </div>
+            <div *ngIf="verificationSuccess" class="alert alert-success py-2 small" role="alert">
+              {{ verificationSuccess }}
+            </div>
 
-
-
-
-          <div class="mb-3">
-            <label class="form-label small fw-medium" for="login-email">Email</label>
-            <input
-              id="login-email"
-              type="email"
-              class="form-control"
-              placeholder="you@example.com"
-              [(ngModel)]="form.email"
-              name="email"
-              autocomplete="email"
-              required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small fw-medium" for="login-password">Password</label>
-            <div class="input-group">
+            <div class="mb-3">
+              <label class="form-label small fw-medium" for="verification-code">Verification Code</label>
               <input
-                id="login-password"
-                [type]="showPassword ? 'text' : 'password'"
-                class="form-control"
-                placeholder="Your password"
-                [(ngModel)]="form.password"
-                name="password"
-                autocomplete="current-password"
+                id="verification-code"
+                type="text"
+                class="form-control text-center fw-bold fs-5"
+                placeholder="000000"
+                [(ngModel)]="confirmCode"
+                name="confirmCode"
+                maxlength="8"
+                style="letter-spacing: 0.5rem; text-indent: 0.25rem;"
                 required>
-              <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" tabindex="-1" aria-label="Toggle password visibility">
-                <i class="bi" [class.bi-eye]="showPassword" [class.bi-eye-slash]="!showPassword"></i>
-              </button>
             </div>
-            <div class="d-flex justify-content-end mt-1 mb-3">
-              <a routerLink="/forgot-password" class="text-decoration-none small text-muted">Forgot your password?</a>
-            </div>
-          </div>
 
-          <button type="submit" class="btn btn-dark w-100 py-2 mb-3 rounded-3" [disabled]="submitting">
-            {{ submitting ? 'Signing in…' : 'Sign in' }}
-          </button>
-        </form>
+            <button type="submit" class="btn btn-dark w-100 py-2 mb-3 rounded-3" [disabled]="verifying">
+              {{ verifying ? 'Verifying…' : 'Verify & Sign in' }}
+            </button>
+            
+            <button type="button" class="btn btn-link w-100 text-decoration-none text-muted small" (click)="showConfirmBox = false">
+              Back to Sign in
+            </button>
+          </form>
+        </div>
 
         <div class="login-card__footer">
           <div class="login-footer-block">

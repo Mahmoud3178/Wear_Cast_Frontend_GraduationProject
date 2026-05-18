@@ -214,6 +214,20 @@ export class AuthService {
     );
   }
 
+  getUserId(email: string, password: string): Observable<{ userId: string }> {
+    const url = `${this.apiUrl}/api/auth/getid`;
+    return this.http.post<any>(url, { email: email.trim(), password }).pipe(
+      map(res => {
+        const userId = res?.userId ?? res?.UserId ?? res?.userid;
+        if (!userId) {
+          throw new Error('Could not retrieve user ID');
+        }
+        return { userId };
+      }),
+      catchError(err => this.handleHttpError(err))
+    );
+  }
+
   /** Customer: POST /api/auth/confirm-email — body { userId, code }. */
   confirmCustomerEmail(userId: string, code: string): Observable<void> {
     const url = `${this.apiUrl}/api/auth/confirm-email`;

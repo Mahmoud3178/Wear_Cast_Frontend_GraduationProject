@@ -220,3 +220,167 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Color utilities */
+.bg-purple-soft { background-color: #faf5ff; }
+.bg-purple { background-color: #9333ea; color: white; }
+.text-purple { color: #9333ea; }
+.border-primary-light { border-color: rgba(37, 99, 235, 0.2) !important; }
+
+.bg-emerald-soft { background-color: #ecfdf5; }
+.text-emerald { color: #059669; }
+
+.bg-rose-soft { background-color: #fff1f2; }
+.text-rose { color: #e11d48; }
+
+.bg-warning-soft { background-color: #fffbeb; }
+.text-warning { color: #d97706; }
+
+.bg-indigo { background-color: #4f46e5; }
+.bg-indigo-soft { background-color: #e0e7ff; }
+.text-indigo { color: #4f46e5; }
+
+/* Wallet Ledger styles */
+.wallet-glow-bg {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(147, 51, 234, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.text-xxs {
+  font-size: 0.65rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+/* Custom background icons */
+.bg-soft-0 { background-color: #eff6ff; color: #2563eb; } /* Primary Blue */
+.bg-soft-1 { background-color: #ecfdf5; color: #10b981; } /* Emerald Green */
+.bg-soft-2 { background-color: #faf5ff; color: #9333ea; } /* Purple Fleet */
+.bg-soft-3 { background-color: #fef3c7; color: #d97706; } /* Wallet Amber/Orange */
+
+/* Pagination Buttons */
+.btn-outline-slate {
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  background: white;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-outline-slate:hover:not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.btn-outline-slate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Order Type Badges */
+.badge-fixed-product {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid rgba(29, 78, 216, 0.15);
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-custom-design {
+  background-color: #faf5ff;
+  color: #7e22ce;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid rgba(126, 34, 206, 0.15);
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-secondary {
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Filter Controls Box */
+.filters-container {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.form-select-premium {
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.8rem;
+  padding: 10px 14px;
+  background-color: white;
+  transition: all 0.3s;
+  color: #334155;
+  font-weight: 500;
+}
+
+.form-select-premium:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  outline: none;
+}
+
+.form-control-premium {
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.8rem;
+  padding: 10px 14px;
+  background-color: white;
+  transition: all 0.3s;
+  color: #334155;
+  font-weight: 500;
+}
+
+.form-control-premium:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  outline: none;
+}
+
+/* Inline Loading Animation */
+.inline-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.spinner-sm {
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid #f3f3f3;
+  border-top: 2.5px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+

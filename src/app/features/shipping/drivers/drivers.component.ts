@@ -1,8 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map } from 'rxjs';
 import { DriverService } from '../../../core/services/driver.service';
+import { ShippingService } from '../../../core/services/shipping.service';
 import { Driver, DriverStatus, DeliveryVehicleType, CreateDriverRequest, UpdateDriverRequest } from '../../../core/models/driver.model';
 import { ShippingStats } from '../../../core/models/shipping-stats.model';
 
@@ -15,6 +16,7 @@ import { ShippingStats } from '../../../core/models/shipping-stats.model';
 })
 export class DriversComponent implements OnInit {
   private driverService = inject(DriverService);
+  private shippingService = inject(ShippingService);
   private fb = inject(FormBuilder);
 
   drivers: Driver[] = [];
@@ -33,6 +35,8 @@ export class DriversComponent implements OnInit {
   searchFirstName = '';
   searchLastName = '';
   searchCity = '';
+  searchNationalId = '';
+  searchVehicleType = '';
   sortBy = 'Newest';
   pageIndex = 1;
   pageSize = 10;
@@ -58,6 +62,12 @@ export class DriversComponent implements OnInit {
   isUpdateModalOpen = false;
   selectedDriver: Driver | null = null;
 
+  // Details Modal
+  showDetailsModal = false;
+  isLoadingDetails = false;
+  selectedDriverDetails: any = null;
+  driverShipments: any[] = [];
+
   // Form
   newDriver: any = {
     name: '',
@@ -70,6 +80,8 @@ export class DriversComponent implements OnInit {
     city: '',
     street: '',
     buildingNumber: '',
+    password: '',
+    confirmPassword: '',
     status: DriverStatus.Available
   };
 
@@ -108,9 +120,14 @@ export class DriversComponent implements OnInit {
     if (this.searchFirstName.trim()) params.DriverFirstName = this.searchFirstName.trim();
     if (this.searchLastName.trim()) params.DriverLastName = this.searchLastName.trim();
     if (this.searchCity.trim()) params.DriverCity = this.searchCity.trim();
+    if (this.searchNationalId.trim()) params.DriverNationalId = this.searchNationalId.trim();
+
+    if (this.searchVehicleType) {
+      params.VehicleType = Number(this.searchVehicleType);
+    }
 
     if (this.selectedFilter !== 'all') {
-      params.driverStatus = this.selectedFilter === 'Available' ? DriverStatus.Available : DriverStatus.NotAvailable;
+      params.DriverStatus = this.selectedFilter === 'Available' ? DriverStatus.Available : DriverStatus.NotAvailable;
     }
 
     this.driverService.getAllDrivers(params).subscribe({
@@ -136,6 +153,9 @@ export class DriversComponent implements OnInit {
               return {
                 ...d,
                 driverPhone: profile.phoneNumber,
+                driverEmail: profile.email,
+                driverNationalId: profile.nationalId,
+                vehiclePlateNumber: profile.vehiclePlateNumber,
                 profileImageUrl: profile.profileImageUrl
               };
             });
@@ -259,7 +279,7 @@ export class DriversComponent implements OnInit {
       lastName: names.slice(1).join(' ') || 'Driver',
       phoneNumber: this.newDriver.phoneNumber,
       nationalId: this.newDriver.nationalId,
-      vehicleType: this.newDriver.vehicleType,
+      vehicleType: Number(this.newDriver.vehicleType),
       vehiclePlateNumber: this.newDriver.vehiclePlateNumber,
       address: {
         state: this.newDriver.state || 'Cairo',
@@ -328,7 +348,10 @@ export class DriversComponent implements OnInit {
       state: '',
       city: '',
       street: '',
-      buildingNumber: ''
+      buildingNumber: '',
+      password: '',
+      confirmPassword: '',
+      status: DriverStatus.Available
     };
   }
 
@@ -357,14 +380,14 @@ export class DriversComponent implements OnInit {
       email: this.newDriver.email || `${this.newDriver.phoneNumber}@wearcast.com`,
       phoneNumber: this.newDriver.phoneNumber,
       nationalId: this.newDriver.nationalId,
-      vehicleType: this.newDriver.vehicleType,
+      vehicleType: Number(this.newDriver.vehicleType),
       vehiclePlateNumber: this.newDriver.vehiclePlateNumber || 'ABC-123',
       state: this.newDriver.state || 'Cairo',
       city: this.newDriver.city || 'Cairo',
       street: this.newDriver.street || 'Main St',
       buildingNumber: this.newDriver.buildingNumber || '1',
-      password: 'WearCast@2024',
-      confirmPassword: 'WearCast@2024',
+      password: this.newDriver.password || 'WearCast@2024',
+      confirmPassword: this.newDriver.confirmPassword || 'WearCast@2024',
       profileImage: this.selectedFile
     };
 
@@ -386,6 +409,59 @@ export class DriversComponent implements OnInit {
         }
       }
     });
+  }
+
+  openDetailsModal(driver: Driver) {
+    this.showDetailsModal = true;
+    this.isLoadingDetails = true;
+    this.selectedDriverDetails = null;
+    this.driverShipments = [];
+
+    forkJoin({
+      profile: this.driverService.getDriverById(driver.id),
+      shipmentsData: this.driverService.getAllDriverShipments(driver.id)
+    }).subscribe({
+      next: ({ profile, shipmentsData }) => {
+        this.selectedDriverDetails = profile;
+
+        const shipmentsList = shipmentsData || [];
+
+        if (shipmentsList.length > 0) {
+          const orderRequests = shipmentsList.map((s: any) =>
+            this.shippingService.getOrdersByShipmentId(s.id).pipe(
+              map(ordersData => ({
+                ...s,
+                orders: ordersData?.orders || []
+              }))
+            )
+          );
+          forkJoin(orderRequests).subscribe({
+            next: (detailedShipments) => {
+              this.driverShipments = detailedShipments;
+              this.isLoadingDetails = false;
+            },
+            error: (err) => {
+              console.error('Failed to load shipment orders', err);
+              this.driverShipments = shipmentsList.map(s => ({ ...s, orders: [] }));
+              this.isLoadingDetails = false;
+            }
+          });
+        } else {
+          this.driverShipments = [];
+          this.isLoadingDetails = false;
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load driver details', err);
+        this.isLoadingDetails = false;
+      }
+    });
+  }
+
+  closeDetailsModal() {
+    this.showDetailsModal = false;
+    this.selectedDriverDetails = null;
+    this.driverShipments = [];
   }
 
   openUpdateModal(driver: Driver) {

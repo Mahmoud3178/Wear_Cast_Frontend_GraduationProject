@@ -25,6 +25,14 @@ export class LoginComponent implements OnInit {
   emailNotConfirmed = false;
   showPassword = false;
 
+  // New properties for inline email verification
+  showConfirmBox = false;
+  confirmCode = '';
+  cachedUserId = '';
+  verificationError = '';
+  verificationSuccess = '';
+  verifying = false;
+
   constructor(
     private readonly auth: AuthService,
     private readonly router: Router,
@@ -70,10 +78,60 @@ export class LoginComponent implements OnInit {
           this.errorMessage
         );
         if (this.emailNotConfirmed) {
-          void this.router.navigate(['/resend-confirmation/customer'], {
-            queryParams: { email: this.form.email.trim() }
+          const email = this.form.email.trim();
+          this.errorMessage = 'Your email is not confirmed yet. Initiating email confirmation code...';
+          this.submitting = true;
+
+          // Call resend confirmation email
+          this.auth.resendConfirmationEmail(email).subscribe({
+            next: () => {
+              // And retrieve user id
+              this.auth.getUserId(email, this.form.password).subscribe({
+                next: (idRes) => {
+                  this.submitting = false;
+                  this.cachedUserId = idRes.userId;
+                  this.showConfirmBox = true;
+                  this.errorMessage = '';
+                },
+                error: (idErr) => {
+                  this.submitting = false;
+                  this.errorMessage = idErr.message || 'Failed to initialize verification. Please try again.';
+                }
+              });
+            },
+            error: (resendErr) => {
+              this.submitting = false;
+              this.errorMessage = resendErr.message || 'Failed to resend confirmation email.';
+            }
           });
         }
+      }
+    });
+  }
+
+  verifyCode(): void {
+    if (!this.confirmCode.trim()) {
+      this.verificationError = 'Please enter the verification code.';
+      return;
+    }
+    this.verificationError = '';
+    this.verificationSuccess = '';
+    this.verifying = true;
+
+    this.auth.confirmCustomerEmail(this.cachedUserId, this.confirmCode.trim()).subscribe({
+      next: () => {
+        this.verifying = false;
+        this.verificationSuccess = 'Email confirmed successfully! Logging you in...';
+        
+        // Auto login!
+        setTimeout(() => {
+          this.showConfirmBox = false;
+          this.login();
+        }, 1500);
+      },
+      error: (err) => {
+        this.verifying = false;
+        this.verificationError = err.message || 'Verification failed. Please check the code and try again.';
       }
     });
   }

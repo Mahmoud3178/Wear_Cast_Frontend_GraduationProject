@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { ShippingService } from '../../../core/services/shipping.service';
 import { DriverService } from '../../../core/services/driver.service';
 import { Shipment, ShipmentDetails, ShipmentStatus } from '../../../core/models/shipment.model';
@@ -44,6 +45,7 @@ export class ShipmentsComponent implements OnInit {
   maxOrders: number | null = null;
   startDate: string | null = null;
   endDate: string | null = null;
+  searchDriverNationalId = '';
   
   sortOptions = [
     { value: 'Newest', label: 'Newest' },
@@ -54,7 +56,9 @@ export class ShipmentsComponent implements OnInit {
 
   // View Details Modal
   showDetailsModal = false;
-  selectedShipmentDetails: ShipmentDetails | null = null;
+  selectedShipmentDetails: any | null = null;
+  selectedShipmentFixedItems: any[] = [];
+  selectedShipmentDesignedItems: any[] = [];
   isLoadingDetails = false;
 
   // Assign Driver Modal
@@ -63,8 +67,28 @@ export class ShipmentsComponent implements OnInit {
   selectedDriverId: number | null = null;
 
   ShipmentStatusEnum = ShipmentStatus;
+  showAdvancedFilters = false;
 
   constructor() { }
+
+  public clearFilters() {
+    this.searchCustomerName = '';
+    this.searchCity = '';
+    this.searchState = '';
+    this.searchStreet = '';
+    this.searchDriverName = '';
+    this.searchDriverNationalId = '';
+    this.minPrice = null;
+    this.maxPrice = null;
+    this.minOrders = null;
+    this.maxOrders = null;
+    this.startDate = null;
+    this.endDate = null;
+    this.sortBy = 'Newest';
+    this.statusFilter = 'All';
+    this.currentPage = 1;
+    this.loadShipments();
+  }
 
   ngOnInit(): void {
     this.loadShipments();
@@ -84,6 +108,7 @@ export class ShipmentsComponent implements OnInit {
     if (this.searchState.trim()) params.DeliveryState = this.searchState.trim();
     if (this.searchStreet.trim()) params.DeliveryStreet = this.searchStreet.trim();
     if (this.searchDriverName.trim()) params.DriverFirstName = this.searchDriverName.trim();
+    if (this.searchDriverNationalId.trim()) params.DriverNationalId = this.searchDriverNationalId.trim();
     
     if (this.minPrice !== null) params.MinPrice = this.minPrice;
     if (this.maxPrice !== null) params.MaxPrice = this.maxPrice;
@@ -153,9 +178,21 @@ export class ShipmentsComponent implements OnInit {
   public openDetailsModal(shipment: Shipment) {
     this.showDetailsModal = true;
     this.isLoadingDetails = true;
-    this.shippingService.getShipmentById(shipment.id).subscribe({
-      next: (data) => {
-        this.selectedShipmentDetails = data;
+    this.selectedShipmentFixedItems = [];
+    this.selectedShipmentDesignedItems = [];
+
+    forkJoin({
+      details: this.shippingService.getShipmentById(shipment.id),
+      ordersData: this.shippingService.getOrdersByShipmentId(shipment.id),
+      itemsData: this.shippingService.getShipmentOrderItems(shipment.id)
+    }).subscribe({
+      next: ({ details, ordersData, itemsData }) => {
+        this.selectedShipmentDetails = {
+          ...details,
+          orders: ordersData?.orders || []
+        };
+        this.selectedShipmentFixedItems = itemsData?.fixedItems?.items || [];
+        this.selectedShipmentDesignedItems = itemsData?.designedItems?.items || [];
         this.isLoadingDetails = false;
       },
       error: (err) => {
@@ -168,6 +205,8 @@ export class ShipmentsComponent implements OnInit {
   public closeDetailsModal() {
     this.showDetailsModal = false;
     this.selectedShipmentDetails = null;
+    this.selectedShipmentFixedItems = [];
+    this.selectedShipmentDesignedItems = [];
   }
 
   public openAssignModal(shipment: Shipment) {

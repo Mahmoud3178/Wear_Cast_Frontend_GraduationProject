@@ -324,3 +324,69 @@ tr:hover .driver-avatar-small {
 .section-divider:not(:empty)::after {
   margin-left: 1rem;
 }
+
+/* Extra Wide Modal for Driver Details */
+.extra-wide-modal {
+  max-width: 1000px;
+  width: 95%;
+}
+
+/* Stat Card Gradient Overrides for Premium View */
+.stat-card-gradient {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  border-radius: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card-gradient:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card-gradient.bg-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+}
+
+.stat-card-gradient.bg-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%) !important;
+}
+
+.stat-card-gradient.bg-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+/* Icon Box Soft styling */
+.icon-box-soft {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Sidebar Border for Desktop View */
+@media (min-width: 992px) {
+  .border-end-lg {
+    border-right: 1px solid #e2e8f0;
+  }
+}
+
+/* Scrollbar for details modal body */
+.overflow-auto::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.overflow-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+.overflow-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

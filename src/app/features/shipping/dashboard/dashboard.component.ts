@@ -1,28 +1,27 @@
 import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import Chart from 'chart.js/auto';
 import { forkJoin } from 'rxjs';
 import { ShippingService } from '../../../core/services/shipping.service';
 import { DriverService } from '../../../core/services/driver.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Shipment, ShipmentStatus } from '../../../core/models/shipment.model';
+import { ShipmentStatus } from '../../../core/models/shipment.model';
 import { Driver } from '../../../core/models/driver.model';
-import { ShippingDashboardStats } from '../../../core/models/dashboard.model';
+import { ShippingCompanyDashboardResponse, WalletResponse, WalletTransaction } from '../../../core/models/shipping-company.model';
 import { ShippingCompanyService } from '../../../core/services/shipping-company.service';
 
 @Component({
   selector: 'app-shipping-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit, AfterViewInit {
-  @ViewChild('revenueChart') revenueChartRef!: ElementRef;
   @ViewChild('statusChart') statusChartRef!: ElementRef;
 
-  private shippingService = inject(ShippingService);
   private driverService = inject(DriverService);
   private authService = inject(AuthService);
   private shippingCompanyService = inject(ShippingCompanyService);
@@ -32,27 +31,33 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   today = new Date();
   ShipmentStatusEnum = ShipmentStatus;
 
-  dashboardStats: ShippingDashboardStats = {
-    totalShipments: 0,
-    activeDrivers: 0,
-    totalRevenue: 0,
-    pendingDeliveries: 0,
-    totalShipmentsGrowth: 0,
-    activeDriversGrowth: 0,
-    totalRevenueGrowth: 0,
-    pendingDeliveriesGrowth: 0,
-    monthlyRevenue: [],
-    statusBreakdown: {}
-  };
+  dashboardStats: ShippingCompanyDashboardResponse | null = null;
+  wallet: WalletResponse | null = null;
 
   stats = [
-    { title: 'Total Shipments', value: '0', icon: 'bi-box-seam', trend: '0%', trendUp: true },
-    { title: 'Active Drivers', value: '0', icon: 'bi-truck', trend: '0%', trendUp: true },
-    { title: 'Gross Revenue', value: '$0', icon: 'bi-currency-dollar', trend: '0%', trendUp: true },
-    { title: 'Pending Deliveries', value: '0', icon: 'bi-clock-history', trend: '0%', trendUp: false }
+    { title: 'Pending Shipments', value: '0', icon: 'bi-clock-history', trend: 'Pending', trendUp: true },
+    { title: 'Delivered Shipments', value: '0', icon: 'bi-check-circle', trend: 'Completed', trendUp: true },
+    { title: 'Active Drivers', value: '0', icon: 'bi-truck', trend: 'Fleet Status', trendUp: true },
+    { title: 'Wallet Balance', value: '$0', icon: 'bi-wallet2', trend: 'Current Balance', trendUp: true }
   ];
 
-  recentShipments: Shipment[] = [];
+  walletPage = 1;
+  walletPageSize = 5;
+
+  // --- Shipping Company Order Requests Pipeline ---
+  orderRequests: any[] = [];
+  ordersCurrentPage = 1;
+  ordersPageSize = 5;
+  ordersTotalRecords = 0;
+  ordersTotalPages = 1;
+  isOrdersLoading = false;
+
+  // Filters
+  filterOrderStatus: number | 'All' = 'All';
+  filterOrderType: number | 'All' = 'All';
+  filterVendorCity = '';
+  filterShipmentStatus: number | 'All' = 'All';
+  filterSortBy = 1; // 1 = Newest
 
   constructor() { }
 
@@ -73,8 +78,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     // 3. Fallback: Fetch from Shipping Manager profile endpoint for accurate name
     this.shippingCompanyService.getManager().subscribe({
       next: (manager) => {
-        if (manager && manager.firstName) {
-          this.userName = manager.firstName;
+        const rawManager = (manager as any)?.data ?? (manager as any)?.value ?? manager;
+        if (rawManager) {
+          this.userName = rawManager.firstName ?? rawManager.FirstName ?? this.userName;
         }
       },
       error: (err) => {
@@ -83,53 +89,81 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     });
 
     this.loadData();
+    this.loadOrders();
   }
 
   loadData() {
     this.isLoading = true;
     forkJoin({
-      stats: this.shippingService.getShippingStats(),
-      shipments: this.shippingService.getAllShipments()
+      dashboard: this.shippingCompanyService.getDashboard(),
+      wallet: this.shippingCompanyService.getWallet()
     }).subscribe({
-      next: ({ stats, shipments }) => {
-        this.dashboardStats = stats;
+      next: ({ dashboard, wallet }) => {
+        // Handle standard API wrapper format or direct DTO
+        const rawDashboard = (dashboard as any)?.data ?? (dashboard as any)?.value ?? dashboard ?? {};
+        const rawWallet = (wallet as any)?.data ?? (wallet as any)?.value ?? wallet ?? {};
+
+        // Case-tolerant DTO parsing for Dashboard
+        this.dashboardStats = {
+          pendingOrders: rawDashboard.pendingOrders ?? rawDashboard.PendingOrders ?? 0,
+          pickedUpOrders: rawDashboard.pickedUpOrders ?? rawDashboard.PickedUpOrders ?? 0,
+          pendingShipments: rawDashboard.pendingShipments ?? rawDashboard.PendingShipments ?? 0,
+          unassignedShipments: rawDashboard.unassignedShipments ?? rawDashboard.UnassignedShipments ?? 0,
+          assignedShipments: rawDashboard.assignedShipments ?? rawDashboard.AssignedShipments ?? 0,
+          pickingUpShipments: rawDashboard.pickingUpShipments ?? rawDashboard.PickingUpShipments ?? 0,
+          outForDeliveryShipments: rawDashboard.outForDeliveryShipments ?? rawDashboard.OutForDeliveryShipments ?? 0,
+          deliveredShipments: rawDashboard.deliveredShipments ?? rawDashboard.DeliveredShipments ?? 0,
+          totalDrivers: rawDashboard.totalDrivers ?? rawDashboard.TotalDrivers ?? 0,
+          activeDrivers: rawDashboard.activeDrivers ?? rawDashboard.ActiveDrivers ?? 0,
+          inactiveDrivers: rawDashboard.inactiveDrivers ?? rawDashboard.InactiveDrivers ?? 0,
+          averageDeliveryTimeInHours: rawDashboard.averageDeliveryTimeInHours ?? rawDashboard.AverageDeliveryTimeInHours ?? 0,
+          numberOfManagers: rawDashboard.numberOfManagers ?? rawDashboard.NumberOfManagers ?? 0
+        };
+
+        // Case-tolerant DTO parsing for Wallet and Transactions
+        const rawTransactions = Array.isArray(rawWallet.recentTransactions ?? rawWallet.RecentTransactions)
+          ? (rawWallet.recentTransactions ?? rawWallet.RecentTransactions)
+          : [];
+
+        const mappedTransactions = rawTransactions.map((t: any) => ({
+          id: t.id ?? t.Id ?? 0,
+          type: t.type ?? t.Type ?? '',
+          amount: t.amount ?? t.Amount ?? 0,
+          balanceAfter: t.balanceAfter ?? t.BalanceAfter ?? 0,
+          description: t.description ?? t.Description ?? '',
+          referenceOrderId: t.referenceOrderId ?? t.ReferenceOrderId ?? null,
+          senderName: t.senderName ?? t.SenderName ?? null,
+          senderEmail: t.senderEmail ?? t.SenderEmail ?? null,
+          createdOn: t.createdOn ?? t.CreatedOn ?? ''
+        }));
+
+        this.wallet = {
+          walletId: rawWallet.walletId ?? rawWallet.WalletId ?? 0,
+          balance: rawWallet.balance ?? rawWallet.Balance ?? 0,
+          recentTransactions: mappedTransactions
+        };
 
         // Update stats array for UI
-        this.stats[0].value = this.dashboardStats.totalShipments.toLocaleString();
-        this.stats[0].trend = (this.dashboardStats.totalShipmentsGrowth >= 0 ? '+' : '') + this.dashboardStats.totalShipmentsGrowth + '%';
-        this.stats[0].trendUp = this.dashboardStats.totalShipmentsGrowth >= 0;
+        this.stats[0].value = (this.dashboardStats.pendingShipments).toLocaleString();
+        this.stats[0].trend = `${this.dashboardStats.unassignedShipments} Unassigned`;
+        this.stats[0].trendUp = (this.dashboardStats.unassignedShipments) === 0;
 
-        this.stats[1].value = this.dashboardStats.activeDrivers.toLocaleString();
-        this.stats[1].trend = (this.dashboardStats.activeDriversGrowth >= 0 ? '+' : '') + this.dashboardStats.activeDriversGrowth + '%';
-        this.stats[1].trendUp = this.dashboardStats.activeDriversGrowth >= 0;
+        this.stats[1].value = (this.dashboardStats.deliveredShipments).toLocaleString();
+        this.stats[1].trend = 'Completed';
+        this.stats[1].trendUp = true;
 
-        this.stats[2].value = '$' + this.dashboardStats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        this.stats[2].trend = (this.dashboardStats.totalRevenueGrowth >= 0 ? '+' : '') + this.dashboardStats.totalRevenueGrowth + '%';
-        this.stats[2].trendUp = this.dashboardStats.totalRevenueGrowth >= 0;
+        this.stats[2].value = `${this.dashboardStats.activeDrivers} / ${this.dashboardStats.totalDrivers}`;
+        this.stats[2].trend = `${this.dashboardStats.inactiveDrivers} Inactive`;
+        this.stats[2].trendUp = (this.dashboardStats.activeDrivers) > 0;
 
-        this.stats[3].value = this.dashboardStats.pendingDeliveries.toLocaleString();
-        this.stats[3].trend = (this.dashboardStats.pendingDeliveriesGrowth >= 0 ? '+' : '') + this.dashboardStats.pendingDeliveriesGrowth + '%';
-        this.stats[3].trendUp = this.dashboardStats.pendingDeliveriesGrowth <= 0; // Fewer pending is usually good
-
-        this.recentShipments = this.shippingService.getRecentShipments(shipments.items, 4);
+        this.stats[3].value = '$' + (this.wallet.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        this.stats[3].trend = 'Gross Earnings';
+        this.stats[3].trendUp = (this.wallet.balance) >= 0;
 
         this.isLoading = false;
 
-        // Update revenue chart with backend data
-        if (this.chartInstance && this.dashboardStats.monthlyRevenue) {
-          this.chartInstance.data.labels = this.dashboardStats.monthlyRevenue.map(m => m.month);
-          this.chartInstance.data.datasets[0].data = this.dashboardStats.monthlyRevenue.map(m => m.revenue);
-          this.chartInstance.update();
-        }
-
-        // Update status chart with backend data
-        if (this.statusChartInstance && this.dashboardStats.statusBreakdown) {
-          const labels = Object.keys(this.dashboardStats.statusBreakdown);
-          const data = Object.values(this.dashboardStats.statusBreakdown);
-          this.statusChartInstance.data.labels = labels;
-          this.statusChartInstance.data.datasets[0].data = data;
-          this.statusChartInstance.update();
-        }
+        // Update status chart with real-time backend data
+        this.updateStatusChart(this.dashboardStats);
       },
       error: (err) => {
         console.error('Failed to load dashboard data', err);
@@ -138,102 +172,55 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     });
   }
 
-  private chartInstance: any = null;
+  get walletPagedTransactions() {
+    if (!this.wallet?.recentTransactions) return [];
+    const start = (this.walletPage - 1) * this.walletPageSize;
+    return this.wallet.recentTransactions.slice(start, start + this.walletPageSize);
+  }
+
+  get walletTotalPages(): number {
+    if (!this.wallet?.recentTransactions) return 1;
+    return Math.max(1, Math.ceil(this.wallet.recentTransactions.length / this.walletPageSize));
+  }
+
+  walletGoTo(page: number) {
+    if (page >= 1 && page <= this.walletTotalPages) this.walletPage = page;
+  }
+
+  updateStatusChart(dashboard: ShippingCompanyDashboardResponse) {
+    if (!this.statusChartInstance) return;
+
+    const labels = ['Pending', 'Unassigned', 'Assigned', 'Picking Up', 'Out For Delivery', 'Delivered'];
+    const data = [
+      dashboard.pendingShipments,
+      dashboard.unassignedShipments,
+      dashboard.assignedShipments,
+      dashboard.pickingUpShipments,
+      dashboard.outForDeliveryShipments,
+      dashboard.deliveredShipments
+    ];
+
+    this.statusChartInstance.data.labels = labels;
+    this.statusChartInstance.data.datasets[0].data = data;
+    this.statusChartInstance.data.datasets[0].backgroundColor = [
+      '#f59e0b', // Pending (amber)
+      '#ef4444', // Unassigned (red)
+      '#3b82f6', // Assigned (blue)
+      '#6366f1', // PickingUp (indigo)
+      '#8b5cf6', // OutForDelivery (purple)
+      '#10b981'  // Delivered (emerald)
+    ];
+    this.statusChartInstance.update();
+  }
+
   private statusChartInstance: any = null;
 
   ngAfterViewInit(): void {
     this.initCharts();
   }
 
-  updateChartData(shipments: Shipment[]) {
-    if (!this.chartInstance) return;
-
-    // Calculate revenue for the last 6 months
-    const last6Months = [];
-    const monthlyRevenue = new Array(6).fill(0);
-    const currentDate = new Date();
-
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-      last6Months.push(d.toLocaleString('default', { month: 'short' }));
-    }
-
-    shipments.forEach(s => {
-      if (s.orderTime && s.price) {
-        const orderDate = new Date(s.orderTime);
-        const diffMonths = (currentDate.getFullYear() - orderDate.getFullYear()) * 12 + (currentDate.getMonth() - orderDate.getMonth());
-
-        if (diffMonths >= 0 && diffMonths < 6) {
-          const index = 5 - diffMonths;
-          monthlyRevenue[index] += s.price;
-        }
-      }
-    });
-
-    this.chartInstance.data.labels = last6Months;
-    this.chartInstance.data.datasets[0].data = monthlyRevenue;
-    this.chartInstance.update();
-  }
-
   initCharts() {
-    this.initRevenueChart();
     this.initStatusChart();
-  }
-
-  initRevenueChart() {
-    this.chartInstance = new Chart(this.revenueChartRef.nativeElement, {
-      type: 'line',
-      data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        datasets: [{
-          label: 'Revenue',
-          data: [0, 0, 0, 0, 0, 0],
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37, 99, 235, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: '#2563eb',
-          pointBorderColor: '#fff',
-          pointHoverRadius: 6,
-          pointRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#1e293b',
-            padding: 12,
-            titleFont: { size: 14, weight: 'bold' },
-            bodyFont: { size: 13 },
-            displayColors: false,
-            callbacks: {
-              label: (context: any) => {
-                const value = context.parsed.y !== null && context.parsed.y !== undefined ? context.parsed.y : 0;
-                return `Revenue: $${value.toLocaleString()}`;
-              }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            border: { display: false },
-            grid: { color: 'rgba(0,0,0,0.05)' },
-            ticks: {
-              callback: (value) => '$' + value
-            }
-          },
-          x: {
-            border: { display: false },
-            grid: { display: false }
-          }
-        }
-      }
-    });
   }
 
   initStatusChart() {
@@ -292,5 +279,144 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     if (s === ShipmentStatus.Pending) return 'status-warning';
     if (s === ShipmentStatus.Unassigned) return 'status-danger';
     return 'status-info';
+  }
+
+  // --- Shipping Company Order Requests Pipeline ---
+  loadOrders() {
+    this.isOrdersLoading = true;
+    const params: any = {
+      PageIndex: this.ordersCurrentPage,
+      PageSize: this.ordersPageSize,
+      SortBy: this.filterSortBy
+    };
+
+    if (this.filterOrderStatus !== 'All') {
+      params.OrderStatus = this.filterOrderStatus;
+    }
+    if (this.filterOrderType !== 'All') {
+      params.OrderType = this.filterOrderType;
+    }
+    if (this.filterVendorCity.trim()) {
+      params.VendorCity = this.filterVendorCity.trim();
+    }
+    if (this.filterShipmentStatus !== 'All') {
+      params.ShipmentStatus = this.filterShipmentStatus;
+    }
+
+    this.shippingCompanyService.getOrders(params).subscribe({
+      next: (res) => {
+        const raw = (res as any)?.data ?? (res as any)?.value ?? res ?? {};
+        this.orderRequests = raw.items ?? [];
+        this.ordersTotalRecords = raw.records ?? 0;
+        this.ordersTotalPages = raw.pages ?? 1;
+        this.isOrdersLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load orders requests', err);
+        this.isOrdersLoading = false;
+      }
+    });
+  }
+
+  ordersNextPage() {
+    if (this.ordersCurrentPage < this.ordersTotalPages) {
+      this.ordersCurrentPage++;
+      this.loadOrders();
+    }
+  }
+
+  ordersPreviousPage() {
+    if (this.ordersCurrentPage > 1) {
+      this.ordersCurrentPage--;
+      this.loadOrders();
+    }
+  }
+
+  ordersGoToPage(page: number) {
+    if (page >= 1 && page <= this.ordersTotalPages) {
+      this.ordersCurrentPage = page;
+      this.loadOrders();
+    }
+  }
+
+  applyFilters() {
+    this.ordersCurrentPage = 1;
+    this.loadOrders();
+  }
+
+  resetFilters() {
+    this.filterOrderStatus = 'All';
+    this.filterOrderType = 'All';
+    this.filterVendorCity = '';
+    this.filterShipmentStatus = 'All';
+    this.filterSortBy = 1;
+    this.ordersCurrentPage = 1;
+    this.loadOrders();
+  }
+
+  getOrderStatusName(status: any): string {
+    if (status === null || status === undefined) return 'Pending';
+    // Handle both number and string conversions
+    let s = Number(status);
+    if (isNaN(s)) return status.toString();
+
+    switch (s) {
+      case 0: return 'Pending';
+      case 1: return 'Paid';
+      case 2: return 'Failed';
+      case 3: return 'Cancelled';
+      case 4: return 'Refunded';
+      case 5: return 'Ready';
+      case 6: return 'PickedUp';
+      default: return 'Processing';
+    }
+  }
+
+  getOrderStatusClass(status: any): string {
+    if (status === null || status === undefined) return 'status-warning';
+    let s = Number(status);
+    if (isNaN(s)) {
+      if (status === 'Paid' || status === 'PickedUp' || status === 'Ready') return 'status-success';
+      if (status === 'Cancelled' || status === 'Failed') return 'status-danger';
+      return 'status-warning';
+    }
+
+    switch (s) {
+      case 1: // Paid
+      case 5: // Ready
+      case 6: // PickedUp
+        return 'status-success';
+      case 2: // Failed
+      case 3: // Cancelled
+        return 'status-danger';
+      default:
+        return 'status-warning';
+    }
+  }
+
+  getOrderTypeName(type: any): string {
+    if (type === null || type === undefined) return 'Standard';
+    let t = Number(type);
+    if (isNaN(t)) return type.toString();
+
+    switch (t) {
+      case 1: return 'Fixed Product';
+      case 2: return 'Custom Design';
+      default: return 'Standard';
+    }
+  }
+
+  getOrderTypeClass(type: any): string {
+    if (type === null || type === undefined) return 'badge-secondary';
+    let t = Number(type);
+    if (isNaN(t)) {
+      return type === 'Fixed' || type === 'FixedProduct' ? 'badge-fixed-product' : 'badge-custom-design';
+    }
+
+    switch (t) {
+      case 1: return 'badge-fixed-product';
+      case 2: return 'badge-custom-design';
+      default: return 'badge-secondary';
+    }
   }
 }

@@ -36,6 +36,14 @@ export class ShippingService {
     return this.http.get<ShipmentDetails>(`${this.apiUrl}/Shipments/${id}`);
   }
 
+  getOrdersByShipmentId(shipmentId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/Orders/shipment/${shipmentId}`);
+  }
+
+  getShipmentOrderItems(shipmentId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/Orders/shipment/${shipmentId}/items`);
+  }
+
   assignDriver(request: AssignShipmentRequest): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/Shipments/${request.shipmentId}/assign`, request);
   }

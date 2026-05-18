@@ -23,6 +23,9 @@ export interface Driver {
   profileImageUrl?: string;
   driverPhone?: string;
   plateNumber?: string;
+  driverEmail?: string;
+  driverNationalId?: string;
+  vehiclePlateNumber?: string;
 }
 
 export interface DriverProfile {

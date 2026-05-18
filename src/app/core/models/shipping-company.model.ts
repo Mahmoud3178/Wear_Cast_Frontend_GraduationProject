@@ -83,3 +83,38 @@ export interface UpdateManagerRequest {
   phoneNumber: string;
   providedManagerId?: number;
 }
+
+export interface ShippingCompanyDashboardResponse {
+  pendingOrders: number;
+  pickedUpOrders: number;
+  pendingShipments: number;
+  unassignedShipments: number;
+  assignedShipments: number;
+  pickingUpShipments: number;
+  outForDeliveryShipments: number;
+  deliveredShipments: number;
+  totalDrivers: number;
+  activeDrivers: number;
+  inactiveDrivers: number;
+  averageDeliveryTimeInHours: number;
+  numberOfManagers: number;
+}
+
+export interface WalletTransaction {
+  id: number;
+  type: string;
+  amount: number;
+  balanceAfter: number;
+  description: string;
+  referenceOrderId: number | null;
+  senderName: string | null;
+  senderEmail: string | null;
+  createdOn: string;
+}
+
+export interface WalletResponse {
+  walletId: number;
+  balance: number;
+  recentTransactions: WalletTransaction[];
+}
+

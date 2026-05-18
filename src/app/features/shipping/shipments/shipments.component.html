@@ -10,77 +10,137 @@
 
   <div class="premium-card">
     <div class="premium-card-header border-0 pb-0">
-      <!-- Row 1: Text Filters and Status -->
+      <!-- Primary Filters Row -->
       <div class="row align-items-center g-3 mb-3">
         <div class="col-12 col-md-3">
+          <label class="text-xs fw-bold text-slate-500 mb-1 d-block">Customer Search</label>
           <input type="text" class="form-control py-2 shadow-none" 
-                 placeholder="Customer Name" 
+                 placeholder="Customer Name..." 
                  [(ngModel)]="searchCustomerName" 
                  (input)="loadShipments()">
         </div>
         <div class="col-12 col-md-3">
+          <label class="text-xs fw-bold text-slate-500 mb-1 d-block">City Search</label>
           <input type="text" class="form-control py-2 shadow-none" 
-                 placeholder="City" 
+                 placeholder="City..." 
                  [(ngModel)]="searchCity" 
                  (input)="loadShipments()">
         </div>
         <div class="col-12 col-md-3">
+          <label class="text-xs fw-bold text-slate-500 mb-1 d-block">Driver Search</label>
           <input type="text" class="form-control py-2 shadow-none" 
-                 placeholder="Driver Name" 
+                 placeholder="Driver Name..." 
                  [(ngModel)]="searchDriverName" 
                  (input)="loadShipments()">
         </div>
         <div class="col-12 col-md-3">
+          <label class="text-xs fw-bold text-slate-500 mb-1 d-block">Shipment Status</label>
           <select class="form-select py-2 shadow-none" 
                   [(ngModel)]="statusFilter" 
                   (change)="loadShipments()">
-            <option value="All">All Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Unassigned">Unassigned</option>
-            <option value="Assigned">Assigned</option>
-            <option value="OutForDelivery">In Transit</option>
-            <option value="Delivered">Delivered</option>
+            <option value="All">All Statuses</option>
+            <option value="1">Pending</option>
+            <option value="2">Unassigned</option>
+            <option value="3">Assigned</option>
+            <option value="4">Picking Up</option>
+            <option value="5">Out For Delivery (In Transit)</option>
+            <option value="6">Delivered</option>
           </select>
         </div>
       </div>
 
-      <!-- Row 2: Ranges and Actions -->
-      <div class="row align-items-center g-3">
-        <div class="col-12 col-md-3">
-          <div class="input-group">
-            <input type="number" class="form-control py-2 shadow-none" 
-                   placeholder="Min Price" 
-                   [(ngModel)]="minPrice" 
-                   (input)="loadShipments()">
-            <input type="number" class="form-control py-2 shadow-none" 
-                   placeholder="Max Price" 
-                   [(ngModel)]="maxPrice" 
-                   (input)="loadShipments()">
-          </div>
+      <!-- Action Row -->
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-light-soft border text-slate-700 rounded-pill px-3 text-xs fw-semibold" 
+                  (click)="showAdvancedFilters = !showAdvancedFilters">
+            <i class="bi" [ngClass]="showAdvancedFilters ? 'bi-funnel-fill text-primary' : 'bi-funnel'"></i> 
+            {{ showAdvancedFilters ? 'Hide Advanced Filters' : 'Show Advanced Filters' }}
+          </button>
+          <button class="btn btn-sm btn-light-soft border text-danger rounded-pill px-3 text-xs fw-semibold" (click)="clearFilters()">
+            <i class="bi bi-arrow-counterclockwise"></i> Clear All
+          </button>
         </div>
-        <div class="col-12 col-md-3">
-          <div class="input-group">
-            <input type="number" class="form-control py-2 shadow-none" 
-                   placeholder="Min Order" 
-                   [(ngModel)]="minOrders" 
-                   (input)="loadShipments()">
-            <input type="number" class="form-control py-2 shadow-none" 
-                   placeholder="Max Order" 
-                   [(ngModel)]="maxOrders" 
-                   (input)="loadShipments()">
-          </div>
-        </div>
-        <div class="col-12 col-md-3">
-          <select class="form-select py-2 shadow-none" 
+        
+        <div style="min-width: 220px;">
+          <select class="form-select form-select-sm shadow-none rounded-pill text-xs fw-semibold" 
                   [(ngModel)]="sortBy" 
                   (change)="loadShipments()">
-            <option *ngFor="let opt of sortOptions" [value]="opt.value">{{opt.label}}</option>
+            <option *ngFor="let opt of sortOptions" [value]="opt.value">Sort By: {{opt.label}}</option>
           </select>
         </div>
-        <div class="col-12 col-md-3">
-          <button class="btn btn-outline-secondary py-2 w-100" (click)="searchCustomerName=''; searchCity=''; searchState=''; searchStreet=''; searchDriverName=''; minPrice=null; maxPrice=null; minOrders=null; maxOrders=null; startDate=null; endDate=null; sortBy='Newest'; statusFilter='All'; loadShipments()">
-            Clear All Filters
-          </button>
+      </div>
+
+      <!-- Advanced Filters Expandable Panel -->
+      <div class="p-4 bg-slate-50 rounded-4 mb-4 border border-slate-100 animate-fade-in" *ngIf="showAdvancedFilters">
+        <div class="row g-3">
+          <!-- State and Street -->
+          <div class="col-12 col-md-3">
+            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">State / Governorate</label>
+            <input type="text" class="form-control form-control-sm py-2 shadow-none bg-white" 
+                   placeholder="e.g. Cairo" 
+                   [(ngModel)]="searchState" 
+                   (input)="loadShipments()">
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">Street Address</label>
+            <input type="text" class="form-control form-control-sm py-2 shadow-none bg-white" 
+                   placeholder="e.g. El Tahrir" 
+                   [(ngModel)]="searchStreet" 
+                   (input)="loadShipments()">
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">Driver National ID</label>
+            <input type="text" class="form-control form-control-sm py-2 shadow-none bg-white" 
+                   placeholder="14-digit National ID" 
+                   [(ngModel)]="searchDriverNationalId" 
+                   (input)="loadShipments()">
+          </div>
+          
+          <!-- Price Range -->
+          <div class="col-12 col-md-3">
+            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">Shipment Price Range</label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control shadow-none bg-white" 
+                     placeholder="Min ($)" 
+                     [(ngModel)]="minPrice" 
+                     (input)="loadShipments()">
+              <input type="number" class="form-control shadow-none bg-white" 
+                     placeholder="Max ($)" 
+                     [(ngModel)]="maxPrice" 
+                     (input)="loadShipments()">
+            </div>
+          </div>
+
+          <!-- Orders Range -->
+          <div class="col-12 col-md-4">
+            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">Number of Orders Range</label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control shadow-none bg-white" 
+                     placeholder="Min orders count" 
+                     [(ngModel)]="minOrders" 
+                     (input)="loadShipments()">
+              <input type="number" class="form-control shadow-none bg-white" 
+                     placeholder="Max orders count" 
+                     [(ngModel)]="maxOrders" 
+                     (input)="loadShipments()">
+            </div>
+          </div>
+
+          <!-- Date Range -->
+          <div class="col-12 col-md-8">
+            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">Date Created Range</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0 text-slate-400">From</span>
+              <input type="date" class="form-control shadow-none border-start-0 ps-1" 
+                     [(ngModel)]="startDate" 
+                     (change)="loadShipments()">
+              <span class="input-group-text bg-white border-end-0 border-start-0 text-slate-400">To</span>
+              <input type="date" class="form-control shadow-none border-start-0 ps-1" 
+                     [(ngModel)]="endDate" 
+                     (change)="loadShipments()">
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -107,7 +167,7 @@
               <td>
                 <div class="d-flex flex-column">
                   <span class="fw-semibold">{{ shipment.customerName }}</span>
-                  <span class="text-muted-custom text-xs"><i class="bi bi-geo-alt me-1"></i>{{ shipment.deliveryCity }}, {{ shipment.deliveryStreet }}</span>
+                  <span class="text-muted-custom text-xs"><i class="bi bi-geo-alt me-1"></i>{{ shipment.deliveryCity }}, {{ shipment.deliveryState ? shipment.deliveryState + ', ' : '' }}{{ shipment.deliveryStreet }}</span>
                 </div>
               </td>
               <td class="text-muted-custom text-sm">
@@ -189,7 +249,7 @@
           <i class="bi bi-box-seam text-primary"></i>
         </div>
         <div>
-          <h4 class="mb-0 fw-bold">Shipment #{{ selectedShipmentDetails?.id }}</h4>
+          <h4 class="mb-0 fw-bold text-dark">Shipment Details #{{ selectedShipmentDetails?.id }}</h4>
           <span class="text-muted text-sm">Created on {{ selectedShipmentDetails?.orderTime | date:'MMM d, yyyy' }}</span>
         </div>
       </div>
@@ -204,110 +264,247 @@
       <div *ngIf="!isLoadingDetails && selectedShipmentDetails" class="row g-4">
         <!-- Main Info -->
         <div class="col-12 col-md-7">
+          
+          <!-- Shipment Progress -->
           <div class="info-section mb-4">
             <h6 class="text-uppercase text-muted fw-bold ls-1 mb-3">Shipment Progress</h6>
             <div class="status-timeline mt-4">
               <div class="timeline-item" [ngClass]="{'active': isStepActive(selectedShipmentDetails.shipmentStatus, 0)}">
                 <div class="timeline-dot"></div>
                 <div class="timeline-content">
-                  <p class="fw-bold mb-0">Order Placed</p>
+                  <p class="fw-bold mb-0 text-dark">Order Placed</p>
                   <p class="text-muted text-xs mb-0">{{ selectedShipmentDetails.orderTime | date:'h:mm a' }}</p>
                 </div>
               </div>
               <div class="timeline-item" [ngClass]="{'active': isStepActive(selectedShipmentDetails.shipmentStatus, 2)}">
                 <div class="timeline-dot"></div>
                 <div class="timeline-content">
-                  <p class="fw-bold mb-0">Driver Assigned</p>
+                  <p class="fw-bold mb-0 text-dark">Driver Assigned</p>
                   <p class="text-muted text-xs mb-0">{{ selectedShipmentDetails.driverName || 'Awaiting assignment' }}</p>
                 </div>
               </div>
               <div class="timeline-item" [ngClass]="{'active': isStepActive(selectedShipmentDetails.shipmentStatus, 4)}">
                 <div class="timeline-dot"></div>
                 <div class="timeline-content">
-                  <p class="fw-bold mb-0">In Transit</p>
+                  <p class="fw-bold mb-0 text-dark">In Transit</p>
                   <p class="text-muted text-xs mb-0">Out for delivery</p>
                 </div>
               </div>
               <div class="timeline-item" [ngClass]="{'active': isStepActive(selectedShipmentDetails.shipmentStatus, 5)}">
                 <div class="timeline-dot"></div>
                 <div class="timeline-content">
-                  <p class="fw-bold mb-0">Delivered</p>
+                  <p class="fw-bold mb-0 text-dark">Delivered</p>
                   <p class="text-muted text-xs mb-0">Successfully completed</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="info-section">
-            <h6 class="text-uppercase text-muted fw-bold ls-1 mb-3">Address Details</h6>
-            <div class="address-card p-3 bg-light rounded-3">
-              <div class="d-flex mb-2">
-                <i class="bi bi-geo-alt-fill text-primary me-2"></i>
-                <div>
-                  <p class="fw-bold mb-1">{{ selectedShipmentDetails.deliveryAddress.city }}</p>
-                  <p class="text-muted-custom mb-0 text-sm">
-                    {{ selectedShipmentDetails.deliveryAddress.street }}
-                  </p>
+          <!-- Included Orders -->
+          <div class="info-section mt-4 mb-4">
+            <h6 class="text-uppercase text-muted fw-bold ls-1 mb-3">Included Orders Details</h6>
+            <div class="orders-list">
+              <div *ngFor="let order of selectedShipmentDetails.orders" class="order-item p-3 bg-light rounded-3 mb-3 border">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <span class="badge bg-primary-light text-primary mb-1 text-uppercase text-xxs fw-bold">{{ order.orderType || 'Product Order' }}</span>
+                    <h6 class="fw-bold mb-0 text-dark text-sm">Order #{{ order.id }}</h6>
+                    <p class="text-muted text-xs mb-0">Store: <span class="fw-bold text-dark">{{ order.vendorName || 'WearCast Vendor' }}</span></p>
+                  </div>
+                  <div class="text-end">
+                    <p class="fw-bold text-primary mb-0 text-sm">${{ order.totalAmount | number:'1.2-2' }}</p>
+                    <span class="text-xxs badge px-2 py-1 rounded-pill" [ngClass]="{
+                      'bg-warning-light text-warning': order.status === 'Pending' || order.status === 0,
+                      'bg-success-light text-success': order.status === 'Completed' || order.status === 4 || order.status === 'Delivered',
+                      'bg-info-light text-info': order.status === 'Processing' || order.status === 1 || order.status === 'Shipped' || order.status === 'PickedUp'
+                    }">{{ order.status }}</span>
+                  </div>
                 </div>
+                
+                <!-- Recipient Info & Shipping Address inside the order -->
+                <div class="border-top pt-2 mt-2 text-xs">
+                  <div class="row g-2">
+                    <div class="col-12 col-sm-6 text-muted-custom">
+                      <i class="bi bi-person-fill text-muted me-1"></i>Recipient: <span class="fw-semibold text-dark">{{ order.recipientName || 'N/A' }}</span>
+                    </div>
+                    <div class="col-12 col-sm-6 text-muted-custom">
+                      <i class="bi bi-telephone-fill text-muted me-1"></i>Phone: <span class="fw-semibold text-dark">{{ order.recipientPhoneNumber || 'N/A' }}</span>
+                    </div>
+                    <div class="col-12 text-muted-custom">
+                      <i class="bi bi-geo-alt-fill text-muted me-1"></i>Address: 
+                      <span class="text-dark">{{ order.shippingAddress?.street }}, {{ order.shippingAddress?.city }}, {{ order.shippingAddress?.state }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="!selectedShipmentDetails.orders || selectedShipmentDetails.orders.length === 0" class="text-muted text-sm italic py-2 text-center bg-light rounded-3">
+                No detailed orders found in this shipment.
               </div>
             </div>
           </div>
 
+          <!-- Ordered Items Section -->
           <div class="info-section mt-4">
-            <h6 class="text-uppercase text-muted fw-bold ls-1 mb-3">Included Orders</h6>
-            <div class="orders-list">
-              <div *ngFor="let order of selectedShipmentDetails.orders" class="order-item p-3 bg-light rounded-3 mb-2">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p class="fw-bold mb-0">Order #{{ order.orderId }}</p>
-                    <p class="text-muted text-xs mb-0">Store: {{ order.storeName }}</p>
+            <h6 class="text-uppercase text-muted fw-bold ls-1 mb-3">Shipment Items & Specifications</h6>
+            
+            <!-- Fixed Product Items -->
+            <div *ngIf="selectedShipmentFixedItems && selectedShipmentFixedItems.length > 0" class="mb-4">
+              <span class="badge bg-secondary text-white mb-2 px-2 py-1 text-uppercase text-xxs fw-semibold">Standard Store Products</span>
+              <div class="list-group gap-2">
+                <div *ngFor="let item of selectedShipmentFixedItems" class="list-group-item d-flex align-items-center border-0 p-3 bg-light rounded-3 mb-1">
+                  <img [src]="item.imageUrl || 'assets/placeholder.png'" class="rounded me-3 border" style="width: 54px; height: 54px; object-fit: cover;" alt="Product Image">
+                  <div class="flex-grow-1 min-w-0">
+                    <h6 class="mb-1 fw-bold text-dark text-truncate text-sm">{{ item.productName }}</h6>
+                    <p class="mb-0 text-muted text-xs">
+                      Color: <span class="fw-semibold text-dark">{{ item.colorName }}</span> | 
+                      Price: <span class="fw-semibold text-primary">${{ item.unitPrice | number:'1.2-2' }}</span>
+                    </p>
+                    <!-- Sizes list -->
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                      <span *ngFor="let size of item.sizes" class="badge bg-white text-dark border text-xxs">
+                        Size: <span class="fw-bold">{{ size.sizeName }}</span> ({{ size.quantity }})
+                      </span>
+                    </div>
                   </div>
-                  <span class="badge bg-primary-light text-primary rounded-pill">{{ order.itemsCount }} Items</span>
+                  <div class="text-end ms-3">
+                    <p class="fw-bold text-dark text-sm mb-0">x{{ item.totalQuantity }}</p>
+                    <p class="text-primary fw-semibold text-xs mb-0">${{ item.totalPrice | number:'1.2-2' }}</p>
+                  </div>
                 </div>
               </div>
-              <div *ngIf="selectedShipmentDetails.orders.length === 0" class="text-muted text-sm italic">
-                No orders found in this shipment.
+            </div>
+
+            <!-- Custom Designed Items -->
+            <div *ngIf="selectedShipmentDesignedItems && selectedShipmentDesignedItems.length > 0" class="mb-4">
+              <span class="badge bg-info text-white mb-2 px-2 py-1 text-uppercase text-xxs fw-semibold">Custom Tailored Designs</span>
+              <div class="list-group gap-2">
+                <div *ngFor="let item of selectedShipmentDesignedItems" class="list-group-item border-0 p-3 bg-light rounded-3 mb-1">
+                  <div class="d-flex align-items-start">
+                    <!-- Carousel/Multi-image view for custom designs -->
+                    <div class="me-3 d-flex flex-column gap-1">
+                      <img [src]="item.frontImageUrl || 'assets/placeholder.png'" class="rounded border" style="width: 54px; height: 54px; object-fit: cover;" alt="Front view">
+                      <div class="d-flex gap-1" *ngIf="item.backImageUrl || item.leftImageUrl || item.rightImageUrl">
+                        <img *ngIf="item.backImageUrl" [src]="item.backImageUrl" class="rounded border" style="width: 16px; height: 16px; object-fit: cover;">
+                        <img *ngIf="item.leftImageUrl" [src]="item.leftImageUrl" class="rounded border" style="width: 16px; height: 16px; object-fit: cover;">
+                        <img *ngIf="item.rightImageUrl" [src]="item.rightImageUrl" class="rounded border" style="width: 16px; height: 16px; object-fit: cover;">
+                      </div>
+                    </div>
+                    
+                    <div class="flex-grow-1 min-w-0">
+                      <h6 class="mb-1 fw-bold text-dark text-truncate text-sm">{{ item.productName }}</h6>
+                      <p class="mb-0 text-muted text-xs">
+                        Color: <span class="fw-semibold text-dark">{{ item.colorName }}</span> | 
+                        Price: <span class="fw-semibold text-primary">${{ item.unitPrice | number:'1.2-2' }}</span>
+                      </p>
+                      <!-- Sizes list -->
+                      <div class="d-flex flex-wrap gap-1 mt-1">
+                        <span *ngFor="let size of item.sizes" class="badge bg-white text-dark border text-xxs">
+                          Size: <span class="fw-bold">{{ size.sizeName }}</span> ({{ size.quantity }})
+                        </span>
+                      </div>
+                    </div>
+                    <div class="text-end ms-3">
+                      <p class="fw-bold text-dark text-sm mb-0">x{{ item.totalQuantity }}</p>
+                      <p class="text-primary fw-semibold text-xs mb-0">${{ item.totalPrice | number:'1.2-2' }}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <!-- Empty State for Items -->
+            <div *ngIf="(!selectedShipmentFixedItems || selectedShipmentFixedItems.length === 0) && (!selectedShipmentDesignedItems || selectedShipmentDesignedItems.length === 0)" class="text-muted text-sm italic py-2 text-center bg-light rounded-3">
+              No specific item details loaded for this shipment.
             </div>
           </div>
         </div>
 
         <!-- Sidebar Info -->
         <div class="col-12 col-md-5">
+          
+          <!-- Customer Information -->
           <div class="premium-card bg-light border-0 shadow-none mb-4">
             <div class="premium-card-body p-3">
-              <h6 class="fw-bold mb-3">Customer Information</h6>
+              <h6 class="fw-bold mb-3 text-dark">Customer Information</h6>
               <div class="d-flex align-items-center mb-3">
-                <div class="avatar-sm me-2 bg-white text-primary d-flex align-items-center justify-content-center fw-bold">
-                  {{ selectedShipmentDetails.customerName.charAt(0) }}
+                <div class="avatar-sm me-3 bg-white border text-primary d-flex align-items-center justify-content-center fw-bold text-uppercase fs-5">
+                  {{ selectedShipmentDetails.customerName?.charAt(0) || 'C' }}
                 </div>
                 <div>
-                  <p class="fw-semibold mb-0">{{ selectedShipmentDetails.customerName }}</p>
-                  <p class="text-muted text-xs mb-0">{{ selectedShipmentDetails.customerPhoneNumber }}</p>
+                  <p class="fw-bold mb-0 text-dark">{{ selectedShipmentDetails.customerName || 'Anonymous Customer' }}</p>
+                  <span class="text-xs text-muted">ID: #{{ selectedShipmentDetails.customerId }}</span>
                 </div>
               </div>
-              <p class="text-muted text-xs mb-0"><i class="bi bi-telephone me-1"></i>{{ selectedShipmentDetails.customerPhoneNumber }}</p>
+              <p class="text-muted-custom text-xs mb-1"><i class="bi bi-telephone-fill me-2 text-muted"></i>{{ selectedShipmentDetails.customerPhoneNumber || 'No Phone Registered' }}</p>
             </div>
           </div>
 
-          <div class="premium-card bg-light border-0 shadow-none">
+          <!-- Driver Assignment Information -->
+          <div class="premium-card bg-light border-0 shadow-none mb-4">
             <div class="premium-card-body p-3">
-              <h6 class="fw-bold mb-3">Payment Summary</h6>
-              <div class="d-flex justify-content-between mb-2">
-                <span class="text-muted text-sm">Order Total</span>
-                <span class="fw-bold">${{ selectedShipmentDetails.price | number:'1.2-2' }}</span>
+              <h6 class="fw-bold mb-3 text-dark">Driver Information</h6>
+              <div *ngIf="selectedShipmentDetails.driverName" class="d-flex align-items-center mb-3">
+                <div class="avatar-sm me-3 bg-white border text-success d-flex align-items-center justify-content-center fw-bold text-uppercase fs-5">
+                  {{ selectedShipmentDetails.driverName?.charAt(0) || 'D' }}
+                </div>
+                <div>
+                  <p class="fw-bold mb-0 text-dark">{{ selectedShipmentDetails.driverName }}</p>
+                  <span class="text-xs text-muted">National ID: {{ selectedShipmentDetails.driverNationalId || 'N/A' }}</span>
+                </div>
               </div>
-              <div class="d-flex justify-content-between">
-                <span class="text-muted text-sm">Payment Status</span>
-                <span class="badge bg-success-light text-success rounded-pill px-2">Paid via Stripe</span>
+              <div *ngIf="selectedShipmentDetails.driverName" class="text-xs">
+                <p class="text-muted-custom mb-1"><i class="bi bi-telephone-fill me-2 text-muted"></i>{{ selectedShipmentDetails.driverPhoneNumber || 'N/A' }}</p>
+              </div>
+              
+              <!-- Unassigned Alert -->
+              <div *ngIf="!selectedShipmentDetails.driverName" class="alert alert-warning border-0 p-3 mb-0 d-flex align-items-center rounded-3">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+                <div class="text-xs fw-semibold">No driver assigned to this shipment yet.</div>
               </div>
             </div>
           </div>
+
+          <!-- Address Details -->
+          <div class="premium-card bg-light border-0 shadow-none mb-4">
+            <div class="premium-card-body p-3">
+              <h6 class="fw-bold mb-3 text-dark">Shipping Destination</h6>
+              <div class="d-flex align-items-start text-xs">
+                <i class="bi bi-geo-alt-fill text-primary me-2 fs-5"></i>
+                <div>
+                  <p class="fw-bold mb-1 text-dark">{{ selectedShipmentDetails.deliveryAddress.city }}</p>
+                  <p class="text-muted-custom mb-1">{{ selectedShipmentDetails.deliveryAddress.street }}</p>
+                  <span class="badge bg-secondary-light text-secondary text-xxs fw-bold text-uppercase" *ngIf="selectedShipmentDetails.deliveryAddress.state">{{ selectedShipmentDetails.deliveryAddress.state }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Summary -->
+          <div class="premium-card bg-light border-0 shadow-none">
+            <div class="premium-card-body p-3">
+              <h6 class="fw-bold mb-3 text-dark">Payment Summary</h6>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted text-sm">Shipment Total</span>
+                <span class="fw-bold text-primary fs-5">${{ selectedShipmentDetails.price | number:'1.2-2' }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted text-sm">Payment Status</span>
+                <span class="badge bg-success-light text-success rounded-pill px-2 py-1 text-xxs fw-bold">Paid via Stripe</span>
+              </div>
+              <div class="border-top pt-3 mt-2 text-xs">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-muted">Delivery Security Code</span>
+                  <span class="font-monospace fw-bold text-dark">{{ selectedShipmentDetails.deliveryCode }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
     <div class="modal-footer border-0 p-4 pt-0">
-      <button class="btn btn-premium w-100" (click)="closeDetailsModal()">Done</button>
+      <button class="btn btn-premium w-100 py-2.5 rounded-3" (click)="closeDetailsModal()">Close Details</button>
     </div>
   </div>
 </div>
