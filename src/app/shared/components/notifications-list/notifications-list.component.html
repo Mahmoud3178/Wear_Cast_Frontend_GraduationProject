@@ -1,0 +1,85 @@
+<div class="notif-page">
+  <div class="notif-header">
+    <div>
+      <h1 class="notif-title">Notifications</h1>
+      <p class="notif-sub">{{ pageSubtitle }}</p>
+    </div>
+    <button type="button" class="btn-mark-all" (click)="markAllRead()" [disabled]="!unread">
+      <i class="bi bi-check2-all me-1"></i> Mark all as read
+    </button>
+  </div>
+
+  <div class="notif-toolbar">
+    <div class="notif-toolbar__group">
+      <label class="notif-toolbar__label" for="notif-sort">Sort</label>
+      <select id="notif-sort" class="notif-select" [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
+        <option *ngFor="let o of sortOptions" [ngValue]="o.value">{{ o.label }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="notif-filters">
+    <button type="button" class="filter-pill" [class.active]="readFilter === 'all' && selectedType === undefined" (click)="applyFilters('all', undefined)">
+      All
+      <span class="pill-count">{{ totalCount }}</span>
+    </button>
+    <button type="button" class="filter-pill" [class.active]="readFilter === 'unread'" (click)="setReadFilter('unread')">
+      Unread
+      <span class="pill-count unread">{{ unread }}</span>
+    </button>
+    <button type="button" class="filter-pill" [class.active]="readFilter === 'read'" (click)="setReadFilter('read')">
+      Read
+    </button>
+    <button type="button" class="filter-pill" [class.active]="selectedType === 1" (click)="filterByType(1)">
+      Shipment updates
+    </button>
+  </div>
+
+  <div *ngIf="errorMessage" class="notif-error">{{ errorMessage }}</div>
+
+  <div *ngIf="isLoading" class="notif-loading">
+    <span class="spinner-border text-primary me-2"></span> Loading…
+  </div>
+
+  <div *ngIf="!isLoading">
+    <div *ngIf="!notifications.length" class="notif-empty">
+      <i class="bi bi-bell-slash"></i>
+      <p>No notifications yet</p>
+    </div>
+
+    <div class="notif-list">
+      <div
+        *ngFor="let n of notifications"
+        class="notif-item"
+        [class.unread]="!n.isRead"
+        (click)="markRead(n)"
+      >
+        <div class="notif-icon" [ngClass]="typeColor(n.notificationType)">
+          <i class="bi" [ngClass]="typeIcon(n.notificationType)"></i>
+        </div>
+
+        <div class="notif-content">
+          <div class="notif-item-title">
+            {{ n.title }}
+            <span *ngIf="!n.isRead" class="unread-dot"></span>
+          </div>
+          <div class="notif-msg">{{ n.message }}</div>
+          <div class="notif-meta">
+            <span class="notif-type-badge">{{ typeLabel(n.notificationType) }}</span>
+            <span class="notif-time" *ngIf="notificationDate(n) as d">{{ d | date:'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
+        </div>
+
+        <button type="button" class="notif-del" (click)="delete(n, $event)" title="Delete" aria-label="Delete notification">
+          <i class="bi bi-trash3"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="notif-pagination" *ngIf="totalPages > 1">
+      <button type="button" class="btn-page" (click)="changePage(-1)" [disabled]="pageIndex <= 1">Previous</button>
+      <span class="notif-page-label">Page {{ pageIndex }} of {{ totalPages }}</span>
+      <button type="button" class="btn-page" (click)="changePage(1)" [disabled]="pageIndex >= totalPages">Next</button>
+    </div>
+  </div>
+</div>

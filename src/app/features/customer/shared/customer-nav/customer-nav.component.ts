@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { AuthService } from '../../../../core/services/auth.service';
+import { NotificationsService } from '../../../../core/services/notifications.service';
 
 @Component({
   selector: 'app-customer-nav',
@@ -15,22 +16,52 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class CustomerNavComponent implements OnInit, OnDestroy {
   searchTerm = '';
   isMobileMenuOpen = false;
+  undeliveredCount = 0;
   private routerSub?: Subscription;
+  private readonly onNotifDelivered = (): void => {
+    this.undeliveredCount = 0;
+  };
 
   constructor(
     readonly auth: AuthService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly notifService: NotificationsService
   ) {}
 
   ngOnInit(): void {
+    this.loadUndeliveredCount();
+    window.addEventListener('notif-delivered', this.onNotifDelivered);
+
     this.routerSub = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-      .subscribe(() => this.closeMobileMenu());
+      .subscribe((e) => {
+        this.closeMobileMenu();
+        const url = e.urlAfterRedirects || e.url;
+        if (url.includes('/customer/notifications')) {
+          setTimeout(() => this.loadUndeliveredCount(), 500);
+        }
+      });
   }
 
   ngOnDestroy(): void {
     this.routerSub?.unsubscribe();
+    window.removeEventListener('notif-delivered', this.onNotifDelivered);
     this.setBodyScrollLock(false);
+  }
+
+  loadUndeliveredCount(): void {
+    if (!this.auth.isLoggedIn()) {
+      this.undeliveredCount = 0;
+      return;
+    }
+    this.notifService.getUndeliveredCount().subscribe({
+      next: (res) => {
+        this.undeliveredCount = this.notifService.parseUndeliveredCount(res);
+      },
+      error: () => {
+        this.undeliveredCount = 0;
+      }
+    });
   }
 
   signOut(): void {

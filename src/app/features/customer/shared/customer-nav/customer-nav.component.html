@@ -49,6 +49,16 @@
         class="wc-nav-auth"
         (click)="signOut()"
       >Sign out</button>
+      <a
+        routerLink="/customer/notifications"
+        class="wc-icon-btn wc-icon-btn--notif"
+        aria-label="Notifications"
+        *ngIf="auth.isLoggedIn()"
+        (click)="closeMobileMenu()"
+      >
+        <i class="bi bi-bell-fill wc-bell-icon"></i>
+        <span *ngIf="undeliveredCount > 0" class="wc-notif-badge">{{ undeliveredCount > 99 ? '99+' : undeliveredCount }}</span>
+      </a>
       <a routerLink="/customer/favourites" class="wc-icon-btn" aria-label="Favourites" *ngIf="auth.isLoggedIn()" (click)="closeMobileMenu()">
         <span class="wc-icon">♡</span>
       </a>

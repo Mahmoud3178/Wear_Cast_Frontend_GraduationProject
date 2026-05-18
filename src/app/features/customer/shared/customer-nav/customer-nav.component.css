@@ -211,6 +211,41 @@
   transform: scale(1.08);
 }
 
+.wc-icon-btn--notif {
+  position: relative;
+}
+
+.wc-bell-icon {
+  font-size: 16px;
+  line-height: 1;
+  color: var(--wc-nav-muted);
+  transition: color 0.22s ease, transform 0.22s ease;
+}
+
+.wc-icon-btn--notif:hover .wc-bell-icon {
+  color: var(--wc-nav-primary);
+  transform: scale(1.06);
+}
+
+.wc-notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  line-height: 1;
+}
+
 .wc-nav-auth {
   font-size: 13px;
   font-weight: 600;

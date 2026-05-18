@@ -63,6 +63,14 @@ export const FACTORY_ROUTES: Routes = [
           import('./managers/factory-managers.component').then(
             m => m.FactoryManagersComponent
           )
+      },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('../../shared/components/notifications-list/notifications-list.component').then(
+            m => m.NotificationsListComponent
+          ),
+        data: { subtitle: 'Factory orders, production, and system alerts' }
       }
     ]
   }

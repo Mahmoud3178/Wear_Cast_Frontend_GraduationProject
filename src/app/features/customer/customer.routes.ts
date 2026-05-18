@@ -58,6 +58,12 @@ export const CUSTOMER_ROUTES: Routes = [
           import('./favourites/favourites.component')
             .then(m => m.FavouritesComponent)
       },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./notifications/customer-notifications.component')
+            .then(m => m.CustomerNotificationsComponent)
+      },
             {
         path: 'register',
         loadComponent: () =>
