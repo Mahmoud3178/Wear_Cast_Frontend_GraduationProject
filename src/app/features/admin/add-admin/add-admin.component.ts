@@ -19,7 +19,7 @@ export class AddAdminComponent {
     lastName: '',
     email: '',
     phone: '',
-    role: 'Editor',
+    role: '',
     password: '',
     confirmPassword: ''
   };
@@ -57,7 +57,7 @@ export class AddAdminComponent {
           lastName: '',
           email: '',
           phone: '',
-          role: 'Editor',
+          role: '',
           password: '',
           confirmPassword: ''
         };
@@ -70,35 +70,28 @@ export class AddAdminComponent {
     });
   }
 
-  handleError(err: any) {
+handleError(err: any) {
+  this.errorMessages = [];
+  this.fieldErrors = {};
 
-    this.errorMessages = [];
+  const error = err?.error;
 
-    const error = err?.error;
-
-    if (error?.errors) {
-
-      this.fieldErrors = error.errors;
-
-      for (const key of Object.keys(error.errors)) {
-        this.errorMessages.push(...error.errors[key]);
-      }
-
+  if (error?.validationErrors) {
+    this.fieldErrors = error.validationErrors;
+    for (const key of Object.keys(error.validationErrors)) {
+      this.errorMessages.push(`${key}: ${error.validationErrors[key]}`);
     }
-    else if (Array.isArray(error?.messages)) {
-
-      this.errorMessages = error.messages;
-
+  } else if (error?.errors) {
+    this.fieldErrors = error.errors;
+    for (const key of Object.keys(error.errors)) {
+      this.errorMessages.push(...error.errors[key]);
     }
-    else if (error?.message) {
-
-      this.errorMessages = [error.message];
-
-    }
-    else {
-
-      this.errorMessages = ['Something went wrong. Please try again.'];
-
-    }
+  } else if (error?.message) {
+    this.errorMessages = [error.message];
+  } else if (error?.description) {
+    this.errorMessages = [error.description];
+  } else {
+    this.errorMessages = ['Something went wrong. Please try again.'];
   }
+}
 }

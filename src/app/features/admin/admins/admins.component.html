@@ -160,7 +160,6 @@
         <input
           class="form-field"
           [class.field-invalid]="fieldErrors.firstName"
-          placeholder="John"
           [(ngModel)]="newAdmin.firstName"
           autocomplete="off">
 
@@ -177,7 +176,6 @@
 
         <input
           class="form-field"
-          placeholder="Doe"
           [(ngModel)]="newAdmin.lastName"
           autocomplete="off">
 
@@ -195,7 +193,6 @@
           class="form-field"
           type="email"
           [class.field-invalid]="fieldErrors.email"
-          placeholder="admin@wearcast.com"
           [(ngModel)]="newAdmin.email"
           autocomplete="off">
 
@@ -212,7 +209,6 @@
 
         <input
           class="form-field"
-          placeholder="+20 1xx xxx xxxx"
           [(ngModel)]="newAdmin.phoneNumber"
           autocomplete="off">
 
@@ -232,7 +228,6 @@
             [type]="showPassword ? 'text' : 'password'"
             class="form-field"
             [class.field-invalid]="fieldErrors.password"
-            placeholder="••••••••"
             [(ngModel)]="newAdmin.password"
             autocomplete="off">
 
@@ -271,7 +266,6 @@
             [type]="showConfirmPassword ? 'text' : 'password'"
             class="form-field"
             [class.field-invalid]="fieldErrors.confirmPassword"
-            placeholder="••••••••"
             [(ngModel)]="newAdmin.confirmPassword"
             autocomplete="off">
 
