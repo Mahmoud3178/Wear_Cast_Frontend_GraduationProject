@@ -53,27 +53,36 @@ undeliveredCount = 0;
   };
 
   constructor(private router: Router, private notifService: NotificationsService) {}
+  private pollingInterval: any = null;
 
-ngOnInit() {
-  this.loadAdminInfo();
-  this.loadUndeliveredCount();
+  ngOnInit() {
+    this.loadAdminInfo();
+    this.loadUndeliveredCount();
 
-  window.addEventListener('notif-delivered', () => {
-    this.undeliveredCount = 0;
-  });
+    // polling كل 30 ثانية
+    this.pollingInterval = setInterval(() => {
+      this.loadUndeliveredCount();
+    }, 30000);
 
-  this.updatePageTitle(this.router.url);
-  this.router.events
-    .pipe(filter(e => e instanceof NavigationEnd))
-    .subscribe((e: any) => {
-      this.updatePageTitle(e.urlAfterRedirects || e.url);
-
-      // ✅ لو خش صفحة الـ notifications اعمل reload للكونتر
-      if ((e.urlAfterRedirects || e.url).includes('/notifications')) {
-        setTimeout(() => this.loadUndeliveredCount(), 500);
-      }
+    window.addEventListener('notif-delivered', () => {
+      this.undeliveredCount = 0;
     });
-}
+
+    this.updatePageTitle(this.router.url);
+    this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe((e: any) => {
+        this.updatePageTitle(e.urlAfterRedirects || e.url);
+        if ((e.urlAfterRedirects || e.url).includes('/notifications')) {
+          setTimeout(() => this.loadUndeliveredCount(), 500);
+        }
+      });
+  }
+  ngOnDestroy() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+  }
 
   // ── صلاحية: هل الـ route ده مسموح للرول الحالي؟ ──────────────
   canAccess(route: string): boolean {

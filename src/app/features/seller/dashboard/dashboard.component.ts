@@ -44,25 +44,37 @@ undeliveredCount = 0;
 
   private productsChart: Chart | null = null;
   private statusChart:   Chart | null = null;
+  private pollingInterval: any = null;
 
-ngOnInit() {
-  this.loadDashboardStats();
-  this.loadOrders();
-  this.loadUndeliveredCount();
+  ngOnInit() {
+    this.loadDashboardStats();
+    this.loadOrders();
+    this.loadUndeliveredCount();
 
-  window.addEventListener('notif-delivered', () => {
-    this.undeliveredCount = 0;
-  });
+    // polling كل 30 ثانية
+    this.pollingInterval = setInterval(() => {
+      this.loadUndeliveredCount();
+    }, 30000);
 
-  // ✅ لو رجع من صفحة الـ notifications يعمل reload للكونتر
-  this.router.events
-    .pipe(filter((e: any) => e instanceof NavigationEnd))
-    .subscribe((e: any) => {
-      if ((e.urlAfterRedirects || e.url).includes('/saller-notifications')) {
-        setTimeout(() => this.loadUndeliveredCount(), 500);
-      }
+    window.addEventListener('notif-delivered', () => {
+      this.undeliveredCount = 0;
     });
-}
+
+    this.router.events
+      .pipe(filter((e: any) => e instanceof NavigationEnd))
+      .subscribe((e: any) => {
+        if ((e.urlAfterRedirects || e.url).includes('/saller-notifications')) {
+          setTimeout(() => this.loadUndeliveredCount(), 500);
+        }
+      });
+  }
+
+
+  ngOnDestroy() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+  }
 
   ngAfterViewInit() {}
 loadUndeliveredCount() {
