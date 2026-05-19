@@ -1,0 +1,95 @@
+/* Premium Light Mode Fleet Theme Shared Styles */
+
+.drivers-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+/* Managers Grid Card Style - EXACT MATCH to Image 1 */
+.manager-card {
+  background: #94a3b8; /* Exact slate gray background from Image 1 */
+  border-radius: 20px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 260px;
+}
+
+.manager-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Avatar Box */
+.manager-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #2563eb; /* Blue avatar circle from Image 1 */
+  color: white;
+  border: 2px solid white;
+}
+
+.text-white-80 {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.text-white-90 {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Bottom Card Buttons */
+.btn-outline-white {
+  background: transparent;
+  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-white:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: white;
+  color: white;
+}
+
+.btn-danger-card {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fee2e2;
+  border: 1.5px solid rgba(239, 68, 68, 0.25);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-danger-card:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: white;
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+/* Input Overrides */
+.max-w-md {
+  max-width: 28rem;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}

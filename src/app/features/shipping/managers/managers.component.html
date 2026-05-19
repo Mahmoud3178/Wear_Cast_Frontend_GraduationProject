@@ -1,0 +1,260 @@
+<div class="drivers-container p-4">
+  <!-- Header Section -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Company Managers Registry</h2>
+      <p class="text-muted mb-0">View, add, and securely manage your logistics operations managers</p>
+    </div>
+    <button class="btn btn-premium d-flex align-items-center gap-2" (click)="openAddModal()">
+      <i class="bi bi-person-plus-fill"></i>
+      <span>Register New Manager</span>
+    </button>
+  </div>
+
+  <!-- Empty State -->
+  <div class="text-center py-5 mt-4" *ngIf="managers.length === 0 && !isLoading">
+    <div class="premium-card p-5 text-center">
+      <i class="bi bi-people display-4 text-muted mb-3 d-block"></i>
+      <h5 class="fw-bold">No managers registered</h5>
+      <p class="text-muted max-w-md mx-auto mb-4">You currently have no operational managers added to your shipping company profile.</p>
+      <button class="btn btn-premium d-inline-flex align-items-center gap-2" (click)="openAddModal()">
+        <i class="bi bi-person-plus-fill"></i> Add First Manager
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="text-center py-5 mt-4" *ngIf="isLoading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="text-muted mt-3 small">Loading logistics managers registry...</p>
+  </div>
+
+  <!-- Managers Table Card -->
+  <div class="table-card border rounded-4 bg-white shadow-sm overflow-hidden mb-4" *ngIf="!isLoading && managers.length > 0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 premium-table">
+        <thead>
+          <tr>
+            <th class="ps-4">Manager Name</th>
+            <th>Email Address</th>
+            <th>Phone Number</th>
+            <th>Operational Role</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let manager of managers">
+            <td class="ps-4">
+              <div class="d-flex align-items-center gap-3">
+                <div class="avatar-circle-sm bg-primary/10 text-primary d-flex align-items-center justify-content-center rounded-circle" style="width: 40px; height: 40px;">
+                  <i class="bi bi-person-fill fs-5"></i>
+                </div>
+                <div class="fw-bold text-dark fs-6">{{ manager.firstName || manager.FirstName }} {{ manager.lastName || manager.LastName }}</div>
+              </div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-2 text-secondary">
+                <i class="bi bi-envelope text-primary opacity-75"></i>
+                <span>{{ manager.email || manager.Email }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-2 text-secondary">
+                <i class="bi bi-telephone text-primary opacity-75"></i>
+                <span>{{ manager.phoneNumber || manager.PhoneNumber || 'No phone listed' }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-purple py-1.5 px-2.5 text-uppercase" style="background: #ede9fe; color: #5b21b6;">
+                Operations Manager
+              </span>
+            </td>
+            <td class="text-end pe-4">
+              <div class="d-flex justify-content-end gap-2">
+                <button class="btn btn-icon-premium" (click)="openEditModal(manager)" title="Edit Profile">
+                  <i class="bi bi-pencil-square text-secondary"></i>
+                </button>
+                <button class="btn btn-icon-premium" *ngIf="(manager.email || manager.Email || '').toLowerCase() !== currentUserEmail" (click)="openDeleteModal(manager)" title="Remove Profile">
+                  <i class="bi bi-trash text-danger"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add/Edit Manager Overlay -->
+<div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="modal-card wide-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header-premium">
+      <h4 class="fw-bold mb-0">{{ isEditMode ? 'Edit Manager Profile' : 'Register New Manager' }}</h4>
+      <button class="btn-close-premium" (click)="closeAddModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="p-4 p-md-5">
+      <!-- Error Feedback Panel -->
+      <div class="alert alert-danger rounded-4 p-3 mb-4 d-flex align-items-start gap-3 border-0 shadow-sm animate-fade-in" *ngIf="errorMessage" style="background-color: #fef2f2; border-left: 4px solid #ef4444 !important; color: #991b1b;">
+        <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0 mt-0.5 text-danger"></i>
+        <div class="flex-grow-1">
+          <div class="fw-bold mb-1" style="font-size: 0.95rem;">Action Blocked by Validation Rules</div>
+          <div class="small" style="white-space: pre-line; line-height: 1.5; font-size: 0.85rem; color: #b91c1c;">{{ errorMessage }}</div>
+        </div>
+        <button type="button" class="btn-close-premium p-1 opacity-75 hover-opacity-100 ms-auto" (click)="errorMessage = null" style="background: none; border: none; color: #991b1b;">
+          <i class="bi bi-x-lg small"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="saveManager()" #managerForm="ngForm">
+        <div class="row g-4">
+          <!-- Profile/Personal details divider -->
+          <div class="col-12">
+            <div class="section-divider my-2">Personal Information</div>
+          </div>
+
+          <!-- First Name -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold small text-uppercase">First Name</label>
+            <input type="text" class="form-control premium-input" placeholder="e.g. John" 
+                   required name="firstName" [(ngModel)]="newManager.firstName" #firstName="ngModel"
+                   [class.is-invalid]="firstName.invalid && (firstName.dirty || firstName.touched)">
+            <div class="invalid-feedback" *ngIf="firstName.invalid && (firstName.dirty || firstName.touched)">
+              First name is required.
+            </div>
+          </div>
+
+          <!-- Last Name -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold small text-uppercase">Last Name</label>
+            <input type="text" class="form-control premium-input" placeholder="e.g. Doe" 
+                   required name="lastName" [(ngModel)]="newManager.lastName" #lastName="ngModel"
+                   [class.is-invalid]="lastName.invalid && (lastName.dirty || lastName.touched)">
+            <div class="invalid-feedback" *ngIf="lastName.invalid && (lastName.dirty || lastName.touched)">
+              Last name is required.
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="col-md-12">
+            <label class="form-label fw-bold small text-uppercase">Email Address</label>
+            <input type="email" class="form-control premium-input" placeholder="e.g. manager@example.com" 
+                   required name="email" [(ngModel)]="newManager.email" #email="ngModel"
+                   [disabled]="isEditMode"
+                   [class.is-invalid]="email.invalid && (email.dirty || email.touched)">
+            <div class="invalid-feedback" *ngIf="email.invalid && (email.dirty || email.touched)">
+              A valid email address is required.
+            </div>
+          </div>
+
+          <!-- Phone Number -->
+          <div class="col-md-12">
+            <label class="form-label fw-bold small text-uppercase">Phone Number</label>
+            <input type="text" class="form-control premium-input" placeholder="e.g. 01012345678" 
+                   required pattern="^(010|011|012|015)[0-9]{8}$"
+                   name="phoneNumber" [(ngModel)]="newManager.phoneNumber" #phone="ngModel"
+                   [class.is-invalid]="phone.invalid && (phone.dirty || phone.touched)">
+            <div class="invalid-feedback d-block" *ngIf="phone.invalid && (phone.dirty || phone.touched)">
+              <span *ngIf="phone.errors?.['required']">Phone number is required.</span>
+              <span *ngIf="phone.errors?.['pattern']" class="text-danger small fw-bold">Must start with 010, 011, 012, or 015 and be exactly 11 digits long.</span>
+            </div>
+          </div>
+
+          <!-- Password & Security Divider (Only in Register Mode) -->
+          <ng-container *ngIf="!isEditMode">
+            <div class="col-12 mt-4">
+              <div class="section-divider my-2">Account Security</div>
+            </div>
+
+            <!-- Password -->
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Password</label>
+              <div class="position-relative">
+                <input [type]="showPasswordState ? 'text' : 'password'" class="form-control premium-input pe-5" placeholder="Min 8 characters" 
+                       required name="password" minlength="8" [(ngModel)]="newManager.password" #password="ngModel"
+                       [class.is-invalid]="password.invalid && (password.dirty || password.touched)">
+                <button type="button" class="position-absolute top-50 end-0 translate-middle-y border-0 bg-transparent pe-3 text-secondary" 
+                        (click)="togglePasswordVisibility()" style="cursor: pointer; outline: none; z-index: 10;">
+                  <i class="bi fs-5" [class.bi-eye-fill]="showPasswordState" [class.bi-eye-slash-fill]="!showPasswordState"></i>
+                </button>
+              </div>
+              <div class="invalid-feedback d-block" *ngIf="password.invalid && (password.dirty || password.touched)">
+                Password is required (min 8 characters).
+              </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Confirm Password</label>
+              <div class="position-relative">
+                <input [type]="showConfirmPasswordState ? 'text' : 'password'" class="form-control premium-input pe-5" placeholder="Repeat password" 
+                       required name="confirmPassword" [(ngModel)]="newManager.confirmPassword" #confirm="ngModel"
+                       [class.is-invalid]="(confirm.invalid || (newManager.password !== newManager.confirmPassword)) && (confirm.dirty || confirm.touched)">
+                <button type="button" class="position-absolute top-50 end-0 translate-middle-y border-0 bg-transparent pe-3 text-secondary" 
+                        (click)="toggleConfirmPasswordVisibility()" style="cursor: pointer; outline: none; z-index: 10;">
+                  <i class="bi fs-5" [class.bi-eye-fill]="showConfirmPasswordState" [class.bi-eye-slash-fill]="!showConfirmPasswordState"></i>
+                </button>
+              </div>
+              <div class="invalid-feedback d-block" *ngIf="(confirm.invalid || (newManager.password !== newManager.confirmPassword)) && (confirm.dirty || confirm.touched)">
+                Passwords must match.
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Submit & Control panel -->
+        <div class="mt-5 d-flex gap-3 justify-content-end">
+          <button type="button" class="btn btn-white px-4" (click)="closeAddModal()">Cancel</button>
+          <button type="submit" class="btn btn-premium px-5" [disabled]="!managerForm.valid || isSubmitting">
+            <span *ngIf="!isSubmitting">{{ isEditMode ? 'Save Changes' : 'Register Manager' }}</span>
+            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Delete Manager Reason Overlay -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-card small-modal" style="max-width: 480px;" (click)="$event.stopPropagation()">
+    <div class="modal-header-premium">
+      <h4 class="fw-bold mb-0">Confirm Profile Removal</h4>
+      <button class="btn-close-premium" (click)="closeDeleteModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="p-4">
+      <div class="text-center mb-4">
+        <i class="bi bi-exclamation-triangle text-danger display-6 mb-2 d-block"></i>
+        <h5 class="fw-bold text-dark mb-1">Remove operational profile?</h5>
+        <p class="text-muted small">
+          Are you sure you want to remove <strong>{{ managerToDelete?.firstName }} {{ managerToDelete?.lastName }}</strong> from the registry?
+        </p>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-bold small text-uppercase mb-2">Reason for Deletion</label>
+        <textarea class="form-control premium-input w-100" rows="3" 
+                  placeholder="Provide reason for profile termination..." 
+                  [(ngModel)]="deletionReason" required></textarea>
+      </div>
+
+      <div class="d-flex gap-3 mt-4">
+        <button type="button" class="btn btn-white w-50 py-2.5" (click)="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn btn-danger w-50 py-2.5" 
+                [disabled]="isDeleting || !deletionReason.trim()" 
+                (click)="deleteManager()">
+          <span *ngIf="!isDeleting">Yes, Delete</span>
+          <span *ngIf="isDeleting" class="spinner-border spinner-border-sm me-2"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

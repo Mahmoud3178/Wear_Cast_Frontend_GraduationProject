@@ -55,6 +55,24 @@ import { AuthService } from '../../../../core/services/auth.service';
                 <span class="fw-medium text-nowrap" *ngIf="!isCollapsed">Driver Fleet</span>
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 transition-all" 
+                 routerLink="orders" routerLinkActive="active" [title]="isCollapsed ? 'Manage Orders' : ''">
+                <div class="icon-wrapper d-flex align-items-center justify-content-center">
+                  <i class="bi bi-receipt"></i>
+                </div>
+                <span class="fw-medium text-nowrap" *ngIf="!isCollapsed">Manage Orders</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 transition-all" 
+                 routerLink="managers" routerLinkActive="active" [title]="isCollapsed ? 'Company Managers' : ''">
+                <div class="icon-wrapper d-flex align-items-center justify-content-center">
+                  <i class="bi bi-people-fill"></i>
+                </div>
+                <span class="fw-medium text-nowrap" *ngIf="!isCollapsed">Company Managers</span>
+              </a>
+            </li>
           </ul>
         </div>
 

@@ -1,0 +1,136 @@
+/* Premium Light Mode Orders Theme */
+
+.drivers-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.premium-input-search {
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  padding: 0.6rem 1rem;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.premium-input-search:focus {
+  background-color: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+/* Custom badges matching global styles.css */
+.badge-purple {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.badge-indigo {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+}
+
+/* Active State for Pagination Buttons */
+.btn-white.active {
+  background-color: #6366f1 !important;
+  border-color: #6366f1 !important;
+  color: white !important;
+}
+
+/* Status Radio Select Option Layout */
+.status-options-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.status-option {
+  padding: 1rem;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-option:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.status-option.active {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.04);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
+}
+
+.status-radio {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #cbd5e1;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.status-option.active .status-radio {
+  border-color: #2563eb;
+  background: #2563eb;
+}
+
+.status-option.active .status-radio::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* 4-Angle 3D Garment Previews */
+.angle-img-box {
+  cursor: zoom-in;
+  transition: all 0.2s ease;
+}
+
+.angle-img-box:hover {
+  transform: scale(1.05);
+  border-color: #2563eb !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.angle-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 0.55rem;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.8);
+  color: #f1f5f9;
+  padding: 0.15rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Scrollbar styling */
+.overflow-auto::-webkit-scrollbar {
+  width: 5px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}

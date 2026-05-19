@@ -87,5 +87,20 @@ export class ShippingCompanyService {
     }
     return this.http.get<any>(`${this.apiUrl}/ShippingCompany/Orders`, { params: httpParams });
   }
+
+  getOrderDetails(orderId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/Orders/${orderId}/items`);
+  }
+
+  getAllManagers(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/shipping-company-managers/all`);
+  }
+
+  deleteManager(managerId: number, reason: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/shipping-company-managers/${managerId}`, {
+      body: { reason }
+    });
+  }
 }
+
 

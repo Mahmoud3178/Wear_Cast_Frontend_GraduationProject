@@ -18,6 +18,14 @@ export const SHIPPING_ROUTES: Routes = [
       { path: 'drivers', component: DriversComponent },
       { path: 'profile', component: ShippingProfileComponent },
       {
+        path: 'orders',
+        loadComponent: () => import('./orders/orders.component').then(m => m.OrdersComponent)
+      },
+      {
+        path: 'managers',
+        loadComponent: () => import('./managers/managers.component').then(m => m.ManagersComponent)
+      },
+      {
         path: 'notifications',
         loadComponent: () =>
           import('./notifications-shipping/notifications-shipping.component').then(
