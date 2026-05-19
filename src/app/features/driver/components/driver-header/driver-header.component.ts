@@ -1,13 +1,13 @@
-import { Component, inject, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, Output, EventEmitter, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Subscription } from 'rxjs';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterLink, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-driver-header',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule,RouterLink],
   template: `
     <header class="shipping-header d-flex align-items-center justify-content-between px-4 py-2 border-bottom shadow-sm sticky-top">
       <div class="d-flex align-items-center flex-grow-1">
@@ -17,13 +17,13 @@ import { Router, RouterModule } from '@angular/router';
         </button>
         <!-- Search Bar -->
         <!--<div class="search-container position-relative d-none d-lg-block">
-          <div class="search-bar d-flex align-items-center px-3 py-2 rounded-4 border transition-all" 
+          <div class="search-bar d-flex align-items-center px-3 py-2 rounded-4 border transition-all"
                [class.focused]="isSearchFocused">
             <i class="bi bi-search text-slate-400 me-2"></i>
-            <input type="text" 
-                   (focus)="isSearchFocused = true" 
+            <input type="text"
+                   (focus)="isSearchFocused = true"
                    (blur)="isSearchFocused = false"
-                   class="form-control border-0 bg-transparent shadow-none p-0 text-sm" 
+                   class="form-control border-0 bg-transparent shadow-none p-0 text-sm"
                    placeholder="Search shipments, orders, drivers...">
             <span class="search-shortcut ms-2 px-1.5 py-0.5 rounded-2 border bg-light text-slate-400 d-flex align-items-center">
               <i class="bi bi-command small me-1"></i>K
@@ -31,7 +31,7 @@ import { Router, RouterModule } from '@angular/router';
           </div>
         </div>-->
       </div>
-      
+
       <div class="d-flex align-items-center gap-2 gap-md-3">
         <!-- Quick Stats (Optional) -->
         <!-- <div class="d-none d-xl-flex align-items-center gap-4 me-4">
@@ -46,17 +46,22 @@ import { Router, RouterModule } from '@angular/router';
         </div> -->
 
         <div class="header-action-btns d-flex align-items-center gap-2">
-          <button class="btn-icon p-2 rounded-circle hover-bg-slate transition-all border-0 bg-transparent position-relative">
-            <i class="bi bi-bell fs-5 text-slate-600"></i>
-            <span class="badge-count bg-danger">3</span>
-          </button>
+      <a routerLink="/driver/notifications" class="notif-bell-btn me-3" style="position:relative; text-decoration:none;">
+        <i class="bi bi-bell-fill" style="font-size:20px; color:#555;"></i>
+        <span *ngIf="undeliveredCount > 0"
+              style="position:absolute; top:-6px; right:-6px; background:#ef4444; color:#fff;
+                     border-radius:50%; font-size:11px; min-width:18px; height:18px;
+                     display:flex; align-items:center; justify-content:center; padding:0 3px;">
+          {{ undeliveredCount > 99 ? '99+' : undeliveredCount }}
+        </span>
+      </a>
         </div>
 
         <div class="v-divider mx-2"></div>
-        
+
         <!-- User Dropdown -->
         <div class="user-dropdown dropdown">
-          <div class="user-trigger d-flex align-items-center gap-2 cursor-pointer p-1 rounded-pill hover-bg-slate transition-all dropdown-toggle" 
+          <div class="user-trigger d-flex align-items-center gap-2 cursor-pointer p-1 rounded-pill hover-bg-slate transition-all dropdown-toggle"
                data-bs-toggle="dropdown" aria-expanded="false">
             <div class="avatar-box shadow-sm border border-2 border-white">
               <div class="avatar-gradient d-flex align-items-center justify-content-center fw-bold text-white">
@@ -86,7 +91,7 @@ import { Router, RouterModule } from '@angular/router';
                 </div>
               </a>
             </li>
-           
+
             <li><hr class="dropdown-divider opacity-50 mx-2"></li>
             <li>
               <a class="dropdown-item d-flex align-items-center gap-3 py-2.5 rounded-3 text-danger" href="javascript:void(0)" (click)="logout()">
@@ -120,7 +125,7 @@ import { Router, RouterModule } from '@angular/router';
     .bg-primary-soft { background-color: rgba(13, 110, 253, 0.1); }
     .bg-danger-soft { background-color: rgba(239, 68, 68, 0.1); }
     .text-danger-soft { color: rgba(239, 68, 68, 0.7); }
-    
+
     .v-divider {
       width: 1px;
       height: 32px;
@@ -198,17 +203,18 @@ import { Router, RouterModule } from '@angular/router';
       from { transform: translateY(10px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
-    
+
     .cursor-pointer { cursor: pointer; }
     .dropdown-toggle::after { display: none; }
   `]
 })
 export class DriverHeaderComponent implements OnInit {
   @Output() toggleSidebar = new EventEmitter<void>();
+@Input() undeliveredCount = 0;
 
   private authService = inject(AuthService);
   private router = inject(Router);
-  
+
   userName = 'Driver';
   userRole = 'Driver';
   isSearchFocused = false;
@@ -218,7 +224,7 @@ export class DriverHeaderComponent implements OnInit {
     if (role) {
       this.userRole = role;
     }
-    
+
     const profile = this.authService.getCustomerProfile();
     if (profile && profile.firstName) {
       this.userName = `${profile.firstName} ${profile.lastName}`.trim();
