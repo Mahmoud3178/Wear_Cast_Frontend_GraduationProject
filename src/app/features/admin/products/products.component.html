@@ -32,8 +32,7 @@
             </div>
           </td>
           <td><span class="adm-badge badge-info">{{ product.targetAudience || 'N/A' }}</span></td>
-          <td><span class="cell-main" style="color:#10b981">${{ product.price }}</span></td>
-        </tr>
+<td><span class="cell-main" style="color:#10b981">{{ product.price }} EGP</span></td>        </tr>
         <tr *ngIf="!products?.length" class="no-click">
           <td colspan="3"><div class="adm-empty"><i class="bi bi-box-seam"></i><p>No products found</p></div></td>
         </tr>

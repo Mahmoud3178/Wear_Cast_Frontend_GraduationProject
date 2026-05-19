@@ -7,11 +7,11 @@
   </aside>
 
   <div class="main-wrapper">
-    <div class="d-flex align-items-center sticky-top">
-      <app-driver-header class="flex-grow-1" (toggleSidebar)="toggleSidebar()"></app-driver-header>
-
-
-    </div>
+    <app-driver-header
+      class="sticky-top"
+      (toggleSidebar)="toggleSidebar()"
+      [undeliveredCount]="undeliveredCount">
+    </app-driver-header>
 
     <main class="content-body">
       <div class="content-scroll-container">

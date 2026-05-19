@@ -26,7 +26,9 @@ export class DriverLayoutComponent implements OnInit, OnDestroy {
   undeliveredCount = 0;
 
   private pollingInterval: any = null;
-  private readonly onNotifDelivered = (): void => { this.undeliveredCount = 0; };
+private readonly onNotifDelivered = (): void => {
+  setTimeout(() => this.loadUndeliveredCount(), 500);
+};
   private notifService = inject(NotificationsService);
   private router = inject(Router);
 

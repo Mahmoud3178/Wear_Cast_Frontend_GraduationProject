@@ -34,7 +34,7 @@
           <td>
             <span class="adm-badge badge-purple me-1" *ngFor="let t of product.targetAudiences">{{ t }}</span>
           </td>
-          <td><span class="cell-main" style="color:#10b981">${{ product.price }}</span></td>
+          <td><span class="cell-main" style="color:#10b981">{{ product.price }} EGP</span></td>
         </tr>
         <tr *ngIf="!products?.length" class="no-click">
           <td colspan="3"><div class="adm-empty"><i class="bi bi-palette"></i><p>No design products found</p></div></td>
