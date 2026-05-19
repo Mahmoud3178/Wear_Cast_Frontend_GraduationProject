@@ -21,7 +21,8 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
   cartCount = 0;
 
   private routerSub?: Subscription;
-  private pollingInterval: any = null;
+  private notifPollingInterval: any = null;
+  private cartPollingInterval: any = null;
 
   private readonly onNotifDelivered = (): void => { this.undeliveredCount = 0; };
   private readonly onNotifAllRead   = (): void => { this.undeliveredCount = 0; };
@@ -46,9 +47,15 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
     window.addEventListener('cart-updated',    this.onCartUpdated);
 
     this.ngZone.runOutsideAngular(() => {
-      this.pollingInterval = setInterval(() => {
+      // polling النوتفكيشن كل 10 ثواني
+      this.notifPollingInterval = setInterval(() => {
         this.ngZone.run(() => this.loadUndeliveredCount());
       }, 10000);
+
+      // polling الكارت كل 30 ثانية (أبطأ عشان مش بيتغير كتير)
+      this.cartPollingInterval = setInterval(() => {
+        this.ngZone.run(() => this.loadCartCount());
+      }, 30000);
     });
 
     this.routerSub = this.router.events
@@ -67,7 +74,8 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.routerSub?.unsubscribe();
-    if (this.pollingInterval) clearInterval(this.pollingInterval);
+    if (this.notifPollingInterval) clearInterval(this.notifPollingInterval);
+    if (this.cartPollingInterval)  clearInterval(this.cartPollingInterval);
     window.removeEventListener('notif-delivered', this.onNotifDelivered);
     window.removeEventListener('notif-all-read',  this.onNotifAllRead);
     window.removeEventListener('notif-read',      this.onNotifRead);

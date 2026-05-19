@@ -1,14 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { NotificationsService } from '../../../../core/services/notifications.service';
 
-
-
-// ── الصلاحيات لكل role ──────────────────────────────────────────
 const ROLE_PERMISSIONS: Record<string, string[]> = {
-  SuperAdmin:            ['*'],  // كل حاجه
+  SuperAdmin:            ['*'],
   OperationsAdmin:       ['dashboard', 'shipments', 'delivery-company'],
   VendorAdmin:           ['dashboard', 'Factory', 'seller-applications', 'stores'],
   CatalogAdmin:          ['dashboard', 'products', 'design-products', 'categories', 'logos'],
@@ -22,17 +19,22 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.css'
 })
-export class AdminLayoutComponent implements OnInit {
+export class AdminLayoutComponent implements OnInit, OnDestroy {
 
-  sidebarOpen     = false;
-  showLogoutModal = false;
-  adminName       = 'Administrator';
-  adminInitials   = 'A';
-  adminRole       = 'SuperAdmin';
+  sidebarOpen      = false;
+  showLogoutModal  = false;
+  adminName        = 'Administrator';
+  adminInitials    = 'A';
+  adminRole        = 'SuperAdmin';
   currentPageTitle = 'Dashboard';
-undeliveredCount = 0;
-private readonly onNotifDelivered = () => { this.undeliveredCount = 0; };
-private readonly onNotifRead      = () => { this.loadUndeliveredCount(); };
+  undeliveredCount = 0;
+
+  private pollingInterval: any = null;
+
+  private readonly onNotifDelivered = () => { this.undeliveredCount = 0; };
+  private readonly onNotifAllRead   = () => { this.undeliveredCount = 0; };
+  private readonly onNotifRead      = () => { this.loadUndeliveredCount(); };
+
   private readonly routeTitles: Record<string, string> = {
     'dashboard':           'Dashboard',
     'customers':           'Customers',
@@ -54,45 +56,42 @@ private readonly onNotifRead      = () => { this.loadUndeliveredCount(); };
   };
 
   constructor(private router: Router, private notifService: NotificationsService) {}
-  private pollingInterval: any = null;
 
-ngOnInit() {
-  this.loadAdminInfo();
-  this.loadUndeliveredCount();
-
-  // polling كل 15 ثانية
-  this.pollingInterval = setInterval(() => {
+  ngOnInit() {
+    this.loadAdminInfo();
     this.loadUndeliveredCount();
-  }, 15000);
 
-  window.addEventListener('notif-delivered', this.onNotifDelivered);
-  window.addEventListener('notif-all-read',  this.onNotifDelivered);  // ← جديد
-  window.addEventListener('notif-read',      this.onNotifRead);        // ← جديد
+    this.pollingInterval = setInterval(() => {
+      this.loadUndeliveredCount();
+    }, 15000);
 
-  this.updatePageTitle(this.router.url);
-  this.router.events
-    .pipe(filter(e => e instanceof NavigationEnd))
-    .subscribe((e: any) => {
-      this.updatePageTitle(e.urlAfterRedirects || e.url);
-      if ((e.urlAfterRedirects || e.url).includes('/notifications')) {
-        setTimeout(() => this.loadUndeliveredCount(), 500);
-      }
-    });
-}
- ngOnDestroy() {
-  if (this.pollingInterval) clearInterval(this.pollingInterval);
-  window.removeEventListener('notif-delivered', this.onNotifDelivered);
-  window.removeEventListener('notif-all-read',  this.onNotifDelivered);
-  window.removeEventListener('notif-read',      this.onNotifRead);
-}
+    window.addEventListener('notif-delivered', this.onNotifDelivered);
+    window.addEventListener('notif-all-read',  this.onNotifAllRead);
+    window.addEventListener('notif-read',      this.onNotifRead);
 
-  // ── صلاحية: هل الـ route ده مسموح للرول الحالي؟ ──────────────
+    this.updatePageTitle(this.router.url);
+    this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe((e: any) => {
+        this.updatePageTitle(e.urlAfterRedirects || e.url);
+        if ((e.urlAfterRedirects || e.url).includes('/notifications')) {
+          setTimeout(() => this.loadUndeliveredCount(), 500);
+        }
+      });
+  }
+
+  ngOnDestroy() {
+    if (this.pollingInterval) clearInterval(this.pollingInterval);
+    window.removeEventListener('notif-delivered', this.onNotifDelivered);
+    window.removeEventListener('notif-all-read',  this.onNotifAllRead);
+    window.removeEventListener('notif-read',      this.onNotifRead);
+  }
+
   canAccess(route: string): boolean {
     const perms = ROLE_PERMISSIONS[this.adminRole] ?? [];
     return perms.includes('*') || perms.includes(route);
   }
 
-  // ── JWT decode ────────────────────────────────────────────────
   private loadAdminInfo(): void {
     try {
       const token = localStorage.getItem('token');
@@ -103,13 +102,11 @@ ngOnInit() {
       const padded = base64 + '==='.slice((base64.length + 3) % 4);
       const payload = JSON.parse(atob(padded));
 
-      // ── Role ──
       const rawRole =
         payload['role'] ??
         payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ??
         'SuperAdmin';
 
-      // الـ roleMap يحول الـ numeric role لو كان رقم
       const numericToRole: Record<number, string> = {
         16: 'SuperAdmin',
         1:  'OperationsAdmin',
@@ -121,7 +118,6 @@ ngOnInit() {
         ? (numericToRole[rawRole] ?? 'SuperAdmin')
         : rawRole;
 
-      // ── Name ──
       const given  = payload['given_name']  ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']  ?? '';
       const family = payload['family_name'] ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname']     ?? '';
 
@@ -144,14 +140,16 @@ ngOnInit() {
 
     } catch { /* keep defaults */ }
   }
-loadUndeliveredCount() {
-  this.notifService.getUndeliveredCount().subscribe({
-    next: (res: any) => {
-      this.undeliveredCount = this.notifService.parseUndeliveredCount(res);
-    },
-    error: () => {}
-  });
-}
+
+  loadUndeliveredCount() {
+    this.notifService.getUndeliveredCount().subscribe({
+      next: (res: any) => {
+        this.undeliveredCount = this.notifService.parseUndeliveredCount(res);
+      },
+      error: () => {}
+    });
+  }
+
   private updatePageTitle(url: string): void {
     const segments = url.split('/').filter(Boolean);
     const adminIdx = segments.indexOf('admin');
