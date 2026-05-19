@@ -7,20 +7,11 @@
   </aside>
 
   <div class="main-wrapper">
-    <div class="d-flex align-items-center sticky-top">
-      <app-shipping-header class="flex-grow-1" (toggleSidebar)="toggleSidebar()"></app-shipping-header>
-
-      <!-- الجرس -->
-      <a routerLink="/shipping/notifications" class="notif-bell-btn me-3" style="position:relative; text-decoration:none;">
-        <i class="bi bi-bell-fill" style="font-size:20px; color:#555;"></i>
-        <span *ngIf="undeliveredCount > 0"
-              style="position:absolute; top:-6px; right:-6px; background:#ef4444; color:#fff;
-                     border-radius:50%; font-size:11px; min-width:18px; height:18px;
-                     display:flex; align-items:center; justify-content:center; padding:0 3px;">
-          {{ undeliveredCount > 99 ? '99+' : undeliveredCount }}
-        </span>
-      </a>
-    </div>
+    <app-shipping-header
+      class="sticky-top"
+      (toggleSidebar)="toggleSidebar()"
+      [undeliveredCount]="undeliveredCount">
+    </app-shipping-header>
 
     <main class="content-body">
       <div class="content-scroll-container">

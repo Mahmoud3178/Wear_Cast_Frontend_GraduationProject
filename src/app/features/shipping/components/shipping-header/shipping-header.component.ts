@@ -1,16 +1,16 @@
-import { Component, inject, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, Output, EventEmitter, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ShippingCompanyService } from '../../../../core/services/shipping-company.service';
 import { Subscription } from 'rxjs';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterLink, RouterModule } from '@angular/router';
 import { ShippingService } from '../../../../core/services/shipping.service';
 
 
 @Component({
   selector: 'app-shipping-header',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule,RouterLink],
   template: `
     <header class="shipping-header d-flex align-items-center justify-content-between px-4 py-2 border-bottom shadow-sm sticky-top">
       <div class="d-flex align-items-center flex-grow-1">
@@ -20,13 +20,13 @@ import { ShippingService } from '../../../../core/services/shipping.service';
         </button>
         <!-- Search Bar -->
         <!--<div class="search-container position-relative d-none d-lg-block">
-          <div class="search-bar d-flex align-items-center px-3 py-2 rounded-4 border transition-all" 
+          <div class="search-bar d-flex align-items-center px-3 py-2 rounded-4 border transition-all"
                [class.focused]="isSearchFocused">
             <i class="bi bi-search text-slate-400 me-2"></i>
-            <input type="text" 
-                   (focus)="isSearchFocused = true" 
+            <input type="text"
+                   (focus)="isSearchFocused = true"
                    (blur)="isSearchFocused = false"
-                   class="form-control border-0 bg-transparent shadow-none p-0 text-sm" 
+                   class="form-control border-0 bg-transparent shadow-none p-0 text-sm"
                    placeholder="Search shipments, orders, drivers...">
             <span class="search-shortcut ms-2 px-1.5 py-0.5 rounded-2 border bg-light text-slate-400 d-flex align-items-center">
               <i class="bi bi-command small me-1"></i>K
@@ -34,7 +34,7 @@ import { ShippingService } from '../../../../core/services/shipping.service';
           </div>
         </div>-->
       </div>
-      
+
       <div class="d-flex align-items-center gap-2 gap-md-3">
         <!-- Quick Stats (Optional) -->
         <!-- <div class="d-none d-xl-flex align-items-center gap-4 me-4">
@@ -49,18 +49,20 @@ import { ShippingService } from '../../../../core/services/shipping.service';
         </div> -->
 
         <div class="header-action-btns d-flex align-items-center gap-2">
-          
-          <button class="btn-icon p-2 rounded-circle hover-bg-slate transition-all border-0 bg-transparent position-relative">
-            <i class="bi bi-bell fs-5 text-slate-600"></i>
-            <span class="badge-count bg-danger">3</span>
-          </button>
+
+  <a routerLink="/shipping/notifications" class="btn-icon p-2 rounded-circle hover-bg-slate transition-all border-0 bg-transparent position-relative" style="text-decoration:none;">
+  <i class="bi bi-bell fs-5 text-slate-600"></i>
+  <span *ngIf="undeliveredCount > 0" class="badge-count bg-danger">
+    {{ undeliveredCount > 99 ? '99+' : undeliveredCount }}
+  </span>
+</a>
         </div>
 
         <div class="v-divider mx-2"></div>
-        
+
         <!-- User Dropdown -->
         <div class="user-dropdown dropdown">
-          <div class="user-trigger d-flex align-items-center gap-2 cursor-pointer p-1 rounded-pill hover-bg-slate transition-all dropdown-toggle" 
+          <div class="user-trigger d-flex align-items-center gap-2 cursor-pointer p-1 rounded-pill hover-bg-slate transition-all dropdown-toggle"
                data-bs-toggle="dropdown" aria-expanded="false">
             <div class="avatar-box shadow-sm border border-2 border-white">
               <img *ngIf="managerImageUrl" [src]="managerImageUrl" alt="User" class="w-100 h-100" style="object-fit: cover;">
@@ -91,7 +93,7 @@ import { ShippingService } from '../../../../core/services/shipping.service';
                 </div>
               </a>
             </li>
-           
+
             <li><hr class="dropdown-divider opacity-50 mx-2"></li>
             <li>
               <a class="dropdown-item d-flex align-items-center gap-3 py-2.5 rounded-3 text-danger" href="javascript:void(0)" (click)="logout()">
@@ -125,7 +127,7 @@ import { ShippingService } from '../../../../core/services/shipping.service';
     .bg-primary-soft { background-color: rgba(13, 110, 253, 0.1); }
     .bg-danger-soft { background-color: rgba(239, 68, 68, 0.1); }
     .text-danger-soft { color: rgba(239, 68, 68, 0.7); }
-    
+
     .search-bar {
       background-color: #f1f5f9;
       border-color: #e2e8f0;
@@ -227,19 +229,20 @@ import { ShippingService } from '../../../../core/services/shipping.service';
       from { transform: translateY(10px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
-    
+
     .cursor-pointer { cursor: pointer; }
     .dropdown-toggle::after { display: none; }
   `]
 })
 export class ShippingHeaderComponent implements OnInit, OnDestroy {
   @Output() toggleSidebar = new EventEmitter<void>();
+@Input() undeliveredCount = 0;
 
   private authService = inject(AuthService);
   private shippingCompanyService = inject(ShippingCompanyService);
   private shippingService = inject(ShippingService);
   private router = inject(Router);
-  
+
   userName = 'Loading...';
   userRole = 'Shipping Manager';
   isSearchFocused = false;
@@ -255,7 +258,7 @@ export class ShippingHeaderComponent implements OnInit, OnDestroy {
     if (profile && profile.firstName) {
       this.userName = `${profile.firstName} ${profile.lastName}`.trim();
     }
-    
+
     const role = this.authService.getRole();
     if (role) {
       this.userRole = role;
