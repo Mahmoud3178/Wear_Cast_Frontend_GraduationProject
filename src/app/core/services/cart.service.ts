@@ -108,6 +108,12 @@ export interface AddOrUpdateDesignedToCartRequest {
   quantity: number;
 }
 
+export interface UpdateItemQuantityRequest {
+  cartItemId: number;
+  size: string;
+  quantityChange: number;
+}
+
 // ────────────────────────────────────────────────────────
 //  Service
 // ────────────────────────────────────────────────────────
@@ -218,21 +224,38 @@ export class CartService {
     );
   }
 
-  /** PUT /api/Cart/UpdateItemQuantity */
-  updateItemQuantity(cartItemId: number, size: number, newQuantity: number): Observable<unknown> {
-    const body = {
+  /**
+   * PUT /api/Cart/UpdateItemQuantity — returns updated cart (all items + totals).
+   * @param size API size key e.g. `_XS`, `_L`
+   * @param quantityChange `1` for +, `-1` for −
+   */
+  updateItemQuantity(
+    cartItemId: number,
+    size: string,
+    quantityChange: number
+  ): Observable<MyCartResponse> {
+    const sizeKey = normalizeSizeForApi(size);
+    const delta = quantityChange > 0 ? 1 : -1;
+    const body: UpdateItemQuantityRequest = {
       cartItemId,
-      CartItemId: cartItemId,
-      size,
-      Size: size,
-      newQuantity,
-      NewQuantity: newQuantity
+      size: sizeKey,
+      quantityChange: delta
     };
     return cartHttpObservable(
       this.http.put<unknown>(`${this.base}/UpdateItemQuantity`, body).pipe(
-        tap(() => this.invalidateCart())
+        map(res => normalizeMyCart(res)),
+        tap(cart => {
+          this.cart$.next(cart);
+          this.inFlight = null;
+        })
       )
     );
+  }
+
+  /** Apply cart snapshot from an API response (e.g. after update quantity). */
+  setCartSnapshot(cart: MyCartResponse): void {
+    this.cart$.next(cart);
+    this.inFlight = null;
   }
 
   /** POST /api/Cart/AddOrUpdateFixedColorToCart */
@@ -382,4 +405,13 @@ function num(v: unknown): number {
 
 function sumQty(sizes: CartSizeLine[]): number {
   return sizes.reduce((s, x) => s + x.quantityInCart, 0);
+}
+
+/** Ensure size matches API format (`_XS`, `_L`, …). */
+export function normalizeSizeForApi(size: string | undefined | null): string {
+  const raw = String(size ?? '').trim();
+  if (!raw) return '_M';
+  const upper = raw.toUpperCase();
+  if (upper.startsWith('_')) return upper;
+  return `_${upper}`;
 }

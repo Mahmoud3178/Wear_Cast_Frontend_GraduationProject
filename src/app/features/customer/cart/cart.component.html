@@ -87,27 +87,14 @@
               <li class="cart-size-row" *ngFor="let s of item.sizes">
                 <span class="cart-size-row__label">{{ s.sizeLabel }}</span>
                 <div class="cart-size-row__qty">
-                  <div class="item-qty" [attr.aria-label]="'Quantity for size ' + s.sizeLabel">
-                    <button type="button" class="item-qty__btn" aria-label="Decrease" (click)="decreaseQty(item, s.sizeEnum)">−</button>
+                  <div class="item-qty" [class.item-qty--busy]="isQtyUpdating(item, s.sizeKey)" [attr.aria-label]="'Quantity for size ' + s.sizeLabel">
+                    <button type="button" class="item-qty__btn" aria-label="Decrease" [disabled]="isQtyUpdating(item, s.sizeKey)" (click)="$event.stopPropagation(); decreaseQty(item, s.sizeKey)">−</button>
                     <span class="qty-value">{{ s.quantity }}</span>
-                    <button type="button" class="item-qty__btn" aria-label="Increase" (click)="increaseQty(item, s.sizeEnum)">+</button>
+                    <button type="button" class="item-qty__btn" aria-label="Increase" [disabled]="isQtyUpdating(item, s.sizeKey)" (click)="$event.stopPropagation(); increaseQty(item, s.sizeKey)">+</button>
                   </div>
                 </div>
               </li>
             </ul>
-
-            <div class="cart-size-list cart-size-list--single" *ngIf="!item.sizes?.length">
-              <div class="cart-size-row">
-                <span class="cart-size-row__label">Qty</span>
-                <div class="cart-size-row__qty">
-                  <div class="item-qty" aria-label="Quantity">
-                    <button type="button" class="item-qty__btn" (click)="decreaseQty(item)">−</button>
-                    <span class="qty-value">{{ item.quantity }}</span>
-                    <button type="button" class="item-qty__btn" (click)="increaseQty(item)">+</button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <aside class="item-aside">
