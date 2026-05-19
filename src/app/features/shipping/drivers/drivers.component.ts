@@ -57,10 +57,19 @@ export class DriversComponent implements OnInit {
   isEditMode = false;
   backendErrors: any = null;
 
-  // Modals
   isRegisterModalOpen = false;
   isUpdateModalOpen = false;
   selectedDriver: Driver | null = null;
+  showPasswordState = false;
+  showConfirmPasswordState = false;
+
+  togglePasswordVisibility() {
+    this.showPasswordState = !this.showPasswordState;
+  }
+
+  toggleConfirmPasswordVisibility() {
+    this.showConfirmPasswordState = !this.showConfirmPasswordState;
+  }
 
   // Details Modal
   showDetailsModal = false;
@@ -70,7 +79,8 @@ export class DriversComponent implements OnInit {
 
   // Form
   newDriver: any = {
-    name: '',
+    firstName: '',
+    lastName: '',
     phoneNumber: '',
     nationalId: '',
     vehicleType: DeliveryVehicleType.Motorcycle,
@@ -242,15 +252,21 @@ export class DriversComponent implements OnInit {
     this.isEditMode = false;
     this.isRegisterModalOpen = true;
     this.backendErrors = null;
+    this.showPasswordState = false;
+    this.showConfirmPasswordState = false;
+    this.resetNewDriver();
   }
 
   openEditModal(driver: Driver) {
     this.isEditMode = true;
     this.selectedDriver = driver;
+    this.showPasswordState = false;
+    this.showConfirmPasswordState = false;
     this.driverService.getDriverById(driver.id).subscribe({
       next: (profile: any) => {
         this.newDriver = {
-          name: profile.firstName + ' ' + profile.lastName,
+          firstName: profile.firstName || '',
+          lastName: profile.lastName || '',
           phoneNumber: profile.phoneNumber || '',
           nationalId: profile.nationalId || '',
           vehicleType: this.getNumericStatus(profile.vehicleType, DeliveryVehicleType),
@@ -260,6 +276,8 @@ export class DriversComponent implements OnInit {
           city: profile.address?.city || '',
           street: profile.address?.street || '',
           buildingNumber: profile.address?.buildingNumber || '',
+          password: '',
+          confirmPassword: '',
           status: this.getNumericStatus(profile.status, DriverStatus)
         };
         this.previewImage = profile.profileImageUrl || null;
@@ -273,10 +291,9 @@ export class DriversComponent implements OnInit {
     if (!this.selectedDriver) return;
 
     this.isSubmitting = true;
-    const names = this.newDriver.name.split(' ');
     const request: UpdateDriverRequest = {
-      firstName: names[0] || 'New',
-      lastName: names.slice(1).join(' ') || 'Driver',
+      firstName: this.newDriver.firstName || 'New',
+      lastName: this.newDriver.lastName || 'Driver',
       phoneNumber: this.newDriver.phoneNumber,
       nationalId: this.newDriver.nationalId,
       vehicleType: Number(this.newDriver.vehicleType),
@@ -339,7 +356,8 @@ export class DriversComponent implements OnInit {
 
   resetNewDriver() {
     this.newDriver = {
-      name: '',
+      firstName: '',
+      lastName: '',
       phoneNumber: '',
       nationalId: '',
       vehicleType: DeliveryVehicleType.Motorcycle,
@@ -372,11 +390,9 @@ export class DriversComponent implements OnInit {
     }
 
     this.isSubmitting = true;
-    // Map UI model to API model
-    const names = this.newDriver.name.split(' ');
     const request: CreateDriverRequest = {
-      firstName: names[0] || 'New',
-      lastName: names.slice(1).join(' ') || 'Driver',
+      firstName: this.newDriver.firstName || 'New',
+      lastName: this.newDriver.lastName || 'Driver',
       email: this.newDriver.email || `${this.newDriver.phoneNumber}@wearcast.com`,
       phoneNumber: this.newDriver.phoneNumber,
       nationalId: this.newDriver.nationalId,

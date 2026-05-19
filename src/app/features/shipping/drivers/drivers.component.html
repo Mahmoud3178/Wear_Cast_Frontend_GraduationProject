@@ -226,13 +226,22 @@
 
           <div class="col-md-8">
             <div class="row g-3">
-              <div class="col-12">
-                <label class="form-label fw-bold small text-uppercase">Full Name</label>
-                <input type="text" class="form-control premium-input" placeholder="e.g. John Doe" 
-                       name="name" [(ngModel)]="newDriver.name" required #name="ngModel"
-                       [class.is-invalid]="name.invalid && (name.dirty || name.touched)">
-                <div class="invalid-feedback" *ngIf="name.invalid && (name.dirty || name.touched)">
-                  Full name is required.
+              <div class="col-md-6">
+                <label class="form-label fw-bold small text-uppercase">First Name</label>
+                <input type="text" class="form-control premium-input" placeholder="e.g. John" 
+                       name="firstName" [(ngModel)]="newDriver.firstName" required #firstName="ngModel"
+                       [class.is-invalid]="firstName.invalid && (firstName.dirty || firstName.touched)">
+                <div class="invalid-feedback" *ngIf="firstName.invalid && (firstName.dirty || firstName.touched)">
+                  First name is required.
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small text-uppercase">Last Name</label>
+                <input type="text" class="form-control premium-input" placeholder="e.g. Doe" 
+                       name="lastName" [(ngModel)]="newDriver.lastName" required #lastName="ngModel"
+                       [class.is-invalid]="lastName.invalid && (lastName.dirty || lastName.touched)">
+                <div class="invalid-feedback" *ngIf="lastName.invalid && (lastName.dirty || lastName.touched)">
+                  Last name is required.
                 </div>
               </div>
               <div class="col-md-6">
@@ -277,22 +286,40 @@
             </div>
             <div class="col-md-6">
               <label class="form-label fw-bold small text-uppercase">Password</label>
-              <input type="password" class="form-control premium-input" placeholder="Min 6 characters, uppercase & special" 
-                     name="password" [(ngModel)]="newDriver.password" required minlength="6" #password="ngModel"
-                     [class.is-invalid]="password.invalid && (password.dirty || password.touched)">
-              <div class="invalid-feedback" *ngIf="password.invalid && (password.dirty || password.touched)">
-                <div *ngIf="password.errors?.['required']">Password is required.</div>
-                <div *ngIf="password.errors?.['minlength']">Password must be at least 6 characters.</div>
+              <div class="input-group">
+                <input [type]="showPasswordState ? 'text' : 'password'" class="form-control premium-input" 
+                       placeholder="Min 8 characters, uppercase & special" 
+                       name="password" [(ngModel)]="newDriver.password" required
+                       pattern="^(?=.*[0-9])(?=.*[\!@#$%^&*()\\\[\]{}_\-+=\~`|:;\'&quot;&lt;&gt;,.//?])(?=.*[a-z])(?=.*[A-Z]).{8,}$"
+                       #password="ngModel"
+                       [class.is-invalid]="password.invalid && (password.dirty || password.touched)"
+                       style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;">
+                <button class="btn btn-outline-light border" type="button" (click)="togglePasswordVisibility()" 
+                        style="border-top-right-radius: 12px !important; border-bottom-right-radius: 12px !important; border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; background: #f8f9fa; border-color: #e2e8f0 !important; color: #64748b;">
+                  <i class="bi" [ngClass]="showPasswordState ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+                </button>
+                <div class="invalid-feedback" *ngIf="password.invalid && (password.dirty || password.touched)">
+                  <div *ngIf="password.errors?.['required']">Password is required.</div>
+                  <div *ngIf="password.errors?.['pattern']">Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one numeric digit, and one special character (e.g. !&#64;#$).</div>
+                </div>
               </div>
             </div>
             <div class="col-md-6">
               <label class="form-label fw-bold small text-uppercase">Confirm Password</label>
-              <input type="password" class="form-control premium-input" placeholder="Repeat password" 
-                     name="confirmPassword" [(ngModel)]="newDriver.confirmPassword" required #confirmPassword="ngModel"
-                     [class.is-invalid]="(confirmPassword.invalid || (newDriver.password !== newDriver.confirmPassword)) && (confirmPassword.dirty || confirmPassword.touched)">
-              <div class="invalid-feedback" *ngIf="(confirmPassword.invalid || (newDriver.password !== newDriver.confirmPassword)) && (confirmPassword.dirty || confirmPassword.touched)">
-                <div *ngIf="confirmPassword.errors?.['required']">Confirmation is required.</div>
-                <div *ngIf="newDriver.password !== newDriver.confirmPassword">Passwords must match.</div>
+              <div class="input-group">
+                <input [type]="showConfirmPasswordState ? 'text' : 'password'" class="form-control premium-input" 
+                       placeholder="Repeat password" 
+                       name="confirmPassword" [(ngModel)]="newDriver.confirmPassword" required #confirmPassword="ngModel"
+                       [class.is-invalid]="(confirmPassword.invalid || (newDriver.password !== newDriver.confirmPassword)) && (confirmPassword.dirty || confirmPassword.touched)"
+                       style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;">
+                <button class="btn btn-outline-light border" type="button" (click)="toggleConfirmPasswordVisibility()" 
+                        style="border-top-right-radius: 12px !important; border-bottom-right-radius: 12px !important; border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; background: #f8f9fa; border-color: #e2e8f0 !important; color: #64748b;">
+                  <i class="bi" [ngClass]="showConfirmPasswordState ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+                </button>
+                <div class="invalid-feedback" *ngIf="(confirmPassword.invalid || (newDriver.password !== newDriver.confirmPassword)) && (confirmPassword.dirty || confirmPassword.touched)">
+                  <div *ngIf="confirmPassword.errors?.['required']">Confirmation is required.</div>
+                  <div *ngIf="newDriver.password !== newDriver.confirmPassword">Passwords must match.</div>
+                </div>
               </div>
             </div>
           </ng-container>
