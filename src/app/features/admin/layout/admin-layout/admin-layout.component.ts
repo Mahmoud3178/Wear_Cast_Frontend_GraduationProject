@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
@@ -21,19 +21,15 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
 })
 export class AdminLayoutComponent implements OnInit, OnDestroy {
 
-  sidebarOpen      = false;
-  showLogoutModal  = false;
-  adminName        = 'Administrator';
-  adminInitials    = 'A';
-  adminRole        = 'SuperAdmin';
-  currentPageTitle = 'Dashboard';
-  undeliveredCount = 0;
-
   private pollingInterval: any = null;
 
-  private readonly onNotifDelivered = () => { this.undeliveredCount = 0; };
-  private readonly onNotifAllRead   = () => { this.undeliveredCount = 0; };
-  private readonly onNotifRead      = () => { this.loadUndeliveredCount(); };
+  sidebarOpen     = false;
+  showLogoutModal = false;
+  adminName       = 'Administrator';
+  adminInitials   = 'A';
+  adminRole       = 'SuperAdmin';
+  currentPageTitle = 'Dashboard';
+  undeliveredCount = 0;
 
   private readonly routeTitles: Record<string, string> = {
     'dashboard':           'Dashboard',
@@ -61,13 +57,14 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.loadAdminInfo();
     this.loadUndeliveredCount();
 
+    // polling كل 30 ثانية
     this.pollingInterval = setInterval(() => {
       this.loadUndeliveredCount();
-    }, 15000);
+    }, 30000);
 
-    window.addEventListener('notif-delivered', this.onNotifDelivered);
-    window.addEventListener('notif-all-read',  this.onNotifAllRead);
-    window.addEventListener('notif-read',      this.onNotifRead);
+    window.addEventListener('notif-delivered', () => {
+      this.undeliveredCount = 0;
+    });
 
     this.updatePageTitle(this.router.url);
     this.router.events
@@ -81,10 +78,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.pollingInterval) clearInterval(this.pollingInterval);
-    window.removeEventListener('notif-delivered', this.onNotifDelivered);
-    window.removeEventListener('notif-all-read',  this.onNotifAllRead);
-    window.removeEventListener('notif-read',      this.onNotifRead);
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
   }
 
   canAccess(route: string): boolean {
@@ -144,7 +140,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   loadUndeliveredCount() {
     this.notifService.getUndeliveredCount().subscribe({
       next: (res: any) => {
-        this.undeliveredCount = this.notifService.parseUndeliveredCount(res);
+        this.undeliveredCount = res?.count ?? res?.data ?? res ?? 0;
       },
       error: () => {}
     });
