@@ -189,8 +189,6 @@ export class ShipmentDetailsComponent implements OnInit {
 
     const currentStatus = Number(statusStr);
     switch (currentStatus) {
-      case ShipmentStatus.Assigned:
-        return { value: ShipmentStatus.PickingUp, label: 'Start Pickup Trip', btnClass: 'btn-warning bg-warning text-dark' };
       case ShipmentStatus.PickingUp:
         return { value: ShipmentStatus.OutForDelivery, label: 'Start Delivery Trip', btnClass: 'btn-primary bg-primary text-white' };
       case ShipmentStatus.OutForDelivery:
@@ -251,7 +249,33 @@ export class ShipmentDetailsComponent implements OnInit {
         console.error('Failed to update status', err);
         this.isLoading = false;
 
-        const errorData = err.error;
+        let details = '';
+        if (err.error) {
+          if (typeof err.error === 'string') {
+            details = err.error;
+          } else {
+            // Check for standard WearCast Api Result pattern
+            const apiError = err.error.error || err.error;
+            if (apiError && apiError.message) {
+              details = `${apiError.message} (${apiError.code || 'Error'})`;
+            } else if (err.error.message) {
+              details = err.error.message;
+            } else if (err.error.errors) {
+              const errsObj = err.error.errors;
+              details = Object.keys(errsObj)
+                .map(key => `${key}: ${errsObj[key].join(', ')}`)
+                .join('; ');
+            } else if (err.error.title) {
+              details = err.error.title;
+            } else {
+              details = JSON.stringify(err.error);
+            }
+          }
+        } else if (err.message) {
+          details = err.message;
+        }
+
+        const errorData = err.error?.error || err.error;
         if (errorData && errorData.code) {
           switch (errorData.code) {
             case 'Shipment.NotReady':
@@ -267,10 +291,10 @@ export class ShipmentDetailsComponent implements OnInit {
               this.errorMessage = 'Invalid status transition. You cannot move to this status now.';
               break;
             default:
-              this.errorMessage = errorData.message || 'Failed to update status.';
+              this.errorMessage = `Failed to update status. ${details}`;
           }
         } else {
-          this.errorMessage = 'Failed to update status. Please try again.';
+          this.errorMessage = `Failed to update status. Details: ${details || 'Please try again.'}`;
         }
       }
     });
@@ -291,14 +315,52 @@ export class ShipmentDetailsComponent implements OnInit {
           order.status = 'PickedUp';
           localStorage.setItem(`shipment_${this.shipmentId}_order_${orderId}_picked`, 'true');
         }
+
+        // If currently Assigned, transition local state to PickingUp as the backend does
+        if (this.shipment) {
+          const currentStatus = this.shipment.shipmentStatus.toString();
+          if (currentStatus === '3' || currentStatus === 'Assigned') {
+            this.shipment.shipmentStatus = ShipmentStatus.PickingUp;
+          }
+        }
         
         this.successMessage = `Order #${orderId} marked as Picked Up!`;
         setTimeout(() => this.successMessage = '', 3000);
+
+        // Reload details to sync full state (like timestamps) from the backend
+        this.loadShipmentDetails();
       },
       error: (err) => {
         console.error('Failed to update order status', err);
         this.isLoading = false;
-        this.errorMessage = err.error?.message || `Failed to mark Order #${orderId} as Picked Up.`;
+
+        let details = '';
+        if (err.error) {
+          if (typeof err.error === 'string') {
+            details = err.error;
+          } else {
+            // Check for standard WearCast Api Result pattern
+            const apiError = err.error.error || err.error;
+            if (apiError && apiError.message) {
+              details = `${apiError.message} (${apiError.code || 'Error'})`;
+            } else if (err.error.message) {
+              details = err.error.message;
+            } else if (err.error.errors) {
+              const errsObj = err.error.errors;
+              details = Object.keys(errsObj)
+                .map(key => `${key}: ${errsObj[key].join(', ')}`)
+                .join('; ');
+            } else if (err.error.title) {
+              details = err.error.title;
+            } else {
+              details = JSON.stringify(err.error);
+            }
+          }
+        } else if (err.message) {
+          details = err.message;
+        }
+
+        this.errorMessage = `Failed to mark Order #${orderId} as Picked Up. Details: ${details || 'Unknown error'}`;
       }
     });
   }
@@ -306,7 +368,19 @@ export class ShipmentDetailsComponent implements OnInit {
   isPickingUpStatus(): boolean {
     if (!this.shipment) return false;
     const s = this.shipment.shipmentStatus.toString();
-    return s === '4' || s === 'PickingUp';
+    return s === '3' || s === 'Assigned' || s === '4' || s === 'PickingUp';
+  }
+
+  isDelivered(): boolean {
+    if (!this.shipment) return false;
+    const s = this.shipment.shipmentStatus.toString();
+    return s === '6' || s === 'Delivered';
+  }
+
+  isAssignedStatus(): boolean {
+    if (!this.shipment) return false;
+    const s = this.shipment.shipmentStatus.toString();
+    return s === '3' || s === 'Assigned';
   }
 
   getStatusClass(status: any): string {

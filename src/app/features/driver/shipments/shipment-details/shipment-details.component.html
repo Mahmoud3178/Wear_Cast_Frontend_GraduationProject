@@ -59,8 +59,14 @@
               </button>
             </div>
 
+            <!-- Assigned status action message -->
+            <div class="d-flex align-items-center gap-2 text-info fw-bold bg-info-soft px-3 py-2 rounded-pill" *ngIf="isAssignedStatus()">
+              <i class="bi bi-info-circle-fill fs-5"></i>
+              <span class="text-sm">Action Required: Mark orders as Picked Up to start trip</span>
+            </div>
+
             <!-- Delivered completed message -->
-            <div class="d-flex align-items-center gap-2 text-success fw-bold bg-success-soft px-3 py-2 rounded-pill" *ngIf="!getNextStatus()">
+            <div class="d-flex align-items-center gap-2 text-success fw-bold bg-success-soft px-3 py-2 rounded-pill" *ngIf="isDelivered()">
               <i class="bi bi-patch-check-fill fs-5"></i>
               <span class="text-sm">Delivery Completed</span>
             </div>

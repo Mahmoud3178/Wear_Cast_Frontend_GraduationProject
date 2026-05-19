@@ -46,15 +46,7 @@ import { AuthService } from '../../../../core/services/auth.service';
                 <span class="fw-medium text-nowrap" *ngIf="!isCollapsed">My Shipments</span>
               </a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 transition-all" 
-                 [routerLink]="['shipments']" [queryParams]="{status: 'Delivered'}" routerLinkActive="active" [title]="isCollapsed ? 'History' : ''">
-                <div class="icon-wrapper d-flex align-items-center justify-content-center">
-                  <i class="bi bi-clock-history"></i>
-                </div>
-                <span class="fw-medium text-nowrap" *ngIf="!isCollapsed">Delivery History</span>
-              </a>
-            </li>
+
           </ul>
         </div>
 

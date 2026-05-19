@@ -95,7 +95,6 @@ export class OrdersComponent implements OnInit {
 
   shipmentStatusList = [
     { value: ShipmentStatus.Unassigned, label: 'Unassigned (Awaiting Driver)' },
-    { value: ShipmentStatus.Assigned, label: 'Assigned to Driver' },
     { value: ShipmentStatus.PickingUp, label: 'Picking Up' },
     { value: ShipmentStatus.OutForDelivery, label: 'Out for Delivery' },
     { value: ShipmentStatus.Delivered, label: 'Delivered' }
@@ -287,7 +286,7 @@ export class OrdersComponent implements OnInit {
       error: (err) => {
         console.error('Failed to update shipment status', err);
         let errMsg = 'Failed to update shipment status. Role or transition constraints may prevent this action.';
-        
+
         if (err.error) {
           if (typeof err.error === 'string') {
             errMsg = err.error;
@@ -317,7 +316,7 @@ export class OrdersComponent implements OnInit {
         } else if (err.message) {
           errMsg = err.message;
         }
-        
+
         alert(errMsg);
       }
     });
