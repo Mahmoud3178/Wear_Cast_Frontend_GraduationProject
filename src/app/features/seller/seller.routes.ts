@@ -70,6 +70,12 @@ export const SELLER_ROUTES: Routes = [
             .then(m => m.SallerNotificationsComponent)
       },
       {
+  path: 'managers',
+  loadComponent: () =>
+    import('./seller-managers/seller-managers.component')
+      .then(m => m.SellerManagersComponent)
+},
+      {
         path: 'register',
         loadComponent: () =>
           import('./register-seller/register-seller.component')
