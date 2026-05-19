@@ -39,7 +39,6 @@ export class CustomerNotificationsComponent implements OnInit {
   constructor(private readonly notifService: NotificationsService) {}
 
   ngOnInit(): void {
-    // يصفر الكونتر لما يدخل الصفحة
     this.notifService.receiveAll().subscribe(() => {
       window.dispatchEvent(new CustomEvent('notif-delivered'));
     });

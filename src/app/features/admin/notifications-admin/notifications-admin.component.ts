@@ -48,12 +48,15 @@ export class NotificationsAdminComponent implements OnInit {
     this.toastVisible = true;
     setTimeout(() => this.toastVisible = false, 3000);
   }
-  markRead(n: any) {
-    if (!n.isRead) {
-      this.notifService.markAsRead(n.id).subscribe(() => n.isRead = true);
-    }
-    this.navigate(n);
+markRead(n: any) {
+  if (!n.isRead) {
+    this.notifService.markAsRead(n.id).subscribe(() => {
+      n.isRead = true;
+      window.dispatchEvent(new CustomEvent('notif-read'));  // ← أضف
+    });
   }
+  this.navigate(n);
+}
 
 navigate(n: any) {
   if (!n.urlId) return;
@@ -85,7 +88,7 @@ case 'NewSellerApplication':
 markAllRead() {
   this.notifService.markAllAsRead().subscribe(() => {
     this.notifications.forEach(n => n.isRead = true);
-    window.dispatchEvent(new CustomEvent('notif-delivered')); // ← أضف السطر ده
+    window.dispatchEvent(new CustomEvent('notif-all-read'));  // ← غيّر من notif-delivered
   });
 }
 

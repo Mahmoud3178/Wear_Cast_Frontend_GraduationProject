@@ -49,12 +49,15 @@ load() {
     setTimeout(() => this.toastVisible = false, 3000);
   }
 
-  markRead(n: any) {
-    if (!n.isRead) {
-      this.notifService.markAsRead(n.id).subscribe(() => n.isRead = true);
-    }
-    this.navigate(n);
+markRead(n: any) {
+  if (!n.isRead) {
+    this.notifService.markAsRead(n.id).subscribe(() => {
+      n.isRead = true;
+      window.dispatchEvent(new CustomEvent('notif-read'));  // ← أضف
+    });
   }
+  this.navigate(n);
+}
 
   navigate(n: any) {
     if (!n.urlId) return;

@@ -38,7 +38,8 @@ undeliveredCount = 0;
   itemsPerPage = 5;
   searchText   = '';
   isLoading    = true;
-
+private readonly onNotifDelivered = () => { this.undeliveredCount = 0; };
+private readonly onNotifRead      = () => { this.loadUndeliveredCount(); };
   // للـ doughnut chart
   statusSummary: { label: string; count: number; color: string }[] = [];
 
@@ -46,35 +47,36 @@ undeliveredCount = 0;
   private statusChart:   Chart | null = null;
   private pollingInterval: any = null;
 
-  ngOnInit() {
-    this.loadDashboardStats();
-    this.loadOrders();
+ngOnInit() {
+  this.loadDashboardStats();
+  this.loadOrders();
+  this.loadUndeliveredCount();
+
+  // polling كل 15 ثانية
+  this.pollingInterval = setInterval(() => {
     this.loadUndeliveredCount();
+  }, 15000);
 
-    // polling كل 30 ثانية
-    this.pollingInterval = setInterval(() => {
-      this.loadUndeliveredCount();
-    }, 30000);
+  // استمع على كل الـ events
+  window.addEventListener('notif-delivered', this.onNotifDelivered);
+  window.addEventListener('notif-all-read',  this.onNotifDelivered);  // ← جديد
+  window.addEventListener('notif-read',      this.onNotifRead);        // ← جديد
 
-    window.addEventListener('notif-delivered', () => {
-      this.undeliveredCount = 0;
+  this.router.events
+    .pipe(filter((e: any) => e instanceof NavigationEnd))
+    .subscribe((e: any) => {
+      if ((e.urlAfterRedirects || e.url).includes('/saller-notifications')) {
+        setTimeout(() => this.loadUndeliveredCount(), 500);
+      }
     });
+}
 
-    this.router.events
-      .pipe(filter((e: any) => e instanceof NavigationEnd))
-      .subscribe((e: any) => {
-        if ((e.urlAfterRedirects || e.url).includes('/saller-notifications')) {
-          setTimeout(() => this.loadUndeliveredCount(), 500);
-        }
-      });
-  }
-
-
-  ngOnDestroy() {
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-    }
-  }
+ngOnDestroy() {
+  if (this.pollingInterval) clearInterval(this.pollingInterval);
+  window.removeEventListener('notif-delivered', this.onNotifDelivered);
+  window.removeEventListener('notif-all-read',  this.onNotifDelivered);
+  window.removeEventListener('notif-read',      this.onNotifRead);
+}
 
   ngAfterViewInit() {}
 loadUndeliveredCount() {

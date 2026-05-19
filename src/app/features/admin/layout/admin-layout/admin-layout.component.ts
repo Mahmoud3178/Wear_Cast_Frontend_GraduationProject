@@ -31,7 +31,8 @@ export class AdminLayoutComponent implements OnInit {
   adminRole       = 'SuperAdmin';
   currentPageTitle = 'Dashboard';
 undeliveredCount = 0;
-
+private readonly onNotifDelivered = () => { this.undeliveredCount = 0; };
+private readonly onNotifRead      = () => { this.loadUndeliveredCount(); };
   private readonly routeTitles: Record<string, string> = {
     'dashboard':           'Dashboard',
     'customers':           'Customers',
@@ -55,35 +56,35 @@ undeliveredCount = 0;
   constructor(private router: Router, private notifService: NotificationsService) {}
   private pollingInterval: any = null;
 
-  ngOnInit() {
-    this.loadAdminInfo();
+ngOnInit() {
+  this.loadAdminInfo();
+  this.loadUndeliveredCount();
+
+  // polling كل 15 ثانية
+  this.pollingInterval = setInterval(() => {
     this.loadUndeliveredCount();
+  }, 15000);
 
-    // polling كل 30 ثانية
-    this.pollingInterval = setInterval(() => {
-      this.loadUndeliveredCount();
-    }, 30000);
+  window.addEventListener('notif-delivered', this.onNotifDelivered);
+  window.addEventListener('notif-all-read',  this.onNotifDelivered);  // ← جديد
+  window.addEventListener('notif-read',      this.onNotifRead);        // ← جديد
 
-    window.addEventListener('notif-delivered', () => {
-      this.undeliveredCount = 0;
+  this.updatePageTitle(this.router.url);
+  this.router.events
+    .pipe(filter(e => e instanceof NavigationEnd))
+    .subscribe((e: any) => {
+      this.updatePageTitle(e.urlAfterRedirects || e.url);
+      if ((e.urlAfterRedirects || e.url).includes('/notifications')) {
+        setTimeout(() => this.loadUndeliveredCount(), 500);
+      }
     });
-
-    this.updatePageTitle(this.router.url);
-    this.router.events
-      .pipe(filter(e => e instanceof NavigationEnd))
-      .subscribe((e: any) => {
-        this.updatePageTitle(e.urlAfterRedirects || e.url);
-        if ((e.urlAfterRedirects || e.url).includes('/notifications')) {
-          setTimeout(() => this.loadUndeliveredCount(), 500);
-        }
-      });
-  }
-
-  ngOnDestroy() {
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-    }
-  }
+}
+ ngOnDestroy() {
+  if (this.pollingInterval) clearInterval(this.pollingInterval);
+  window.removeEventListener('notif-delivered', this.onNotifDelivered);
+  window.removeEventListener('notif-all-read',  this.onNotifDelivered);
+  window.removeEventListener('notif-read',      this.onNotifRead);
+}
 
   // ── صلاحية: هل الـ route ده مسموح للرول الحالي؟ ──────────────
   canAccess(route: string): boolean {

@@ -23,16 +23,10 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
   private routerSub?: Subscription;
   private pollingInterval: any = null;
 
-  private readonly onNotifDelivered = (): void => {
-    this.undeliveredCount = 0;
-  };
-  private readonly onNotifRead = (): void => {
-    // لما يقرأ notification واحدة أو كل الـ notifications
-    this.loadUndeliveredCount();
-  };
-  private readonly onCartUpdated = (): void => {
-    this.loadCartCount();
-  };
+  private readonly onNotifDelivered = (): void => { this.undeliveredCount = 0; };
+  private readonly onNotifAllRead   = (): void => { this.undeliveredCount = 0; };
+  private readonly onNotifRead      = (): void => { this.loadUndeliveredCount(); };
+  private readonly onCartUpdated    = (): void => { this.loadCartCount(); };
 
   constructor(
     readonly auth: AuthService,
@@ -47,15 +41,14 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
     this.loadCartCount();
 
     window.addEventListener('notif-delivered', this.onNotifDelivered);
-    window.addEventListener('notif-read',      this.onNotifRead);       // ← جديد
-    window.addEventListener('notif-all-read',  this.onNotifDelivered);  // ← جديد (يصفر)
+    window.addEventListener('notif-all-read',  this.onNotifAllRead);
+    window.addEventListener('notif-read',      this.onNotifRead);
     window.addEventListener('cart-updated',    this.onCartUpdated);
 
-    // polling كل 15 ثانية (خارج zone عشان ما يأثرش على change detection)
     this.ngZone.runOutsideAngular(() => {
       this.pollingInterval = setInterval(() => {
         this.ngZone.run(() => this.loadUndeliveredCount());
-      }, 15000);
+      }, 10000);
     });
 
     this.routerSub = this.router.events
@@ -63,7 +56,6 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
       .subscribe((e) => {
         this.closeMobileMenu();
         const url = e.urlAfterRedirects || e.url;
-        // لما يدخل صفحة النوتفكيشن — refresh فوري
         if (url.includes('/customer/notifications')) {
           setTimeout(() => this.loadUndeliveredCount(), 600);
         }
@@ -77,8 +69,8 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
     this.routerSub?.unsubscribe();
     if (this.pollingInterval) clearInterval(this.pollingInterval);
     window.removeEventListener('notif-delivered', this.onNotifDelivered);
+    window.removeEventListener('notif-all-read',  this.onNotifAllRead);
     window.removeEventListener('notif-read',      this.onNotifRead);
-    window.removeEventListener('notif-all-read',  this.onNotifDelivered);
     window.removeEventListener('cart-updated',    this.onCartUpdated);
     this.setBodyScrollLock(false);
   }
