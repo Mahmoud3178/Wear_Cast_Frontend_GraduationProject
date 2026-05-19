@@ -1,8 +1,9 @@
-import { AfterViewInit, Component, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
+import { VirtualTryOnModalComponent } from '../shared/virtual-try-on-modal/virtual-try-on-modal.component';
 import { DesignCatalogService } from '../../../core/services/design-catalog.service';
 import { AuthService } from '../../../core/services/auth.service';
 import {
@@ -28,16 +29,24 @@ import {
 } from '../../../core/services/design-assets-catalog.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { TryOnService } from '../../../core/services/try-on.service';
 
 @Component({
   selector: 'app-customer-design',
   standalone: true,
-  imports: [CommonModule, FormsModule, CustomerNavComponent, CustomerFooterComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CustomerNavComponent,
+    CustomerFooterComponent,
+    VirtualTryOnModalComponent
+  ],
   templateUrl: './design.component.html',
   styleUrls: ['./design.component.css'],
   encapsulation: ViewEncapsulation.None
 })
-export class CustomerDesignComponent implements AfterViewInit {
+export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
+  private readonly tryOnService = inject(TryOnService);
   catalogSearchResults: any[] = [];
   loadingProducts = false;
   initialProductsLoading = true;
@@ -80,6 +89,20 @@ export class CustomerDesignComponent implements AfterViewInit {
   loadingSavedDesigns = false;
   savedDesignsModalMode: 'load' | 'update' = 'load';
 
+  showTryOnModal = false;
+  tryOnGarmentPreviewUrl: string | null = null;
+  private tryOnGarmentPreviewRevoke: string | null = null;
+  tryOnPersonFile: File | null = null;
+  tryOnBusy = false;
+  tryOnError = '';
+  tryOnProgress: number | null = null;
+  tryOnStatusMessage = '';
+  tryOnResultUrl: string | null = null;
+  private tryOnResultDelayTimeout: ReturnType<typeof setTimeout> | null = null;
+  private tryOnPipelineDone = false;
+  private tryOnResultFetched = false;
+  private tryOnResultBlobRevokeUrl: string | null = null;
+
   constructor(
     private readonly catalog: DesignCatalogService,
     private readonly auth: AuthService,
@@ -121,6 +144,7 @@ export class CustomerDesignComponent implements AfterViewInit {
       __WEARCAST_OPEN_SAVED_DESIGNS_MODAL__?: () => void;
       __WEARCAST_OPEN_UPDATE_DESIGN_SELECTOR__?: () => void;
       __WEARCAST_SET_UPDATE_TARGET__?: (id: number, name: string) => void;
+      __WEARCAST_GENERATE_TRYON_GARMENT__?: () => Promise<Blob>;
     };
 
     w.__WEARCAST_LOAD_DESIGN_ASSET_CATEGORIES__ = async () =>
@@ -846,6 +870,201 @@ export class CustomerDesignComponent implements AfterViewInit {
       error: (err) => {
         console.error('Failed to delete design:', err);
         alert('Failed to delete design. Please try again.');
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.clearTryOnPipeline();
+    this.tryOnRevokeResultBlobUrl();
+    this.revokeTryOnGarmentPreview();
+  }
+
+  canTryOn(): boolean {
+    const img = document.getElementById('product-image') as HTMLImageElement | null;
+    const src = img?.src?.trim() || '';
+    return !!src && !src.includes('hoodie-front.jpg');
+  }
+
+  openTryOnModal(): void {
+    this.revokeTryOnGarmentPreview();
+    this.tryOnRevokeResultBlobUrl();
+    this.tryOnPersonFile = null;
+    this.tryOnError = '';
+    this.tryOnProgress = null;
+    this.tryOnStatusMessage = '';
+    this.tryOnResultUrl = null;
+    this.tryOnBusy = false;
+    this.tryOnResultFetched = false;
+    this.clearTryOnPipeline();
+    this.tryOnPipelineDone = false;
+    this.showTryOnModal = true;
+    this.refreshTryOnGarmentPreview();
+  }
+
+  closeTryOnModal(): void {
+    this.showTryOnModal = false;
+    this.clearTryOnPipeline();
+    this.tryOnBusy = false;
+    this.tryOnPipelineDone = true;
+    this.tryOnRevokeResultBlobUrl();
+    this.revokeTryOnGarmentPreview();
+  }
+
+  private revokeTryOnGarmentPreview(): void {
+    if (this.tryOnGarmentPreviewRevoke) {
+      try {
+        URL.revokeObjectURL(this.tryOnGarmentPreviewRevoke);
+      } catch {
+        /* ignore */
+      }
+      this.tryOnGarmentPreviewRevoke = null;
+    }
+    this.tryOnGarmentPreviewUrl = null;
+  }
+
+  private refreshTryOnGarmentPreview(): void {
+    const fn = (window as Window & { __WEARCAST_GENERATE_TRYON_GARMENT__?: () => Promise<Blob> })
+      .__WEARCAST_GENERATE_TRYON_GARMENT__;
+    if (typeof fn !== 'function') return;
+    fn()
+      .then(blob => {
+        this.revokeTryOnGarmentPreview();
+        const url = URL.createObjectURL(blob);
+        this.tryOnGarmentPreviewRevoke = url;
+        this.tryOnGarmentPreviewUrl = url;
+      })
+      .catch(() => {
+        this.tryOnGarmentPreviewUrl = null;
+      });
+  }
+
+  onTryOnPersonSelected(file: File | null): void {
+    this.tryOnPersonFile = file;
+    this.tryOnError =
+      file === null && this.showTryOnModal
+        ? 'Please choose an image file (JPG, PNG, etc.).'
+        : '';
+  }
+
+  startVirtualTryOn(): void {
+    if (!this.tryOnPersonFile) {
+      this.tryOnError = 'Upload a photo of yourself.';
+      return;
+    }
+    const fn = (window as Window & { __WEARCAST_GENERATE_TRYON_GARMENT__?: () => Promise<Blob> })
+      .__WEARCAST_GENERATE_TRYON_GARMENT__;
+    if (typeof fn !== 'function') {
+      this.tryOnError = 'Designer is still loading. Please wait and try again.';
+      return;
+    }
+    this.tryOnBusy = true;
+    this.tryOnError = '';
+    this.tryOnResultUrl = null;
+    this.tryOnProgress = null;
+    this.tryOnStatusMessage = 'Rendering your design on the garment…';
+    this.tryOnRevokeResultBlobUrl();
+    this.tryOnResultFetched = false;
+    this.tryOnPipelineDone = false;
+    this.clearTryOnPipeline();
+
+    fn()
+      .then(garmentBlob => {
+        this.tryOnStatusMessage = 'Starting try-on…';
+        this.tryOnService
+          .startTryOn(this.tryOnPersonFile!, garmentBlob, 'garment.png')
+          .subscribe({
+            next: start => this.scheduleTryOnResultAfterEta(start.taskId, start.estimatedSeconds),
+            error: (e: Error) => {
+              this.tryOnBusy = false;
+              this.tryOnError = e?.message || 'Try-on could not be started.';
+            }
+          });
+      })
+      .catch((e: Error) => {
+        this.tryOnBusy = false;
+        this.tryOnError =
+          e?.message || 'Could not render your design preview. Add a product and try again.';
+      });
+  }
+
+  private clearTryOnPipeline(): void {
+    if (this.tryOnResultDelayTimeout != null) {
+      clearTimeout(this.tryOnResultDelayTimeout);
+      this.tryOnResultDelayTimeout = null;
+    }
+  }
+
+  private tryOnRevokeResultBlobUrl(): void {
+    if (this.tryOnResultBlobRevokeUrl) {
+      try {
+        URL.revokeObjectURL(this.tryOnResultBlobRevokeUrl);
+      } catch {
+        /* ignore */
+      }
+      this.tryOnResultBlobRevokeUrl = null;
+    }
+  }
+
+  private tryOnFinalizeSuccess(imageUrl: string): void {
+    if (this.tryOnPipelineDone) return;
+    this.tryOnPipelineDone = true;
+    this.clearTryOnPipeline();
+    this.tryOnBusy = false;
+    this.tryOnRevokeResultBlobUrl();
+    if (imageUrl.startsWith('blob:')) {
+      this.tryOnResultBlobRevokeUrl = imageUrl;
+    }
+    this.tryOnResultUrl = imageUrl;
+    this.tryOnStatusMessage = 'Done!';
+    this.tryOnProgress = 100;
+    this.tryOnError = '';
+  }
+
+  private tryOnFinalizeError(message: string): void {
+    if (this.tryOnPipelineDone) return;
+    this.tryOnPipelineDone = true;
+    this.clearTryOnPipeline();
+    this.tryOnBusy = false;
+    this.tryOnError = message;
+    this.tryOnProgress = null;
+  }
+
+  private scheduleTryOnResultAfterEta(taskId: string, estimatedSeconds: number | null): void {
+    this.clearTryOnPipeline();
+    this.tryOnResultFetched = false;
+    if (this.tryOnPipelineDone) return;
+    this.tryOnProgress = null;
+    const etaSec = Math.max(1, estimatedSeconds ?? 90);
+    this.tryOnStatusMessage = `Processing… (~${etaSec}s estimated)`;
+    const waitMs = Math.min(Math.max(etaSec * 1000 + 3000, 8000), 900_000);
+    this.tryOnResultDelayTimeout = window.setTimeout(() => {
+      if (this.tryOnPipelineDone || this.tryOnResultFetched) return;
+      this.tryOnStatusMessage = 'Loading result…';
+      this.fetchTryOnResultSingle(taskId);
+    }, waitMs);
+  }
+
+  private fetchTryOnResultSingle(taskId: string): void {
+    if (this.tryOnPipelineDone || this.tryOnResultFetched) return;
+    this.tryOnResultFetched = true;
+    this.clearTryOnPipeline();
+    this.tryOnService.getResultOnce(taskId).subscribe({
+      next: res => {
+        if (this.tryOnPipelineDone) return;
+        const url = res.imageUrl ?? null;
+        if (url) {
+          this.tryOnFinalizeSuccess(url);
+        } else {
+          this.tryOnFinalizeError(
+            'Try-on finished but the service did not return an image.'
+          );
+        }
+      },
+      error: (err: unknown) => {
+        if (this.tryOnPipelineDone) return;
+        const msg = err instanceof Error ? err.message : 'Could not load try-on result.';
+        this.tryOnFinalizeError(msg);
       }
     });
   }

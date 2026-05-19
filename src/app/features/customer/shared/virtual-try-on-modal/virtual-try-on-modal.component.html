@@ -1,0 +1,49 @@
+<div class="wc-tryon-root" *ngIf="open" role="presentation">
+  <div class="wc-tryon-backdrop" aria-hidden="true" (click)="onBackdropClick()"></div>
+  <div class="wc-tryon-modal" role="dialog" aria-modal="true" [attr.aria-labelledby]="titleId" (click)="$event.stopPropagation()">
+    <header class="wc-tryon-modal__header">
+      <div class="wc-tryon-modal__brand">
+        <span class="wc-tryon-modal__icon" aria-hidden="true">{{ icon }}</span>
+        <div>
+          <h3 [id]="titleId" class="wc-tryon-modal__title">{{ title }}</h3>
+          <p class="wc-tryon-modal__subtitle">{{ subtitle }}</p>
+        </div>
+      </div>
+      <button type="button" class="wc-tryon-modal__close" [disabled]="busy" (click)="requestClose()" aria-label="Close">×</button>
+    </header>
+    <div class="wc-tryon-modal__body">
+      <div class="wc-tryon-grid">
+        <div class="wc-tryon-card">
+          <p class="wc-tryon-card__label"><i class="bi bi-person-bounding-box"></i> Your photo</p>
+          <div class="wc-tryon-upload-zone" [class.wc-tryon-upload-zone--has-file]="!!personFileName">
+            <input type="file" accept="image/*" class="wc-tryon-file" [disabled]="busy" (change)="onPersonFileChange($event)" />
+            <div class="wc-tryon-upload-icon" aria-hidden="true">📷</div>
+            <p class="wc-tryon-upload-text">{{ personFileName || 'Tap to upload' }}</p>
+            <p class="wc-tryon-upload-hint">Clear, front-facing photo works best</p>
+          </div>
+        </div>
+        <div class="wc-tryon-card" *ngIf="garmentImageUrl">
+          <p class="wc-tryon-card__label"><i class="bi bi-palette"></i> {{ garmentLabel }}</p>
+          <div class="wc-tryon-thumb-wrap">
+            <img [src]="garmentImageUrl" [alt]="garmentAlt" class="wc-tryon-thumb" />
+          </div>
+        </div>
+      </div>
+      <div *ngIf="error" class="wc-tryon-alert" role="alert">{{ error }}</div>
+      <div class="wc-tryon-progress" *ngIf="busy || progress != null || statusMessage">
+        <div class="wc-tryon-progress-bar" *ngIf="progress != null">
+          <div class="wc-tryon-progress-fill" [style.width.%]="progress"></div>
+        </div>
+        <p class="wc-tryon-status">{{ statusMessage || (busy ? 'Working…' : '') }}</p>
+      </div>
+      <div class="wc-tryon-result" *ngIf="resultUrl">
+        <p class="wc-tryon-result__label">Your preview</p>
+        <img [src]="resultUrl" alt="Try-on result" class="wc-tryon-result-img" />
+      </div>
+      <footer class="wc-tryon-footer">
+        <button type="button" class="wc-tryon-btn wc-tryon-btn--ghost" [disabled]="busy" (click)="requestClose()">Close</button>
+        <button type="button" class="wc-tryon-btn wc-tryon-btn--primary" [disabled]="busy || !canRun" (click)="runTryOn.emit()">{{ busy ? 'Running…' : 'Run try-on' }}</button>
+      </footer>
+    </div>
+  </div>
+</div>

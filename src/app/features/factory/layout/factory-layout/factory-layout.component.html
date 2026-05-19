@@ -1,17 +1,25 @@
 <div class="wc-factory-shell factory-shell min-vh-100">
   <aside class="wc-factory-sidebar border-end">
-    <div class="wc-factory-brand d-flex flex-column mb-3">
-      <span class="fw-bold fs-5 lh-sm">WearCast</span>
-      <small>Factory portal</small>
+    <div class="wc-factory-topbar">
+      <div class="wc-factory-brand d-flex flex-column">
+        <span class="fw-bold fs-5 lh-sm">WearCast</span>
+        <small>Factory portal</small>
+      </div>
+      <a
+        routerLink="/factory/notifications"
+        routerLinkActive="active"
+        class="factory-topbar-notif"
+        aria-label="Notifications"
+        title="Notifications"
+      >
+        <i class="bi bi-bell-fill"></i>
+        <span *ngIf="undeliveredCount > 0" class="factory-notif-badge">{{ undeliveredCount > 99 ? '99+' : undeliveredCount }}</span>
+      </a>
     </div>
     <nav class="d-flex flex-column gap-1">
       <a routerLink="/factory/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-pill"><i class="bi bi-speedometer2"></i> Dashboard</a>
       <a routerLink="/factory/products" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-pill"><i class="bi bi-box-seam"></i> Products</a>
       <a routerLink="/factory/orders" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-pill"><i class="bi bi-cart-check"></i> Orders</a>
-      <a routerLink="/factory/notifications" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-pill nav-pill--notif">
-        <i class="bi bi-bell-fill"></i> Notifications
-        <span *ngIf="undeliveredCount > 0" class="factory-notif-badge">{{ undeliveredCount > 99 ? '99+' : undeliveredCount }}</span>
-      </a>
       <a routerLink="/factory/products/new" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-pill"><i class="bi bi-plus-circle"></i> New product</a>
       <a routerLink="/factory/profile" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-pill"><i class="bi bi-person-gear"></i> Profile</a>
       <a routerLink="/factory/managers" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-pill"><i class="bi bi-people"></i> Managers</a>

@@ -11,6 +11,10 @@
     {
       "source": "/uploads/:path*",
       "destination": "https://wear-cast.runasp.net/uploads/:path*"
+    },
+    {
+      "source": "/tryon-service/:path*",
+      "destination": "https://typically-wheylike-magen.ngrok-free.dev/:path*"
     }
   ]
 }

@@ -35,7 +35,8 @@
       <div class="wc-products-hero__row">
         <a
           *ngFor="let item of productShowcase"
-          [routerLink]="item.link"
+          [routerLink]="categoryLink(item.categorySlug)"
+          [queryParams]="categoryQuery(item.categorySlug)"
           class="wc-showcase-card"
         >
           <div class="wc-showcase-card__blob" [ngClass]="item.blobClasses">
@@ -90,7 +91,7 @@
     <section class="wc-section">
       <div class="wc-section-header">
         <h2>New arrivals</h2>
-        <a routerLink="/customer/category" class="wc-link-btn">View all →</a>
+        <a routerLink="/customer/category" [queryParams]="newArrivalsViewAllQuery" class="wc-link-btn">View all →</a>
       </div>
       <div class="wc-grid">
         <!-- Loading skeletons -->
@@ -124,7 +125,7 @@
     <section class="wc-section wc-section--bestsellers">
       <div class="wc-section-header">
         <h2>Best Sellers</h2>
-        <a routerLink="/customer/category" [queryParams]="{sort: 'bestSeller'}" class="wc-link-btn">View all →</a>
+        <a routerLink="/customer/category" [queryParams]="bestSellersViewAllQuery" class="wc-link-btn">View all →</a>
       </div>
       <div class="wc-grid">
         <!-- Loading skeletons -->
@@ -149,6 +150,37 @@
           <!-- Placeholder if no products -->
           <div *ngIf="bestSellers.length === 0" class="wc-no-products">
             No best sellers yet.
+          </div>
+        </ng-container>
+      </div>
+    </section>
+
+
+    <section class="wc-section wc-section--recommendations">
+      <div class="wc-section-header">
+        <h2>Recommended for you</h2>
+        <p class="wc-section-header-note">Popular picks tailored for you</p>
+      </div>
+      <div class="wc-grid">
+        <ng-container *ngIf="recommendationsLoading">
+          <div class="wc-card wc-card--skeleton" *ngFor="let i of [1,2,3,4,5]">
+            <div class="wc-card-image wc-skeleton-pulse"></div>
+            <div class="wc-skeleton-line wc-skeleton-pulse" style="width:70%;height:14px;border-radius:6px"></div>
+            <div class="wc-skeleton-line wc-skeleton-pulse" style="width:40%;height:12px;border-radius:6px"></div>
+            <div class="wc-skeleton-line wc-skeleton-pulse" style="width:30%;height:14px;border-radius:6px"></div>
+          </div>
+        </ng-container>
+        <ng-container *ngIf="!recommendationsLoading">
+          <article class="wc-card" *ngFor="let p of recommendations" [routerLink]="['/customer/product', p.id]">
+            <div class="wc-card-image">
+              <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" class="wc-card-img">
+            </div>
+            <h3>{{ p.name }}</h3>
+            <p class="wc-card-meta">{{ p.category || p.categoryName || 'Apparel' }}</p>
+            <p class="wc-card-price">EGP {{ p.price | number:'1.0-0' }}</p>
+          </article>
+          <div *ngIf="recommendations.length === 0" class="wc-no-products">
+            No recommendations yet.
           </div>
         </ng-container>
       </div>

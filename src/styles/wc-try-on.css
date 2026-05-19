@@ -1,0 +1,62 @@
+/* Try-on trigger buttons only — modal overlay lives in VirtualTryOnModalComponent */
+
+.wc-btn-tryon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(111, 175, 239, 0.55);
+  background: linear-gradient(135deg, rgba(111, 175, 239, 0.18) 0%, rgba(255, 255, 255, 0.95) 100%);
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.wc-btn-tryon:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #6fafef;
+  box-shadow: 0 8px 20px rgba(76, 143, 234, 0.2);
+  background: linear-gradient(135deg, #6fafef 0%, #7dbbff 100%);
+  color: #fff;
+}
+
+.wc-btn-tryon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wc-design-tryon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(111, 175, 239, 0.55);
+  background: linear-gradient(135deg, rgba(111, 175, 239, 0.15), #fff);
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.wc-design-tryon-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6fafef, #4c8fea);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.wc-design-tryon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+body.wc-tryon-body-lock {
+  overflow: hidden;
+}

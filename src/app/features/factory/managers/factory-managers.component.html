@@ -78,6 +78,7 @@
               <th scope="col">Email</th>
               <th scope="col" class="d-none d-md-table-cell">Phone</th>
               <th scope="col">Status</th>
+              <th scope="col" class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -89,6 +90,18 @@
                 <span class="badge rounded-pill" [class.bg-success-subtle]="m.isActive" [class.text-success]="m.isActive" [class.bg-secondary-subtle]="!m.isActive" [class.text-secondary]="!m.isActive">
                   {{ m.isActive ? 'Active' : 'Inactive' }}
                 </span>
+              </td>
+              <td class="text-end">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger rounded-pill"
+                  (click)="openDeleteModal(m)"
+                  [disabled]="deletingManagerId === m.id"
+                  title="Remove manager"
+                >
+                  <span *ngIf="deletingManagerId === m.id" class="spinner-border spinner-border-sm"></span>
+                  <i *ngIf="deletingManagerId !== m.id" class="bi bi-trash3"></i>
+                </button>
               </td>
             </tr>
           </tbody>
@@ -245,5 +258,56 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<div
+  class="modal fade show d-block"
+  tabindex="-1"
+  role="dialog"
+  *ngIf="showDeleteModal"
+  style="background: rgba(15, 35, 58, 0.45);"
+  (click)="closeDeleteModal()"
+>
+  <div
+    class="modal-dialog modal-dialog-centered"
+    style="max-width: 480px;"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">Remove manager</h5>
+        <button type="button" class="btn-close" (click)="closeDeleteModal()" [disabled]="deletingManagerId != null"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <p class="text-muted small mb-3">
+          Remove <strong>{{ managerToDelete?.name }}</strong>? They will no longer be able to sign in to this factory.
+        </p>
+        <label class="form-label small fw-semibold" for="factory-delete-reason">Reason for removal</label>
+        <textarea
+          id="factory-delete-reason"
+          class="form-control"
+          rows="3"
+          placeholder="Explain why this manager is being removed…"
+          [(ngModel)]="deletionReason"
+          [disabled]="deletingManagerId != null"
+          required
+        ></textarea>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary rounded-pill" (click)="closeDeleteModal()" [disabled]="deletingManagerId != null">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger rounded-pill"
+          [disabled]="deletingManagerId != null || !deletionReason.trim()"
+          (click)="confirmDeleteManager()"
+        >
+          <span *ngIf="deletingManagerId == null">Remove manager</span>
+          <span *ngIf="deletingManagerId != null" class="spinner-border spinner-border-sm"></span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>

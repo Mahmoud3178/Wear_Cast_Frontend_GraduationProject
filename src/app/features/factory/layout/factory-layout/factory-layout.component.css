@@ -11,6 +11,44 @@
   padding: 1rem;
 }
 
+.wc-factory-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--wc-factory-border, rgba(255, 255, 255, 0.12));
+}
+
+.factory-topbar-notif {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.factory-topbar-notif:hover,
+.factory-topbar-notif.active {
+  background: rgba(111, 175, 239, 0.2);
+  border-color: rgba(111, 175, 239, 0.45);
+  transform: translateY(-1px);
+}
+
+.factory-topbar-notif .factory-notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+}
+
 /* Nav pills: base layout; colors from factory-portal.css (.wc-factory-sidebar .nav-pill) */
 .wc-factory-sidebar .nav-pill {
   padding: 0.4rem 0.7rem;

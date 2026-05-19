@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
+import { VirtualTryOnModalComponent } from '../shared/virtual-try-on-modal/virtual-try-on-modal.component';
 import {
   FixedProductService,
   FixedProductDetail,
@@ -22,6 +23,14 @@ import {
 } from '../../../core/services/fixed-product-review.service';
 import { environment } from '../../../../environments/environment';
 import { parseWearCastApiDate } from '../../../core/utils/api-date';
+import {
+  CustomerCatalogService,
+  type CatalogProductCard
+} from '../../../core/services/customer-catalog.service';
+import {
+  fetchGarmentBlob as fetchGarmentBlobShared,
+  guessExtFromUrl
+} from '../../../core/utils/garment-image-url';
 
 /** Size string → backend enum integer (public enum Size in backend) */
 const SIZE_MAP: Record<string, number> = {
@@ -51,7 +60,14 @@ export interface SizeRow {
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, CustomerNavComponent, CustomerFooterComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    FormsModule,
+    CustomerNavComponent,
+    CustomerFooterComponent,
+    VirtualTryOnModalComponent
+  ],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.css'
 })
@@ -63,6 +79,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   private readonly favouritesService = inject(FavouritesService);
   private readonly tryOnService = inject(TryOnService);
   private readonly reviewService = inject(FixedProductReviewService);
+  private readonly catalog = inject(CustomerCatalogService);
 
   // ── product state ──────────────────────────────────────────────
   loading = true;
@@ -112,6 +129,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   bestSellers: FixedProductSummary[] = [];
   bestSellersLoading = false;
 
+  // ── recommendations ────────────────────────────────────────────
+  recommendations: CatalogProductCard[] = [];
+  recommendationsLoading = false;
+
   // ── virtual try-on ─────────────────────────────────────────────
   showTryOnModal = false;
   tryOnPersonFile: File | null = null;
@@ -148,6 +169,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       }
     });
     this.loadBestSellers();
+    this.loadRecommendations();
   }
 
   // ── Product loading ────────────────────────────────────────────
@@ -448,6 +470,20 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadRecommendations(): void {
+    this.recommendationsLoading = true;
+    this.catalog.getRecommendations(8).subscribe({
+      next: items => {
+        this.recommendations = items;
+        this.recommendationsLoading = false;
+      },
+      error: () => {
+        this.recommendations = [];
+        this.recommendationsLoading = false;
+      }
+    });
+  }
+
   // ── Size Table Modal ───────────────────────────────────────────
 
   openSizeTableModal(): void {
@@ -556,15 +592,13 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.tryOnRevokeResultBlobUrl();
   }
 
-  onTryOnPersonSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    this.tryOnPersonFile = file && file.type.startsWith('image/') ? file : null;
-    if (file && !this.tryOnPersonFile) {
-      this.tryOnError = 'Please choose an image file (JPG, PNG, etc.).';
-    } else {
-      this.tryOnError = '';
+  onTryOnPersonSelected(file: File | null): void {
+    this.tryOnPersonFile = file;
+    if (!file && this.showTryOnModal) {
+      // Ignore empty change events; only show error after user picked a non-image.
+      return;
     }
+    this.tryOnError = '';
   }
 
   startVirtualTryOn(): void {
@@ -586,7 +620,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.tryOnPipelineDone = false;
     this.clearTryOnPipeline();
 
-    this.fetchGarmentBlob(this.colorDetail.imageUrl)
+    fetchGarmentBlobShared(this.colorDetail.imageUrl)
       .then(garmentBlob => {
         const ext = guessExtFromUrl(this.colorDetail!.imageUrl);
         this.tryOnService
@@ -713,50 +747,4 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     return base ? `${base}${path}` : path;
   }
 
-  /**
-   * URL for fetch() of garment bytes. In dev, API often returns absolute https://wear-cast.runasp.net/uploads/...
-   * Direct fetch from localhost is CORS-blocked; strip host so the request goes to /uploads/... on the dev
-   * server and is proxied (see proxy.conf.json).
-   */
-  private resolveGarmentFetchUrl(raw: string): string {
-    const u = raw.trim();
-    if (!u) return '';
-    if (u.startsWith('data:')) return u;
-
-    const apiBase = environment.apiUrl.replace(/\/$/, '');
-    if (!apiBase) {
-      try {
-        const abs = u.startsWith('//')
-          ? `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}${u}`
-          : u;
-        if (/^https?:\/\//i.test(abs)) {
-          const parsed = new URL(abs);
-          if (parsed.hostname.toLowerCase() === 'wear-cast.runasp.net') {
-            return parsed.pathname + parsed.search;
-          }
-        }
-      } catch {
-        /* use default resolution */
-      }
-    }
-
-    return this.resolveProductImageUrl(raw);
-  }
-
-  private async fetchGarmentBlob(imageUrl: string): Promise<Blob> {
-    const url = this.resolveGarmentFetchUrl(imageUrl);
-    const res = await fetch(url, { credentials: 'omit' });
-    if (!res.ok) {
-      throw new Error(`Garment image HTTP ${res.status}`);
-    }
-    return res.blob();
-  }
-}
-
-function guessExtFromUrl(url: string): string {
-  const lower = url.split('?')[0].toLowerCase();
-  if (lower.endsWith('.png')) return 'png';
-  if (lower.endsWith('.webp')) return 'webp';
-  if (lower.endsWith('.gif')) return 'gif';
-  return 'jpg';
 }

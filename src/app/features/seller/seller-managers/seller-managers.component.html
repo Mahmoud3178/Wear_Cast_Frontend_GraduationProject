@@ -1,0 +1,246 @@
+<div class="mgr-page">
+
+  <!-- Toast -->
+  <div class="mgr-toast" *ngIf="toastVisible" [class.toast-error]="toastType === 'error'">
+    <i class="bi" [class.bi-check-circle-fill]="toastType === 'success'"
+                  [class.bi-exclamation-circle-fill]="toastType === 'error'"></i>
+    {{ toastMsg }}
+  </div>
+
+  <!-- Header -->
+  <div class="mgr-header">
+    <div>
+      <h1 class="mgr-title">Managers</h1>
+      <p class="mgr-sub">Manage your store's team members</p>
+    </div>
+    <button class="mgr-add-btn" (click)="openAdd()">
+      <i class="bi bi-plus-lg me-2"></i>Add Manager
+    </button>
+  </div>
+
+  <!-- Error -->
+  <div class="mgr-alert" *ngIf="errorMsg">
+    <i class="bi bi-exclamation-circle me-2"></i>{{ errorMsg }}
+  </div>
+
+  <!-- Loading -->
+  <div class="mgr-loading" *ngIf="isLoading">
+    <span class="spinner-border spinner-border-sm me-2"></span> Loading...
+  </div>
+
+  <!-- Table -->
+  <div class="mgr-table-wrap" *ngIf="!isLoading">
+
+    <div class="mgr-empty" *ngIf="!managers.length">
+      <i class="bi bi-people"></i>
+      <p>No managers yet. Add your first one!</p>
+    </div>
+
+    <div class="mgr-table-scroll" *ngIf="managers.length">
+      <table class="mgr-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of managers; let i = index"
+              (click)="openEdit(m)" class="mgr-row">
+            <td><span class="mgr-id">{{ i + 1 }}</span></td>
+            <td>
+              <div class="mgr-name-cell">
+                <div class="mgr-avatar">{{ m.firstName?.charAt(0) }}{{ m.lastName?.charAt(0) }}</div>
+                <span>{{ m.firstName }} {{ m.lastName }}</span>
+              </div>
+            </td>
+            <td><span class="mgr-email">{{ m.email }}</span></td>
+            <td><span class="mgr-phone">{{ m.phoneNumber }}</span></td>
+            <td>
+              <button class="mgr-del-btn"
+                      (click)="$event.stopPropagation(); openDelete(m)"
+                      title="Delete">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Modal -->
+<div class="mgr-overlay" *ngIf="showAddModal" (click)="closeAdd()">
+  <div class="mgr-modal" (click)="$event.stopPropagation()">
+    <div class="mgr-modal-head">
+      <h5>Add New Manager</h5>
+      <button class="mgr-close" (click)="closeAdd()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="mgr-modal-body">
+
+      <div class="mgr-alert" *ngIf="addError">
+        <i class="bi bi-exclamation-circle me-2"></i>{{ addError }}
+      </div>
+
+      <div class="mgr-row-fields">
+        <div class="mgr-field">
+          <label>First Name</label>
+          <input type="text" [(ngModel)]="addForm.firstName"
+                 [class.field-invalid]="addFieldErrors['firstName']">
+          <span class="field-err" *ngIf="addFieldErrors['firstName']">
+            {{ addFieldErrors['firstName'] }}
+          </span>
+        </div>
+        <div class="mgr-field">
+          <label>Last Name</label>
+          <input type="text" [(ngModel)]="addForm.lastName"
+                 [class.field-invalid]="addFieldErrors['lastName']">
+          <span class="field-err" *ngIf="addFieldErrors['lastName']">
+            {{ addFieldErrors['lastName'] }}
+          </span>
+        </div>
+      </div>
+
+      <div class="mgr-field">
+        <label>Email</label>
+        <input type="email" [(ngModel)]="addForm.email"
+               [class.field-invalid]="addFieldErrors['email']">
+        <span class="field-err" *ngIf="addFieldErrors['email']">{{ addFieldErrors['email'] }}</span>
+      </div>
+
+      <div class="mgr-field">
+        <label>Phone Number</label>
+        <input type="text" [(ngModel)]="addForm.phoneNumber"
+               [class.field-invalid]="addFieldErrors['phoneNumber']">
+        <span class="field-err" *ngIf="addFieldErrors['phoneNumber']">{{ addFieldErrors['phoneNumber'] }}</span>
+      </div>
+
+      <div class="mgr-row-fields">
+        <div class="mgr-field">
+          <label>Password</label>
+          <div class="input-eye">
+            <input [type]="showPassword ? 'text' : 'password'"
+                   [(ngModel)]="addForm.password"
+                   [class.field-invalid]="addFieldErrors['password']">
+            <button type="button" (click)="showPassword = !showPassword" tabindex="-1">
+              <i class="bi" [class.bi-eye]="showPassword" [class.bi-eye-slash]="!showPassword"></i>
+            </button>
+          </div>
+          <span class="field-err" *ngIf="addFieldErrors['password']">{{ addFieldErrors['password'] }}</span>
+        </div>
+        <div class="mgr-field">
+          <label>Confirm Password</label>
+          <div class="input-eye">
+            <input [type]="showConfirmPassword ? 'text' : 'password'"
+                   [(ngModel)]="addForm.confirmPassword">
+            <button type="button" (click)="showConfirmPassword = !showConfirmPassword" tabindex="-1">
+              <i class="bi" [class.bi-eye]="showConfirmPassword" [class.bi-eye-slash]="!showConfirmPassword"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="mgr-modal-footer">
+      <button class="mgr-cancel-btn" (click)="closeAdd()">Cancel</button>
+      <button class="mgr-submit-btn" (click)="submitAdd()" [disabled]="isAdding">
+        <span *ngIf="isAdding" class="spinner-border spinner-border-sm me-2"></span>
+        {{ isAdding ? 'Adding...' : 'Add Manager' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="mgr-overlay" *ngIf="showEditModal" (click)="closeEdit()">
+  <div class="mgr-modal" (click)="$event.stopPropagation()">
+    <div class="mgr-modal-head">
+      <h5>Edit Manager</h5>
+      <button class="mgr-close" (click)="closeEdit()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="mgr-modal-body">
+
+      <div class="mgr-alert" *ngIf="updateError">
+        <i class="bi bi-exclamation-circle me-2"></i>{{ updateError }}
+      </div>
+
+      <div class="mgr-row-fields">
+        <div class="mgr-field">
+          <label>First Name</label>
+          <input type="text" [(ngModel)]="editForm.firstName"
+                 [class.field-invalid]="updateFieldErrors['firstName']">
+          <span class="field-err" *ngIf="updateFieldErrors['firstName']">
+            {{ updateFieldErrors['firstName'] }}
+          </span>
+        </div>
+        <div class="mgr-field">
+          <label>Last Name</label>
+          <input type="text" [(ngModel)]="editForm.lastName"
+                 [class.field-invalid]="updateFieldErrors['lastName']">
+          <span class="field-err" *ngIf="updateFieldErrors['lastName']">
+            {{ updateFieldErrors['lastName'] }}
+          </span>
+        </div>
+      </div>
+
+      <div class="mgr-field">
+        <label>Phone Number</label>
+        <input type="text" [(ngModel)]="editForm.phoneNumber"
+               [class.field-invalid]="updateFieldErrors['phoneNumber']">
+        <span class="field-err" *ngIf="updateFieldErrors['phoneNumber']">
+          {{ updateFieldErrors['phoneNumber'] }}
+        </span>
+      </div>
+
+    </div>
+    <div class="mgr-modal-footer">
+      <button class="mgr-cancel-btn" (click)="closeEdit()">Cancel</button>
+      <button class="mgr-submit-btn" (click)="submitEdit()" [disabled]="isUpdating">
+        <span *ngIf="isUpdating" class="spinner-border spinner-border-sm me-2"></span>
+        {{ isUpdating ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="mgr-overlay" *ngIf="showDeleteModal" (click)="closeDelete()">
+  <div class="mgr-modal mgr-modal-sm" (click)="$event.stopPropagation()">
+    <div class="mgr-modal-head">
+      <h5>Delete Manager</h5>
+      <button class="mgr-close" (click)="closeDelete()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="mgr-modal-body">
+
+      <div class="mgr-alert" *ngIf="deleteError">
+        <i class="bi bi-exclamation-circle me-2"></i>{{ deleteError }}
+      </div>
+
+      <p class="mgr-delete-warn">
+        Are you sure you want to delete
+        <strong>{{ selectedManager?.firstName }} {{ selectedManager?.lastName }}</strong>?
+        This action cannot be undone.
+      </p>
+
+      <div class="mgr-field">
+     <div class="mgr-field">
+  <label>Reason for deletion</label>
+  <input type="text" [(ngModel)]="deleteReason" placeholder="Enter reason">
+</div>
+      </div>
+
+    </div>
+    <div class="mgr-modal-footer">
+      <button class="mgr-cancel-btn" (click)="closeDelete()">Cancel</button>
+      <button class="mgr-delete-confirm-btn" (click)="submitDelete()" [disabled]="isDeleting">
+        <span *ngIf="isDeleting" class="spinner-border spinner-border-sm me-2"></span>
+        {{ isDeleting ? 'Deleting...' : 'Delete Manager' }}
+      </button>
+    </div>
+  </div>
+</div>

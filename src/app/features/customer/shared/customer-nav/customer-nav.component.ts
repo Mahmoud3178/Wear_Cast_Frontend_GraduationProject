@@ -6,7 +6,11 @@ import { filter, Subscription } from 'rxjs';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationsService } from '../../../../core/services/notifications.service';
 import { NotificationsPollingService } from '../../../../core/services/notifications-polling.service';
-import { CartService } from '../../../../core/services/cart.service';
+import {
+  CartService,
+  CART_UPDATED_EVENT,
+  MyCartResponse
+} from '../../../../core/services/cart.service';
 
 @Component({
   selector: 'app-customer-nav',
@@ -26,7 +30,14 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
   private cartPollingInterval: any = null;
 
   private readonly onNotifDelivered = (): void => { this.pollingService.reset(); };
-  private readonly onCartUpdated    = (): void => { this.loadCartCount(); };
+  private readonly onCartUpdated = (e: Event): void => {
+    const cart = (e as CustomEvent<MyCartResponse | null>).detail;
+    if (cart) {
+      this.cartCount = this.cartService.getCartItemCount(cart);
+      return;
+    }
+    this.loadCartCount(true);
+  };
 
   constructor(
     readonly auth: AuthService,
@@ -49,7 +60,7 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
     this.loadCartCount();
 
     window.addEventListener('notif-delivered', this.onNotifDelivered);
-    window.addEventListener('cart-updated',    this.onCartUpdated);
+    window.addEventListener(CART_UPDATED_EVENT, this.onCartUpdated);
 
     this.ngZone.runOutsideAngular(() => {
       this.cartPollingInterval = setInterval(() => {
@@ -69,35 +80,23 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
     this.countSub?.unsubscribe();
     if (this.cartPollingInterval) clearInterval(this.cartPollingInterval);
     window.removeEventListener('notif-delivered', this.onNotifDelivered);
-    window.removeEventListener('cart-updated',    this.onCartUpdated);
+    window.removeEventListener(CART_UPDATED_EVENT, this.onCartUpdated);
     this.setBodyScrollLock(false);
     // مش بنعمل stop للـ polling عشان الـ service هتفضل شغالة
   }
 
-  loadCartCount(): void {
-    if (!this.auth.isLoggedIn()) { this.cartCount = 0; return; }
-    this.cartService.getFixedItems().subscribe({
-      next: (fixed: any[]) => {
-        this.cartService.getDesignItems().subscribe({
-          next: (designs: any[]) => {
-            const fixedQty = (fixed ?? []).reduce((sum: number, f: any) => {
-              const sizes = Array.isArray(f.sizes ?? f.Sizes) ? (f.sizes ?? f.Sizes) : [];
-              return sum + (sizes.length
-                ? sizes.reduce((s: number, sz: any) => s + (sz.quantityInCart ?? sz.QuantityInCart ?? sz.quantity ?? 0), 0)
-                : (f.quantity ?? f.Quantity ?? 1));
-            }, 0);
-            const designQty = (designs ?? []).reduce((sum: number, d: any) => {
-              const sizes = Array.isArray(d.sizes ?? d.Sizes) ? (d.sizes ?? d.Sizes) : [];
-              return sum + (sizes.length
-                ? sizes.reduce((s: number, sz: any) => s + (sz.quantityInCart ?? sz.QuantityInCart ?? sz.quantity ?? 0), 0)
-                : (d.quantity ?? d.Quantity ?? 1));
-            }, 0);
-            this.cartCount = fixedQty + designQty;
-          },
-          error: () => {}
-        });
+  loadCartCount(forceRefresh = false): void {
+    if (!this.auth.isLoggedIn()) {
+      this.cartCount = 0;
+      return;
+    }
+    this.cartService.getMyCart(forceRefresh).subscribe({
+      next: cart => {
+        this.cartCount = this.cartService.getCartItemCount(cart);
       },
-      error: () => {}
+      error: () => {
+        this.cartCount = 0;
+      }
     });
   }
 

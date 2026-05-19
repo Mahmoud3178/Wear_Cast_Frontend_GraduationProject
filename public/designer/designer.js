@@ -167,9 +167,9 @@
   function formatPrice(n) {
     if (typeof n !== 'number' || !isFinite(n)) return '';
     try {
-      return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n);
+      return 'EGP ' + n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     } catch (e) {
-      return '$' + n.toFixed(2);
+      return 'EGP ' + n.toFixed(2);
     }
   }
 
@@ -2125,6 +2125,72 @@
     processNextView();
   }
 
+  /**
+   * Builds a single front-view PNG (product photo + Fabric overlays) for virtual try-on.
+   * Returns a data URL; does not change the user's current view after completion.
+   */
+  function generateFrontViewGarmentImage(callback) {
+    if (!canvas) {
+      callback(null);
+      return;
+    }
+    saveCurrentViewToStore();
+    var savedView = currentView;
+
+    function restoreStageThenFinish(dataUrl) {
+      currentView = savedView;
+      document.querySelectorAll('.view-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-view') === currentView);
+      });
+      setProductImage();
+      loadViewFromStore(savedView, function () {
+        setProductImage();
+        if (canvas) canvas.renderAll();
+        callback(dataUrl);
+      });
+    }
+
+    currentView = 'front';
+    document.querySelectorAll('.view-btn').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-view') === 'front');
+    });
+    setProductImage();
+    loadViewFromStore('front', function () {
+      function afterImageReady() {
+        if (canvas) {
+          canvas.discardActiveObject();
+          canvas.renderAll();
+        }
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            compositeStageToDataURL(function (dataUrl) {
+              restoreStageThenFinish(dataUrl);
+            });
+          });
+        });
+      }
+
+      if (!productImage || !productImage.src) {
+        setTimeout(afterImageReady, 0);
+        return;
+      }
+      if (productImage.complete && productImage.naturalWidth > 0) {
+        setTimeout(afterImageReady, 0);
+        return;
+      }
+      productImage.onload = function () {
+        productImage.onload = null;
+        productImage.onerror = null;
+        afterImageReady();
+      };
+      productImage.onerror = function () {
+        productImage.onload = null;
+        productImage.onerror = null;
+        afterImageReady();
+      };
+    });
+  }
+
   function confirmSizeQtyAddToCart() {
     var fnSave = window.__WEARCAST_SAVE_CUSTOMER_DESIGN__;
     var fnCart = window.__WEARCAST_ADD_DESIGNED_TO_CART__;
@@ -2713,6 +2779,28 @@
       var modeUpdate = document.getElementById('save-mode-update');
       if (modeUpdate) modeUpdate.checked = true;
       toggleSaveModeFields();
+    };
+    window.__WEARCAST_GENERATE_TRYON_GARMENT__ = function () {
+      return new Promise(function (resolve, reject) {
+        generateFrontViewGarmentImage(function (dataUrl) {
+          if (!dataUrl) {
+            reject(new Error('Could not build garment preview from your design.'));
+            return;
+          }
+          fetch(dataUrl)
+            .then(function (r) { return r.blob(); })
+            .then(function (blob) {
+              if (!blob || !blob.size) {
+                reject(new Error('Garment preview image is empty.'));
+                return;
+              }
+              resolve(blob);
+            })
+            .catch(function (e) {
+              reject(e instanceof Error ? e : new Error('Could not prepare garment image.'));
+            });
+        });
+      });
     };
     toggleSaveModeFields();
     saveConfirm.addEventListener('click', function () {
