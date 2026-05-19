@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
 import { NotificationsListComponent } from '../../../shared/components/notifications-list/notifications-list.component';
+import { NotificationsService } from '../../../core/services/notifications.service';
 
 @Component({
   selector: 'app-customer-notifications',
@@ -18,21 +19,29 @@ import { NotificationsListComponent } from '../../../shared/components/notificat
       <app-customer-footer></app-customer-footer>
     </div>
   `,
-  styles: [
-    `
-      .customer-page-shell {
-        min-height: 100vh;
-        min-height: 100dvh;
-        display: flex;
-        flex-direction: column;
-        background: #f8fcff;
-      }
+  styles: [`
+    .customer-page-shell {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: #f8fcff;
+    }
 
-      .customer-notifications-main {
-        flex: 1 1 auto;
-        padding: 24px 16px 40px;
-      }
-    `
-  ]
+    .customer-notifications-main {
+      flex: 1 1 auto;
+      padding: 24px 16px 40px;
+    }
+  `]
 })
-export class CustomerNotificationsComponent {}
+export class CustomerNotificationsComponent implements OnInit {
+
+  constructor(private readonly notifService: NotificationsService) {}
+
+  ngOnInit(): void {
+    // يصفر الكونتر لما يدخل الصفحة
+    this.notifService.receiveAll().subscribe(() => {
+      window.dispatchEvent(new CustomEvent('notif-delivered'));
+    });
+  }
+}

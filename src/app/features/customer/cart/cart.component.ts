@@ -15,7 +15,6 @@ import {
 } from '../../../core/services/cart.service';
 import { FixedProductService } from '../../../core/services/fixed-product.service';
 
-/** Unified view model for both fixed + designed items */
 export interface CartItemView {
   cartItemId: number;
   name: string;
@@ -25,9 +24,7 @@ export interface CartItemView {
   size?: string;
   quantity?: number;
   type: 'fixed' | 'design';
-  // For fixed items
   sizes?: { sizeEnum: number; sizeLabel: string; quantity: number }[];
-  // raw refs for update calls
   colorId?: number;
   productId?: number;
   designId?: number;
@@ -44,10 +41,8 @@ export class CartComponent implements OnInit {
   items = signal<CartItemView[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
-  /** Quantity update API message (e.g. Cart.StockExceeded description). Cleared on reload. */
   quantityNotice = signal<string | null>(null);
 
-  // Size details modal
   showProductDetailsModal = false;
   activeProductDetails: any = null;
   detailsModalLoading = false;
@@ -98,8 +93,6 @@ export class CartComponent implements OnInit {
       designs: this.cartService.getDesignItems().pipe(catchError(() => of([])))
     }).subscribe({
       next: ({ fixed, designs }) => {
-        // API size enum: 13=S, 14=M, 15=L, 16=XL, 17=2XL, 18=3XL, 19=4XL, 20=5XL
-        // Also support 0-4 mapping for backward compatibility
         const sizeMap: Record<number, string> = {
           0: 'S', 1: 'M', 2: 'L', 3: 'XL', 4: '2XL',
           13: 'S', 14: 'M', 15: 'L', 16: 'XL', 17: '2XL',
@@ -108,14 +101,13 @@ export class CartComponent implements OnInit {
 
         const mapSize = (s: any) => {
           if (s == null || s === '') return null;
-          // Handle string sizes like "_L", "_XL", "_2XL" -> "L", "XL", "2XL"
           if (typeof s === 'string') {
-            const clean = s.replace(/^_/, ''); // Remove leading underscore
+            const clean = s.replace(/^_/, '');
             if (clean) return clean;
           }
           const num = parseInt(s, 10);
           if (!isNaN(num) && sizeMap[num]) return sizeMap[num];
-          return s; // fallback
+          return s;
         };
 
         const fixedViews: CartItemView[] = (fixed ?? []).map((f: any) => {
@@ -124,27 +116,19 @@ export class CartComponent implements OnInit {
           const imageUrl  = f.imageUrl || f.ImageUrl || f.image || f.Image || '/assets/placeholder.jpg';
           const productName = f.productName || f.ProductName || f.name || f.Name || 'Fixed Product';
           const colorId =
-            f.colorId ??
-            f.ColorId ??
-            f.fixedProductColorId ??
-            f.FixedProductColorId ??
-            f.productColorId ??
-            f.ProductColorId;
+            f.colorId ?? f.ColorId ??
+            f.fixedProductColorId ?? f.FixedProductColorId ??
+            f.productColorId ?? f.ProductColorId;
           const cartItemId = f.cartItemId || f.CartItemId;
           const productId = f.productId || f.ProductId;
 
-          // API may return a flat { size, quantity } OR a grouped { sizes: [{size,quantityInCart}] }
-          const sizesArray: { size: any; quantity?: number; quantityInCart?: number; QuantityInCart?: number }[] = Array.isArray(f.sizes ?? f.Sizes)
-            ? (f.sizes ?? f.Sizes)
-            : [{
-                size: f.size ?? f.Size ?? f.sizeId ?? f.SizeId,
-                quantity:
-                  f.quantity ??
-                  f.Quantity ??
-                  f.quantityInCart ??
-                  f.QuantityInCart ??
-                  1
-              }];
+          const sizesArray: { size: any; quantity?: number; quantityInCart?: number; QuantityInCart?: number }[] =
+            Array.isArray(f.sizes ?? f.Sizes)
+              ? (f.sizes ?? f.Sizes)
+              : [{
+                  size: f.size ?? f.Size ?? f.sizeId ?? f.SizeId,
+                  quantity: f.quantity ?? f.Quantity ?? f.quantityInCart ?? f.QuantityInCart ?? 1
+                }];
 
           const sizesList = sizesArray
             .filter(s => (s.quantity ?? s.quantityInCart ?? s.QuantityInCart ?? 0) > 0 || s.size != null)
@@ -152,8 +136,7 @@ export class CartComponent implements OnInit {
               const sVal = mapSize(s.size) || '';
               const sizeEnum = this.sizeToEnum(sVal || String(s.size ?? ''));
               const qty = this.asPositiveInt(
-                s.quantity ?? s.quantityInCart ?? s.QuantityInCart ?? 1,
-                1
+                s.quantity ?? s.quantityInCart ?? s.QuantityInCart ?? 1, 1
               );
               return { sizeLabel: sVal || String(s.size ?? ''), quantity: qty, sizeEnum };
             });
@@ -174,7 +157,6 @@ export class CartComponent implements OnInit {
         });
 
         const designViews: CartItemView[] = (designs ?? []).map((d: any) => {
-          // API returns sizes array with nested size and quantityInCart.
           const sizesArray = Array.isArray(d.sizes ?? d.Sizes) ? (d.sizes ?? d.Sizes) : [];
           const normalizedDesignSizes = sizesArray
             .map((s: any) => {
@@ -183,19 +165,16 @@ export class CartComponent implements OnInit {
               const qtyRaw = s?.quantityInCart ?? s?.QuantityInCart ?? s?.quantity ?? s?.Quantity ?? 0;
               const qty = this.asPositiveInt(qtyRaw, 0);
               if (!sVal || qty <= 0) return null;
-              return {
-                sizeLabel: sVal,
-                sizeEnum: this.sizeToEnum(sVal),
-                quantity: qty
-              };
+              return { sizeLabel: sVal, sizeEnum: this.sizeToEnum(sVal), quantity: qty };
             })
             .filter((x: { sizeLabel: string; sizeEnum: number; quantity: number } | null): x is { sizeLabel: string; sizeEnum: number; quantity: number } => !!x);
 
-          const fallbackRawSize = d.size ?? d.Size ?? d.itemSize ?? d.ItemSize ?? d.productSize ?? d.ProductSize ?? d.designSize ?? d.DesignSize;
+          const fallbackRawSize =
+            d.size ?? d.Size ?? d.itemSize ?? d.ItemSize ??
+            d.productSize ?? d.ProductSize ?? d.designSize ?? d.DesignSize;
           const fallbackSize = mapSize(fallbackRawSize);
           const fallbackQty = this.asPositiveInt(
-            d.quantity ?? d.Quantity ?? d.qty ?? d.Qty ?? d.cartItemQuantity ?? d.CartItemQuantity ?? 1,
-            1
+            d.quantity ?? d.Quantity ?? d.qty ?? d.Qty ?? d.cartItemQuantity ?? d.CartItemQuantity ?? 1, 1
           );
           const sizes = normalizedDesignSizes.length
             ? normalizedDesignSizes
@@ -203,39 +182,33 @@ export class CartComponent implements OnInit {
               ? [{ sizeLabel: fallbackSize, sizeEnum: this.sizeToEnum(fallbackSize), quantity: fallbackQty }]
               : [];
           const nameVal = d.designName || d.DesignName || d.name || d.Name || d.productName || d.ProductName;
-          const totalQty =
-            sizes.reduce((sum: number, s: { quantity: number }) => sum + s.quantity, 0) ||
-            fallbackQty;
-          const metaParts = ['Custom Design'];
-          const designImg =
-            this.pickDesignCartImageUrl(d) || '/assets/placeholder.jpg';
+          const totalQty = sizes.reduce((sum: number, s: { quantity: number }) => sum + s.quantity, 0) || fallbackQty;
+          const designImg = this.pickDesignCartImageUrl(d) || '/assets/placeholder.jpg';
+
           return {
             cartItemId: d.cartItemId || d.CartItemId,
             name: nameVal || 'Custom Design',
-            meta: metaParts.join(' · '),
+            meta: 'Custom Design',
             imageUrl: designImg,
             price: d.price || d.Price || 0,
             quantity: totalQty,
             type: 'design',
             sizes,
             designId:
-              d.designId ??
-              d.DesignId ??
-              d.designedProductId ??
-              d.DesignedProductId ??
-              d.productId ??
-              d.ProductId ??
-              d.designedId ??
-              d.DesignedId ??
-              d.customerDesignedId ??
-              d.CustomerDesignedId ??
-              d.customerDesignId ??
-              d.CustomerDesignId
+              d.designId ?? d.DesignId ??
+              d.designedProductId ?? d.DesignedProductId ??
+              d.productId ?? d.ProductId ??
+              d.designedId ?? d.DesignedId ??
+              d.customerDesignedId ?? d.CustomerDesignedId ??
+              d.customerDesignId ?? d.CustomerDesignId
           };
         });
 
         this.items.set([...fixedViews, ...designViews]);
         this.loading.set(false);
+
+        // ← أبلغ الـ nav بالتغيير
+        window.dispatchEvent(new CustomEvent('cart-updated'));
       },
       error: (err) => {
         this.error.set(err?.message ?? 'Failed to load cart');
@@ -244,11 +217,12 @@ export class CartComponent implements OnInit {
     });
   }
 
-  /** Explicit full-item delete (all sizes for fixed products). */
   removeItem(item: CartItemView): void {
     this.cartService.deleteItem(item.cartItemId).subscribe({
       next: () => {
         this.items.update(list => list.filter(i => i.cartItemId !== item.cartItemId));
+        // ← أبلغ الـ nav بالتغيير
+        window.dispatchEvent(new CustomEvent('cart-updated'));
       },
       error: (err) => {
         console.error('Failed to remove item', err);
@@ -271,17 +245,13 @@ export class CartComponent implements OnInit {
     return item.quantity ?? 0;
   }
 
-  /**
-   * Fixed cart endpoint now receives absolute quantity after change.
-   * Designed endpoint remains delta-based until backend confirms otherwise.
-   */
   private updateQty(item: CartItemView, delta: number, sizeEnum?: number): void {
     const targetSizeEnum = sizeEnum ?? item.sizes?.[0]?.sizeEnum ?? this.sizeToEnum(item.size);
     const currentQty = this.getCurrentQty(item, targetSizeEnum);
     const nextQty = currentQty + delta;
     if (delta === 0) return;
     this.quantityNotice.set(null);
-    // Optimistically update UI
+
     if (targetSizeEnum != null) {
       this.items.update(list => list.map(i => {
         if (i.cartItemId !== item.cartItemId) return i;
@@ -307,23 +277,18 @@ export class CartComponent implements OnInit {
     const actualSizeEnum = targetSizeEnum;
     const absNext = Math.max(0, nextQty);
 
-    /** Cart row state after this change — POST replaces quantities per size for this color. */
     const rebuildFixedSizesPayload = (): SizeQuantityItem[] | null => {
       if (!item.sizes?.length || item.colorId == null) return null;
       return item.sizes
         .map(s => ({
           size: s.sizeEnum,
-          quantity:
-            s.sizeEnum === actualSizeEnum ? absNext : s.quantity
+          quantity: s.sizeEnum === actualSizeEnum ? absNext : s.quantity
         }))
         .filter(s => s.quantity > 0);
     };
 
     let req$: Observable<unknown>;
     if (item.type === 'fixed' && item.colorId != null) {
-      // Required behavior:
-      // - increment => POST AddOrUpdateFixedColorToCart with +1 delta only
-      // - decrement => PUT UpdateItemQuantity with absolute quantity
       if (delta > 0) {
         if (actualSizeEnum == null) {
           req$ = of(null);
@@ -337,11 +302,7 @@ export class CartComponent implements OnInit {
         if (absNext <= 0) {
           req$ = this.cartService.deleteItem(item.cartItemId);
         } else {
-          req$ = this.cartService.updateItemQuantity(
-            item.cartItemId,
-            actualSizeEnum,
-            absNext
-          );
+          req$ = this.cartService.updateItemQuantity(item.cartItemId, actualSizeEnum, absNext);
         }
       } else {
         const payload = rebuildFixedSizesPayload();
@@ -350,10 +311,7 @@ export class CartComponent implements OnInit {
         } else if (payload.length === 0 && item.cartItemId != null) {
           req$ = this.cartService.deleteItem(item.cartItemId);
         } else if (payload.length > 0) {
-          req$ = this.cartService.addOrUpdateFixed({
-            colorId: item.colorId,
-            sizes: payload
-          });
+          req$ = this.cartService.addOrUpdateFixed({ colorId: item.colorId, sizes: payload });
         } else {
           req$ = of(null);
         }
@@ -370,16 +328,13 @@ export class CartComponent implements OnInit {
 
     req$.subscribe({
       next: () => {
-        // Keep UI synced with server normalization and avoid stale optimistic state.
-        this.loadCart();
+        this.loadCart(); // loadCart هيعمل dispatch لـ cart-updated تلقائياً
       },
       error: (err: unknown) => {
         const msg =
-          err instanceof Error
-            ? err.message
-            : typeof err === 'string'
-              ? err
-              : 'Could not update quantity.';
+          err instanceof Error ? err.message :
+          typeof err === 'string' ? err :
+          'Could not update quantity.';
         console.error('Failed to update quantity', err, {
           type: item.type,
           colorId: item.colorId,
@@ -393,18 +348,11 @@ export class CartComponent implements OnInit {
     });
   }
 
-  /**
-   * Cart thumbnail URLs: keep absolute `https://…` as returned by the API so the browser
-   * loads the same file the server attached to the design (img tags are not CORS-tainted).
-   * Only root-relative paths are prefixed with `environment.apiUrl`.
-   */
   private resolveCartThumbnailUrl(raw: string): string {
     const u = raw.trim();
     if (!u) return '';
     if (u.startsWith('data:')) return u;
-    if (/^https?:\/\//i.test(u)) {
-      return u;
-    }
+    if (/^https?:\/\//i.test(u)) return u;
     if (u.startsWith('//')) {
       return `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}${u}`;
     }
@@ -413,31 +361,14 @@ export class CartComponent implements OnInit {
     return base ? `${base}${path}` : path;
   }
 
-  /** Cart APIs vary field names for the design preview; `image` is what GetDesignsInCart returns today. */
   private pickDesignCartImageUrl(d: Record<string, unknown>): string {
     const keys = [
-      'image',
-      'Image',
-      'compositeImageUrl',
-      'CompositeImageUrl',
-      'frontImageUrl',
-      'FrontImageUrl',
-      'customDesignImageUrl',
-      'CustomDesignImageUrl',
-      'designPreviewUrl',
-      'DesignPreviewUrl',
-      'previewImageUrl',
-      'PreviewImageUrl',
-      'thumbnailUrl',
-      'ThumbnailUrl',
-      'imageUrl',
-      'ImageUrl',
-      'mainImageUrl',
-      'MainImageUrl',
-      'pictureUrl',
-      'PictureUrl',
-      'frontImage',
-      'FrontImage'
+      'image', 'Image', 'compositeImageUrl', 'CompositeImageUrl',
+      'frontImageUrl', 'FrontImageUrl', 'customDesignImageUrl', 'CustomDesignImageUrl',
+      'designPreviewUrl', 'DesignPreviewUrl', 'previewImageUrl', 'PreviewImageUrl',
+      'thumbnailUrl', 'ThumbnailUrl', 'imageUrl', 'ImageUrl',
+      'mainImageUrl', 'MainImageUrl', 'pictureUrl', 'PictureUrl',
+      'frontImage', 'FrontImage'
     ];
     for (const k of keys) {
       const v = d[k];
@@ -449,16 +380,15 @@ export class CartComponent implements OnInit {
     return '';
   }
 
-  /** Maps size string like "S", "M", "L", "XL", "XXL" to the API integer enum */
   private sizeToEnum(size: string | undefined | null): number {
-    if (!size) return 14; // default M
+    if (!size) return 14;
     const map: Record<string, number> = {
       '2XS': 11, '_2XS': 11, 'XXS': 11,
-      'XS': 12, '_XS': 12,
-      'S': 13, '_S': 13,
-      'M': 14, '_M': 14,
-      'L': 15, '_L': 15,
-      'XL': 16, '_XL': 16,
+      'XS': 12,  '_XS': 12,
+      'S': 13,   '_S': 13,
+      'M': 14,   '_M': 14,
+      'L': 15,   '_L': 15,
+      'XL': 16,  '_XL': 16,
       '2XL': 17, '_2XL': 17, 'XXL': 17,
       '3XL': 18, '_3XL': 18, 'XXXL': 18,
       '4XL': 19, '_4XL': 19,
@@ -473,15 +403,11 @@ export class CartComponent implements OnInit {
     return Math.floor(n);
   }
 
-  // ── Size details modal ─────────────────────────────────────────
-
   openSizeDetails(item: CartItemView): void {
     if (item.type !== 'fixed' || !item.productId) return;
-
     this.showProductDetailsModal = true;
     this.detailsModalLoading = true;
     this.activeProductDetails = null;
-
     this.fixedProductService.getDetailsById(item.productId).subscribe({
       next: (res) => {
         this.detailsModalLoading = false;

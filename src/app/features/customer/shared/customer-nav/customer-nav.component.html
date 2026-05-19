@@ -62,9 +62,10 @@
       <a routerLink="/customer/favourites" class="wc-icon-btn" aria-label="Favourites" *ngIf="auth.isLoggedIn()" (click)="closeMobileMenu()">
         <span class="wc-icon">♡</span>
       </a>
-      <a routerLink="/customer/cart" class="wc-icon-btn" aria-label="Cart" (click)="closeMobileMenu()">
-        <span class="wc-icon">🛒</span>
-      </a>
+<a routerLink="/customer/cart" class="wc-icon-btn wc-icon-btn--notif" aria-label="Cart" (click)="closeMobileMenu()">
+  <span class="wc-icon">🛒</span>
+  <span *ngIf="cartCount > 0" class="wc-notif-badge">{{ cartCount > 99 ? '99+' : cartCount }}</span>
+</a>
       <a routerLink="/customer/profile" class="wc-icon-btn" aria-label="Account" (click)="closeMobileMenu()">
         <span class="wc-icon">👤</span>
       </a>

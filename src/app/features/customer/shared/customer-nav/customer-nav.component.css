@@ -180,8 +180,8 @@
   border-color: var(--wc-nav-primary-soft);
   box-shadow: 0 0 0 3px rgba(111, 175, 239, 0.22);
 }
-
 .wc-icon-btn {
+  position: relative; /* ← أضف ده */
   width: 36px;
   height: 36px;
   border-radius: 999px;
@@ -244,6 +244,9 @@
   justify-content: center;
   border: 2px solid #fff;
   line-height: 1;
+  transform: translateY(0) !important; /* ← يمنع الـ badge من التحرك مع الـ hover */
+  transition: none !important;
+  pointer-events: none;
 }
 
 .wc-nav-auth {
@@ -406,5 +409,31 @@
 
   .wc-actions.wc-actions--open {
     justify-content: flex-start;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wc-icon-btn,
+  .wc-nav-auth,
+  .wc-menu-toggle {
+    transition:
+      transform 0.22s ease,
+      background-color 0.22s ease,
+      border-color 0.22s ease,
+      color 0.22s ease,
+      box-shadow 0.22s ease,
+      filter 0.22s ease;
+  }
+
+  .wc-icon-btn:hover .wc-notif-badge {
+    transform: translateY(1px) !important; /* ← يعوض الـ translateY(-1px) على الـ parent */
+  }
+
+  .wc-icon-btn:hover,
+  .wc-nav-auth:hover:not(.wc-nav-auth--primary) {
+    transform: translateY(-1px);
+  }
+
+  .wc-nav-auth--primary:hover {
+    transform: translateY(-1px);
   }
 }

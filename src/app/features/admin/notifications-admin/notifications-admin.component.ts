@@ -82,11 +82,12 @@ case 'NewSellerApplication':
 }
 
 
-  markAllRead() {
-    this.notifService.markAllAsRead().subscribe(() => {
-      this.notifications.forEach(n => n.isRead = true);
-    });
-  }
+markAllRead() {
+  this.notifService.markAllAsRead().subscribe(() => {
+    this.notifications.forEach(n => n.isRead = true);
+    window.dispatchEvent(new CustomEvent('notif-delivered')); // ← أضف السطر ده
+  });
+}
 
   delete(n: any) {
     this.notifService.delete(n.id).subscribe({

@@ -78,6 +78,7 @@ undeliveredCount = 0;
         }
       });
   }
+
   ngOnDestroy() {
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
@@ -145,7 +146,7 @@ undeliveredCount = 0;
 loadUndeliveredCount() {
   this.notifService.getUndeliveredCount().subscribe({
     next: (res: any) => {
-      this.undeliveredCount = res?.count ?? res?.data ?? res ?? 0;
+      this.undeliveredCount = this.notifService.parseUndeliveredCount(res);
     },
     error: () => {}
   });
