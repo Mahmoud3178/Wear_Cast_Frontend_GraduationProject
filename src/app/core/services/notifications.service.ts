@@ -46,20 +46,30 @@ export class NotificationsService {
     return { Authorization: `Bearer ${this.token}` };
   }
 
-  getAll(
-    pageIndex = 1,
-    pageSize = 20,
-    notificationType?: number,
-    options?: Pick<NotificationListQuery, 'sortBy' | 'isRead'>
-  ): Observable<unknown> {
-    return this.getAllQuery({
-      pageIndex,
-      pageSize,
-      notificationType,
-      sortBy: options?.sortBy,
-      isRead: options?.isRead
-    });
+getAll(
+  pageIndex = 1,
+  pageSize = 20,
+  notificationType?: number,
+  isReadOrOptions?: boolean | Pick<NotificationListQuery, 'sortBy' | 'isRead'>
+): Observable<unknown> {
+  let isRead: boolean | null | undefined;
+  let sortBy: number | null | undefined;
+
+  if (typeof isReadOrOptions === 'boolean') {
+    isRead = isReadOrOptions;
+  } else {
+    isRead = isReadOrOptions?.isRead;
+    sortBy = isReadOrOptions?.sortBy;
   }
+
+  return this.getAllQuery({
+    pageIndex,
+    pageSize,
+    notificationType,
+    sortBy,
+    isRead
+  });
+}
 
   getAllQuery(query: NotificationListQuery = {}): Observable<unknown> {
     let params = new HttpParams()

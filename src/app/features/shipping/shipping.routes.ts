@@ -4,7 +4,6 @@ import { ShipmentsComponent } from './shipments/shipments.component';
 import { ShippingShipmentDetailsComponent } from './shipments/shipment-details/shipment-details.component';
 import { DriversComponent } from './drivers/drivers.component';
 import { ShippingProfileComponent } from './profile/profile.component';
-
 import { ShippingLayoutComponent } from './shipping-layout/shipping-layout.component';
 
 export const SHIPPING_ROUTES: Routes = [
@@ -17,7 +16,14 @@ export const SHIPPING_ROUTES: Routes = [
       { path: 'shipments', component: ShipmentsComponent },
       { path: 'shipments/:id', component: ShippingShipmentDetailsComponent },
       { path: 'drivers', component: DriversComponent },
-      { path: 'profile', component: ShippingProfileComponent }
+      { path: 'profile', component: ShippingProfileComponent },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./notifications-shipping/notifications-shipping.component').then(
+            m => m.NotificationsShippingComponent
+          )
+      }
     ]
   }
 ];

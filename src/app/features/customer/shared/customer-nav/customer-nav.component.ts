@@ -5,6 +5,7 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationsService } from '../../../../core/services/notifications.service';
+import { NotificationsPollingService } from '../../../../core/services/notifications-polling.service';
 import { CartService } from '../../../../core/services/cart.service';
 
 @Component({
@@ -21,38 +22,36 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
   cartCount = 0;
 
   private routerSub?: Subscription;
-  private notifPollingInterval: any = null;
+  private countSub?: Subscription;
   private cartPollingInterval: any = null;
 
-  private readonly onNotifDelivered = (): void => { this.undeliveredCount = 0; };
-  private readonly onNotifAllRead   = (): void => { this.undeliveredCount = 0; };
-  private readonly onNotifRead      = (): void => { this.loadUndeliveredCount(); };
+  private readonly onNotifDelivered = (): void => { this.pollingService.reset(); };
   private readonly onCartUpdated    = (): void => { this.loadCartCount(); };
 
   constructor(
     readonly auth: AuthService,
     private readonly router: Router,
     private readonly notifService: NotificationsService,
+    private readonly pollingService: NotificationsPollingService,
     private readonly cartService: CartService,
     private readonly ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
-    this.loadUndeliveredCount();
+    // ابدأ الـ polling (لو مبدأتش قبل كده)
+    this.pollingService.start();
+
+    // اشترك في الـ count
+    this.countSub = this.pollingService.count$.subscribe(count => {
+      this.undeliveredCount = count;
+    });
+
     this.loadCartCount();
 
     window.addEventListener('notif-delivered', this.onNotifDelivered);
-    window.addEventListener('notif-all-read',  this.onNotifAllRead);
-    window.addEventListener('notif-read',      this.onNotifRead);
     window.addEventListener('cart-updated',    this.onCartUpdated);
 
     this.ngZone.runOutsideAngular(() => {
-      // polling النوتفكيشن كل 10 ثواني
-      this.notifPollingInterval = setInterval(() => {
-        this.ngZone.run(() => this.loadUndeliveredCount());
-      }, 10000);
-
-      // polling الكارت كل 30 ثانية (أبطأ عشان مش بيتغير كتير)
       this.cartPollingInterval = setInterval(() => {
         this.ngZone.run(() => this.loadCartCount());
       }, 30000);
@@ -62,33 +61,17 @@ export class CustomerNavComponent implements OnInit, OnDestroy {
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => {
         this.closeMobileMenu();
-        const url = e.urlAfterRedirects || e.url;
-        if (url.includes('/customer/notifications')) {
-          setTimeout(() => this.loadUndeliveredCount(), 600);
-        }
-        if (url.includes('/customer/cart')) {
-          setTimeout(() => this.loadCartCount(), 500);
-        }
       });
   }
 
   ngOnDestroy(): void {
     this.routerSub?.unsubscribe();
-    if (this.notifPollingInterval) clearInterval(this.notifPollingInterval);
-    if (this.cartPollingInterval)  clearInterval(this.cartPollingInterval);
+    this.countSub?.unsubscribe();
+    if (this.cartPollingInterval) clearInterval(this.cartPollingInterval);
     window.removeEventListener('notif-delivered', this.onNotifDelivered);
-    window.removeEventListener('notif-all-read',  this.onNotifAllRead);
-    window.removeEventListener('notif-read',      this.onNotifRead);
     window.removeEventListener('cart-updated',    this.onCartUpdated);
     this.setBodyScrollLock(false);
-  }
-
-  loadUndeliveredCount(): void {
-    if (!this.auth.isLoggedIn()) { this.undeliveredCount = 0; return; }
-    this.notifService.getUndeliveredCount().subscribe({
-      next: (res) => { this.undeliveredCount = this.notifService.parseUndeliveredCount(res); },
-      error: () => {}
-    });
+    // مش بنعمل stop للـ polling عشان الـ service هتفضل شغالة
   }
 
   loadCartCount(): void {

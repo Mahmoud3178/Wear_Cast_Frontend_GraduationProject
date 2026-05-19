@@ -14,7 +14,14 @@ export const DRIVER_ROUTES: Routes = [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'shipments', component: ShipmentsListComponent },
-      { path: 'shipments/:id', component: ShipmentDetailsComponent }
+      { path: 'shipments/:id', component: ShipmentDetailsComponent },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./notifications-drivers/notifications-drivers.component').then(
+            m => m.NotificationsDriversComponent
+          )
+      }
     ]
   }
 ];

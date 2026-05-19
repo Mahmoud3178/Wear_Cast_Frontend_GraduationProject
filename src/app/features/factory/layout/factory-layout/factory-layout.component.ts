@@ -14,7 +14,9 @@ import { NotificationsService } from '../../../../core/services/notifications.se
 })
 export class FactoryLayoutComponent implements OnInit, OnDestroy {
   undeliveredCount = 0;
+  private pollingInterval: any = null;
   private routerSub?: Subscription;
+
   private readonly onNotifDelivered = (): void => {
     this.undeliveredCount = 0;
   };
@@ -27,6 +29,12 @@ export class FactoryLayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadUndeliveredCount();
+
+    // polling كل 30 ثانية
+    this.pollingInterval = setInterval(() => {
+      this.loadUndeliveredCount();
+    }, 30000);
+
     window.addEventListener('notif-delivered', this.onNotifDelivered);
 
     this.routerSub = this.router.events
@@ -40,6 +48,7 @@ export class FactoryLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.pollingInterval) clearInterval(this.pollingInterval);
     this.routerSub?.unsubscribe();
     window.removeEventListener('notif-delivered', this.onNotifDelivered);
   }

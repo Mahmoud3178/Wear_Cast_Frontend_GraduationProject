@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   NotificationItem,
   NOTIFICATION_SORT_NEWEST,
@@ -20,10 +20,13 @@ type ReadFilter = 'all' | 'unread' | 'read';
 })
 export class NotificationsListComponent implements OnInit {
   @Input() pageSubtitle = 'Stay updated on your account activity';
+  @Input() portalRole: 'factory' | 'seller' | 'customer' | 'admin' = 'factory';
 
   notifications: NotificationItem[] = [];
   isLoading = false;
   errorMessage: string | null = null;
+  toastMsg = '';
+  toastVisible = false;
 
   selectedType: number | undefined = undefined;
   readFilter: ReadFilter = 'all';
@@ -41,12 +44,16 @@ export class NotificationsListComponent implements OnInit {
 
   private readonly notifService = inject(NotificationsService);
   private readonly route = inject(ActivatedRoute, { optional: true });
+  private readonly router = inject(Router);
 
   ngOnInit(): void {
     const routeSubtitle = this.route?.snapshot.data['subtitle'];
     if (typeof routeSubtitle === 'string' && routeSubtitle.trim()) {
       this.pageSubtitle = routeSubtitle.trim();
     }
+
+    const routeRole = this.route?.snapshot.data['portalRole'];
+    if (routeRole) this.portalRole = routeRole;
 
     this.notifService.receiveAll().subscribe({
       next: () => {
@@ -92,21 +99,70 @@ export class NotificationsListComponent implements OnInit {
       });
   }
 
+  showToast(msg: string) {
+    this.toastMsg = msg;
+    this.toastVisible = true;
+    setTimeout(() => this.toastVisible = false, 3000);
+  }
+
   markRead(n: NotificationItem): void {
-    if (n.isRead) return;
-    this.notifService.markAsRead(n.id).subscribe({
-      next: () => {
-        n.isRead = true;
+    if (!n.isRead) {
+      this.notifService.markAsRead(n.id).subscribe({
+        next: () => { n.isRead = true; }
+      });
+    }
+    this.navigate(n);
+  }
+
+  navigate(n: NotificationItem): void {
+    const type = n.notificationType as any;
+    const urlId = (n as any).urlId;
+
+    if (this.portalRole === 'factory') {
+      switch (type) {
+        case 'NewOrder':
+        case 5:
+          this.router.navigate(['/factory/orders']); break;
+        default: break;
       }
-    });
+      return;
+    }
+
+    if (this.portalRole === 'seller') {
+      if (!urlId) return;
+      switch (type) {
+        case 'NewOrder':
+        case 5:
+          this.router.navigate(['/seller/orders', urlId]); break;
+        default: break;
+      }
+      return;
+    }
+
+    if (this.portalRole === 'admin') {
+      switch (type) {
+        case 'ShipmentUpdateStatus':
+        case 'NewShipment':
+        case 'ShipmentUnAssigned':
+        case 'ShipmentAssigned':
+        case 'ShipmentReady':
+          if (urlId) this.router.navigate(['/admin/shipments', urlId]); break;
+        case 'NewSellerApplication':
+          if (urlId) this.router.navigate(['/admin/seller-applications'], { queryParams: { openId: urlId } }); break;
+        case 'NewOrder':
+          if (urlId) this.router.navigate(['/admin/orders', urlId]); break;
+        case 'NewProduct':
+          if (urlId) this.router.navigate(['/admin/products', urlId]); break;
+        default: break;
+      }
+      return;
+    }
   }
 
   markAllRead(): void {
     this.notifService.markAllAsRead().subscribe({
       next: () => {
-        this.notifications.forEach(n => {
-          n.isRead = true;
-        });
+        this.notifications.forEach(n => { n.isRead = true; });
       }
     });
   }
@@ -117,7 +173,9 @@ export class NotificationsListComponent implements OnInit {
       next: () => {
         this.notifications = this.notifications.filter(x => x.id !== n.id);
         this.totalCount = Math.max(0, this.totalCount - 1);
-      }
+        this.showToast('Notification deleted successfully');
+      },
+      error: () => this.showToast('Failed to delete notification')
     });
   }
 
@@ -153,23 +211,50 @@ export class NotificationsListComponent implements OnInit {
     return raw && raw.trim() ? raw : null;
   }
 
-  typeLabel(type: number): string {
-    const map: Record<number, string> = {
-      1: 'Shipment Update'
+  typeLabel(type: any): string {
+    const map: Record<string, string> = {
+      'ShipmentUpdateStatus': 'Shipment Update',
+      'NewSellerApplication': 'Seller Application',
+      'NewOrder': 'New Order',
+      'NewShipment': 'New Shipment',
+      'NewProduct': 'New Product',
+      'ShipmentUnAssigned': 'Shipment Unassigned',
+      'ShipmentAssigned': 'Shipment Assigned',
+      'ShipmentReady': 'Shipment Ready',
+      'DriverDeActivated': 'Driver Deactivated',
+      'DriverDeleted': 'Driver Deleted',
     };
     return map[type] ?? 'Notification';
   }
 
-  typeIcon(type: number): string {
-    const map: Record<number, string> = {
-      1: 'bi-truck'
+  typeIcon(type: any): string {
+    const map: Record<string, string> = {
+      'ShipmentUpdateStatus': 'bi-truck',
+      'NewSellerApplication': 'bi-shop',
+      'NewOrder': 'bi-bag-check',
+      'NewShipment': 'bi-box-seam',
+      'NewProduct': 'bi-tag',
+      'ShipmentUnAssigned': 'bi-truck',
+      'ShipmentAssigned': 'bi-truck',
+      'ShipmentReady': 'bi-check-circle',
+      'DriverDeActivated': 'bi-person-x',
+      'DriverDeleted': 'bi-person-dash',
     };
     return map[type] ?? 'bi-bell';
   }
 
-  typeColor(type: number): string {
-    const map: Record<number, string> = {
-      1: 'notif-icon--indigo'
+  typeColor(type: any): string {
+    const map: Record<string, string> = {
+      'ShipmentUpdateStatus': 'notif-icon--indigo',
+      'NewSellerApplication': 'notif-icon--yellow',
+      'NewOrder': 'notif-icon--green',
+      'NewShipment': 'notif-icon--cyan',
+      'NewProduct': 'notif-icon--purple',
+      'ShipmentUnAssigned': 'notif-icon--yellow',
+      'ShipmentAssigned': 'notif-icon--green',
+      'ShipmentReady': 'notif-icon--green',
+      'DriverDeActivated': 'notif-icon--red',
+      'DriverDeleted': 'notif-icon--red',
     };
     return map[type] ?? 'notif-icon--muted';
   }

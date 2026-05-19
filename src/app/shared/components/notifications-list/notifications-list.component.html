@@ -46,6 +46,9 @@
       <i class="bi bi-bell-slash"></i>
       <p>No notifications yet</p>
     </div>
+    <div class="notif-toast" *ngIf="toastVisible">
+  <i class="bi bi-check-circle-fill me-2"></i>{{ toastMsg }}
+</div>
 
     <div class="notif-list">
       <div
