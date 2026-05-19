@@ -45,7 +45,6 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
   private productsChart: Chart | null = null;
   private statusChart:   Chart | null = null;
 
-  // ── الـ events للكونتر ────────────────────────────────
   private readonly onNotifDelivered = () => { this.undeliveredCount = 0; };
   private readonly onNotifAllRead   = () => { this.undeliveredCount = 0; };
   private readonly onNotifRead      = () => { this.loadUndeliveredCount(); };
@@ -55,7 +54,6 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
     this.loadOrders();
     this.loadUndeliveredCount();
 
-    // ← بس events، من غير polling عشان الـ layout عنده polling
     window.addEventListener('notif-delivered', this.onNotifDelivered);
     window.addEventListener('notif-all-read',  this.onNotifAllRead);
     window.addEventListener('notif-read',      this.onNotifRead);
@@ -105,10 +103,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
           price:    p.price ?? 0,
         }));
         this.isLoading = false;
-        setTimeout(() => {
-          this.buildProductsChart();
-          this.buildStatusChart();
-        }, 0);
+        setTimeout(() => { this.buildProductsChart(); this.buildStatusChart(); }, 0);
       },
       error: () => { this.isLoading = false; }
     });
@@ -116,10 +111,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
 
   loadOrders() {
     this.orderService.getSellerOrders(1, 100).subscribe({
-      next: (res: any) => {
-        this.orders = res?.items ?? res ?? [];
-        this.buildStatusChart();
-      },
+      next: (res: any) => { this.orders = res?.items ?? res ?? []; this.buildStatusChart(); },
       error: () => { this.orders = []; }
     });
   }
@@ -127,8 +119,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
   get filteredOrders() {
     const t = this.searchText.toLowerCase();
     return this.orders.filter(o =>
-      o.id?.toString().includes(t) ||
-      (o.recipientName ?? '').toLowerCase().includes(t)
+      o.id?.toString().includes(t) || (o.recipientName ?? '').toLowerCase().includes(t)
     );
   }
 
@@ -137,13 +128,8 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
     return this.filteredOrders.slice(s, s + this.itemsPerPage);
   }
 
-  get totalPages() {
-    return Math.max(1, Math.ceil(this.filteredOrders.length / this.itemsPerPage));
-  }
-
-  get pages() {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
-  }
+  get totalPages() { return Math.max(1, Math.ceil(this.filteredOrders.length / this.itemsPerPage)); }
+  get pages() { return Array.from({ length: this.totalPages }, (_, i) => i + 1); }
 
   goToPage(p: number) { this.currentPage = p; }
   nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; }
