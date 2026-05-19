@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { RouterModule, Router, NavigationEnd, RouterLink } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { DriverSidebarComponent } from '../components/driver-sidebar/driver-sidebar.component';
 import { DriverHeaderComponent } from '../components/driver-header/driver-header.component';
@@ -15,7 +15,8 @@ import { NotificationsService } from '../../../core/services/notifications.servi
     RouterModule,
     DriverSidebarComponent,
     DriverHeaderComponent,
-    DriverFooterComponent
+    DriverFooterComponent,
+    RouterLink
   ],
   templateUrl: './driver-layout.component.html',
   styleUrls: ['./driver-layout.component.css']

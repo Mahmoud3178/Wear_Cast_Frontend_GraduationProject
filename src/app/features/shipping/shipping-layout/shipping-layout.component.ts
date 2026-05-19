@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { RouterModule, Router, NavigationEnd, RouterLink } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { ShippingSidebarComponent } from '../components/shipping-sidebar/shipping-sidebar.component';
 import { ShippingHeaderComponent } from '../components/shipping-header/shipping-header.component';
@@ -15,7 +15,8 @@ import { NotificationsService } from '../../../core/services/notifications.servi
     RouterModule,
     ShippingSidebarComponent,
     ShippingHeaderComponent,
-    ShippingFooterComponent
+    ShippingFooterComponent,
+    RouterLink
   ],
   templateUrl: './shipping-layout.component.html',
   styleUrls: ['./shipping-layout.component.css']
