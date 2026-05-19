@@ -146,6 +146,39 @@
 
     <!-- Right Column: Distribution & Quick Actions -->
     <div class="col-12 col-xl-4">
+      <!-- Driver Profile Card -->
+      <div class="premium-card p-4 shadow-premium mb-4 text-center position-relative overflow-hidden" *ngIf="dashboardStats">
+        <div class="profile-avatar-wrapper mb-3 mx-auto bg-light rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 80px; height: 80px; border: 3px solid #eff6ff; margin-top: 10px;">
+          <i class="bi bi-person-circle text-primary fs-1"></i>
+        </div>
+        <h5 class="fw-bold text-slate-900 mb-1">{{ userName }}</h5>
+        <p class="text-xs text-slate-500 uppercase-tracking fw-bold mb-3">Professional Driver</p>
+        
+        <div class="d-flex flex-column gap-2 mb-4 text-start">
+          <div class="p-2 bg-slate-50 rounded-3 border border-slate-100 d-flex justify-content-between align-items-center">
+            <span class="text-xs text-slate-500 fw-semibold">Assigned Vehicle</span>
+            <span class="text-sm fw-bold text-slate-800 d-flex align-items-center gap-1">
+              <i class="bi" [ngClass]="getVehicleIcon(dashboardStats.deliveryVehicleType)"></i>
+              {{ getVehicleName(dashboardStats.deliveryVehicleType) }}
+            </span>
+          </div>
+          <div class="p-2 bg-slate-50 rounded-3 border border-slate-100 d-flex justify-content-between align-items-center">
+            <span class="text-xs text-slate-500 fw-semibold">Duty Status</span>
+            <span class="badge rounded-pill text-xs fw-bold px-2.5 py-1" 
+                  [ngClass]="dashboardStats.driverStatus === 1 ? 'bg-success text-white' : 'bg-danger text-white'">
+              {{ getDriverStatusName(dashboardStats.driverStatus) }}
+            </span>
+          </div>
+        </div>
+
+        <button (click)="toggleStatus()" 
+                [ngClass]="dashboardStats.driverStatus === 1 ? 'btn-danger bg-danger text-white' : 'btn-success bg-success text-white'" 
+                class="btn w-100 rounded-pill py-2.5 fw-bold text-sm shadow-sm border-0 d-flex align-items-center justify-content-center gap-2">
+          <i class="bi" [ngClass]="dashboardStats.driverStatus === 1 ? 'bi-toggle-off' : 'bi-toggle-on'"></i>
+          {{ dashboardStats.driverStatus === 1 ? 'Go Off Duty' : 'Go On Duty' }}
+        </button>
+      </div>
+
       <!-- Status Distribution Chart -->
       <div class="premium-card p-4 shadow-premium mb-4" *ngIf="dashboardStats">
         <h5 class="fw-bold text-slate-900 mb-4">Shipment Breakdown</h5>

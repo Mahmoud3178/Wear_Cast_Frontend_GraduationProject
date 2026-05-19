@@ -319,19 +319,19 @@
             <div class="d-flex flex-column gap-3">
               <div class="p-3 bg-slate-50 rounded-4">
                 <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">State</p>
-                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress.state }}</p>
+                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress?.state || 'N/A' }}</p>
               </div>
               <div class="p-3 bg-slate-50 rounded-4">
                 <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">City</p>
-                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress.city }}</p>
+                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress?.city || 'N/A' }}</p>
               </div>
               <div class="p-3 bg-slate-50 rounded-4">
                 <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Street</p>
-                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress.street }}</p>
+                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress?.street || 'N/A' }}</p>
               </div>
-              <div class="p-3 bg-slate-50 rounded-4" *ngIf="shipment.deliveryAddress.buildingNumber">
+              <div class="p-3 bg-slate-50 rounded-4" *ngIf="shipment.deliveryAddress?.buildingNumber">
                 <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Building Number</p>
-                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress.buildingNumber }}</p>
+                <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress?.buildingNumber }}</p>
               </div>
             </div>
             

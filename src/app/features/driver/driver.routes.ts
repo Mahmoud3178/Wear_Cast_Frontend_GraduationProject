@@ -4,6 +4,7 @@ import { ProfileComponent } from './profile/profile.component';
 import { DriverLayoutComponent } from './driver-layout/driver-layout.component';
 import { ShipmentsListComponent } from './shipments/shipments-list/shipments-list.component';
 import { ShipmentDetailsComponent } from './shipments/shipment-details/shipment-details.component';
+import { DetailOrdersComponent } from './shipments/detail-orders/detail-orders.component';
 
 export const DRIVER_ROUTES: Routes = [
   {
@@ -15,6 +16,7 @@ export const DRIVER_ROUTES: Routes = [
       { path: 'profile', component: ProfileComponent },
       { path: 'shipments', component: ShipmentsListComponent },
       { path: 'shipments/:id', component: ShipmentDetailsComponent },
+      { path: 'detail-orders', component: DetailOrdersComponent },
       {
         path: 'notifications',
         loadComponent: () =>

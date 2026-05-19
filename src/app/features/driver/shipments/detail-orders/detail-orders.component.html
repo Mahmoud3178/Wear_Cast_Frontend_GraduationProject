@@ -1,0 +1,162 @@
+<div class="orders-page-container p-4">
+  <!-- Page Header -->
+  <div class="header-section mb-5 animate-fade-in">
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3">
+      <div>
+        <nav aria-label="breadcrumb" class="mb-2">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a routerLink="/driver/dashboard" class="text-slate-500 text-decoration-none small fw-bold">DASHBOARD</a></li>
+            <li class="breadcrumb-item active text-primary small fw-bold" aria-current="page">DETAILED ORDERS</li>
+          </ol>
+        </nav>
+        <h2 class="fw-bold text-slate-900 mb-1 tracking-tight">Detailed Delivery Orders</h2>
+        <p class="text-slate-500 mb-0">Granular view of all assigned customer orders and packages in your queue.</p>
+      </div>
+      <div>
+        <button (click)="loadAllOrders()" class="btn btn-light-soft rounded-pill px-4 me-2">
+          <i class="bi bi-arrow-clockwise me-2"></i>Refresh List
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-premium mb-3"></div>
+    <p class="text-slate-500 fw-medium">Resolving shipment packages and order items...</p>
+  </div>
+
+  <!-- Alert Notifications -->
+  <div *ngIf="errorMessage" class="alert alert-danger mb-4 rounded-4 shadow-sm border-0 d-flex align-items-center gap-3 animate-fade-in" role="alert">
+    <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+    <div>{{ errorMessage }}</div>
+  </div>
+  <div *ngIf="successMessage" class="alert alert-success mb-4 rounded-4 shadow-sm border-0 d-flex align-items-center gap-3 animate-fade-in" role="alert">
+    <i class="bi bi-check-circle-fill fs-4"></i>
+    <div>{{ successMessage }}</div>
+  </div>
+
+  <!-- Dashboard Overview Cards -->
+  <div *ngIf="!isLoading" class="row g-4 mb-4 animate-fade-in">
+    <div class="col-6 col-md-3">
+      <div class="premium-card p-3 shadow-premium border-0 text-center">
+        <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Total Orders</p>
+        <h3 class="fw-bold text-slate-900 mb-0">{{ totalOrdersCount }}</h3>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="premium-card p-3 shadow-premium border-0 text-center">
+        <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Ready for Pick Up</p>
+        <h3 class="fw-bold text-warning mb-0">{{ readyOrdersCount }}</h3>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="premium-card p-3 shadow-premium border-0 text-center">
+        <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Picked Up</p>
+        <h3 class="fw-bold text-success mb-0">{{ pickedUpOrdersCount }}</h3>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="premium-card p-3 shadow-premium border-0 text-center">
+        <p class="text-xs text-slate-400 fw-bold uppercase-tracking mb-1">Active Shipments</p>
+        <h3 class="fw-bold text-primary mb-0">{{ activeShipmentsCount }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Actions Bar -->
+  <div *ngIf="!isLoading" class="premium-card p-3 mb-4 shadow-premium border-0 animate-fade-in">
+    <div class="d-flex align-items-center gap-3">
+      <div class="flex-grow-1 position-relative">
+        <i class="bi bi-search text-slate-400 position-absolute top-50 start-0 translate-middle-y ms-3"></i>
+        <input type="text" 
+               class="form-control form-control-refined ps-5 rounded-pill" 
+               placeholder="Search by Order ID, Shipment ID, Customer, Store, or City..."
+               [(ngModel)]="searchQuery"
+               (ngModelChange)="applyFilter()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Orders Table -->
+  <div *ngIf="!isLoading && filteredOrders.length > 0" class="premium-card shadow-premium border-0 animate-fade-in">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="bg-slate-50">
+          <tr>
+            <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0">Order ID</th>
+            <th class="py-3 uppercase-tracking text-slate-500 border-0">Shipment</th>
+            <th class="py-3 uppercase-tracking text-slate-500 border-0">Store / Merchant</th>
+            <th class="py-3 uppercase-tracking text-slate-500 border-0">Customer & Destination</th>
+            <th class="py-3 uppercase-tracking text-slate-500 border-0 text-center">Items</th>
+            <th class="py-3 uppercase-tracking text-slate-500 border-0 text-center">Order Status</th>
+            <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0 text-end">Pickup / Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of filteredOrders" class="hover-row">
+            <td class="px-4">
+              <span class="fw-bold text-slate-900">#{{ order.orderId }}</span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <a [routerLink]="['/driver/shipments', order.shipmentId]" class="fw-bold text-primary text-decoration-none">
+                  #{{ order.shipmentId }}
+                </a>
+                <span class="badge" [ngClass]="getShipmentStatusClass(order.shipmentStatus)">
+                  {{ getShipmentStatusName(order.shipmentStatus) }}
+                </span>
+              </div>
+            </td>
+            <td>
+              <span class="fw-bold text-slate-700">{{ order.storeName }}</span>
+            </td>
+            <td>
+              <div class="text-sm fw-semibold text-slate-900">{{ order.customerName }}</div>
+              <div class="text-xs text-slate-500">
+                <i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ order.deliveryCity }}, {{ order.deliveryStreet }}
+              </div>
+            </td>
+            <td class="text-center">
+              <span class="items-count-badge">{{ order.itemsCount }}</span>
+            </td>
+            <td class="text-center">
+              <!-- Order Status Badge -->
+              <span *ngIf="order.status === 'PickedUp'" class="badge bg-success-soft text-success rounded-pill px-3 py-2 fw-bold text-xs d-inline-flex align-items-center gap-1">
+                <i class="bi bi-check-circle-fill"></i> Picked Up
+              </span>
+              <span *ngIf="order.status === 'Ready'" class="badge bg-warning-soft text-warning rounded-pill px-3 py-2 fw-semibold text-xs d-inline-flex align-items-center gap-1">
+                <i class="bi bi-clock-history"></i> Ready for Pickup
+              </span>
+            </td>
+            <td class="px-4 text-end">
+              <!-- Mark Picked Up Button -->
+              <button *ngIf="order.status === 'Ready' && isPickingUpStatus(order)" 
+                      class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-bold text-xs d-inline-flex align-items-center gap-1 shadow-premium-sm" 
+                      (click)="updateOrderPickedUp(order)">
+                <i class="bi bi-box-seam"></i> Mark Picked Up
+              </button>
+
+              <span *ngIf="order.status === 'PickedUp'" class="text-slate-400 text-xs italic">
+                Ready for Route
+              </span>
+              
+              <span *ngIf="order.status === 'Ready' && !isPickingUpStatus(order)" class="text-slate-400 text-xs italic">
+                Awaiting Assignment
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && filteredOrders.length === 0" class="text-center py-5 animate-fade-in">
+    <div class="icon-box-refined bg-light text-slate-400 mx-auto mb-3" style="width: 60px; height: 60px;">
+      <i class="bi bi-receipt fs-3"></i>
+    </div>
+    <h5 class="fw-bold text-slate-700 mb-1">No Orders Found</h5>
+    <p class="text-slate-500 mb-0">No customer orders are currently assigned to you or match your search.</p>
+  </div>
+</div>

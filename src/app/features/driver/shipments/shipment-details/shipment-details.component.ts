@@ -44,8 +44,25 @@ export class ShipmentDetailsComponent implements OnInit {
   loadShipmentDetails() {
     this.isLoading = true;
     this.driverService.getDriverShipmentById(this.shipmentId).subscribe({
-      next: (data) => {
-        this.shipment = data;
+      next: (data: any) => {
+        if (data) {
+          // Defensively map properties in case of casing mismatches from backend
+          this.shipment = {
+            id: data.id ?? data.Id ?? this.shipmentId,
+            deliveryAddress: data.deliveryAddress ?? data.DeliveryAddress ?? { state: '', city: '', street: '' },
+            shipmentStatus: data.shipmentStatus ?? data.ShipmentStatus,
+            orderedAt: data.orderedAt ?? data.OrderedAt ?? data.orderTime ?? data.OrderTime ?? new Date().toISOString(),
+            readyForPickupAt: data.readyForPickupAt ?? data.ReadyForPickupAt,
+            tripStartedAt: data.tripStartedAt ?? data.TripStartedAt,
+            outForDeliveryAt: data.outForDeliveryAt ?? data.OutForDeliveryAt,
+            deliveredAt: data.deliveredAt ?? data.DeliveredAt,
+            customerName: data.customerName ?? data.CustomerName ?? '',
+            customerPhoneNumber: data.customerPhoneNumber ?? data.CustomerPhoneNumber ?? '',
+            orders: this.shipment?.orders ?? []
+          };
+        } else {
+          this.shipment = null;
+        }
         this.loadShipmentItems();
         this.isLoading = false;
       },
@@ -65,36 +82,38 @@ export class ShipmentDetailsComponent implements OnInit {
         const items: any[] = [];
         if (res) {
           // Parse fixed items
-          const fixedPaged = res.fixedItems;
-          const fixedList = fixedPaged?.items ?? [];
+          const fixedPaged = res.fixedItems ?? res.FixedItems;
+          const fixedList = fixedPaged?.items ?? fixedPaged?.Items ?? [];
           fixedList.forEach((i: any) => {
-            const orderId = i.sizes && i.sizes.length > 0 ? i.sizes[0].orderId : null;
+            const sizesList = i.sizes ?? i.Sizes ?? [];
+            const orderId = sizesList && sizesList.length > 0 ? sizesList[0].orderId ?? sizesList[0].OrderId : null;
             items.push({
-              productName: i.productName || 'Fixed Product',
-              quantity: i.totalQuantity || 1,
-              unitPrice: i.unitPrice || 0,
+              productName: i.productName || i.ProductName || 'Fixed Product',
+              quantity: i.totalQuantity || i.TotalQuantity || 1,
+              unitPrice: i.unitPrice || i.UnitPrice || 0,
               orderId: orderId,
               type: 'Fixed',
-              colorName: i.colorName || 'Default',
-              imageUrl: i.imageUrl || null,
-              sizes: i.sizes || []
+              colorName: i.colorName || i.ColorName || 'Default',
+              imageUrl: i.imageUrl || i.ImageUrl || null,
+              sizes: sizesList
             });
           });
 
           // Parse designed items
-          const designedPaged = res.designedItems;
-          const designedList = designedPaged?.items ?? [];
+          const designedPaged = res.designedItems ?? res.DesignedItems;
+          const designedList = designedPaged?.items ?? designedPaged?.Items ?? [];
           designedList.forEach((d: any) => {
-            const orderId = d.sizes && d.sizes.length > 0 ? d.sizes[0].orderId : null;
+            const sizesList = d.sizes ?? d.Sizes ?? [];
+            const orderId = sizesList && sizesList.length > 0 ? sizesList[0].orderId ?? sizesList[0].OrderId : null;
             items.push({
-              productName: d.productName || 'Designed Product',
-              quantity: d.totalQuantity || 1,
-              unitPrice: d.unitPrice || 0,
+              productName: d.productName || d.ProductName || 'Designed Product',
+              quantity: d.totalQuantity || d.TotalQuantity || 1,
+              unitPrice: d.unitPrice || d.UnitPrice || 0,
               orderId: orderId,
               type: 'Designed',
-              colorName: d.colorName || 'Default',
-              imageUrl: d.frontImageUrl || null,
-              sizes: d.sizes || []
+              colorName: d.colorName || d.ColorName || 'Default',
+              imageUrl: d.frontImageUrl || d.FrontImageUrl || null,
+              sizes: sizesList
             });
           });
         }

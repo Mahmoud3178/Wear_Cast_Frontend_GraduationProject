@@ -1,0 +1,131 @@
+.orders-page-container {
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.premium-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.shadow-premium {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.shadow-premium-sm {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+}
+
+.spinner-premium {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f1f5f9;
+  border-top-color: #0d6efd;
+  border-radius: 50%;
+  animation: spin-premium 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin-premium {
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.uppercase-tracking {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.form-control-refined {
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.form-control-refined:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.hover-row {
+  transition: background-color 0.2s ease;
+}
+
+.hover-row:hover {
+  background-color: #f8fafc;
+}
+
+.items-count-badge {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.badge-status {
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Custom Soft Status Badges */
+.bg-success-soft {
+  background-color: #ecfdf5 !important;
+  color: #047857 !important;
+}
+
+.bg-warning-soft {
+  background-color: #fffbe6 !important;
+  color: #d97706 !important;
+}
+
+.bg-primary-soft {
+  background-color: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+.bg-info-soft {
+  background-color: #ecfeff !important;
+  color: #0891b2 !important;
+}
+
+.btn-light-soft {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-light-soft:hover {
+  background-color: #e2e8f0;
+  color: #1e293b;
+}
+
+.icon-box-refined {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}

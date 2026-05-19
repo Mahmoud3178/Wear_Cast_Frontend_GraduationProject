@@ -55,11 +55,14 @@ export class ShippingShipmentDetailsComponent implements OnInit {
         // Fetch order items for items list
         this.shippingService.getShipmentOrderItems(this.shipmentId).subscribe({
           next: (res) => {
-            this.selectedShipmentFixedItems = (res?.fixedItems?.items || []).map((item: any) => ({
+            const fixedList = res?.fixedItems?.items || res?.FixedItems?.Items || res?.fixedItems?.Items || res?.FixedItems?.items || [];
+            const designedList = res?.designedItems?.items || res?.DesignedItems?.Items || res?.designedItems?.Items || res?.DesignedItems?.items || [];
+            
+            this.selectedShipmentFixedItems = fixedList.map((item: any) => ({
               ...item,
               imageUrl: this.resolveImageUrl(item.imageUrl)
             }));
-            this.selectedShipmentDesignedItems = (res?.designedItems?.items || []).map((item: any) => ({
+            this.selectedShipmentDesignedItems = designedList.map((item: any) => ({
               ...item,
               frontImageUrl: this.resolveImageUrl(item.frontImageUrl),
               backImageUrl: item.backImageUrl ? this.resolveImageUrl(item.backImageUrl) : null,
@@ -83,40 +86,49 @@ export class ShippingShipmentDetailsComponent implements OnInit {
         this.shippingService.getOrdersByShipmentId(this.shipmentId).subscribe({
           next: (orders) => {
             let ordersArray: any[] = [];
-            if (Array.isArray(orders)) {
-              ordersArray = orders;
-            } else if (orders && Array.isArray(orders.orders)) {
-              ordersArray = orders.orders;
-            } else if (orders && Array.isArray(orders.items)) {
-              ordersArray = orders.items;
-            }
+            if (orders) {
+              if (Array.isArray(orders)) {
+                ordersArray = orders;
+              } else if (Array.isArray(orders.orders)) {
+                ordersArray = orders.orders;
+              } else if (Array.isArray(orders.Orders)) {
+                ordersArray = orders.Orders;
+              } else if (Array.isArray(orders.items)) {
+                ordersArray = orders.items;
+              }
 
-            if (ordersArray && ordersArray.length > 0) {
-              this.selectedShipmentDetails.orders = ordersArray.map((o: any) => {
-                // Ensure correct string status
-                let statusStr = 'Pending';
-                if (o.status !== undefined && o.status !== null) {
-                  const s = o.status.toString();
-                  if (s === '0' || s === 'Pending') statusStr = 'Pending';
-                  else if (s === '1' || s === 'Paid') statusStr = 'Paid';
-                  else if (s === '2' || s === 'Failed') statusStr = 'Failed';
-                  else if (s === '3' || s === 'Cancelled') statusStr = 'Cancelled';
-                  else if (s === '4' || s === 'Refunded') statusStr = 'Refunded';
-                  else if (s === '5' || s === 'Ready') statusStr = 'Ready';
-                  else if (s === '6' || s === 'PickedUp') statusStr = 'PickedUp';
-                }
-                
-                return {
-                  id: o.id,
-                  orderType: o.orderType === 0 ? 'Standard Store' : 'Custom Tailored',
-                  vendorName: o.vendorName || (o.orderType === 0 ? 'WearCast Store' : 'Design Factory'),
-                  totalAmount: o.totalAmount,
-                  status: statusStr,
-                  recipientName: o.recipientName,
-                  recipientPhoneNumber: o.recipientPhoneNumber,
-                  shippingAddress: o.shippingAddress || { street: 'N/A', city: 'N/A', state: 'N/A' }
-                };
-              });
+              // Merge all other shipment properties from getOrdersByShipmentId to ensure consistency!
+              this.selectedShipmentDetails = {
+                ...this.selectedShipmentDetails,
+                ...orders,
+                orders: ordersArray.map((o: any) => {
+                  const isFixed = o.orderType === 0 || o.orderType === 'Fixed' || o.orderType === 'Standard Store' || o.orderType === 'StandardStore';
+                  
+                  // Ensure correct string status
+                  let statusStr = 'Pending';
+                  if (o.status !== undefined && o.status !== null) {
+                    const s = o.status.toString();
+                    if (s === '0' || s === 'Pending') statusStr = 'Pending';
+                    else if (s === '1' || s === 'Paid') statusStr = 'Paid';
+                    else if (s === '2' || s === 'Failed') statusStr = 'Failed';
+                    else if (s === '3' || s === 'Cancelled') statusStr = 'Cancelled';
+                    else if (s === '4' || s === 'Refunded') statusStr = 'Refunded';
+                    else if (s === '5' || s === 'Ready') statusStr = 'Ready';
+                    else if (s === '6' || s === 'PickedUp') statusStr = 'PickedUp';
+                  }
+
+                  return {
+                    id: o.id,
+                    orderType: isFixed ? 'Standard Store' : 'Custom Tailored',
+                    vendorName: o.vendorName || (isFixed ? 'WearCast Store' : 'Design Factory'),
+                    totalAmount: o.totalAmount,
+                    status: statusStr,
+                    recipientName: o.recipientName,
+                    recipientPhoneNumber: o.recipientPhoneNumber,
+                    shippingAddress: o.shippingAddress || { street: 'N/A', city: 'N/A', state: 'N/A' }
+                  };
+                })
+              };
             }
           },
           error: (err) => console.error('Failed to load nested orders', err)
