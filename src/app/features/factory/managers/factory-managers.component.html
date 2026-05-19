@@ -22,23 +22,14 @@
   </div>
 
   <!-- Email Confirmation Notice -->
-  <div *ngIf="lastCreatedEmail && lastCreatedUserId" class="alert alert-info py-2 small mb-3" role="alert">
+  <div *ngIf="lastCreatedEmail" class="alert alert-info py-2 small mb-3" role="alert">
     <i class="bi bi-envelope-check me-2"></i>
     <span>
       Manager created! They must
-      <a [routerLink]="['/confirm-email/factory-manager']" [queryParams]="{email: lastCreatedEmail, userId: lastCreatedUserId}" class="alert-link">confirm their email</a>
+      <a [routerLink]="['/confirm-email/factory-manager']" [queryParams]="{email: lastCreatedEmail}" class="alert-link">confirm their email</a>
       before signing in.
     </span>
   </div>
-  <div *ngIf="lastCreatedEmail && !lastCreatedUserId" class="alert alert-warning py-2 small mb-3" role="alert">
-    <i class="bi bi-exclamation-triangle me-2"></i>
-    <span>
-      Manager created but User ID was not returned.
-      <a [routerLink]="['/confirm-email/factory-manager']" [queryParams]="{email: lastCreatedEmail}" class="alert-link">Manually confirm email here</a>
-      (you'll need the User ID from the backend team or check browser console).
-    </span>
-  </div>
-
   <!-- Error alert -->
   <div *ngIf="errorMsg" class="alert alert-danger d-flex align-items-center py-2 small" role="alert">
     <i class="bi bi-exclamation-triangle-fill me-2"></i>

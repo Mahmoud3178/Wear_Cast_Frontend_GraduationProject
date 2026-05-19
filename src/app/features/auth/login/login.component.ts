@@ -5,8 +5,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CustomerNavComponent } from '../../customer/shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../../customer/shared/customer-footer/customer-footer.component';
-import { pendingCustomerUserIdStorageKey } from '../../../core/services/auth.service';
-
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -28,7 +26,6 @@ export class LoginComponent implements OnInit {
   // New properties for inline email verification
   showConfirmBox = false;
   confirmCode = '';
-  cachedUserId = '';
   verificationError = '';
   verificationSuccess = '';
   verifying = false;
@@ -85,19 +82,9 @@ export class LoginComponent implements OnInit {
           // Call resend confirmation email
           this.auth.resendConfirmationEmail(email).subscribe({
             next: () => {
-              // And retrieve user id
-              this.auth.getUserId(email, this.form.password).subscribe({
-                next: (idRes) => {
-                  this.submitting = false;
-                  this.cachedUserId = idRes.userId;
-                  this.showConfirmBox = true;
-                  this.errorMessage = '';
-                },
-                error: (idErr) => {
-                  this.submitting = false;
-                  this.errorMessage = idErr.message || 'Failed to initialize verification. Please try again.';
-                }
-              });
+              this.submitting = false;
+              this.showConfirmBox = true;
+              this.errorMessage = '';
             },
             error: (resendErr) => {
               this.submitting = false;
@@ -118,7 +105,13 @@ export class LoginComponent implements OnInit {
     this.verificationSuccess = '';
     this.verifying = true;
 
-    this.auth.confirmCustomerEmail(this.cachedUserId, this.confirmCode.trim()).subscribe({
+    const email = this.form.email.trim();
+    if (!email) {
+      this.verificationError = 'Email is required.';
+      this.verifying = false;
+      return;
+    }
+    this.auth.confirmCustomerEmail(email, this.confirmCode.trim()).subscribe({
       next: () => {
         this.verifying = false;
         this.verificationSuccess = 'Email confirmed successfully! Logging you in...';

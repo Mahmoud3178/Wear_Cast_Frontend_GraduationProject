@@ -2,10 +2,7 @@ import { Component } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import {
-  AuthService,
-  pendingCustomerUserIdStorageKey
-} from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-register-customer',
@@ -54,21 +51,12 @@ export class RegisterCustomerComponent {
 
     this.submitting = true;
     this.auth.registerCustomer(this.form).subscribe({
-      next: res => {
+      next: () => {
         this.submitting = false;
         this.auth.saveCustomerProfileFromRegister(this.form);
         const email = this.form.email.trim();
-        if (res.userId && email) {
-          sessionStorage.setItem(
-            pendingCustomerUserIdStorageKey(email),
-            res.userId
-          );
-        }
         void this.router.navigate(['/confirm-email/customer'], {
-          queryParams: {
-            email,
-            userId: res.userId ?? ''
-          }
+          queryParams: { email }
         });
       },
       error: (e: Error) => {

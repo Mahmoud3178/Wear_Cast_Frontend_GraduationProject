@@ -6,8 +6,6 @@ import {
   FactoryApiService,
   FactoryRegisterForm
 } from '../../../core/services/factory-api.service';
-import { pendingCustomerUserIdStorageKey } from '../../../core/services/auth.service';
-
 @Component({
   selector: 'app-factory-register',
   standalone: true,
@@ -72,19 +70,13 @@ export class FactoryRegisterComponent {
 
     this.submitting = true;
     this.factoryApi.createFactory(this.form).subscribe({
-      next: ({ userManagerId }) => {
+      next: () => {
         this.submitting = false;
         this.successMessage =
           'Factory created. Confirm your email with the code we sent you.';
         const email = this.form.managerEmail.trim();
-        if (email) {
-          sessionStorage.setItem(pendingCustomerUserIdStorageKey(email), userManagerId);
-        }
         void this.router.navigate(['/confirm-email/factory-manager'], {
-          queryParams: {
-            email,
-            userId: userManagerId
-          }
+          queryParams: { email }
         });
       },
       error: (e: Error) => {

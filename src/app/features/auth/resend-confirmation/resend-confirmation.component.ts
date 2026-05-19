@@ -2,11 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import {
-  AuthService,
-  pendingCustomerUserIdStorageKey,
-  pendingFactoryUserIdStorageKey
-} from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-resend-confirmation',
@@ -17,7 +13,7 @@ import {
 export class ResendConfirmationComponent implements OnInit {
   email = '';
   type: 'customer' | 'factory-manager' = 'customer';
-  
+
   submitting = false;
   errorMessage = '';
   successMessage = '';
@@ -39,26 +35,25 @@ export class ResendConfirmationComponent implements OnInit {
       this.errorMessage = 'Please enter your email.';
       return;
     }
-    
+
     this.submitting = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    const obs$ = this.type === 'factory-manager' 
+    const obs$ = this.type === 'factory-manager'
       ? this.auth.resendFactoryManagerConfirmationEmail(em)
       : this.auth.resendConfirmationEmail(em);
 
     obs$.subscribe({
-      next: (res) => {
+      next: () => {
         this.submitting = false;
-        if (res.userId) {
-          if (this.type === 'factory-manager') {
-            sessionStorage.setItem(pendingFactoryUserIdStorageKey(em), res.userId);
-          } else {
-            sessionStorage.setItem(pendingCustomerUserIdStorageKey(em), res.userId);
-          }
-        }
-        void this.router.navigate([`/confirm-email/${this.type}`], { queryParams: { email: em } });
+        this.successMessage = 'A new confirmation code was sent. Check your inbox.';
+        setTimeout(
+          () => void this.router.navigate([`/confirm-email/${this.type}`], {
+            queryParams: { email: em }
+          }),
+          1200
+        );
       },
       error: (e: Error) => {
         this.submitting = false;

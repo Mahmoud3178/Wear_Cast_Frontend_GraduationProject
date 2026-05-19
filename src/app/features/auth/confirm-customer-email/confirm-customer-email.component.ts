@@ -3,10 +3,7 @@ import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
-import {
-  AuthService,
-  pendingCustomerUserIdStorageKey
-} from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-confirm-customer-email',
@@ -16,7 +13,6 @@ import {
 })
 export class ConfirmCustomerEmailComponent implements OnInit, OnDestroy {
   email = '';
-  userId = '';
   code = '';
 
   errorMessage = '';
@@ -34,15 +30,6 @@ export class ConfirmCustomerEmailComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.sub = this.route.queryParamMap.subscribe(params => {
       this.email = params.get('email')?.trim() ?? '';
-      this.userId = params.get('userId')?.trim() ?? '';
-      if (!this.userId && this.email) {
-        const stored = sessionStorage.getItem(
-          pendingCustomerUserIdStorageKey(this.email)
-        );
-        if (stored) {
-          this.userId = stored;
-        }
-      }
     });
   }
 
@@ -57,11 +44,10 @@ export class ConfirmCustomerEmailComponent implements OnInit, OnDestroy {
   confirm(): void {
     this.errorMessage = '';
     this.successMessage = '';
-    const uid = this.userId.trim();
+    const em = this.email.trim();
     const c = this.code.trim();
-    if (!uid) {
-      this.errorMessage =
-        'User ID is missing. It is saved automatically after you register on this device, or paste the ID from your registration success screen.';
+    if (!em) {
+      this.errorMessage = 'Enter the email address you used when registering.';
       return;
     }
     if (c.length < 4) {
@@ -69,15 +55,12 @@ export class ConfirmCustomerEmailComponent implements OnInit, OnDestroy {
       return;
     }
     this.submitting = true;
-    this.auth.confirmCustomerEmail(uid, c).subscribe({
+    this.auth.confirmCustomerEmail(em, c).subscribe({
       next: () => {
         this.submitting = false;
-        if (this.email) {
-          sessionStorage.removeItem(pendingCustomerUserIdStorageKey(this.email));
-        }
         this.successMessage = 'Email confirmed. You can sign in now.';
         setTimeout(() => void this.router.navigate(['/login'], {
-          queryParams: this.email ? { email: this.email } : {}
+          queryParams: { email: em }
         }), 1200);
       },
       error: (e: Error) => {
@@ -88,5 +71,4 @@ export class ConfirmCustomerEmailComponent implements OnInit, OnDestroy {
       }
     });
   }
-
 }

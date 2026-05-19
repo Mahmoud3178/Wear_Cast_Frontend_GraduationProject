@@ -37,9 +37,8 @@ export class FactoryManagersComponent implements OnInit {
   errorMsg = '';
   successMsg = '';
 
-  /** Track the last created manager's email and userId for confirmation link. */
+  /** Track the last created manager's email for confirmation link. */
   lastCreatedEmail = '';
-  lastCreatedUserId = '';
 
   /** Track managers created in this session for quick reference. */
   createdManagers: { email: string; name: string }[] = [];
@@ -141,7 +140,6 @@ export class FactoryManagersComponent implements OnInit {
           this.successMsg =
             res.message || 'Factory manager created successfully!';
           this.lastCreatedEmail = this.form.email.trim();
-          this.lastCreatedUserId = res.userId || '';
           this.loadManagers();
           this.createdManagers.push({
             email: this.form.email.trim(),

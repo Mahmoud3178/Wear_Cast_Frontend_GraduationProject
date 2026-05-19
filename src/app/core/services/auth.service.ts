@@ -56,13 +56,28 @@ export interface CustomerRegisterForm {
   buildingNumber: string;
 }
 
-/** Session key so "confirm email" can recover userId after register (API needs userId + code). */
+/** @deprecated Backend no longer returns userId for email confirmation. */
 export function pendingCustomerUserIdStorageKey(email: string): string {
   return `wearcast:pendingCustomerUserId:${email.trim().toLowerCase()}`;
 }
 
+/** @deprecated Backend no longer returns userId for email confirmation. */
 export function pendingFactoryUserIdStorageKey(email: string): string {
   return `wearcast:pendingFactoryUserId:${email.trim().toLowerCase()}`;
+}
+
+function authEmailJson(email: string): { email: string; Email: string } {
+  const em = email.trim();
+  return { email: em, Email: em };
+}
+
+function confirmEmailJson(
+  email: string,
+  code: string
+): { email: string; Email: string; code: string; Code: string } {
+  const em = email.trim();
+  const c = code.trim();
+  return { email: em, Email: em, code: c, Code: c };
 }
 
 export interface RegisterCustomerResult {
@@ -170,21 +185,13 @@ export class AuthService {
   }
 
   /** Ask the API to send another confirmation email (same address used at registration). */
-  resendConfirmationEmail(email: string): Observable<{ userId?: string }> {
+  resendConfirmationEmail(email: string): Observable<void> {
     const url = `${this.apiUrl}/api/auth/resend-confirmation-email`;
-    return this.http.post<ApiEnvelope<any>>(url, { email: email.trim() }).pipe(
+    return this.http.post<ApiEnvelope>(url, authEmailJson(email)).pipe(
       map(body => {
         if (!body.isSuccess) {
           throw this.apiFailure(body);
         }
-        const d = body.data;
-        let userId: string | undefined;
-        if (typeof d === 'string') {
-          userId = d;
-        } else if (d && typeof d === 'object') {
-          userId = d['userId'] ?? d['UserId'] ?? d['userid'];
-        }
-        return { userId: typeof userId === 'string' ? userId : undefined };
       }),
       catchError(err => this.handleHttpError(err))
     );
@@ -228,14 +235,11 @@ export class AuthService {
     );
   }
 
-  /** Customer: POST /api/auth/confirm-email — body { userId, code }. */
-  confirmCustomerEmail(userId: string, code: string): Observable<void> {
+  /** Customer: POST /api/auth/confirm-email — body { email, code }. */
+  confirmCustomerEmail(email: string, code: string): Observable<void> {
     const url = `${this.apiUrl}/api/auth/confirm-email`;
     return this.http
-      .post<ApiEnvelope>(url, {
-        userId: userId.trim(),
-        code: code.trim()
-      })
+      .post<ApiEnvelope>(url, confirmEmailJson(email, code))
       .pipe(
         map(body => {
           if (!body.isSuccess) {
@@ -280,16 +284,13 @@ export class AuthService {
   }
 
   /**
-   * Factory manager: POST /api/auth/confirm-email — body { userId, code }.
+   * Factory manager: POST /api/auth/confirm-email — body { email, code }.
    * Uses generic auth endpoint (factory managers are users too).
    */
-  confirmFactoryManagerEmail(userId: string, code: string): Observable<void> {
+  confirmFactoryManagerEmail(email: string, code: string): Observable<void> {
     const url = `${this.apiUrl}/api/auth/confirm-email`;
     return this.http
-      .post<ApiEnvelope>(url, {
-        userId: userId.trim(),
-        code: code.trim()
-      })
+      .post<ApiEnvelope>(url, confirmEmailJson(email, code))
       .pipe(
         map(body => {
           if (!body.isSuccess) {
@@ -301,21 +302,13 @@ export class AuthService {
   }
 
   /** Resend factory manager confirmation using generic endpoint. */
-  resendFactoryManagerConfirmationEmail(email: string): Observable<{ userId?: string }> {
+  resendFactoryManagerConfirmationEmail(email: string): Observable<void> {
     const url = `${this.apiUrl}/api/auth/resend-confirmation-email`;
-    return this.http.post<ApiEnvelope<any>>(url, { email: email.trim() }).pipe(
+    return this.http.post<ApiEnvelope>(url, authEmailJson(email)).pipe(
       map(body => {
         if (!body.isSuccess) {
           throw this.apiFailure(body);
         }
-        const d = body.data;
-        let userId: string | undefined;
-        if (typeof d === 'string') {
-          userId = d;
-        } else if (d && typeof d === 'object') {
-          userId = d['userId'] ?? d['UserId'] ?? d['userid'];
-        }
-        return { userId: typeof userId === 'string' ? userId : undefined };
       }),
       catchError(err => this.handleHttpError(err))
     );
