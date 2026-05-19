@@ -31,7 +31,8 @@
               "node_modules/bootstrap-icons/font/bootstrap-icons.css",
               "src/styles.css",
               "src/app/features/factory/factory-portal.css",
-              "src/styles/wc-theme-baby-blue.css"
+              "src/styles/wc-theme-baby-blue.css",
+              "src/styles/wc-try-on.css"
             ],
             "scripts": [
               "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"

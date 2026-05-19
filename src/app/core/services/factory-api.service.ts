@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -764,6 +764,28 @@ export class FactoryApiService {
       map(res => this.normalizeFactoryManagerList(res)),
       catchError(() => of([]))
     );
+  }
+
+  /** DELETE /api/factories/managers/{factoryManagerId} */
+  deleteFactoryManager(factoryManagerId: number, reason: string): Observable<void> {
+    const url = `${this.base}/api/factories/managers/${factoryManagerId}`;
+    const trimmed = reason.trim();
+    return this.http
+      .request<ApiEnvelope | null>('DELETE', url, {
+        headers: new HttpHeaders({
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        }),
+        body: { reason: trimmed, Reason: trimmed }
+      })
+      .pipe(
+        map(body => {
+          if (body && typeof body === 'object' && 'isSuccess' in body && !body.isSuccess) {
+            throw this.envErr(body as ApiEnvelope);
+          }
+        }),
+        catchError(e => this.mapErr(e))
+      );
   }
 
   private normalizeFactoryManagerList(res: unknown): FactoryManager[] {

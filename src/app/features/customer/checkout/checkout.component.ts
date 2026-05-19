@@ -52,9 +52,16 @@ export class CheckoutComponent implements OnInit {
     this.loading.set(true);
     forkJoin({
       shippingInfo: this.checkoutService.getShippingInfo().pipe(catchError(() => of(null))),
-      fixed: this.cartService.getFixedItems().pipe(catchError(() => of([]))),
-      designs: this.cartService.getDesignItems().pipe(catchError(() => of([])))
-    }).subscribe(({ shippingInfo, fixed, designs }) => {
+      cart: this.cartService.getMyCart().pipe(catchError(() => of({
+        fixedItems: [],
+        designedItems: [],
+        subTotal: 0,
+        deliveryFee: 0,
+        grandTotal: 0
+      })))
+    }).subscribe(({ shippingInfo, cart }) => {
+      const fixed = cart.fixedItems;
+      const designs = cart.designedItems;
       if (shippingInfo) {
         this.shippingForm = { ...this.shippingForm, ...shippingInfo };
       }

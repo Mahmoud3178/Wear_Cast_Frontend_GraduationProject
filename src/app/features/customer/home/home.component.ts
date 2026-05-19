@@ -13,6 +13,10 @@ import { of } from 'rxjs';
 import { CustomerNavComponent } from '../shared/customer-nav/customer-nav.component';
 import { CustomerFooterComponent } from '../shared/customer-footer/customer-footer.component';
 import { environment } from '../../../../environments/environment';
+import {
+  CustomerCatalogService,
+  type CatalogProductCard
+} from '../../../core/services/customer-catalog.service';
 
 const LANDING_SEEN_KEY = 'wearcast:landingSeen';
 
@@ -44,49 +48,55 @@ export class HomeComponent implements OnInit, AfterViewInit {
   bestSellers: NewArrivalProduct[] = [];
   bestSellersLoading = true;
 
+  recommendations: CatalogProductCard[] = [];
+  recommendationsLoading = true;
+
   readonly productShowcase: ReadonlyArray<{
     label: string;
     image: string;
-    link: string;
+    categorySlug: string;
     blobClasses: string[];
   }> = [
     {
       label: 'T-Shirts',
       image: '/assets/Shirts.webp',
-      link: '/customer/category',
+      categorySlug: 't-shirts',
       blobClasses: ['wc-blob', 'wc-blob--mint']
     },
     {
       label: 'Hoodies',
       image: '/assets/Hoodies.webp',
-      link: '/customer/category',
+      categorySlug: 'hoodies',
       blobClasses: ['wc-blob', 'wc-blob--orange']
     },
     {
       label: 'Accessories',
       image: '/assets/Accessoires.webp',
-      link: '/customer/category',
+      categorySlug: 'accessories',
       blobClasses: ['wc-blob', 'wc-blob--pink']
     },
     {
       label: 'Sweatshirts',
       image: '/assets/Sweatshirts.webp',
-      link: '/customer/category',
+      categorySlug: 'sweatshirts',
       blobClasses: ['wc-blob', 'wc-blob--yellow']
     },
     {
       label: 'Mugs & Drinkwear',
       image: '/assets/mug.webp',
-      link: '/customer/category',
+      categorySlug: 'mugs-drinkwear',
       blobClasses: ['wc-blob', 'wc-blob--indigo', 'wc-blob--circle']
     },
     {
       label: 'Caps & Hats',
       image: '/assets/Caps.webp',
-      link: '/customer/category',
+      categorySlug: 'caps-hats',
       blobClasses: ['wc-blob', 'wc-blob--sky', 'wc-blob--cap']
     }
   ];
+
+  readonly newArrivalsViewAllQuery = { sort: 'Newest' };
+  readonly bestSellersViewAllQuery = { sort: 'BestSeller' };
 
   readonly parallaxCards = [
     {
@@ -103,7 +113,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
   ] as const;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly catalog: CustomerCatalogService
+  ) {}
 
   ngOnInit(): void {
     if (typeof localStorage !== 'undefined') {
@@ -111,6 +124,29 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
     this.loadNewArrivals();
     this.loadBestSellers();
+    this.loadRecommendations();
+  }
+
+  categoryLink(slug: string): string[] {
+    return ['/customer/category'];
+  }
+
+  categoryQuery(slug: string): { category: string } {
+    return { category: slug };
+  }
+
+  private loadRecommendations(): void {
+    this.recommendationsLoading = true;
+    this.catalog.getRecommendations(8).subscribe({
+      next: items => {
+        this.recommendations = items;
+        this.recommendationsLoading = false;
+      },
+      error: () => {
+        this.recommendations = [];
+        this.recommendationsLoading = false;
+      }
+    });
   }
 
   ngAfterViewInit(): void {

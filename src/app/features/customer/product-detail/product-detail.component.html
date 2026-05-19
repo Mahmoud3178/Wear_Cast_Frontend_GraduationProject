@@ -125,6 +125,7 @@
             [disabled]="!canTryOn() || tryOnBusy"
             title="Upload your photo to preview this colorway on you"
           >
+            <i class="bi bi-camera-fill" aria-hidden="true"></i>
             Try it on
           </button>
           <button class="wc-btn-size-table" (click)="openSizeTableModal()"
@@ -311,6 +312,38 @@
       </div>
     </section>
 
+    <section class="wc-bestsellers-section wc-recommendations-section" *ngIf="!loading && product">
+      <div class="wc-section-container">
+        <div class="wc-section-header">
+          <h2>Recommended for you</h2>
+          <p class="wc-section-subtitle">You might also like these</p>
+        </div>
+
+        <div class="wc-bestsellers-loading" *ngIf="recommendationsLoading">
+          <div class="wc-spinner wc-spinner--sm"></div>
+          <span>Loading recommendations...</span>
+        </div>
+
+        <div class="wc-bestsellers-grid" *ngIf="!recommendationsLoading">
+          <a [routerLink]="['/customer/product', item.id]"
+             class="wc-bestseller-card"
+             *ngFor="let item of recommendations">
+            <div class="wc-bestseller-image">
+              <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name">
+              <div *ngIf="!item.imageUrl" class="wc-bestseller-placeholder">👕</div>
+            </div>
+            <div class="wc-bestseller-info">
+              <h4 class="wc-bestseller-name">{{ item.name }}</h4>
+              <p class="wc-bestseller-price">EGP {{ item.price | number:'1.2-2' }}</p>
+              <div class="wc-bestseller-tags" *ngIf="item.category || item.categoryName">
+                <span class="wc-bestseller-tag">{{ item.category || item.categoryName }}</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
   </ng-container>
 
   <app-customer-footer></app-customer-footer>
@@ -415,59 +448,24 @@
   </div>
 </div>
 
-<!-- ══════════════════════ Try it on modal ══════════════════════ -->
-<div class="wc-modal-backdrop" *ngIf="showTryOnModal" (click)="!tryOnBusy && closeTryOnModal()"></div>
-<div class="wc-tryon-modal" *ngIf="showTryOnModal" role="dialog" aria-labelledby="tryon-modal-title">
-  <div class="wc-size-modal-header">
-    <h3 id="tryon-modal-title">Try it on</h3>
-    <button type="button" class="wc-modal-close" [disabled]="tryOnBusy" (click)="closeTryOnModal()">×</button>
-  </div>
-  <p class="wc-size-modal-sub">
-    Upload a clear photo of yourself. We’ll send it with the <strong>selected color</strong> garment image to the try-on service.
-  </p>
+<app-virtual-try-on-modal
+  [open]="showTryOnModal"
+  [busy]="tryOnBusy"
+  [error]="tryOnError || null"
+  [personFileName]="tryOnPersonFile?.name ?? null"
+  [canRun]="!!tryOnPersonFile"
+  [garmentImageUrl]="colorDetail?.imageUrl ?? null"
+  garmentLabel="Garment"
+  garmentAlt="Selected color garment"
+  [resultUrl]="tryOnResultUrl"
+  [progress]="tryOnProgress"
+  [statusMessage]="tryOnStatusMessage"
+  titleId="tryon-modal-title"
+  title="Virtual try-on"
+  subtitle="Preview this colorway on you with AI"
+  icon="👕"
+  (closed)="closeTryOnModal()"
+  (personFileChange)="onTryOnPersonSelected($event)"
+  (runTryOn)="startVirtualTryOn()"
+/>
 
-  <div class="wc-tryon-field">
-    <label class="wc-tryon-label" for="tryon-person-input">Your photo</label>
-    <input
-      id="tryon-person-input"
-      type="file"
-      accept="image/*"
-      class="wc-tryon-file"
-      [disabled]="tryOnBusy"
-      (change)="onTryOnPersonSelected($event)"
-    />
-    <span class="wc-tryon-hint" *ngIf="tryOnPersonFile">{{ tryOnPersonFile.name }}</span>
-  </div>
-
-  <div class="wc-tryon-garment-preview" *ngIf="colorDetail && colorDetail.imageUrl">
-    <span class="wc-tryon-label">Garment (this color)</span>
-    <img [src]="colorDetail.imageUrl" alt="Selected color garment" class="wc-tryon-thumb" />
-  </div>
-
-  <div *ngIf="tryOnError" class="wc-cart-error wc-tryon-error">{{ tryOnError }}</div>
-
-  <div class="wc-tryon-progress" *ngIf="tryOnBusy || tryOnProgress != null || tryOnStatusMessage">
-    <div class="wc-tryon-progress-bar" *ngIf="tryOnProgress != null">
-      <div class="wc-tryon-progress-fill" [style.width.%]="tryOnProgress"></div>
-    </div>
-    <p class="wc-tryon-status">{{ tryOnStatusMessage || (tryOnBusy ? 'Working…' : '') }}</p>
-  </div>
-
-  <div class="wc-tryon-result" *ngIf="tryOnResultUrl">
-    <p class="wc-tryon-label">Result</p>
-    <img [src]="tryOnResultUrl" alt="Try-on result" class="wc-tryon-result-img" />
-  </div>
-
-  <div class="wc-size-modal-footer wc-tryon-footer">
-    <button type="button" class="wc-btn-outline-dark" [disabled]="tryOnBusy" (click)="closeTryOnModal()">Close</button>
-    <button
-      type="button"
-      class="wc-btn-add-cart"
-      [disabled]="tryOnBusy || !tryOnPersonFile"
-      (click)="startVirtualTryOn()"
-    >
-      <span *ngIf="tryOnBusy" class="wc-dot-loader"></span>
-      {{ tryOnBusy ? 'Running…' : 'Run try-on' }}
-    </button>
-  </div>
-</div>

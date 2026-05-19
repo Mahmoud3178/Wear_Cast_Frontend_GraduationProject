@@ -93,6 +93,16 @@
         <div id="pd-rating" class="pd-rating" style="display:none;"></div>
       </a>
       <button type="button" id="product-details-open" class="details-link">See product details &gt;</button>
+      <button
+        type="button"
+        class="wc-design-tryon-btn"
+        (click)="openTryOnModal()"
+        [disabled]="!canTryOn() || tryOnBusy"
+        title="Upload your photo to preview this product on you"
+      >
+        <i class="bi bi-camera-fill" aria-hidden="true"></i>
+        Try it on
+      </button>
       <p class="print-method">Print method: <strong>Digital Direct</strong></p>
 
       <div class="color-section">
@@ -315,7 +325,7 @@
         <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name">
         <div *ngIf="!p.imageUrl" class="no-img">No Image</div>
         <h4 class="h6 mb-1 text-truncate text-white">{{ p.name }}</h4>
-        <p class="small text-muted mb-0" *ngIf="p.price">${{ p.price }}</p>
+        <p class="small text-muted mb-0" *ngIf="p.price">EGP {{ p.price }}</p>
         <p class="small text-muted mb-0">Audience: {{ p.targetAudienceLabel || 'All' }}</p>
         <p class="small text-muted mb-0">
           ★ {{ (p.averageRating ?? 0) | number:'1.1-1' }} · {{ p.reviewCount ?? 0 }} reviews
@@ -678,5 +688,27 @@
     </div>
   </div>
 </section>
+
+<app-virtual-try-on-modal
+  [open]="showTryOnModal"
+  [busy]="tryOnBusy"
+  [error]="tryOnError || null"
+  [personFileName]="tryOnPersonFile?.name ?? null"
+  [canRun]="!!tryOnPersonFile"
+  [garmentImageUrl]="tryOnGarmentPreviewUrl"
+  garmentLabel="Your design"
+  garmentAlt="Rendered front design"
+  [resultUrl]="tryOnResultUrl"
+  [progress]="tryOnProgress"
+  [statusMessage]="tryOnStatusMessage"
+  titleId="design-tryon-title"
+  title="Virtual try-on"
+  subtitle="Uses your rendered front design (product + artwork)"
+  icon="✨"
+  (closed)="closeTryOnModal()"
+  (personFileChange)="onTryOnPersonSelected($event)"
+  (runTryOn)="startVirtualTryOn()"
+/>
+
 
 <app-customer-footer></app-customer-footer>

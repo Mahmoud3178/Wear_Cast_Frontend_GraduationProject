@@ -10,13 +10,11 @@
       <a class="wc-cart-continue" routerLink="/customer/home">← Continue shopping</a>
     </header>
 
-    <!-- Loading State -->
     <div class="wc-cart-loading" *ngIf="loading()">
       <div class="wc-spinner"></div>
       <p>Loading your cart…</p>
     </div>
 
-    <!-- Error State -->
     <div class="wc-cart-error" *ngIf="!loading() && error()">
       <p>⚠️ {{ error() }}</p>
       <button type="button" class="wc-btn-retry" (click)="ngOnInit()">Retry</button>
@@ -33,7 +31,6 @@
       </button>
     </div>
 
-    <!-- Empty State -->
     <div class="wc-cart-empty" *ngIf="!loading() && !error() && items().length === 0">
       <div class="wc-empty-icon" aria-hidden="true">🛒</div>
       <h2>Your cart is empty</h2>
@@ -41,11 +38,9 @@
       <a routerLink="/customer/home" class="wc-btn-primary wc-btn-empty-cta">Start shopping</a>
     </div>
 
-    <!-- Main Cart Layout -->
     <div class="wc-cart-layout" *ngIf="!loading() && !error() && items().length > 0">
       <div class="wc-cart-items">
-        <article class="cart-item" *ngFor="let item of items()">
-          <!-- Thumbnail -->
+        <article class="cart-item" *ngFor="let item of items()" [class.cart-item--unavailable]="item.unavailable">
           <div class="item-thumb" [class.item-thumb--design]="item.type === 'design'">
             <img
               *ngIf="item.imageUrl"
@@ -55,90 +50,84 @@
             />
           </div>
 
-          <!-- Info -->
-          <div class="item-info">
+          <div class="item-body">
             <div class="item-top">
-              <div>
+              <div class="item-title-block">
                 <h2>{{ item.name }}</h2>
-                <p class="meta">{{ item.meta }}</p>
                 <div class="item-badges">
                   <span class="item-type-badge" [class.item-type-badge--design]="item.type === 'design'">
-                    {{ item.type === 'design' ? '✏️ Custom Design' : '🏷️ Fixed Product' }}
+                    {{ item.type === 'design' ? 'Custom design' : 'Fixed product' }}
                   </span>
-                  <span *ngIf="item.type === 'design' && item.sizes?.length" class="item-size-badge">
-                    {{ item.sizes!.length }} size{{ item.sizes!.length === 1 ? '' : 's' }}
-                  </span>
+                  <span *ngIf="item.unavailable" class="item-type-badge item-type-badge--warn">Unavailable</span>
                 </div>
               </div>
               <button
                 type="button"
                 class="item-remove item-remove--icon"
-                aria-label="Delete item"
-                title="Delete item"
+                aria-label="Remove item"
+                title="Remove item"
                 (click)="removeItem(item)"
               >
                 <i class="bi bi-trash"></i>
               </button>
             </div>
 
-            <div class="item-pricing mb-2">
-              <p class="price">{{ item.price | currency:'EGP':'symbol':'1.0-0' }}</p>
-              <p class="unit">per item</p>
-            </div>
-          </div>
+            <ul class="cart-price-breakdown" *ngIf="item.priceBreakdown?.length">
+              <li *ngFor="let row of item.priceBreakdown">
+                <span>{{ row.label }}</span>
+                <span>{{ row.amount | currency:'EGP':'symbol':'1.0-0' }}</span>
+              </li>
+            </ul>
 
-          <!-- Quantity / Sizes -->
-          <div class="item-sizes-container">
-            <!-- For Design Items (sizes) -->
-            <div *ngIf="item.type === 'design' && item.sizes?.length">
-              <div class="item-qty-row mb-2 d-flex align-items-center justify-content-between" *ngFor="let s of item.sizes">
-                <div class="d-flex align-items-center">
-                  <span class="badge bg-light text-dark border me-3" style="width: 60px">{{ s.sizeLabel }}</span>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                  <div class="item-qty" aria-label="Quantity">
-                    <button type="button" aria-label="Decrease quantity" (click)="decreaseQty(item, s.sizeEnum)">−</button>
+            <ul class="cart-size-list" *ngIf="item.sizes?.length">
+              <li class="cart-size-list__head" aria-hidden="true">
+                <span>Size</span>
+                <span class="cart-size-list__head-qty">Quantity</span>
+              </li>
+              <li class="cart-size-row" *ngFor="let s of item.sizes">
+                <span class="cart-size-row__label">{{ s.sizeLabel }}</span>
+                <div class="cart-size-row__qty">
+                  <div class="item-qty" [attr.aria-label]="'Quantity for size ' + s.sizeLabel">
+                    <button type="button" class="item-qty__btn" aria-label="Decrease" (click)="decreaseQty(item, s.sizeEnum)">−</button>
                     <span class="qty-value">{{ s.quantity }}</span>
-                    <button type="button" aria-label="Increase quantity" (click)="increaseQty(item, s.sizeEnum)">+</button>
+                    <button type="button" class="item-qty__btn" aria-label="Increase" (click)="increaseQty(item, s.sizeEnum)">+</button>
                   </div>
                 </div>
-              </div>
-            </div>
+              </li>
+            </ul>
 
-            <div *ngIf="item.type === 'design' && (!item.sizes || item.sizes.length === 0)" class="item-qty-row">
-              <div class="item-qty" aria-label="Quantity">
-                <button type="button" aria-label="Decrease quantity" (click)="decreaseQty(item)">−</button>
-                <span class="qty-value">{{ item.quantity }}</span>
-                <button type="button" aria-label="Increase quantity" (click)="increaseQty(item)">+</button>
-              </div>
-            </div>
-
-            <!-- For Fixed Items (grouped sizes) -->
-            <div *ngIf="item.type === 'fixed' && item.sizes">
-              <div class="item-qty-row mb-2 d-flex align-items-center justify-content-between" *ngFor="let s of item.sizes">
-                <div class="d-flex align-items-center">
-                  <span class="badge bg-light text-dark border me-3" style="width: 50px">{{ s.sizeLabel }}</span>
-                </div>
-                <div class="d-flex align-items-center gap-3">
+            <div class="cart-size-list cart-size-list--single" *ngIf="!item.sizes?.length">
+              <div class="cart-size-row">
+                <span class="cart-size-row__label">Qty</span>
+                <div class="cart-size-row__qty">
                   <div class="item-qty" aria-label="Quantity">
-                    <button type="button" aria-label="Decrease quantity" (click)="decreaseQty(item, s.sizeEnum)">−</button>
-                    <span class="qty-value">{{ s.quantity }}</span>
-                    <button type="button" aria-label="Increase quantity" (click)="increaseQty(item, s.sizeEnum)">+</button>
+                    <button type="button" class="item-qty__btn" (click)="decreaseQty(item)">−</button>
+                    <span class="qty-value">{{ item.quantity }}</span>
+                    <button type="button" class="item-qty__btn" (click)="increaseQty(item)">+</button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <aside class="item-aside">
+            <p class="item-aside__label">Item total</p>
+            <p class="item-aside__amount">{{ item.lineTotal | currency:'EGP':'symbol':'1.0-0' }}</p>
+            <p class="item-aside__meta">{{ item.quantity }} {{ item.quantity === 1 ? 'piece' : 'pieces' }}</p>
+          </aside>
         </article>
       </div>
 
-      <!-- Order Summary -->
       <aside class="wc-cart-summary">
         <h2>Order summary</h2>
         <dl>
           <div class="row">
             <dt>Subtotal ({{ totalQuantity() }} item{{ totalQuantity() !== 1 ? 's' : '' }})</dt>
             <dd>{{ subtotal() | currency:'EGP':'symbol':'1.0-0' }}</dd>
+          </div>
+          <div class="row" *ngIf="deliveryFee() > 0">
+            <dt>Delivery</dt>
+            <dd>{{ deliveryFee() | currency:'EGP':'symbol':'1.0-0' }}</dd>
           </div>
           <div class="row total">
             <dt>Total</dt>
@@ -159,7 +148,6 @@
 
 <app-customer-footer></app-customer-footer>
 
-<!-- ══════════════════════ Size Details Modal ══════════════════════ -->
 <div class="wc-modal-backdrop" *ngIf="showProductDetailsModal" (click)="closeSizeDetailsModal()"></div>
 <div class="wc-size-modal" *ngIf="showProductDetailsModal" role="dialog" aria-labelledby="size-details-title">
   <div class="wc-size-modal-header">

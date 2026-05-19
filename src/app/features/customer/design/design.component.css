@@ -2043,3 +2043,34 @@ body {
     padding: 12px;
   }
 }
+
+.wc-design-tryon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(111, 175, 239, 0.55);
+  background: rgba(232, 244, 255, 0.9);
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wc-design-tryon-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6fafef 0%, #4c8fea 100%);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(76, 143, 234, 0.3);
+}
+
+.wc-design-tryon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+

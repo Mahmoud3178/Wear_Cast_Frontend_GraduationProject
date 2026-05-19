@@ -72,8 +72,76 @@ export class CategoryComponent implements OnInit {
       if (q !== this.searchTerm) {
         this.searchTerm = q;
       }
+
+      const sortRaw = (params.get('sort') || '').trim();
+      if (sortRaw) {
+        const normalized = this.normalizeSortParam(sortRaw);
+        if (normalized) {
+          this.selectedSort = normalized;
+        }
+      }
+
+      const categoryIdRaw = params.get('categoryId');
+      if (categoryIdRaw) {
+        const id = parseInt(categoryIdRaw, 10);
+        if (Number.isFinite(id) && id > 0) {
+          this.selectedCategory = id;
+        }
+      } else {
+        const categorySlug = (params.get('category') || '').trim();
+        if (categorySlug && this.categories.length) {
+          const resolved = this.resolveCategoryIdBySlug(categorySlug);
+          if (resolved != null) {
+            this.selectedCategory = resolved;
+          }
+        } else if (!categorySlug) {
+          /* keep current category when only search/sort changed */
+        }
+      }
+
       this.fetchProducts(1);
     });
+  }
+
+  private normalizeSortParam(raw: string): string | null {
+    const key = raw.replace(/\s+/g, '').toLowerCase();
+    const map: Record<string, string> = {
+      mostpopular: 'MostPopular',
+      newest: 'Newest',
+      priceasc: 'PriceAsc',
+      pricedesc: 'PriceDesc',
+      bestseller: 'BestSeller',
+      bestSeller: 'BestSeller'
+    };
+    return map[key] ?? null;
+  }
+
+  /** Match home hero slugs to API category names (e.g. `t-shirts` → "T-Shirt"). */
+  resolveCategoryIdBySlug(slug: string): number | null {
+    const patterns: Record<string, string[]> = {
+      't-shirts': ['t-shirt', 'tshirt', 't shirt', 'shirt'],
+      hoodies: ['hoodie'],
+      accessories: ['accessor', 'bag', 'tote'],
+      sweatshirts: ['sweatshirt', 'sweat shirt', 'sweat', 'sweetshirt', 'sweet shirt', 'sweet'],
+      'mugs-drinkwear': ['mug', 'drink'],
+      'caps-hats': ['cap', 'hat']
+    };
+    const slugKey = slug.toLowerCase().trim();
+    const needles = patterns[slugKey] ?? [slugKey.replace(/-/g, ' ')];
+    const slugCompact = slugKey.replace(/[^a-z0-9]/g, '');
+    for (const cat of this.categories) {
+      const name = String(cat.name ?? cat.Name ?? '').toLowerCase();
+      const nameCompact = name.replace(/[^a-z0-9]/g, '');
+      if (needles.some(n => name.includes(n) || nameCompact.includes(n.replace(/[^a-z0-9]/g, '')))) {
+        const id = cat.id ?? cat.Id;
+        return typeof id === 'number' ? id : parseInt(String(id), 10) || null;
+      }
+      if (slugCompact.length >= 4 && nameCompact.includes(slugCompact.replace(/s$/, ''))) {
+        const id = cat.id ?? cat.Id;
+        return typeof id === 'number' ? id : parseInt(String(id), 10) || null;
+      }
+    }
+    return null;
   }
 
   private readonly http = inject(HttpClient);
@@ -95,6 +163,7 @@ export class CategoryComponent implements OnInit {
           arr = arr.categories;
         }
         this.categories = Array.isArray(arr) ? arr : [];
+        this.applyCategorySlugFromRoute();
       },
       error: () => {
         this.loadingCategories = false;
@@ -147,5 +216,17 @@ export class CategoryComponent implements OnInit {
   audienceLabel(val: number): string {
     const found = this.targetAudiences.find(a => a.value === val);
     return found?.label ?? '';
+  }
+
+  private applyCategorySlugFromRoute(): void {
+    const slug = (this.route.snapshot.queryParamMap.get('category') || '').trim();
+    if (!slug || this.route.snapshot.queryParamMap.get('categoryId')) {
+      return;
+    }
+    const resolved = this.resolveCategoryIdBySlug(slug);
+    if (resolved != null) {
+      this.selectedCategory = resolved;
+      this.fetchProducts(1);
+    }
   }
 }

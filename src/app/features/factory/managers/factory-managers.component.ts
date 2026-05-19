@@ -50,6 +50,10 @@ export class FactoryManagersComponent implements OnInit {
   managers: FactoryManager[] = [];
   loadingManagers = false;
   managersLoadError = '';
+  deletingManagerId: number | null = null;
+  showDeleteModal = false;
+  managerToDelete: FactoryManager | null = null;
+  deletionReason = '';
 
   constructor(
     private readonly factoryApi: FactoryApiService,
@@ -159,5 +163,45 @@ export class FactoryManagersComponent implements OnInit {
             err.message || 'Failed to create factory manager. Please try again.';
         }
       });
+  }
+
+  openDeleteModal(manager: FactoryManager): void {
+    if (!manager.id || this.deletingManagerId != null) return;
+    this.managerToDelete = manager;
+    this.deletionReason = '';
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal(): void {
+    if (this.deletingManagerId != null) return;
+    this.showDeleteModal = false;
+    this.managerToDelete = null;
+    this.deletionReason = '';
+  }
+
+  confirmDeleteManager(): void {
+    const manager = this.managerToDelete;
+    if (!manager?.id || this.deletingManagerId != null) return;
+    const reason = this.deletionReason.trim();
+    if (!reason) {
+      this.errorMsg = 'Please provide a reason for removing this manager.';
+      return;
+    }
+    this.deletingManagerId = manager.id;
+    this.errorMsg = '';
+    this.factoryApi.deleteFactoryManager(manager.id, reason).subscribe({
+      next: () => {
+        this.deletingManagerId = null;
+        this.showDeleteModal = false;
+        this.managerToDelete = null;
+        this.deletionReason = '';
+        this.successMsg = 'Manager removed successfully.';
+        this.managers = this.managers.filter(m => m.id !== manager.id);
+      },
+      error: (err: Error) => {
+        this.deletingManagerId = null;
+        this.errorMsg = err.message || 'Could not delete this manager.';
+      }
+    });
   }
 }
