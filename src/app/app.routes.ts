@@ -35,6 +35,13 @@ export const routes: Routes = [
     component: LoginComponent
   },
   {
+    path: 'driver-shipping/login',
+    loadComponent: () =>
+      import('./features/auth/driver-shipping-login/driver-shipping-login.component').then(
+        m => m.DriverShippingLoginComponent
+      )
+  },
+  {
     path: 'forgot-password',
     loadComponent: () =>
       import('./features/auth/forgot-password/forgot-password.component').then(

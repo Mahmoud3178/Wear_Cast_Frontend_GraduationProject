@@ -1,0 +1,184 @@
+<div class="ds-login-shell">
+  <!-- Glowing Background Orbs -->
+  <div class="glowing-orb orb-1"></div>
+  <div class="glowing-orb orb-2"></div>
+
+  <header class="ds-header">
+    <a routerLink="/" class="brand-logo">
+      <i class="bi bi-intersect"></i> Wear<span>Cast</span>
+    </a>
+    <a routerLink="/login" class="back-link">
+      <i class="bi bi-arrow-left"></i> Customer Portal
+    </a>
+  </header>
+
+  <main class="ds-main">
+    <div class="ds-container">
+      <!-- Title Block -->
+      <div class="ds-intro">
+        <span class="portal-badge">Enterprise Portal</span>
+        <h1>Logistics & Fulfillment Portal</h1>
+        <p>Manage deliveries, track orders, and coordinate shipments across the WearCast platform.</p>
+      </div>
+
+      <!-- Segmented Tab Control -->
+      <div class="ds-tabs-wrapper" *ngIf="!showConfirmBox">
+        <div class="ds-tabs">
+          <button 
+            type="button" 
+            class="tab-btn" 
+            [class.active]="selectedRole === 'DRIVER'" 
+            (click)="selectRole('DRIVER')">
+            <i class="bi bi-truck"></i>
+            <span>Driver Portal</span>
+          </button>
+          <button 
+            type="button" 
+            class="tab-btn" 
+            [class.active]="selectedRole === 'SHIPPING'" 
+            (click)="selectRole('SHIPPING')">
+            <i class="bi bi-building-gear"></i>
+            <span>Shipping Company</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Glassmorphic Login Card -->
+      <div class="ds-card">
+        <!-- Normal Sign-in View -->
+        <div *ngIf="!showConfirmBox">
+          <div class="card-header-info">
+            <h2>{{ selectedRole === 'DRIVER' ? 'Driver Sign In' : 'Shipping Company Sign In' }}</h2>
+            <p>Access your logistics dashboard with your credentials</p>
+          </div>
+
+          <form (ngSubmit)="login()" class="ds-form">
+            <!-- Alert Messages -->
+            <div *ngIf="errorMessage" class="alert-box alert-danger">
+              <i class="bi bi-exclamation-triangle"></i>
+              <span>{{ errorMessage }}</span>
+            </div>
+
+            <div *ngIf="infoMessage" class="alert-box alert-info">
+              <i class="bi bi-info-circle"></i>
+              <span>{{ infoMessage }}</span>
+            </div>
+
+            <!-- Email Input -->
+            <div class="form-group">
+              <label for="ds-email">Email Address</label>
+              <div class="input-wrapper">
+                <i class="bi bi-envelope input-icon"></i>
+                <input
+                  id="ds-email"
+                  type="email"
+                  placeholder="name@example.com"
+                  [(ngModel)]="form.email"
+                  name="email"
+                  autocomplete="email"
+                  required>
+              </div>
+            </div>
+
+            <!-- Password Input -->
+            <div class="form-group">
+              <label for="ds-password">Password</label>
+              <div class="input-wrapper">
+                <i class="bi bi-lock input-icon"></i>
+                <input
+                  id="ds-password"
+                  [type]="showPassword ? 'text' : 'password'"
+                  placeholder="Enter password"
+                  [(ngModel)]="form.password"
+                  name="password"
+                  autocomplete="current-password"
+                  required>
+                <button 
+                  type="button" 
+                  class="toggle-pass-btn" 
+                  (click)="showPassword = !showPassword" 
+                  tabindex="-1"
+                  [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+                  <i class="bi" [class.bi-eye]="showPassword" [class.bi-eye-slash]="!showPassword"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <button type="submit" class="submit-btn" [disabled]="submitting">
+              <span *ngIf="!submitting">
+                Sign In to {{ selectedRole === 'DRIVER' ? 'Driver' : 'Shipping' }} <i class="bi bi-chevron-right"></i>
+              </span>
+              <span *ngIf="submitting" class="loader-span">
+                <span class="spinner"></span> Authenticating...
+              </span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Inline Email Verification View -->
+        <div *ngIf="showConfirmBox">
+          <div class="card-header-info">
+            <h2>Verify Account</h2>
+            <p>We've sent a 6-digit confirmation code to <strong>{{ form.email }}</strong></p>
+          </div>
+
+          <form (ngSubmit)="verifyCode()" class="ds-form">
+            <!-- Alert Messages -->
+            <div *ngIf="verificationError" class="alert-box alert-danger">
+              <i class="bi bi-exclamation-triangle"></i>
+              <span>{{ verificationError }}</span>
+            </div>
+            <div *ngIf="verificationSuccess" class="alert-box alert-success">
+              <i class="bi bi-check-circle"></i>
+              <span>{{ verificationSuccess }}</span>
+            </div>
+
+            <!-- Verification Code Input -->
+            <div class="form-group text-center">
+              <label for="confirm-code" class="text-center w-100">Verification Code</label>
+              <div class="code-input-wrapper">
+                <input
+                  id="confirm-code"
+                  type="text"
+                  class="code-input"
+                  placeholder="000000"
+                  [(ngModel)]="confirmCode"
+                  name="confirmCode"
+                  maxlength="8"
+                  required>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <button type="submit" class="submit-btn" [disabled]="verifying">
+              <span *ngIf="!verifying">
+                Verify & Sign In <i class="bi bi-check2"></i>
+              </span>
+              <span *ngIf="verifying" class="loader-span">
+                <span class="spinner"></span> Verifying...
+              </span>
+            </button>
+
+            <button type="button" class="back-to-signin-btn" (click)="showConfirmBox = false">
+              <i class="bi bi-arrow-left"></i> Back to Sign In
+            </button>
+          </form>
+        </div>
+
+        <!-- Card Footer links -->
+        <div class="ds-card-footer" *ngIf="!showConfirmBox">
+          <div class="footer-divider"><span>OR</span></div>
+          <p class="store-login-prompt">
+            Are you a customer or a retail seller?
+            <a routerLink="/login">Standard Sign In Portal</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="ds-footer">
+    <p>&copy; 2026 WearCast. All rights reserved. Professional Logistics Network.</p>
+  </footer>
+</div>

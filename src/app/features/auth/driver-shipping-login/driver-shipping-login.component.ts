@@ -1,29 +1,31 @@
 import { Component, OnInit } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { NgIf, NgClass } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CustomerNavComponent } from '../../customer/shared/customer-nav/customer-nav.component';
-import { CustomerFooterComponent } from '../../customer/shared/customer-footer/customer-footer.component';
+
 @Component({
-  selector: 'app-login',
+  selector: 'app-driver-shipping-login',
   standalone: true,
-  imports: [FormsModule, RouterLink, NgIf, CustomerNavComponent, CustomerFooterComponent],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.css'
+  imports: [FormsModule, RouterLink, NgIf, NgClass],
+  templateUrl: './driver-shipping-login.component.html',
+  styleUrl: './driver-shipping-login.component.css'
 })
-export class LoginComponent implements OnInit {
+export class DriverShippingLoginComponent implements OnInit {
+  selectedRole: 'DRIVER' | 'SHIPPING' = 'DRIVER';
+
   form = {
     email: '',
     password: ''
   };
 
   errorMessage = '';
+  infoMessage = '';
   submitting = false;
   emailNotConfirmed = false;
   showPassword = false;
 
-  // New properties for inline email verification
+  // Email verification properties
   showConfirmBox = false;
   confirmCode = '';
   verificationError = '';
@@ -41,45 +43,64 @@ export class LoginComponent implements OnInit {
     if (email) {
       this.form.email = email;
     }
+    const redirected = this.route.snapshot.queryParamMap.get('redirected');
+    if (redirected === 'true') {
+      this.infoMessage = 'Driver and Shipping accounts must sign in using this dedicated portal.';
+    }
+  }
+
+  selectRole(role: 'DRIVER' | 'SHIPPING'): void {
+    this.selectedRole = role;
+    this.errorMessage = '';
+    this.infoMessage = '';
   }
 
   login(): void {
     this.errorMessage = '';
+    this.infoMessage = '';
     this.emailNotConfirmed = false;
+
+    if (!this.form.email.trim() || !this.form.password) {
+      this.errorMessage = 'Please provide both email and password.';
+      return;
+    }
+
     this.submitting = true;
     this.auth.login(this.form).subscribe({
       next: res => {
         this.submitting = false;
-        if (res.role === 'SHIPPING' || res.role === 'DRIVER') {
-          // Clear session immediately as they logged in on the wrong portal
+
+        // Verify the authenticated role matches the selected tab role
+        const returnedRole = (res.role || '').toUpperCase();
+        if (returnedRole !== this.selectedRole) {
+          // If the role does not match, sign out and throw error
+          this.auth.logout(); // Clears any saved state
           localStorage.removeItem('token');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('role');
-          void this.router.navigate(['/driver-shipping/login'], {
-            queryParams: { email: this.form.email, redirected: 'true' }
-          });
+
+          if (returnedRole === 'DRIVER' || returnedRole === 'SHIPPING') {
+            const roleLabel = returnedRole === 'DRIVER' ? 'Driver' : 'Shipping Company';
+            this.errorMessage = `This account is registered as a ${roleLabel}. Please switch to the correct tab to sign in.`;
+          } else {
+            this.errorMessage = 'This portal is restricted to Drivers and Shipping Companies only.';
+          }
           return;
         }
+
+        // Save session and redirect
         this.auth.saveUser(res);
-        if (res.role === 'ADMIN') {
-          void this.router.navigate(['/admin']);
-        } else if (
-          res.role === 'FACTORY' ||
-          res.role === 'FACTORY_MANAGER'
-        ) {
-          void this.router.navigate(['/factory']);
-        } else if (res.role === 'SELLER') {
-          void this.router.navigate(['/seller/dashboard']);
-        } else {
-          void this.router.navigate(['/customer']);
+        if (returnedRole === 'DRIVER') {
+          void this.router.navigate(['/driver/dashboard']);
+        } else if (returnedRole === 'SHIPPING') {
+          void this.router.navigate(['/shipping/dashboard']);
         }
       },
       error: (e: Error) => {
         this.submitting = false;
         this.errorMessage = e.message || 'Login failed';
-        this.emailNotConfirmed = /email is not confirmed/i.test(
-          this.errorMessage
-        );
+        this.emailNotConfirmed = /email is not confirmed/i.test(this.errorMessage);
+
         if (this.emailNotConfirmed) {
           const email = this.form.email.trim();
           this.errorMessage = 'Your email is not confirmed yet. Initiating email confirmation code...';
@@ -117,12 +138,13 @@ export class LoginComponent implements OnInit {
       this.verifying = false;
       return;
     }
+
     this.auth.confirmCustomerEmail(email, this.confirmCode.trim()).subscribe({
       next: () => {
         this.verifying = false;
         this.verificationSuccess = 'Email confirmed successfully! Logging you in...';
         
-        // Auto login!
+        // Auto login
         setTimeout(() => {
           this.showConfirmBox = false;
           this.login();
@@ -134,5 +156,4 @@ export class LoginComponent implements OnInit {
       }
     });
   }
-
 }

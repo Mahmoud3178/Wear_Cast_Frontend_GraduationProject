@@ -7,7 +7,7 @@ export const shippingRoleGuard: CanActivateFn = () => {
   const router = inject(Router);
   
   if (!auth.isLoggedIn()) {
-    void router.navigate(['/login']);
+    void router.navigate(['/driver-shipping/login']);
     return false;
   }
   
