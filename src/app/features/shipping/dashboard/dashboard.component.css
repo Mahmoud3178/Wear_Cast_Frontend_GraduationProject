@@ -2,11 +2,11 @@
 .dashboard-page-container {
   max-width: 1600px;
   margin: 0 auto;
-  animation: fadeIn 0.6s ease-out;
+  animation: cardSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+@keyframes cardSlide {
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -14,7 +14,7 @@
 .tracking-tight { letter-spacing: -0.025em; }
 .uppercase-tracking {
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   font-size: 0.7rem;
 }
 .text-xs { font-size: 0.75rem; }
@@ -33,17 +33,14 @@
 .premium-card {
   background: white;
   border-radius: 24px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.shadow-premium {
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 4px 10px -5px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.02), 0 10px 30px -10px rgba(15, 23, 42, 0.04);
 }
 
 .premium-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(37, 99, 235, 0.1);
   border-color: rgba(37, 99, 235, 0.2);
 }
 
@@ -56,12 +53,17 @@
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
+  transition: transform 0.3s ease;
 }
 
-.bg-soft-0 { background-color: #eff6ff; color: #2563eb; }
-.bg-soft-1 { background-color: #f0fdf4; color: #16a34a; }
-.bg-soft-2 { background-color: #faf5ff; color: #9333ea; }
-.bg-soft-3 { background-color: #fffbeb; color: #d97706; }
+.premium-card:hover .stat-icon-box {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.bg-soft-0 { background-color: #eff6ff; color: #2563eb; } /* Blue pending */
+.bg-soft-1 { background-color: #ecfdf5; color: #10b981; } /* Emerald delivered */
+.bg-soft-2 { background-color: #faf5ff; color: #9333ea; } /* Purple active drivers */
+.bg-soft-3 { background-color: #fffbeb; color: #d97706; } /* Amber wallet */
 
 /* Trend Badges */
 .trend-badge {
@@ -81,39 +83,50 @@
 .table thead th {
   font-weight: 600;
   color: #64748b;
-  border-bottom-width: 1px;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  padding: 12px 16px;
 }
 
 .table tbody tr {
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
 }
 
 .table tbody tr:hover {
   background-color: #f8fafc;
 }
 
-.pkg-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Badge Status */
 .badge-status {
   padding: 6px 12px;
   border-radius: 8px;
-  font-size: 0.75rem;
+  font-size: 0.725rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
+  border: 1px solid transparent;
 }
 
-.status-success { background-color: #dcfce7; color: #166534; }
-.status-warning { background-color: #fef3c7; color: #92400e; }
-.status-danger { background-color: #fee2e2; color: #991b1b; }
-.status-info { background-color: #e0f2fe; color: #075985; }
+.status-success {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border-color: rgba(52, 211, 153, 0.2);
+}
+.status-warning {
+  background-color: #fffbeb;
+  color: #92400e;
+  border-color: rgba(251, 191, 36, 0.2);
+}
+.status-danger {
+  background-color: #fff1f2;
+  color: #9f1239;
+  border-color: rgba(251, 113, 133, 0.2);
+}
+.status-info {
+  background-color: #f0f9ff;
+  color: #075985;
+  border-color: rgba(56, 189, 248, 0.2);
+}
 
 /* Buttons */
 .btn-primary-premium {
@@ -121,13 +134,14 @@
   color: white;
   border: none;
   font-weight: 600;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
 }
 
 .btn-primary-premium:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
   color: white;
 }
 
@@ -136,142 +150,6 @@
   color: #475569;
   background: white;
   font-weight: 600;
-  transition: all 0.3s;
-}
-
-.btn-outline-slate:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  color: #1e293b;
-}
-
-.btn-light-soft {
-  background-color: #f1f5f9;
-  border: none;
-  color: #475569;
-  font-weight: 500;
-}
-
-.btn-link-premium {
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s;
-}
-
-.btn-link-premium:hover {
-  color: #1d4ed8;
-}
-
-/* Status Chart */
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-/* Decorations */
-.card-bg-decoration {
-  position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 100px;
-  height: 100px;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
-  border-radius: 50%;
-  z-index: 0;
-}
-
-/* Loading Overlay */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(4px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.spinner-premium {
-  width: 50px;
-  height: 50px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #2563eb;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.bg-primary-soft { background-color: #eff6ff; }
-.icon-box-xs {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Color utilities */
-.bg-purple-soft { background-color: #faf5ff; }
-.bg-purple { background-color: #9333ea; color: white; }
-.text-purple { color: #9333ea; }
-.border-primary-light { border-color: rgba(37, 99, 235, 0.2) !important; }
-
-.bg-emerald-soft { background-color: #ecfdf5; }
-.text-emerald { color: #059669; }
-
-.bg-rose-soft { background-color: #fff1f2; }
-.text-rose { color: #e11d48; }
-
-.bg-warning-soft { background-color: #fffbeb; }
-.text-warning { color: #d97706; }
-
-.bg-indigo { background-color: #4f46e5; }
-.bg-indigo-soft { background-color: #e0e7ff; }
-.text-indigo { color: #4f46e5; }
-
-/* Wallet Ledger styles */
-.wallet-glow-bg {
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 150px;
-  height: 150px;
-  background: radial-gradient(circle, rgba(147, 51, 234, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
-  border-radius: 50%;
-  z-index: 0;
-}
-
-.text-xxs {
-  font-size: 0.65rem;
-}
-
-.text-xs {
-  font-size: 0.75rem;
-}
-
-/* Custom background icons */
-.bg-soft-0 { background-color: #eff6ff; color: #2563eb; } /* Primary Blue */
-.bg-soft-1 { background-color: #ecfdf5; color: #10b981; } /* Emerald Green */
-.bg-soft-2 { background-color: #faf5ff; color: #9333ea; } /* Purple Fleet */
-.bg-soft-3 { background-color: #fef3c7; color: #d97706; } /* Wallet Amber/Orange */
-
-/* Pagination Buttons */
-.btn-outline-slate {
-  border: 1px solid #e2e8f0;
-  color: #475569;
-  background: white;
-  font-weight: 500;
   transition: all 0.2s ease-in-out;
 }
 
@@ -286,101 +164,195 @@
   cursor: not-allowed;
 }
 
-/* Order Type Badges */
-.badge-fixed-product {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  border: 1px solid rgba(29, 78, 216, 0.15);
-  display: inline-flex;
-  align-items: center;
-}
-
-.badge-custom-design {
-  background-color: #faf5ff;
-  color: #7e22ce;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  border: 1px solid rgba(126, 34, 206, 0.15);
-  display: inline-flex;
-  align-items: center;
-}
-
-.badge-secondary {
+.btn-light-soft {
   background-color: #f1f5f9;
+  border: none;
   color: #475569;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-}
-
-/* Filter Controls Box */
-.filters-container {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 24px;
-}
-
-.form-select-premium {
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  font-size: 0.8rem;
-  padding: 10px 14px;
-  background-color: white;
-  transition: all 0.3s;
-  color: #334155;
   font-weight: 500;
+  transition: background-color 0.2s;
 }
 
-.form-select-premium:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-  outline: none;
+.btn-light-soft:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
 }
 
-.form-control-premium {
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  font-size: 0.8rem;
-  padding: 10px 14px;
-  background-color: white;
-  transition: all 0.3s;
-  color: #334155;
-  font-weight: 500;
+/* Virtual Credit Card Styling */
+.shipping-virtual-card {
+  height: 200px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #311042 100%);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 15px 30px rgba(15, 23, 42, 0.2);
 }
 
-.form-control-premium:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-  outline: none;
+.shipping-virtual-card:hover {
+  transform: scale(1.02) rotate(-1deg);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.3), 0 0 20px rgba(147, 51, 234, 0.2);
 }
 
-/* Inline Loading Animation */
-.inline-loading-container {
+.card-glass-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0) 45%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0) 55%
+  );
+  transform: rotate(45deg);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+
+.shipping-virtual-card:hover .card-glass-glow {
+  transform: translate(30%, 30%) rotate(45deg);
+}
+
+.card-chip-container {
+  width: 40px;
+  height: 30px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border-radius: 6px;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(255,255,255,0.3);
+}
+
+.gold-chip {
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  position: relative;
+}
+
+.gold-chip::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.gold-chip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.text-white-55 {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.text-white-50 {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Decorations */
+.card-bg-decoration {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.wallet-glow-bg {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(147, 51, 234, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(6px);
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  padding: 48px 0;
+  align-items: center;
+  z-index: 9999;
 }
 
-.spinner-sm {
+.spinner-premium {
+  width: 50px;
+  height: 50px;
+  border: 3px solid #f1f5f9;
+  border-top: 3px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Color and border utilities */
+.bg-primary-soft { background-color: #eff6ff; }
+.icon-box-xs {
   width: 32px;
   height: 32px;
-  border: 2.5px solid #f3f3f3;
-  border-top: 2.5px solid #2563eb;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+.bg-purple-soft { background-color: #faf5ff; }
+.bg-purple { background-color: #9333ea; color: white; }
+.text-purple { color: #9333ea; }
+.border-primary-light { border-color: rgba(37, 99, 235, 0.2) !important; }
 
+.bg-emerald-soft { background-color: #ecfdf5; }
+.text-emerald { color: #059669; }
+.border-emerald-light { border-color: rgba(16, 185, 129, 0.15) !important; }
+
+.bg-rose-soft { background-color: #fff1f2; }
+.text-rose { color: #e11d48; }
+.border-rose-light { border-color: rgba(244, 63, 94, 0.15) !important; }
+
+.bg-warning-soft { background-color: #fffbeb; }
+.text-warning { color: #d97706; }
+
+.bg-indigo { background-color: #4f46e5; }
+.bg-indigo-soft { background-color: #e0e7ff; }
+.text-indigo { color: #4f46e5; }
+
+.text-xxs {
+  font-size: 0.65rem;
+}
+
+/* Interactive card effects */
+.card-hover-effect {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}

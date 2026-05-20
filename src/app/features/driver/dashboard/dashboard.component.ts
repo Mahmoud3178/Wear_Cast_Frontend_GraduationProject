@@ -26,7 +26,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   today = new Date();
 
   dashboardStats: DriverDashboardStats | null = null;
-  recentShipments: DriverShipment[] = [];
   stats: any[] = [];
   statusBreakdown: { [key: string]: number } = {
     'Assigned': 0,
@@ -43,7 +42,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       this.userName = `${profile.firstName} ${profile.lastName || ''}`.trim();
     }
     this.loadDashboardData();
-    this.loadShipments();
   }
 
   ngAfterViewInit(): void {
@@ -59,13 +57,13 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         this.isLoading = false;
         this.dashboardStats = data;
         
-        const activeShipments = (data.assignedShipments || 0) + (data.pickingUpShipments || 0) + (data.outForDeliveryShipments || 0);
-
         this.stats = [
           { title: 'Pending Orders', value: data.pendingOrders || 0, icon: 'bi-hourglass-split', color: 'warning' },
           { title: 'Picked Up Orders', value: data.pickedUpOrders || 0, icon: 'bi-box-seam', color: 'info' },
-          { title: 'Active Shipments', value: activeShipments, icon: 'bi-truck', color: 'primary' },
-          { title: 'Completed', value: data.deliveredShipments || 0, icon: 'bi-check-circle-fill', color: 'success' }
+          { title: 'Assigned Shipments', value: data.assignedShipments || 0, icon: 'bi-journal-check', color: 'secondary' },
+          { title: 'Picking Up', value: data.pickingUpShipments || 0, icon: 'bi-truck-flatbed', color: 'primary' },
+          { title: 'Out For Delivery', value: data.outForDeliveryShipments || 0, icon: 'bi-truck', color: 'info' },
+          { title: 'Delivered', value: data.deliveredShipments || 0, icon: 'bi-check-circle-fill', color: 'success' }
         ];
 
         this.statusBreakdown = {
@@ -89,29 +87,12 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     });
   }
 
-  loadShipments(): void {
-    const driverId = this.authService.getDriverId();
-    if (driverId) {
-      this.driverService.getAllDriverShipments(driverId).subscribe({
-        next: (shipments) => {
-          this.recentShipments = (shipments || [])
-            .sort((a, b) => new Date(b.orderTime).getTime() - new Date(a.orderTime).getTime())
-            .slice(0, 5);
-        },
-        error: (err) => {
-          console.error('Failed to load shipments', err);
-        }
-      });
-    }
-  }
-
   toggleStatus(): void {
     const driverId = this.authService.getDriverId();
     if (!driverId || !this.dashboardStats) return;
 
-    const newStatus = this.dashboardStats.driverStatus === DriverStatus.Available 
-      ? DriverStatus.NotAvailable 
-      : DriverStatus.Available;
+    const currentIsAvailable = this.getDriverStatusName(this.dashboardStats.driverStatus) === 'Available';
+    const newStatus = currentIsAvailable ? DriverStatus.NotAvailable : DriverStatus.Available;
 
     this.isLoading = true;
     this.driverService.changeDriverStatus(driverId, { driverId, newStatus }).subscribe({
@@ -129,8 +110,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     });
   }
 
-  getVehicleName(type: DeliveryVehicleType | undefined): string {
-    if (type === undefined) return 'N/A';
+  getVehicleName(type: any): string {
+    if (type === undefined || type === null) return 'N/A';
+    if (typeof type === 'string') return type;
+    
     switch (Number(type)) {
       case DeliveryVehicleType.Bicycle: return 'Bicycle';
       case DeliveryVehicleType.Motorcycle: return 'Motorcycle';
@@ -140,8 +123,15 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
-  getVehicleIcon(type: DeliveryVehicleType | undefined): string {
-    if (type === undefined) return 'bi-truck';
+  getVehicleIcon(type: any): string {
+    if (type === undefined || type === null) return 'bi-truck';
+    
+    const typeStr = typeof type === 'string' ? type.toLowerCase() : '';
+    if (typeStr.includes('bicycle')) return 'bi-bicycle';
+    if (typeStr.includes('motorcycle')) return 'bi-bicycle';
+    if (typeStr.includes('car')) return 'bi-car-front';
+    if (typeStr.includes('van')) return 'bi-truck';
+
     switch (Number(type)) {
       case DeliveryVehicleType.Bicycle: return 'bi-bicycle';
       case DeliveryVehicleType.Motorcycle: return 'bi-bicycle';
@@ -151,8 +141,11 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
-  getDriverStatusName(status: DriverStatus | undefined): string {
-    if (status === undefined) return 'Unknown';
+  getDriverStatusName(status: any): string {
+    if (status === undefined || status === null) return 'Unknown';
+    if (typeof status === 'string') {
+      return status === 'Available' ? 'Available' : 'Not Available';
+    }
     return Number(status) === DriverStatus.Available ? 'Available' : 'Not Available';
   }
 

@@ -49,7 +49,7 @@
                 {{ getStatusName(shipment.shipmentStatus) }}
               </span>
             </div>
-            
+
             <!-- Next status transition button -->
             <div class="d-flex gap-2 align-items-center" *ngIf="getNextStatus() as next">
               <span class="text-sm fw-bold text-slate-700 me-2">Action Required:</span>
@@ -84,7 +84,7 @@
               <p class="mb-0 text-xs text-slate-500 fw-medium uppercase-tracking">Order & Tracking</p>
             </div>
           </div>
-          
+
           <div class="card-body p-4">
             <div class="row g-4">
               <div class="col-md-6">
@@ -215,23 +215,55 @@
                     <span class="items-count-badge">{{ order.itemsCount || 0 }}</span>
                   </td>
                   <td class="text-center">
-                    <!-- Picked Up Status Badge -->
-                    <span *ngIf="order.status === 'PickedUp'" class="badge bg-success-soft text-success rounded-pill px-3 py-2 fw-bold text-xs d-inline-flex align-items-center gap-1">
-                      <i class="bi bi-check-circle-fill"></i> Picked Up
-                    </span>
+                    <ng-container [ngSwitch]="order.status">
 
-                    <!-- Mark Picked Up Button (only shown when shipment is in 'PickingUp' state, i.e. 4 or 'PickingUp') -->
-                    <button *ngIf="order.status === 'Ready' && isPickingUpStatus()" 
-                            class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-bold text-xs d-inline-flex align-items-center gap-1 shadow-premium-sm" 
-                            (click)="updateOrderPickedUp(order.orderId)">
-                      <i class="bi bi-box-seam"></i> Mark Picked Up
-                    </button>
+                      <!-- PickedUp -->
+                      <ng-container *ngSwitchCase="'PickedUp'">
+                        <span class="badge rounded-pill px-3 py-2 fw-bold text-xs d-inline-flex align-items-center gap-1"
+                              style="background-color: rgba(16,185,129,0.1); color: #10b981;">
+                          <i class="bi bi-check-circle-fill"></i> Picked Up
+                        </span>
+                      </ng-container>
 
-                    <!-- Ready / Pending Start Trip Badge -->
-                    <span *ngIf="order.status === 'Ready' && !isPickingUpStatus()" 
-                          class="badge bg-warning-soft text-warning rounded-pill px-3 py-2 fw-medium text-xs d-inline-flex align-items-center gap-1">
-                      <i class="bi bi-clock-history"></i> Ready for Pickup
-                    </span>
+                      <!-- Ready + PickingUp shipment → show button -->
+                      <ng-container *ngSwitchCase="'Ready'">
+                        <button *ngIf="isPickingUpStatus()"
+                                class="btn btn-sm btn-primary rounded-pill px-3 fw-bold text-xs d-inline-flex align-items-center gap-1 shadow-sm"
+                                (click)="updateOrderPickedUp(order.orderId)">
+                          <i class="bi bi-box-seam"></i> Mark Picked Up
+                        </button>
+                        <span *ngIf="!isPickingUpStatus()"
+                              class="badge rounded-pill px-3 py-2 fw-medium text-xs d-inline-flex align-items-center gap-1"
+                              style="background-color: rgba(245,158,11,0.1); color: #f59e0b;">
+                          <i class="bi bi-clock-history"></i> Ready for Pickup
+                        </span>
+                      </ng-container>
+
+                      <!-- Pending -->
+                      <ng-container *ngSwitchCase="'Pending'">
+                        <span class="badge rounded-pill px-3 py-2 fw-medium text-xs d-inline-flex align-items-center gap-1"
+                              style="background-color: #f1f5f9; color: #64748b;">
+                          <i class="bi bi-hourglass-split"></i> Pending
+                        </span>
+                      </ng-container>
+
+                      <!-- Paid -->
+                      <ng-container *ngSwitchCase="'Paid'">
+                        <span class="badge rounded-pill px-3 py-2 fw-medium text-xs d-inline-flex align-items-center gap-1"
+                              style="background-color: rgba(37,99,235,0.1); color: #2563eb;">
+                          <i class="bi bi-credit-card-fill"></i> Paid
+                        </span>
+                      </ng-container>
+
+                      <!-- Any other status -->
+                      <ng-container *ngSwitchDefault>
+                        <span class="badge rounded-pill px-3 py-2 fw-medium text-xs d-inline-flex align-items-center gap-1"
+                              style="background-color: #f1f5f9; color: #64748b;">
+                          <i class="bi bi-info-circle"></i> {{ order.status }}
+                        </span>
+                      </ng-container>
+
+                    </ng-container>
                   </td>
                   <td class="px-4 text-end">
                     <span class="fw-bold text-slate-900">#{{ order.orderId }}</span>
@@ -277,7 +309,7 @@
                           <span class="product-type-badge">{{ item.type }}</span>
                           <span class="text-xs text-slate-400">Color: {{ item.colorName }}</span>
                           <span class="text-xs text-slate-400" *ngIf="item.sizes && item.sizes.length > 0">
-                            | Size: 
+                            | Size:
                             <span *ngFor="let s of item.sizes; let last = last" class="fw-semibold text-slate-600">
                               {{ s.sizeName }} (x{{ s.quantity }}){{ !last ? ', ' : '' }}
                             </span>
@@ -334,7 +366,7 @@
                 <p class="fw-bold text-slate-900 mb-0">{{ shipment.deliveryAddress?.buildingNumber }}</p>
               </div>
             </div>
-            
+
             <div class="mt-4 p-3 bg-primary-soft rounded-4 text-primary d-flex align-items-center gap-3">
               <i class="bi bi-truck fs-3"></i>
               <div>
@@ -361,9 +393,9 @@
     </div>
 
     <div class="mb-4">
-      <input type="text" class="form-control form-control-lg text-center fw-bold letter-spacing-lg" 
-             [(ngModel)]="enteredCode" 
-             placeholder="123456" 
+      <input type="text" class="form-control form-control-lg text-center fw-bold letter-spacing-lg"
+             [(ngModel)]="enteredCode"
+             placeholder="123456"
              maxlength="6">
     </div>
 

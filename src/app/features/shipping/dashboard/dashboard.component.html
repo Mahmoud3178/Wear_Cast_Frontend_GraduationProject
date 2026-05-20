@@ -24,7 +24,7 @@
   <!-- Stats Grid -->
   <div class="row g-4 mb-5">
     <div class="col-12 col-md-6 col-xl-3" *ngFor="let stat of stats; let i = index">
-      <div class="premium-card p-4 h-100 shadow-premium border-0 position-relative overflow-hidden">
+      <div class="premium-card p-4 h-100 shadow-premium border-0 position-relative overflow-hidden card-hover-effect">
         <div class="card-bg-decoration"></div>
         <div class="d-flex justify-content-between align-items-start mb-3 position-relative">
           <div class="stat-icon-box" [ngClass]="'bg-soft-' + i">
@@ -44,27 +44,79 @@
 
   <!-- Main Content Grid -->
   <div class="row g-4">
-    <!-- Left Column: Charts, Wallet & Shipments -->
+    <!-- Left Column: Wallet & Transactions -->
     <div class="col-12 col-xl-8">
-
-      <!-- Wallet & Ledger Widget -->
       <div class="premium-card shadow-premium p-4 mb-4 position-relative overflow-hidden">
         <div class="wallet-glow-bg"></div>
-        <div class="row align-items-center mb-4 position-relative">
-          <div class="col-md-7">
-            <h5 class="fw-bold text-slate-900 mb-1">Company Wallet & Transactions</h5>
-            <p class="text-xs text-slate-500 mb-0">Track and manage shipping company earnings and delivery fees ledger.</p>
-          </div>
-          <div class="col-md-5 text-md-end mt-3 mt-md-0">
-            <div class="d-inline-block bg-primary-soft border border-primary-light px-4 py-3 rounded-4 shadow-sm text-start">
-              <span class="text-xs text-primary uppercase-tracking fw-bold d-block mb-1">Current Balance</span>
-              <h3 class="fw-bold text-primary mb-0">${{ (wallet?.balance ?? 0) | number:'1.2-2' }}</h3>
+        
+        <h5 class="fw-bold text-slate-900 mb-4 position-relative z-1 d-flex align-items-center gap-2">
+          <i class="bi bi-wallet2 text-primary"></i> Company Wallet & Financial Ledger
+        </h5>
+
+        <div class="row g-4 position-relative z-1 mb-4">
+          <!-- Glassmorphic credit card visual representation -->
+          <div class="col-12 col-md-6">
+            <div class="shipping-virtual-card p-4 rounded-4 position-relative overflow-hidden d-flex flex-column justify-content-between shadow-lg">
+              <div class="card-glass-glow"></div>
+              
+              <!-- Card Top -->
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="text-xs text-white-50 uppercase-tracking fw-semibold d-block">WearCast Network</span>
+                  <span class="text-xxs text-white-55">Logistics Carrier Wallet</span>
+                </div>
+                <div class="card-chip-container">
+                  <div class="gold-chip"></div>
+                </div>
+              </div>
+              
+              <!-- Card Mid: Balance -->
+              <div class="my-4">
+                <span class="text-xxs text-white-50 uppercase-tracking d-block mb-1">Available Balance</span>
+                <h2 class="fw-bold text-white mb-0 tracking-tight">${{ (wallet?.balance ?? 0) | number:'1.2-2' }}</h2>
+              </div>
+              
+              <!-- Card Bottom -->
+              <div class="d-flex justify-content-between align-items-end">
+                <div>
+                  <span class="text-xxs text-white-50 uppercase-tracking d-block">Authorized Signatory</span>
+                  <span class="text-xs fw-semibold text-white uppercase">{{ userName || 'Carrier Manager' }}</span>
+                </div>
+                <div class="d-flex flex-column align-items-end">
+                  <span class="text-xxs text-white-50 uppercase-tracking">Card ID</span>
+                  <span class="text-xs fw-bold text-white">#{{ wallet?.walletId ?? '00' }}</span>
+                </div>
+              </div>
             </div>
+          </div>
+
+          <!-- Quick Statistics about Transactions -->
+          <div class="col-12 col-md-6 d-flex flex-column justify-content-center">
+            <div class="p-3 bg-slate-50 rounded-4 border border-slate-100 mb-3">
+              <div class="row text-center">
+                <div class="col-6 border-end border-slate-200">
+                  <span class="text-xxs text-slate-400 uppercase-tracking d-block mb-1">Transactions Count</span>
+                  <span class="fw-bold text-slate-800 fs-5">{{ wallet?.recentTransactions?.length ?? 0 }} Logs</span>
+                </div>
+                <div class="col-6">
+                  <span class="text-xxs text-slate-400 uppercase-tracking d-block mb-1">Carrier Network</span>
+                  <span class="fw-bold text-emerald fs-5">Active Partner</span>
+                </div>
+              </div>
+            </div>
+            <p class="text-xs text-slate-500 mb-0 px-1">
+              <i class="bi bi-shield-check text-emerald me-1 fs-6"></i> Earnings are updated automatically when drivers pickup, scan packages, and mark orders as delivered.
+            </p>
           </div>
         </div>
 
-        <div class="border-top border-slate-100 pt-4 position-relative">
-          <h6 class="uppercase-tracking text-slate-500 fw-bold mb-3">Recent Transactions Log</h6>
+        <!-- Recent Transactions Table -->
+        <div class="border-top border-slate-100 pt-4 position-relative z-1">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="uppercase-tracking text-slate-500 fw-bold mb-0">Recent Transactions Log</h6>
+            <span class="badge bg-light-soft text-slate-500 rounded-pill px-2.5 py-1 text-xs">Page {{ walletPage }} of {{ walletTotalPages }}</span>
+          </div>
+          
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
               <thead class="bg-slate-50">
@@ -78,40 +130,43 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let tx of walletPagedTransactions">
+                <tr *ngFor="let tx of walletPagedTransactions" class="align-middle">
                   <td class="px-3">
                     <span class="text-slate-600 fw-semibold text-sm">#{{ tx.id }}</span>
                   </td>
                   <td>
                     <span class="badge-status" [ngClass]="tx.type === 'Credit' ? 'status-success' : 'status-danger'">
+                      <i class="bi me-1" [ngClass]="tx.type === 'Credit' ? 'bi-arrow-down-left-circle-fill' : 'bi-arrow-up-right-circle-fill'"></i>
                       {{ tx.type }}
                     </span>
                   </td>
                   <td>
-                    <span class="text-slate-700 text-sm">{{ tx.description || 'N/A' }}</span>
-                    <small *ngIf="tx.referenceOrderId" class="d-block text-slate-400">Order Ref: #{{ tx.referenceOrderId }}</small>
+                    <div class="text-slate-700 text-sm fw-medium">{{ tx.description || 'N/A' }}</div>
+                    <small *ngIf="tx.referenceOrderId" class="text-slate-400 d-inline-flex align-items-center gap-1">
+                      <i class="bi bi-tag-fill text-xxs"></i> Order Ref: #{{ tx.referenceOrderId }}
+                    </small>
                   </td>
                   <td>
                     <div *ngIf="tx.senderName || tx.senderEmail; else noSender">
                       <div class="text-xs fw-semibold text-slate-800">{{ tx.senderName }}</div>
                       <div class="text-xxs text-slate-400">{{ tx.senderEmail }}</div>
                     </div>
-                    <ng-template #noSender><span class="text-muted text-xs">Customer</span></ng-template>
+                    <ng-template #noSender><span class="text-slate-400 text-xs">Customer Shipment</span></ng-template>
                   </td>
                   <td>
                     <span class="text-xs text-slate-500">{{ tx.createdOn | date:'MMM d, y, HH:mm' }}</span>
                   </td>
                   <td class="px-3 text-end">
-                    <span class="fw-bold" [ngClass]="tx.type === 'Credit' ? 'text-emerald' : 'text-rose'">
+                    <span class="fw-bold text-sm" [ngClass]="tx.type === 'Credit' ? 'text-emerald' : 'text-rose'">
                       {{ tx.type === 'Credit' ? '+' : '-' }}${{ tx.amount | number:'1.2-2' }}
                     </span>
                   </td>
                 </tr>
                 <tr *ngIf="!wallet?.recentTransactions?.length">
-                  <td colspan="6" class="text-center py-4 text-slate-400">
-                    <div class="my-2">
-                      <i class="bi bi-wallet2 text-slate-300 fs-3 d-block mb-2"></i>
-                      <span>No transactions have been recorded yet.</span>
+                  <td colspan="6" class="text-center py-5 text-slate-400">
+                    <div class="my-3">
+                      <i class="bi bi-wallet2 text-slate-300 fs-2 d-block mb-2"></i>
+                      <span class="fw-medium">No transactions recorded yet.</span>
                     </div>
                   </td>
                 </tr>
@@ -125,182 +180,33 @@
               Showing page {{ walletPage }} of {{ walletTotalPages }}
             </span>
             <div class="d-flex gap-2">
-              <button class="btn btn-outline-slate btn-sm px-3 rounded-pill text-xs" 
+              <button class="btn btn-outline-slate btn-sm px-3 rounded-pill text-xs d-flex align-items-center gap-1" 
                       [disabled]="walletPage === 1" 
                       (click)="walletGoTo(walletPage - 1)">
-                <i class="bi bi-chevron-left me-1"></i> Previous
+                <i class="bi bi-chevron-left"></i> Previous
               </button>
-              <button class="btn btn-outline-slate btn-sm px-3 rounded-pill text-xs" 
+              <button class="btn btn-outline-slate btn-sm px-3 rounded-pill text-xs d-flex align-items-center gap-1" 
                       [disabled]="walletPage === walletTotalPages" 
                       (click)="walletGoTo(walletPage + 1)">
-                Next <i class="bi bi-chevron-right ms-1"></i>
+                Next <i class="bi bi-chevron-right"></i>
               </button>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Order Requests Pipeline Widget -->
-      <div class="premium-card shadow-premium p-4 position-relative overflow-hidden mb-4 animate-fade-in">
-        <div class="card-bg-decoration"></div>
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3 position-relative">
-          <div>
-            <h5 class="fw-bold text-slate-900 mb-1">Live Order Requests Pipeline</h5>
-            <p class="text-xs text-slate-500 mb-0">View, search, and manage incoming order requests that need assignment.</p>
-          </div>
-          <div>
-            <button class="btn btn-light-soft btn-sm rounded-pill px-3 text-xs" (click)="resetFilters()">
-              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Filters
-            </button>
-          </div>
-        </div>
-
-        <!-- Filter Controls Bar -->
-        <div class="filters-container position-relative">
-          <div class="row g-3">
-            <div class="col-12 col-md-3">
-              <label class="text-xs fw-semibold text-slate-500 mb-1 d-block">Order Status</label>
-              <select class="form-select form-select-premium w-100" [(ngModel)]="filterOrderStatus" (change)="applyFilters()">
-                <option value="All">All Statuses</option>
-                <option value="0">Pending</option>
-                <option value="1">Paid</option>
-                <option value="2">Failed</option>
-                <option value="3">Cancelled</option>
-                <option value="4">Refunded</option>
-                <option value="5">Ready</option>
-                <option value="6">PickedUp</option>
-              </select>
-            </div>
-            <div class="col-12 col-md-3">
-              <label class="text-xs fw-semibold text-slate-500 mb-1 d-block">Order Type</label>
-              <select class="form-select form-select-premium w-100" [(ngModel)]="filterOrderType" (change)="applyFilters()">
-                <option value="All">All Types</option>
-                <option value="1">Fixed Product</option>
-                <option value="2">Custom Design</option>
-              </select>
-            </div>
-            <div class="col-12 col-md-3">
-              <label class="text-xs fw-semibold text-slate-500 mb-1 d-block">Vendor City</label>
-              <input type="text" class="form-control form-control-premium w-100" placeholder="e.g. Cairo, Giza..." 
-                     [(ngModel)]="filterVendorCity" (input)="applyFilters()">
-            </div>
-            <div class="col-12 col-md-3">
-              <label class="text-xs fw-semibold text-slate-500 mb-1 d-block">Sort By</label>
-              <select class="form-select form-select-premium w-100" [(ngModel)]="filterSortBy" (change)="applyFilters()">
-                <option value="1">Newest First</option>
-                <option value="2">Oldest First</option>
-                <option value="18">Items (Low to High)</option>
-                <option value="19">Items (High to Low)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Orders Table Log -->
-        <div class="border-top border-slate-100 pt-4 position-relative">
-          <div class="table-responsive" *ngIf="!isOrdersLoading; else ordersLoadingTpl">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="bg-slate-50">
-                <tr>
-                  <th class="px-3 py-2 text-xs uppercase-tracking text-slate-500 border-0">Order ID</th>
-                  <th class="py-2 text-xs uppercase-tracking text-slate-500 border-0">Type</th>
-                  <th class="py-2 text-xs uppercase-tracking text-slate-500 border-0">Vendor Details</th>
-                  <th class="py-2 text-xs uppercase-tracking text-slate-500 border-0">Items</th>
-                  <th class="py-2 text-xs uppercase-tracking text-slate-500 border-0">Order Status</th>
-                  <th class="py-2 text-xs uppercase-tracking text-slate-500 border-0">Shipment Status</th>
-                  <th class="px-3 py-2 text-xs uppercase-tracking text-slate-500 border-0 text-end">Created Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let order of orderRequests">
-                  <td class="px-3">
-                    <span class="text-slate-900 fw-bold text-sm">#{{ order.orderId }}</span>
-                  </td>
-                  <td>
-                    <span class="badge" [ngClass]="getOrderTypeClass(order.orderType)">
-                      {{ getOrderTypeName(order.orderType) }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="d-flex flex-column">
-                      <span class="text-slate-800 fw-semibold text-sm">{{ order.vendorName || 'N/A' }}</span>
-                      <small class="text-xs text-slate-400 d-flex align-items-center gap-1 mt-1">
-                        <i class="bi bi-geo-alt"></i> {{ order.vendorAddress?.city || 'N/A' }}, {{ order.vendorAddress?.state || 'N/A' }}
-                      </small>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="badge bg-light-soft text-slate-700 fw-semibold px-2.5 py-1.5 rounded-3 text-xs">
-                      {{ order.numberOfItems }} Item(s)
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge-status" [ngClass]="getOrderStatusClass(order.orderStatus)">
-                      {{ getOrderStatusName(order.orderStatus) }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge-status" [ngClass]="getStatusClass(order.shipmentStatus)">
-                      {{ getStatusName(order.shipmentStatus) }}
-                    </span>
-                  </td>
-                  <td class="px-3 text-end">
-                    <span class="text-xs text-slate-500">{{ order.createdOn | date:'MMM d, y, HH:mm' }}</span>
-                  </td>
-                </tr>
-                <tr *ngIf="!orderRequests || !orderRequests.length">
-                  <td colspan="7" class="text-center py-5 text-slate-400">
-                    <div class="my-2">
-                      <i class="bi bi-mailbox text-slate-300 fs-2 d-block mb-2"></i>
-                      <span class="fw-semibold d-block text-slate-600 mb-1">No Order Requests Found</span>
-                      <span class="text-xs text-slate-400">Try adjusting your filters or search terms.</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <ng-template #ordersLoadingTpl>
-            <div class="inline-loading-container">
-              <div class="spinner-sm mb-3"></div>
-              <span class="text-xs text-slate-500">Updating order requests list...</span>
-            </div>
-          </ng-template>
-
-          <!-- Order Requests Pagination -->
-          <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top border-slate-100" *ngIf="orderRequests && orderRequests.length && !isOrdersLoading">
-            <span class="text-xs text-slate-500">
-              Showing page {{ ordersCurrentPage }} of {{ ordersTotalPages }} ({{ ordersTotalRecords }} total orders)
-            </span>
-            <div class="d-flex gap-2">
-              <button class="btn btn-outline-slate btn-sm px-3 rounded-pill text-xs" 
-                      [disabled]="ordersCurrentPage === 1" 
-                      (click)="ordersPreviousPage()">
-                <i class="bi bi-chevron-left me-1"></i> Previous
-              </button>
-              <button class="btn btn-outline-slate btn-sm px-3 rounded-pill text-xs" 
-                      [disabled]="ordersCurrentPage === ordersTotalPages" 
-                      (click)="ordersNextPage()">
-                Next <i class="bi bi-chevron-right ms-1"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
 
     <!-- Right Column: Distribution & Fleet Performance Widgets -->
     <div class="col-12 col-xl-4">
       <!-- Status Distribution Chart -->
-      <div class="premium-card p-4 shadow-premium mb-4">
-        <h5 class="fw-bold text-slate-900 mb-4">Shipment Status Breakdown</h5>
-        <div class="chart-container d-flex align-items-center justify-content-center" style="height: 250px;">
+      <div class="premium-card p-4 shadow-premium mb-4 overflow-hidden position-relative">
+        <div class="card-bg-decoration"></div>
+        <h5 class="fw-bold text-slate-900 mb-4 position-relative">Shipment Status Breakdown</h5>
+        <div class="chart-container d-flex align-items-center justify-content-center position-relative mb-2" style="height: 240px;">
           <canvas #statusChart></canvas>
         </div>
         
-        <div class="status-legend mt-4">
+        <div class="status-legend mt-4 position-relative">
           <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
             <div class="d-flex align-items-center gap-2">
               <span class="dot bg-warning"></span>
@@ -347,10 +253,11 @@
       </div>
 
       <!-- Fleet Analytics Widgets -->
-      <div class="premium-card p-4 shadow-premium mb-4">
-        <h5 class="fw-bold text-slate-900 mb-4">Fleet Analytics</h5>
+      <div class="premium-card p-4 shadow-premium mb-4 position-relative overflow-hidden">
+        <div class="card-bg-decoration" style="background: radial-gradient(circle, rgba(147, 51, 234, 0.04) 0%, rgba(255, 255, 255, 0) 70%);"></div>
+        <h5 class="fw-bold text-slate-900 mb-4 position-relative">Fleet Analytics</h5>
         
-        <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-purple-soft rounded-4">
+        <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-purple-soft rounded-4 position-relative">
           <div class="stat-icon-box bg-purple text-white shadow-sm rounded-4 flex-shrink-0">
             <i class="bi bi-speedometer2"></i>
           </div>
@@ -360,15 +267,15 @@
           </div>
         </div>
 
-        <div class="row g-3">
+        <div class="row g-3 position-relative">
           <div class="col-6">
-            <div class="p-3 bg-emerald-soft rounded-4 text-center">
+            <div class="p-3 bg-emerald-soft rounded-4 text-center border border-emerald-light card-hover-effect">
               <span class="text-xs text-emerald fw-semibold d-block mb-1">Available Drivers</span>
               <h4 class="fw-bold text-emerald mb-0">{{ dashboardStats?.activeDrivers ?? 0 }}</h4>
             </div>
           </div>
           <div class="col-6">
-            <div class="p-3 bg-rose-soft rounded-4 text-center">
+            <div class="p-3 bg-rose-soft rounded-4 text-center border border-rose-light card-hover-effect">
               <span class="text-xs text-rose fw-semibold d-block mb-1">Inactive Drivers</span>
               <h4 class="fw-bold text-rose mb-0">{{ dashboardStats?.inactiveDrivers ?? 0 }}</h4>
             </div>
@@ -376,7 +283,7 @@
         </div>
 
         <!-- Order Sync Status -->
-        <div class="mt-4 pt-4 border-top border-slate-100">
+        <div class="mt-4 pt-4 border-top border-slate-100 position-relative">
           <h6 class="uppercase-tracking text-slate-400 fw-bold mb-3">Backend Order Pipelines</h6>
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="text-sm text-slate-600">Ready Orders (Pending)</span>
@@ -390,14 +297,14 @@
       </div>
 
       <!-- Quick Actions -->
-      <div class="premium-card p-4 shadow-premium">
-        <h6 class="uppercase-tracking text-slate-400 fw-bold mb-3">Quick Actions</h6>
-        <div class="d-grid gap-3">
-          <button class="btn btn-primary-premium py-3 rounded-4 shadow-sm" routerLink="/shipping/shipments">
-            <i class="bi bi-plus-lg me-2"></i> Assign New Shipment
+      <div class="premium-card p-4 shadow-premium position-relative overflow-hidden">
+        <h6 class="uppercase-tracking text-slate-400 fw-bold mb-3 position-relative">Quick Actions</h6>
+        <div class="d-grid gap-3 position-relative">
+          <button class="btn btn-primary-premium py-3 rounded-4 shadow-sm d-flex align-items-center justify-content-center gap-2" routerLink="/shipping/shipments">
+            <i class="bi bi-plus-lg"></i> Assign New Shipment
           </button>
-          <button class="btn btn-outline-slate py-3 rounded-4" routerLink="/shipping/drivers">
-            <i class="bi bi-people me-2"></i> Manage Drivers
+          <button class="btn btn-outline-slate py-3 rounded-4 d-flex align-items-center justify-content-center gap-2" routerLink="/shipping/drivers">
+            <i class="bi bi-people"></i> Manage Drivers
           </button>
         </div>
       </div>
@@ -409,4 +316,3 @@
 <div class="loading-overlay" *ngIf="isLoading">
   <div class="spinner-premium"></div>
 </div>
-

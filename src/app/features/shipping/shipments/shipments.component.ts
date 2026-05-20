@@ -241,6 +241,24 @@ export class ShipmentsComponent implements OnInit {
     });
   }
 
+  public unassignShipment(shipmentId: number) {
+    if (!confirm('Are you sure you want to unassign the driver from this shipment?')) return;
+
+    this.isLoading = true;
+    this.shippingService.unassignDriver(shipmentId).subscribe({
+      next: () => {
+        this.loadShipments();
+        this.loadDrivers(); // Refresh availability
+      },
+      error: (err) => {
+        console.error('Failed to unassign driver', err);
+        const errorMessage = err.error?.message || err.error || 'Failed to unassign driver.';
+        alert(errorMessage);
+        this.isLoading = false;
+      }
+    });
+  }
+
   public getStatusName(status: any): string {
     const s = this.getNumericStatus(status, ShipmentStatus);
     switch (s) {

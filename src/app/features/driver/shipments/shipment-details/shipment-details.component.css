@@ -53,6 +53,23 @@
 .bg-primary-soft { background-color: var(--primary-soft); }
 .bg-success-soft { background-color: var(--success-soft); }
 .bg-warning-soft { background-color: var(--warning-soft); }
+.bg-info-soft { background-color: rgba(6, 182, 212, 0.08); }
+.bg-slate-50  { background-color: var(--slate-50); }
+.bg-slate-100 { background-color: var(--slate-100); }
+
+.text-primary  { color: var(--bs-primary) !important; }
+.text-success  { color: #10b981 !important; }
+.text-warning  { color: #f59e0b !important; }
+.text-info     { color: #06b6d4 !important; }
+.text-slate-400 { color: var(--slate-400) !important; }
+.text-slate-500 { color: var(--slate-500) !important; }
+.text-slate-600 { color: var(--slate-600) !important; }
+.text-slate-700 { color: var(--slate-700) !important; }
+.text-slate-900 { color: var(--slate-900) !important; }
+
+.hover-row:hover td {
+  background-color: var(--slate-50);
+}
 
 .badge-status {
   display: inline-block;

@@ -1,21 +1,17 @@
-<div class="drivers-container p-4 animate-fade-in">
+<div class="orders-container px-4 py-5 animate-fade-in">
   <!-- Header Section -->
-  <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+  <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-4 mt-2">
     <div>
       <nav aria-label="breadcrumb" class="mb-2">
         <ol class="breadcrumb mb-0">
-          <li class="breadcrumb-item"><a routerLink="/shipping/dashboard" class="text-slate-500 text-decoration-none small fw-bold">PORTAL</a></li>
-          <li class="breadcrumb-item active text-primary small fw-bold" aria-current="page">ORDERS MANAGEMENT</li>
+          <li class="breadcrumb-item"><a routerLink="/shipping/dashboard" class="text-slate-400 text-decoration-none small fw-bold uppercase-tracking">Portal</a></li>
+          <li class="breadcrumb-item active text-primary small fw-bold uppercase-tracking" aria-current="page">Orders Management</li>
         </ol>
       </nav>
-      <h2 class="fw-bold mb-1 text-slate-900 tracking-tight">Manage Orders Requests</h2>
-      <p class="text-slate-500 mb-0">Monitor, filter, and dispatch client store orders across operational routes in real time.</p>
+      <h2 class="fw-bold mb-2 text-slate-900 tracking-tight" style="font-size: 2.25rem;">Manage Order Requests</h2>
     </div>
-    <div>
-      <button (click)="loadOrders()" class="btn btn-light-soft rounded-pill px-4">
-        <i class="bi bi-arrow-clockwise me-2"></i>Refresh Orders
-      </button>
-    </div>
+
+
   </div>
 
   <!-- Main Table Card -->
@@ -27,44 +23,39 @@
         <div class="col-md-3 col-sm-6">
           <div class="position-relative">
             <i class="bi bi-geo-alt text-slate-400 position-absolute top-50 start-0 translate-middle-y ms-3"></i>
-            <input type="text" class="form-control ps-5 py-2.5 rounded-pill shadow-none premium-input-search" 
-                   placeholder="Search by Vendor City..." 
-                   [(ngModel)]="searchTerm" 
-                   (input)="applyFilters()">
+            <input type="text" class="form-control ps-5 py-2.5 rounded-pill shadow-none premium-input-search"
+                   placeholder="Search ID, Vendor, City or Phone..."
+                   [(ngModel)]="searchTerm"
+                   (input)="onSearchInput()">
           </div>
         </div>
-        
+
         <!-- Order Status -->
         <div class="col-md-3 col-sm-6">
-          <select class="form-select py-2.5 rounded-pill shadow-none form-select-refined" 
-                  [(ngModel)]="statusFilter" 
+          <select class="form-select py-2.5 rounded-pill shadow-none form-select-refined"
+                  [(ngModel)]="statusFilter"
                   (change)="applyFilters()">
-            <option value="All">All Order Statuses</option>
-            <option *ngFor="let opt of statusList" [value]="opt.value">{{ opt.label }}</option>
+            <option [ngValue]="'All'">All Order Statuses</option>
+            <option *ngFor="let opt of statusList" [ngValue]="opt.value">{{ opt.label }}</option>
           </select>
         </div>
 
         <!-- Shipment Status -->
         <div class="col-md-3 col-sm-6">
-          <select class="form-select py-2.5 rounded-pill shadow-none form-select-refined" 
-                  [(ngModel)]="shipmentStatusFilter" 
+          <select class="form-select py-2.5 rounded-pill shadow-none form-select-refined"
+                  [(ngModel)]="shipmentStatusFilter"
                   (change)="applyFilters()">
-            <option value="All">All Shipment Statuses</option>
-            <option [value]="ShipmentStatusEnum.Pending">Pending</option>
-            <option [value]="ShipmentStatusEnum.Unassigned">Unassigned</option>
-            <option [value]="ShipmentStatusEnum.Assigned">Assigned</option>
-            <option [value]="ShipmentStatusEnum.PickingUp">Picking Up</option>
-            <option [value]="ShipmentStatusEnum.OutForDelivery">Out for Delivery</option>
-            <option [value]="ShipmentStatusEnum.Delivered">Delivered</option>
+            <option [ngValue]="'All'">All Shipment Statuses</option>
+            <option *ngFor="let opt of shipmentStatusList" [ngValue]="opt.value">{{ opt.label }}</option>
           </select>
         </div>
 
         <!-- Sort -->
         <div class="col-md-3 col-sm-6">
-          <select class="form-select py-2.5 rounded-pill shadow-none form-select-refined" 
-                  [(ngModel)]="sortBy" 
+          <select class="form-select py-2.5 rounded-pill shadow-none form-select-refined"
+                  [(ngModel)]="sortBy"
                   (change)="applyFilters()">
-            <option *ngFor="let opt of sortOptions" [value]="opt.value">{{ opt.label }}</option>
+            <option *ngFor="let sort of sortOptions" [ngValue]="sort.value">{{ sort.label }}</option>
           </select>
         </div>
       </div>
@@ -84,13 +75,17 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let order of orders" class="hover-row">
+          <tr *ngFor="let order of orders" class="hover-row cursor-pointer transition-all" (click)="viewOrderDetails(order)">
             <td class="ps-4">
               <span class="fw-bold text-slate-900 fs-6">#{{ order.orderId }}</span>
             </td>
             <td>
               <div class="d-flex flex-column">
                 <div class="fw-bold text-slate-800 mb-0">{{ order.vendorName || 'Boutique Store' }}</div>
+                <div class="text-slate-500 small d-flex align-items-center gap-1 mt-1">
+                  <i class="bi bi-telephone-fill text-slate-400"></i>
+                  <span>{{ order.vendorPhoneNumber || 'N/A' }}</span>
+                </div>
                 <div class="text-slate-500 small d-flex align-items-center gap-1 mt-0.5">
                   <i class="bi bi-geo-alt-fill text-danger"></i>
                   <span>{{ order.vendorAddress?.city || 'Operational City' }}</span>
@@ -100,28 +95,34 @@
               </div>
             </td>
             <td class="text-center">
-              <span class="badge py-1.5 px-3 rounded-pill text-xs fw-bold text-uppercase" 
+              <span class="badge py-1.5 px-3 rounded-pill text-xs fw-bold text-uppercase"
                     [ngClass]="order.orderType === OrderTypeEnum.Designed ? 'badge-purple text-purple bg-purple-soft' : 'badge-indigo text-indigo bg-indigo-soft'">
                 {{ order.orderType === OrderTypeEnum.Designed ? 'CUSTOM DESIGN' : 'FIXED GARMENT' }}
               </span>
             </td>
             <td class="text-center">
-              <span class="items-count-badge">{{ order.numberOfItems || 1 }} items</span>
+              <div class="items-count-badge shadow-premium-sm">
+                <span class="fs-5 text-primary me-1">{{ order.numberOfItems }}</span>
+                <span class="text-slate-500 small text-uppercase">{{ order.numberOfItems === 1 ? 'Item' : 'Items' }}</span>
+              </div>
             </td>
             <td class="text-center">
-              <div class="d-flex align-items-center justify-content-center gap-2">
-                <span class="badge rounded-pill px-2.5 py-1.5 text-xs fw-bold uppercase-tracking shadow-premium-sm" [ngClass]="getStatusBadgeClass(order.orderStatus)">
+              <div class="d-flex flex-column gap-2">
+                <span class="status-badge" [ngClass]="getStatusBadgeClass(order.orderStatus)">
                   {{ getStatusLabel(order.orderStatus) }}
                 </span>
-                <span class="badge rounded-pill px-2.5 py-1.5 text-xs fw-bold uppercase-tracking shadow-premium-sm" [ngClass]="getShipmentStatusBadgeClass(order.shipmentStatus)">
-                  Shipment: {{ getShipmentStatusLabel(order.shipmentStatus) }}
+                <span class="status-badge" [ngClass]="getShipmentStatusBadgeClass(order.shipmentStatus)">
+                  <i class="bi bi-truck me-1"></i> {{ getShipmentStatusLabel(order.shipmentStatus) }}
                 </span>
               </div>
             </td>
             <td>
-              <span class="text-slate-500 small fw-medium">{{ order.createdOn | date:'MMM d, yyyy' }}</span>
+              <div class="d-flex flex-column">
+                <span class="fw-bold text-slate-800">{{ order.createdOn | date:'MMM dd, yyyy' }}</span>
+                <span class="text-slate-400 small">{{ order.createdOn | date:'hh:mm a' }}</span>
+              </div>
             </td>
-            
+
           </tr>
 
           <!-- Empty State -->
@@ -158,10 +159,10 @@
         <button class="btn btn-sm btn-light-soft border-0 rounded-pill px-3 py-1.5" [disabled]="currentPage === 1 || isLoading" (click)="previousPage()">
           <i class="bi bi-chevron-left me-1"></i>Prev
         </button>
-        
+
         <ng-container *ngFor="let pageNum of visiblePages">
           <!-- Page Button -->
-          <button class="btn btn-sm rounded-circle px-3 py-1.5 mx-0.5 border-0 font-semibold" 
+          <button class="btn btn-sm rounded-circle px-3 py-1.5 mx-0.5 border-0 font-semibold"
                   *ngIf="pageNum !== '...'"
                   [class.btn-primary]="currentPage === pageNum"
                   [class.btn-light]="currentPage !== pageNum"
@@ -169,7 +170,7 @@
                   style="min-width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
             {{ pageNum }}
           </button>
-          
+
           <!-- Ellipses -->
           <span class="px-2 text-slate-400 fw-bold" style="user-select: none;" *ngIf="pageNum === '...'">
             ...
@@ -238,14 +239,14 @@
             <div class="d-flex justify-content-between">
               <span>Delivery City:</span>
               <strong class="text-slate-900">
-                {{ selectedOrder.shippingAddress?.city || selectedOrder.deliveryCity || 'City' }}, 
+                {{ selectedOrder.shippingAddress?.city || selectedOrder.deliveryCity || 'City' }},
                 {{ selectedOrder.shippingAddress?.state || selectedOrder.deliveryState || 'State' }}
               </strong>
             </div>
             <div class="d-flex justify-content-between">
               <span>Street Address:</span>
               <strong class="text-slate-900">
-                {{ selectedOrder.shippingAddress?.street || selectedOrder.deliveryStreet || 'Street' }} 
+                {{ selectedOrder.shippingAddress?.street || selectedOrder.deliveryStreet || 'Street' }}
                 (Bld {{ selectedOrder.shippingAddress?.buildingNumber || selectedOrder.deliveryBuildingNumber || 'N/A' }})
               </strong>
             </div>
@@ -267,7 +268,7 @@
             <div class="d-flex justify-content-between">
               <span>Pickup Region:</span>
               <strong class="text-slate-900">
-                {{ selectedOrder.pickUpAddress?.city || selectedOrder.pickupCity || selectedOrder.vendorAddress?.city || 'City' }}, 
+                {{ selectedOrder.pickUpAddress?.city || selectedOrder.pickupCity || selectedOrder.vendorAddress?.city || 'City' }},
                 {{ selectedOrder.pickUpAddress?.state || selectedOrder.pickupState || selectedOrder.vendorAddress?.state || 'State' }}
               </strong>
             </div>
@@ -290,7 +291,7 @@
                 <img [src]="resolveImageUrl(item.imageUrl || item.productImage)" class="rounded-3 border object-fit-cover bg-light" style="width: 70px; height: 70px;">
                 <div class="flex-grow-1">
                   <div class="fw-bold text-slate-800 mb-1">{{ item.productName }}</div>
-                  
+
                   <div class="d-flex flex-column gap-1 mb-2">
                     <span class="text-xs text-slate-500">Color: <strong class="text-slate-700">{{ item.colorName || 'Default' }}</strong></span>
                     <span class="text-xs text-slate-500">Total Qty: <strong class="text-slate-700">{{ item.totalQuantity || item.quantity }}</strong></span>
@@ -319,7 +320,7 @@
           <div class="d-flex flex-column gap-3">
             <div class="p-3 border border-slate-100 rounded-4 bg-white shadow-sm" *ngFor="let item of selectedOrderDesignedItems">
               <div class="fw-bold text-slate-800 mb-1">{{ item.productName || 'Custom Design' }}</div>
-              
+
               <div class="d-flex flex-column gap-1 mb-2 text-xs text-slate-500">
                 <span>Color: <strong class="text-slate-700">{{ item.colorName || 'Custom Color' }}</strong></span>
                 <span>Total Qty: <strong class="text-slate-700">{{ item.totalQuantity || item.quantity }}</strong></span>
@@ -377,42 +378,3 @@
   </div>
 </div>
 
-<!-- Modal: Update Shipment Status Overlay -->
-<div class="modal-overlay animate-fade-in" *ngIf="showStatusModal" (click)="closeStatusModal()">
-  <div class="modal-card small-modal" style="max-width: 480px;" (click)="$event.stopPropagation()">
-    <div class="modal-header-premium border-bottom p-4">
-      <h4 class="fw-bold mb-0 text-slate-900">Update Shipment Status</h4>
-      <button class="btn-close shadow-none" (click)="closeStatusModal()"></button>
-    </div>
-
-    <div class="p-4" *ngIf="orderToUpdateStatus">
-      <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-slate-50 border rounded-4">
-        <div>
-          <div class="fw-bold text-slate-800">Order #{{ orderToUpdateStatus.orderId }}</div>
-          <div class="text-slate-500 small">Current Shipment Status: <strong class="text-slate-800">{{ getShipmentStatusLabel(orderToUpdateStatus.shipmentStatus) }}</strong></div>
-        </div>
-      </div>
-
-      <div class="mb-4">
-        <label class="form-label fw-bold small text-uppercase mb-3 d-block text-center text-slate-400 tracking-wider">Select New Shipment Status</label>
-        <div class="status-options-grid d-flex flex-column gap-2">
-          <label class="status-option-label m-0" *ngFor="let opt of shipmentStatusList">
-            <input type="radio" name="shipmentStatus" [value]="opt.value" [(ngModel)]="newStatusValue" class="btn-check">
-            <div class="status-option p-3 rounded-4 d-flex align-items-center gap-3 cursor-pointer border"
-                 [class.active]="newStatusValue === opt.value">
-              <div class="status-radio"></div>
-              <div>
-                <div class="fw-bold text-slate-800">{{ opt.label }}</div>
-              </div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="d-grid mt-4">
-        <button class="btn btn-primary rounded-pill py-3 fw-bold shadow-premium" (click)="updateOrderStatus()">
-          <span>Save Changes</span>
-        </button>
-    </div>
-  </div>
-</div>

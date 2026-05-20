@@ -175,7 +175,7 @@
               </td>
               <td class="fw-medium">${{ shipment.price | number:'1.2-2' }}</td>
               <td>
-                <div *ngIf="shipment.driverName" class="d-flex align-items-center">
+                <div *ngIf="shipment.driverName" class="d-flex align-items-center mb-1">
                   <div class="avatar-sm-circle me-2">
                     <i class="bi bi-person-circle"></i>
                   </div>
@@ -186,6 +186,11 @@
                         (click)="openAssignModal(shipment)">
                   <i class="bi bi-person-plus me-1"></i>Assign
                 </button>
+                <button *ngIf="getNumericStatus(shipment.shipmentStatus, ShipmentStatusEnum) === ShipmentStatusEnum.Assigned" 
+                        class="btn btn-outline-danger btn-sm me-2" 
+                        (click)="unassignShipment(shipment.id)">
+                  <i class="bi bi-person-dash me-1"></i>Unassign
+                </button>
               </td>
               <td>
                 <span class="status-badge" [ngClass]="getStatusBadgeClass(shipment.shipmentStatus)">
@@ -195,11 +200,20 @@
               </td>
               <td class="text-end pe-4">
                 <div class="dropdown">
-                  <a class="btn btn-icon btn-light" [routerLink]="['/shipping/shipments', shipment.id]">
+                  <a class="btn btn-icon btn-light" [routerLink]="['/shipping/shipments', shipment.id]" title="View Details">
                     <i class="bi bi-eye"></i>
                   </a>
-                  <button *ngIf="getNumericStatus(shipment.shipmentStatus, ShipmentStatusEnum) === ShipmentStatusEnum.Unassigned" class="btn btn-icon btn-light ms-2" (click)="openAssignModal(shipment)">
+                  <button *ngIf="getNumericStatus(shipment.shipmentStatus, ShipmentStatusEnum) === ShipmentStatusEnum.Unassigned" 
+                          class="btn btn-icon btn-light ms-2" 
+                          (click)="openAssignModal(shipment)" 
+                          title="Assign Driver">
                     <i class="bi bi-person-plus"></i>
+                  </button>
+                  <button *ngIf="getNumericStatus(shipment.shipmentStatus, ShipmentStatusEnum) === ShipmentStatusEnum.Assigned" 
+                          class="btn btn-icon btn-light text-danger ms-2" 
+                          (click)="unassignShipment(shipment.id)" 
+                          title="Unassign Driver">
+                    <i class="bi bi-person-dash"></i>
                   </button>
                 </div>
               </td>

@@ -77,6 +77,7 @@ export class ShipmentDetailsComponent implements OnInit {
   }
 
   loadShipmentItems() {
+    // We will fetch both items and the full orders (to get real statuses)
     this.driverService.getShipmentItems(this.shipmentId).subscribe({
       next: (res) => {
         const items: any[] = [];
@@ -119,27 +120,55 @@ export class ShipmentDetailsComponent implements OnInit {
         }
         this.shipmentItems = items;
 
-        // Populate shipment.orders with unique order IDs from the items dynamically
-        if (this.shipment) {
-          const uniqueOrderIds = Array.from(new Set(items.map(x => x.orderId).filter(id => id !== null && id !== undefined)));
-          const currentShipmentStatusStr = this.shipment.shipmentStatus.toString();
-          const isAlreadyPickedUp = currentShipmentStatusStr === 'OutForDelivery' || 
-                                     currentShipmentStatusStr === '5' || 
-                                     currentShipmentStatusStr === 'Delivered' || 
-                                     currentShipmentStatusStr === '6';
+        // Fetch real order statuses
+        this.driverService.getShipmentOrders(this.shipmentId).subscribe({
+          next: (orderRes) => {
+            if (this.shipment) {
+              const realOrders = orderRes?.orders ?? orderRes?.Orders ?? [];
+              const uniqueOrderIds = Array.from(new Set(items.map(x => x.orderId).filter(id => id !== null && id !== undefined)));
+              
+              this.shipment.orders = uniqueOrderIds.map(orderId => {
+                const localKey = `shipment_${this.shipmentId}_order_${orderId}_picked`;
+                const wasPickedLocal = localStorage.getItem(localKey) === 'true';
+                
+                // Find the real order to get its true status
+                const realOrder = realOrders.find((ro: any) => (ro.id || ro.Id) === orderId);
+                let currentStatus = realOrder ? (realOrder.status ?? realOrder.Status) : 'Pending';
 
-          this.shipment.orders = uniqueOrderIds.map(orderId => {
-            const localKey = `shipment_${this.shipmentId}_order_${orderId}_picked`;
-            const wasPickedLocal = localStorage.getItem(localKey) === 'true';
+                // Map integer enums to strings if necessary
+                if (currentStatus === 0) currentStatus = 'Pending';
+                if (currentStatus === 1) currentStatus = 'Paid';
+                if (currentStatus === 5) currentStatus = 'Ready';
+                if (currentStatus === 6) currentStatus = 'PickedUp';
 
-            return {
-              orderId: orderId as number,
-              storeName: items.find(x => x.orderId === orderId)?.type === 'Fixed' ? 'WearCast Store' : 'Design Factory',
-              itemsCount: items.filter(x => x.orderId === orderId).reduce((sum, current) => sum + current.quantity, 0),
-              status: (isAlreadyPickedUp || wasPickedLocal) ? 'PickedUp' : 'Ready'
-            };
-          });
-        }
+                // If picked up locally, override it
+                if (wasPickedLocal) {
+                  currentStatus = 'PickedUp';
+                }
+
+                return {
+                  orderId: orderId as number,
+                  storeName: items.find(x => x.orderId === orderId)?.type === 'Fixed' ? 'WearCast Store' : 'Design Factory',
+                  itemsCount: items.filter(x => x.orderId === orderId).reduce((sum, current) => sum + current.quantity, 0),
+                  status: currentStatus
+                };
+              });
+            }
+          },
+          error: (err) => {
+             console.error('Failed to load real orders', err);
+             // Fallback
+             if (this.shipment) {
+               const uniqueOrderIds = Array.from(new Set(items.map(x => x.orderId).filter(id => id !== null && id !== undefined)));
+               this.shipment.orders = uniqueOrderIds.map(orderId => ({
+                  orderId: orderId as number,
+                  storeName: items.find(x => x.orderId === orderId)?.type === 'Fixed' ? 'WearCast Store' : 'Design Factory',
+                  itemsCount: items.filter(x => x.orderId === orderId).reduce((sum, current) => sum + current.quantity, 0),
+                  status: 'Pending'
+               }));
+             }
+          }
+        });
       },
       error: (err) => {
         console.error('Failed to load shipment items', err);

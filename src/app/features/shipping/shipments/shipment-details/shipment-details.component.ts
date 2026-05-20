@@ -84,52 +84,46 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
         // Fetch individual orders to populate details reactively from backend
         this.shippingService.getOrdersByShipmentId(this.shipmentId).subscribe({
-          next: (orders) => {
+          next: (ordersResponse) => {
             let ordersArray: any[] = [];
-            if (orders) {
-              if (Array.isArray(orders)) {
-                ordersArray = orders;
-              } else if (Array.isArray(orders.orders)) {
-                ordersArray = orders.orders;
-              } else if (Array.isArray(orders.Orders)) {
-                ordersArray = orders.Orders;
-              } else if (Array.isArray(orders.items)) {
-                ordersArray = orders.items;
+            if (ordersResponse) {
+              if (Array.isArray(ordersResponse)) {
+                ordersArray = ordersResponse;
+              } else if (Array.isArray(ordersResponse.orders)) {
+                ordersArray = ordersResponse.orders;
+              } else if (Array.isArray(ordersResponse.Orders)) {
+                ordersArray = ordersResponse.Orders;
+              }
+            }
+
+            // ONLY extract and map the orders, do NOT overwrite the selectedShipmentDetails properties!
+            this.selectedShipmentDetails.orders = ordersArray.map((o: any) => {
+              const isFixed = o.orderType === 0 || o.orderType === 'Fixed' || o.orderType === 'Standard Store' || o.orderType === 'StandardStore';
+              
+              // Ensure correct string status
+              let statusStr = 'Pending';
+              if (o.status !== undefined && o.status !== null) {
+                const s = o.status.toString();
+                if (s === '0' || s === 'Pending') statusStr = 'Pending';
+                else if (s === '1' || s === 'Paid') statusStr = 'Paid';
+                else if (s === '2' || s === 'Failed') statusStr = 'Failed';
+                else if (s === '3' || s === 'Cancelled') statusStr = 'Cancelled';
+                else if (s === '4' || s === 'Refunded') statusStr = 'Refunded';
+                else if (s === '5' || s === 'Ready') statusStr = 'Ready';
+                else if (s === '6' || s === 'PickedUp') statusStr = 'PickedUp';
               }
 
-              // Merge all other shipment properties from getOrdersByShipmentId to ensure consistency!
-              this.selectedShipmentDetails = {
-                ...this.selectedShipmentDetails,
-                ...orders,
-                orders: ordersArray.map((o: any) => {
-                  const isFixed = o.orderType === 0 || o.orderType === 'Fixed' || o.orderType === 'Standard Store' || o.orderType === 'StandardStore';
-                  
-                  // Ensure correct string status
-                  let statusStr = 'Pending';
-                  if (o.status !== undefined && o.status !== null) {
-                    const s = o.status.toString();
-                    if (s === '0' || s === 'Pending') statusStr = 'Pending';
-                    else if (s === '1' || s === 'Paid') statusStr = 'Paid';
-                    else if (s === '2' || s === 'Failed') statusStr = 'Failed';
-                    else if (s === '3' || s === 'Cancelled') statusStr = 'Cancelled';
-                    else if (s === '4' || s === 'Refunded') statusStr = 'Refunded';
-                    else if (s === '5' || s === 'Ready') statusStr = 'Ready';
-                    else if (s === '6' || s === 'PickedUp') statusStr = 'PickedUp';
-                  }
-
-                  return {
-                    id: o.id,
-                    orderType: isFixed ? 'Standard Store' : 'Custom Tailored',
-                    vendorName: o.vendorName || (isFixed ? 'WearCast Store' : 'Design Factory'),
-                    totalAmount: o.totalAmount,
-                    status: statusStr,
-                    recipientName: o.recipientName,
-                    recipientPhoneNumber: o.recipientPhoneNumber,
-                    shippingAddress: o.shippingAddress || { street: 'N/A', city: 'N/A', state: 'N/A' }
-                  };
-                })
+              return {
+                id: o.id,
+                orderType: isFixed ? 'Standard Store' : 'Custom Tailored',
+                vendorName: o.vendorName || (isFixed ? 'WearCast Store' : 'Design Factory'),
+                totalAmount: o.totalAmount,
+                status: statusStr,
+                recipientName: o.recipientName,
+                recipientPhoneNumber: o.recipientPhoneNumber,
+                shippingAddress: o.shippingAddress || { street: 'N/A', city: 'N/A', state: 'N/A' }
               };
-            }
+            });
           },
           error: (err) => console.error('Failed to load nested orders', err)
         });

@@ -46,6 +46,7 @@ export class OrdersComponent implements OnInit {
   orders: any[] = [];
   isLoading = false;
   isLoadingDetails = false;
+  private searchTimeout: any;
 
   // Pagination
   currentPage = 1;
@@ -66,11 +67,6 @@ export class OrdersComponent implements OnInit {
   selectedOrderDesignedItems: any[] = [];
   showDetailsDrawer = false;
 
-  // Status Change Dialog
-  showStatusModal = false;
-  orderToUpdateStatus: any | null = null;
-  newStatusValue: number = 0;
-
   OrderStatusEnum = OrderStatus;
   OrderTypeEnum = OrderType;
   ShipmentStatusEnum = ShipmentStatus;
@@ -79,8 +75,8 @@ export class OrdersComponent implements OnInit {
   sortOptions = [
     { value: 1, label: 'Newest first' },
     { value: 2, label: 'Oldest first' },
-    { value: 18, label: 'Items: Low to High' },
-    { value: 19, label: 'Items: High to Low' }
+    { value: 14, label: 'Items: Low to High' },
+    { value: 15, label: 'Items: High to Low' }
   ];
 
   statusList = [
@@ -164,7 +160,7 @@ export class OrdersComponent implements OnInit {
     }
 
     if (this.searchTerm.trim()) {
-      params.VendorCity = this.searchTerm.trim();
+      params.SearchTerm = this.searchTerm.trim();
     }
 
     this.shippingCompanyService.getOrders(params).subscribe({
@@ -185,6 +181,15 @@ export class OrdersComponent implements OnInit {
   applyFilters() {
     this.currentPage = 1;
     this.loadOrders();
+  }
+
+  onSearchInput() {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+    this.searchTimeout = setTimeout(() => {
+      this.applyFilters();
+    }, 500); // 500ms debounce
   }
 
   clearFilters() {
@@ -254,74 +259,6 @@ export class OrdersComponent implements OnInit {
     this.selectedOrderDesignedItems = [];
   }
 
-  openStatusModal(order: any) {
-    this.orderToUpdateStatus = order;
-    this.newStatusValue = this.getNumericStatus(order.shipmentStatus, ShipmentStatus);
-    this.showStatusModal = true;
-  }
-
-  closeStatusModal() {
-    this.showStatusModal = false;
-    this.orderToUpdateStatus = null;
-  }
-
-  updateOrderStatus() {
-    if (!this.orderToUpdateStatus) return;
-
-    const shipmentId = this.orderToUpdateStatus.shipmentId;
-    if (!shipmentId) {
-      alert("No shipment record is currently associated with this order.");
-      return;
-    }
-
-    this.shippingService.updateShipmentStatus(shipmentId, this.newStatusValue).subscribe({
-      next: () => {
-        this.closeStatusModal();
-        this.loadOrders();
-        // If details drawer is open for this order, refresh details
-        if (this.showDetailsDrawer && this.selectedOrder?.orderId === this.orderToUpdateStatus.orderId) {
-          this.viewOrderDetails(this.selectedOrder);
-        }
-      },
-      error: (err) => {
-        console.error('Failed to update shipment status', err);
-        let errMsg = 'Failed to update shipment status. Role or transition constraints may prevent this action.';
-
-        if (err.error) {
-          if (typeof err.error === 'string') {
-            errMsg = err.error;
-          } else if (err.error.message) {
-            errMsg = err.error.message;
-          } else if (err.error.title) {
-            errMsg = err.error.title;
-          } else if (err.error.errors) {
-            const validationErrors = err.error.errors;
-            const messages = [];
-            for (const key in validationErrors) {
-              if (validationErrors.hasOwnProperty(key)) {
-                const item = validationErrors[key];
-                if (Array.isArray(item)) {
-                  messages.push(...item);
-                } else if (typeof item === 'string') {
-                  messages.push(item);
-                }
-              }
-            }
-            if (messages.length > 0) {
-              errMsg = messages.join('\n');
-            }
-          } else {
-            errMsg = JSON.stringify(err.error);
-          }
-        } else if (err.message) {
-          errMsg = err.message;
-        }
-
-        alert(errMsg);
-      }
-    });
-  }
-
   // Helper formatting methods
   getStatusLabel(status: any): string {
     const s = this.getNumericStatus(status, OrderStatus);
@@ -366,12 +303,12 @@ export class OrdersComponent implements OnInit {
   getShipmentStatusBadgeClass(status: any): string {
     const s = this.getNumericStatus(status, ShipmentStatus);
     switch (s) {
-      case ShipmentStatus.Delivered: return 'status-success';
+      case ShipmentStatus.Delivered: return 'shipment-success';
       case ShipmentStatus.OutForDelivery:
-      case ShipmentStatus.PickingUp: return 'status-info';
-      case ShipmentStatus.Assigned: return 'status-info';
-      case ShipmentStatus.Unassigned: return 'status-warning';
-      default: return 'status-secondary';
+      case ShipmentStatus.PickingUp: return 'shipment-info';
+      case ShipmentStatus.Assigned: return 'shipment-info';
+      case ShipmentStatus.Unassigned: return 'shipment-warning';
+      default: return 'shipment-secondary';
     }
   }
 

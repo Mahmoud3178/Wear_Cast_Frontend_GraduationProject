@@ -3,9 +3,9 @@
   <header class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
     <div>
       <h1 class="fw-bold tracking-tight mb-1 text-slate-900">Welcome Back, {{ userName }}</h1>
-      <p class="text-slate-500 mb-0">Here's what's happening with your deliveries today.</p>
+      <p class="text-slate-500 mb-0">Here's your live operational overview.</p>
     </div>
-    
+
     <div class="d-flex align-items-center gap-3">
       <!-- Vehicle Type badge -->
       <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border border-slate-100" *ngIf="dashboardStats">
@@ -17,7 +17,7 @@
 
       <!-- Online Status Badge -->
       <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border border-slate-100" *ngIf="dashboardStats">
-        <span class="dot" [ngClass]="dashboardStats.driverStatus === 1 ? 'bg-success' : 'bg-danger'"></span>
+        <span class="dot" [ngClass]="getDriverStatusName(dashboardStats.driverStatus) === 'Available' ? 'bg-success' : 'bg-danger'"></span>
         <span class="text-sm fw-semibold text-slate-600">Status: {{ getDriverStatusName(dashboardStats.driverStatus) }}</span>
       </div>
 
@@ -30,192 +30,100 @@
     </div>
   </header>
 
-  <!-- Stats Grid -->
+  <!-- Stats Grid (3x2 Layout) -->
   <div class="row g-4 mb-5">
-    <div class="col-12 col-md-6 col-xl-3" *ngFor="let stat of stats; let i = index">
-      <div class="premium-card p-4 h-100 shadow-premium border-0 position-relative overflow-hidden">
+    <div class="col-12 col-sm-6 col-md-4" *ngFor="let stat of stats; let i = index">
+      <div class="premium-card p-4 h-100 shadow-premium border-0 position-relative overflow-hidden d-flex flex-column justify-content-between">
         <div class="card-bg-decoration animate-pulse"></div>
         <div class="d-flex justify-content-between align-items-start mb-3 position-relative">
-          <div class="stat-icon-box" [ngClass]="'bg-soft-' + i">
+          <div class="stat-icon-box" [ngClass]="'bg-soft-' + (i % 6)">
             <i class="bi" [ngClass]="stat.icon"></i>
           </div>
         </div>
         <div class="position-relative">
           <p class="uppercase-tracking text-slate-400 fw-bold mb-1">{{ stat.title }}</p>
-          <h2 class="fw-bold text-slate-900 mb-0">{{ stat.value }}</h2>
+          <h2 class="fw-bold text-slate-900 mb-0 fs-1">{{ stat.value }}</h2>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Main Content Grid -->
-  <div class="row g-4">
-    <!-- Left Column: Shipments & Route info -->
-    <div class="col-12 col-xl-8">
-      <!-- Active Driver Profile Overview Card -->
-      <div class="premium-card p-4 shadow-premium mb-4" *ngIf="dashboardStats">
-        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
-          <div>
-            <h5 class="fw-bold text-slate-900 mb-1">Active Duty Information</h5>
-            <p class="text-xs text-slate-500 mb-0">Live status details and assigned work metrics</p>
-          </div>
-        </div>
-        
-        <div class="row g-3">
-          <div class="col-6 col-sm-3">
-            <div class="bg-slate-50 p-3 rounded-3 text-center border border-slate-100">
-              <div class="text-xs text-slate-400 fw-semibold mb-1">Pending Orders</div>
-              <h4 class="fw-bold text-slate-900 mb-0">{{ dashboardStats.pendingOrders }}</h4>
-            </div>
-          </div>
-          <div class="col-6 col-sm-3">
-            <div class="bg-slate-50 p-3 rounded-3 text-center border border-slate-100">
-              <div class="text-xs text-slate-400 fw-semibold mb-1">Picked Up</div>
-              <h4 class="fw-bold text-slate-900 mb-0">{{ dashboardStats.pickedUpOrders }}</h4>
-            </div>
-          </div>
-          <div class="col-6 col-sm-3">
-            <div class="bg-slate-50 p-3 rounded-3 text-center border border-slate-100">
-              <div class="text-xs text-slate-400 fw-semibold mb-1">Active Shipments</div>
-              <h4 class="fw-bold text-slate-900 mb-0">
-                {{ (dashboardStats.assignedShipments || 0) + (dashboardStats.pickingUpShipments || 0) + (dashboardStats.outForDeliveryShipments || 0) }}
-              </h4>
-            </div>
-          </div>
-          <div class="col-6 col-sm-3">
-            <div class="bg-slate-50 p-3 rounded-3 text-center border border-slate-100">
-              <div class="text-xs text-slate-400 fw-semibold mb-1">Total Delivered</div>
-              <h4 class="fw-bold text-slate-900 mb-0">{{ dashboardStats.deliveredShipments }}</h4>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="row g-4 mb-5">
 
-      <!-- Recent Shipments Table -->
-      <div class="premium-card shadow-premium overflow-hidden">
-        <div class="p-4 d-flex justify-content-between align-items-center border-bottom border-slate-100">
-          <h5 class="fw-bold text-slate-900 mb-0">Recent Deliveries</h5>
-          <a routerLink="/driver/shipments" class="btn btn-link-premium text-sm p-0">View All</a>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="bg-slate-50">
-              <tr>
-                <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0">Tracking ID</th>
-                <th class="py-3 uppercase-tracking text-slate-500 border-0">Customer</th>
-                <th class="py-3 uppercase-tracking text-slate-500 border-0">Destination</th>
-                <th class="py-3 uppercase-tracking text-slate-500 border-0">Status</th>
-                <th class="px-4 py-3 uppercase-tracking text-slate-500 border-0 text-end">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let shipment of recentShipments" class="cursor-pointer" [routerLink]="['/driver/shipments', shipment.id]">
-                <td class="px-4">
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="pkg-icon bg-slate-100 text-slate-500 rounded-circle">
-                      <i class="bi bi-box"></i>
-                    </div>
-                    <span class="fw-bold text-slate-700">#{{ shipment.id }}</span>
-                  </div>
-                </td>
-                <td>
-                  <div class="text-sm fw-semibold text-slate-900">{{ shipment.customerName || 'N/A' }}</div>
-                  <div class="text-xs text-slate-500">{{ shipment.customerPhoneNumber || 'N/A' }}</div>
-                </td>
-                <td>
-                  <div class="text-sm fw-medium text-slate-900">{{ shipment.deliveryCity }}</div>
-                  <div class="text-xs text-slate-500">{{ shipment.deliveryStreet }}</div>
-                </td>
-                <td>
-                  <span class="badge-status" [ngClass]="getStatusClass(shipment.shipmentStatus)">
-                    {{ getStatusName(shipment.shipmentStatus) }}
-                  </span>
-                </td>
-                <td class="px-4 text-end">
-                  <span class="text-sm text-slate-500">{{ shipment.orderTime | date:'MMM d, HH:mm' }}</span>
-                </td>
-              </tr>
-              <tr *ngIf="recentShipments.length === 0">
-                <td colspan="5" class="text-center py-5 text-muted">No recent shipments assigned to you.</td>
-              </tr>
-            </tbody>
-          </table>
+    <!-- Left Column: Distribution Chart -->
+    <div class="col-12 col-xl-8">
+      <div class="premium-card p-4 shadow-premium h-100" *ngIf="dashboardStats">
+        <h5 class="fw-bold text-slate-900 mb-4">Live Shipment Breakdown</h5>
+
+        <div class="row align-items-center h-100">
+          <div class="col-md-6 d-flex align-items-center justify-content-center" style="height: 300px;">
+            <canvas #statusChart></canvas>
+          </div>
+          <div class="col-md-6">
+            <div class="status-legend mt-4 mt-md-0 px-md-4">
+              <div class="status-item d-flex align-items-center justify-content-between py-3 border-bottom border-slate-50">
+                <div class="d-flex align-items-center gap-3">
+                  <span class="dot bg-primary" style="width: 12px; height: 12px;"></span>
+                  <span class="text-slate-700 fw-medium">Assigned</span>
+                </div>
+                <span class="fw-bold text-slate-900 fs-5">{{ dashboardStats.assignedShipments || 0 }}</span>
+              </div>
+              <div class="status-item d-flex align-items-center justify-content-between py-3 border-bottom border-slate-50">
+                <div class="d-flex align-items-center gap-3">
+                  <span class="dot bg-warning" style="width: 12px; height: 12px;"></span>
+                  <span class="text-slate-700 fw-medium">Picking Up</span>
+                </div>
+                <span class="fw-bold text-slate-900 fs-5">{{ dashboardStats.pickingUpShipments || 0 }}</span>
+              </div>
+              <div class="status-item d-flex align-items-center justify-content-between py-3 border-bottom border-slate-50">
+                <div class="d-flex align-items-center gap-3">
+                  <span class="dot bg-info" style="width: 12px; height: 12px;"></span>
+                  <span class="text-slate-700 fw-medium">Out For Delivery</span>
+                </div>
+                <span class="fw-bold text-slate-900 fs-5">{{ dashboardStats.outForDeliveryShipments || 0 }}</span>
+              </div>
+              <div class="status-item d-flex align-items-center justify-content-between py-3 border-bottom border-slate-50">
+                <div class="d-flex align-items-center gap-3">
+                  <span class="dot bg-success" style="width: 12px; height: 12px;"></span>
+                  <span class="text-slate-700 fw-medium">Delivered</span>
+                </div>
+                <span class="fw-bold text-slate-900 fs-5">{{ dashboardStats.deliveredShipments || 0 }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Right Column: Distribution & Quick Actions -->
+    <!-- Right Column: Quick Actions & Profile -->
     <div class="col-12 col-xl-4">
-      <!-- Driver Profile Card -->
-      <div class="premium-card p-4 shadow-premium mb-4 text-center position-relative overflow-hidden" *ngIf="dashboardStats">
-        <div class="profile-avatar-wrapper mb-3 mx-auto bg-light rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 80px; height: 80px; border: 3px solid #eff6ff; margin-top: 10px;">
-          <i class="bi bi-person-circle text-primary fs-1"></i>
+      <div class="premium-card p-4 shadow-premium h-100 text-center position-relative overflow-hidden d-flex flex-column" *ngIf="dashboardStats">
+        <div class="profile-avatar-wrapper mb-4 mx-auto bg-light rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 100px; height: 100px; border: 4px solid #eff6ff; margin-top: 15px;">
+          <i class="bi bi-person-circle text-primary" style="font-size: 3.5rem;"></i>
         </div>
-        <h5 class="fw-bold text-slate-900 mb-1">{{ userName }}</h5>
-        <p class="text-xs text-slate-500 uppercase-tracking fw-bold mb-3">Professional Driver</p>
-        
-        <div class="d-flex flex-column gap-2 mb-4 text-start">
-          <div class="p-2 bg-slate-50 rounded-3 border border-slate-100 d-flex justify-content-between align-items-center">
-            <span class="text-xs text-slate-500 fw-semibold">Assigned Vehicle</span>
-            <span class="text-sm fw-bold text-slate-800 d-flex align-items-center gap-1">
-              <i class="bi" [ngClass]="getVehicleIcon(dashboardStats.deliveryVehicleType)"></i>
+
+        <h4 class="fw-bold text-slate-900 mb-1">{{ userName }}</h4>
+        <p class="text-sm text-slate-500 uppercase-tracking fw-bold mb-4">Professional Driver</p>
+
+        <div class="d-flex flex-column gap-3 mb-auto text-start">
+          <div class="p-3 bg-slate-50 rounded-4 border border-slate-100 d-flex justify-content-between align-items-center transition-all hover-lift">
+            <span class="text-sm text-slate-500 fw-semibold">Assigned Vehicle</span>
+            <span class="text-md fw-bold text-slate-800 d-flex align-items-center gap-2">
+              <i class="bi text-primary" [ngClass]="getVehicleIcon(dashboardStats.deliveryVehicleType)"></i>
               {{ getVehicleName(dashboardStats.deliveryVehicleType) }}
             </span>
           </div>
-          <div class="p-2 bg-slate-50 rounded-3 border border-slate-100 d-flex justify-content-between align-items-center">
-            <span class="text-xs text-slate-500 fw-semibold">Duty Status</span>
-            <span class="badge rounded-pill text-xs fw-bold px-2.5 py-1" 
-                  [ngClass]="dashboardStats.driverStatus === 1 ? 'bg-success text-white' : 'bg-danger text-white'">
+          <div class="p-3 bg-slate-50 rounded-4 border border-slate-100 d-flex justify-content-between align-items-center transition-all hover-lift">
+            <span class="text-sm text-slate-500 fw-semibold">Duty Status</span>
+            <span class="badge rounded-pill text-sm fw-bold px-3 py-1.5 shadow-sm"
+                  [ngClass]="getDriverStatusName(dashboardStats.driverStatus) === 'Available' ? 'bg-success text-white' : 'bg-danger text-white'">
               {{ getDriverStatusName(dashboardStats.driverStatus) }}
             </span>
           </div>
         </div>
 
-        <button (click)="toggleStatus()" 
-                [ngClass]="dashboardStats.driverStatus === 1 ? 'btn-danger bg-danger text-white' : 'btn-success bg-success text-white'" 
-                class="btn w-100 rounded-pill py-2.5 fw-bold text-sm shadow-sm border-0 d-flex align-items-center justify-content-center gap-2">
-          <i class="bi" [ngClass]="dashboardStats.driverStatus === 1 ? 'bi-toggle-off' : 'bi-toggle-on'"></i>
-          {{ dashboardStats.driverStatus === 1 ? 'Go Off Duty' : 'Go On Duty' }}
-        </button>
-      </div>
 
-      <!-- Status Distribution Chart -->
-      <div class="premium-card p-4 shadow-premium mb-4" *ngIf="dashboardStats">
-        <h5 class="fw-bold text-slate-900 mb-4">Shipment Breakdown</h5>
-        <div class="chart-container d-flex align-items-center justify-content-center" style="height: 250px;">
-          <canvas #statusChart></canvas>
-        </div>
-        
-        <div class="status-legend mt-4">
-          <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
-            <div class="d-flex align-items-center gap-2">
-              <span class="dot bg-primary"></span>
-              <span class="text-sm text-slate-600">Assigned</span>
-            </div>
-            <span class="fw-bold text-slate-900">{{ dashboardStats.assignedShipments || 0 }}</span>
-          </div>
-          <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
-            <div class="d-flex align-items-center gap-2">
-              <span class="dot bg-warning"></span>
-              <span class="text-sm text-slate-600">Picking Up</span>
-            </div>
-            <span class="fw-bold text-slate-900">{{ dashboardStats.pickingUpShipments || 0 }}</span>
-          </div>
-          <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
-            <div class="d-flex align-items-center gap-2">
-              <span class="dot bg-info"></span>
-              <span class="text-sm text-slate-600">Out For Delivery</span>
-            </div>
-            <span class="fw-bold text-slate-900">{{ dashboardStats.outForDeliveryShipments || 0 }}</span>
-          </div>
-          <div class="status-item d-flex align-items-center justify-content-between py-2 border-bottom border-slate-50">
-            <div class="d-flex align-items-center gap-2">
-              <span class="dot bg-success"></span>
-              <span class="text-sm text-slate-600">Delivered</span>
-            </div>
-            <span class="fw-bold text-slate-900">{{ dashboardStats.deliveredShipments || 0 }}</span>
-          </div>
-        </div>
       </div>
     </div>
   </div>

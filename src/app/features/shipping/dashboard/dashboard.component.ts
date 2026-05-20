@@ -4,12 +4,9 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import Chart from 'chart.js/auto';
 import { forkJoin } from 'rxjs';
-import { ShippingService } from '../../../core/services/shipping.service';
-import { DriverService } from '../../../core/services/driver.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ShipmentStatus } from '../../../core/models/shipment.model';
-import { Driver } from '../../../core/models/driver.model';
-import { ShippingCompanyDashboardResponse, WalletResponse, WalletTransaction } from '../../../core/models/shipping-company.model';
+import { ShippingCompanyDashboardResponse, WalletResponse } from '../../../core/models/shipping-company.model';
 import { ShippingCompanyService } from '../../../core/services/shipping-company.service';
 
 @Component({
@@ -22,7 +19,6 @@ import { ShippingCompanyService } from '../../../core/services/shipping-company.
 export class DashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('statusChart') statusChartRef!: ElementRef;
 
-  private driverService = inject(DriverService);
   private authService = inject(AuthService);
   private shippingCompanyService = inject(ShippingCompanyService);
 
@@ -41,23 +37,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     { title: 'Wallet Balance', value: '$0', icon: 'bi-wallet2', trend: 'Current Balance', trendUp: true }
   ];
 
+  // --- Wallet & Ledger Info ---
   walletPage = 1;
   walletPageSize = 5;
-
-  // --- Shipping Company Order Requests Pipeline ---
-  orderRequests: any[] = [];
-  ordersCurrentPage = 1;
-  ordersPageSize = 5;
-  ordersTotalRecords = 0;
-  ordersTotalPages = 1;
-  isOrdersLoading = false;
-
-  // Filters
-  filterOrderStatus: number | 'All' = 'All';
-  filterOrderType: number | 'All' = 'All';
-  filterVendorCity = '';
-  filterShipmentStatus: number | 'All' = 'All';
-  filterSortBy = 1; // 1 = Newest
 
   constructor() { }
 
@@ -89,7 +71,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     });
 
     this.loadData();
-    this.loadOrders();
   }
 
   loadData() {
@@ -279,144 +260,5 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     if (s === ShipmentStatus.Pending) return 'status-warning';
     if (s === ShipmentStatus.Unassigned) return 'status-danger';
     return 'status-info';
-  }
-
-  // --- Shipping Company Order Requests Pipeline ---
-  loadOrders() {
-    this.isOrdersLoading = true;
-    const params: any = {
-      PageIndex: this.ordersCurrentPage,
-      PageSize: this.ordersPageSize,
-      SortBy: this.filterSortBy
-    };
-
-    if (this.filterOrderStatus !== 'All') {
-      params.OrderStatus = this.filterOrderStatus;
-    }
-    if (this.filterOrderType !== 'All') {
-      params.OrderType = this.filterOrderType;
-    }
-    if (this.filterVendorCity.trim()) {
-      params.VendorCity = this.filterVendorCity.trim();
-    }
-    if (this.filterShipmentStatus !== 'All') {
-      params.ShipmentStatus = this.filterShipmentStatus;
-    }
-
-    this.shippingCompanyService.getOrders(params).subscribe({
-      next: (res) => {
-        const raw = (res as any)?.data ?? (res as any)?.value ?? res ?? {};
-        this.orderRequests = raw.items ?? [];
-        this.ordersTotalRecords = raw.records ?? 0;
-        this.ordersTotalPages = raw.pages ?? 1;
-        this.isOrdersLoading = false;
-      },
-      error: (err) => {
-        console.error('Failed to load orders requests', err);
-        this.isOrdersLoading = false;
-      }
-    });
-  }
-
-  ordersNextPage() {
-    if (this.ordersCurrentPage < this.ordersTotalPages) {
-      this.ordersCurrentPage++;
-      this.loadOrders();
-    }
-  }
-
-  ordersPreviousPage() {
-    if (this.ordersCurrentPage > 1) {
-      this.ordersCurrentPage--;
-      this.loadOrders();
-    }
-  }
-
-  ordersGoToPage(page: number) {
-    if (page >= 1 && page <= this.ordersTotalPages) {
-      this.ordersCurrentPage = page;
-      this.loadOrders();
-    }
-  }
-
-  applyFilters() {
-    this.ordersCurrentPage = 1;
-    this.loadOrders();
-  }
-
-  resetFilters() {
-    this.filterOrderStatus = 'All';
-    this.filterOrderType = 'All';
-    this.filterVendorCity = '';
-    this.filterShipmentStatus = 'All';
-    this.filterSortBy = 1;
-    this.ordersCurrentPage = 1;
-    this.loadOrders();
-  }
-
-  getOrderStatusName(status: any): string {
-    if (status === null || status === undefined) return 'Pending';
-    // Handle both number and string conversions
-    let s = Number(status);
-    if (isNaN(s)) return status.toString();
-
-    switch (s) {
-      case 0: return 'Pending';
-      case 1: return 'Paid';
-      case 2: return 'Failed';
-      case 3: return 'Cancelled';
-      case 4: return 'Refunded';
-      case 5: return 'Ready';
-      case 6: return 'PickedUp';
-      default: return 'Processing';
-    }
-  }
-
-  getOrderStatusClass(status: any): string {
-    if (status === null || status === undefined) return 'status-warning';
-    let s = Number(status);
-    if (isNaN(s)) {
-      if (status === 'Paid' || status === 'PickedUp' || status === 'Ready') return 'status-success';
-      if (status === 'Cancelled' || status === 'Failed') return 'status-danger';
-      return 'status-warning';
-    }
-
-    switch (s) {
-      case 1: // Paid
-      case 5: // Ready
-      case 6: // PickedUp
-        return 'status-success';
-      case 2: // Failed
-      case 3: // Cancelled
-        return 'status-danger';
-      default:
-        return 'status-warning';
-    }
-  }
-
-  getOrderTypeName(type: any): string {
-    if (type === null || type === undefined) return 'Standard';
-    let t = Number(type);
-    if (isNaN(t)) return type.toString();
-
-    switch (t) {
-      case 1: return 'Fixed Product';
-      case 2: return 'Custom Design';
-      default: return 'Standard';
-    }
-  }
-
-  getOrderTypeClass(type: any): string {
-    if (type === null || type === undefined) return 'badge-secondary';
-    let t = Number(type);
-    if (isNaN(t)) {
-      return type === 'Fixed' || type === 'FixedProduct' ? 'badge-fixed-product' : 'badge-custom-design';
-    }
-
-    switch (t) {
-      case 1: return 'badge-fixed-product';
-      case 2: return 'badge-custom-design';
-      default: return 'badge-secondary';
-    }
   }
 }

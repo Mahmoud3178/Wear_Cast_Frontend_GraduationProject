@@ -86,6 +86,10 @@ export class DriverService {
     return this.http.get<any>(`${this.apiUrl}/Orders/shipment/${shipmentId}/items`);
   }
 
+  getShipmentOrders(shipmentId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/Orders/shipment/${shipmentId}`);
+  }
+
   updateShipmentStatus(id: number, request: UpdateShipmentStatusRequest): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/Shipments/${id}/status`, request);
   }

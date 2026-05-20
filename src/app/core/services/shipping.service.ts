@@ -48,6 +48,10 @@ export class ShippingService {
     return this.http.put<void>(`${this.apiUrl}/Shipments/${request.shipmentId}/assign`, request);
   }
 
+  unassignDriver(shipmentId: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/Shipments/${shipmentId}/unassign`, {});
+  }
+
   updateShipmentStatus(shipmentId: number, newStatus: number, deliveryCode?: string): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/Shipments/${shipmentId}/status`, {
       newStatus,
