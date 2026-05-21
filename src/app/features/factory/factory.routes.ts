@@ -70,7 +70,7 @@ export const FACTORY_ROUTES: Routes = [
           import('../../shared/components/notifications-list/notifications-list.component').then(
             m => m.NotificationsListComponent
           ),
-        data: { subtitle: 'Factory orders, production, and system alerts' }
+        data: { subtitle: 'Factory orders, production, and system alerts',   portalRole: 'factory' }
       }
     ]
   }

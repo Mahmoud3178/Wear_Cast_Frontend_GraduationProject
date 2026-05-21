@@ -46,23 +46,32 @@ export class NotificationsListComponent implements OnInit {
   private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly router = inject(Router);
 
-  ngOnInit(): void {
-    const routeSubtitle = this.route?.snapshot.data['subtitle'];
-    if (typeof routeSubtitle === 'string' && routeSubtitle.trim()) {
-      this.pageSubtitle = routeSubtitle.trim();
-    }
-
-    const routeRole = this.route?.snapshot.data['portalRole'];
-    if (routeRole) this.portalRole = routeRole;
-
-    this.notifService.receiveAll().subscribe({
-      next: () => {
-        window.dispatchEvent(new CustomEvent('notif-delivered'));
-        this.load();
-      },
-      error: () => this.load()
-    });
+ ngOnInit(): void {
+  const routeSubtitle = this.route?.snapshot.data['subtitle'];
+  if (typeof routeSubtitle === 'string' && routeSubtitle.trim()) {
+    this.pageSubtitle = routeSubtitle.trim();
   }
+
+  const routeRole = this.route?.snapshot.data['portalRole'];
+  if (routeRole) {
+    this.portalRole = routeRole;
+  } else {
+    // fallback: اكتشف من الـ URL
+    const url = this.router.url;
+    if (url.includes('/factory/'))       this.portalRole = 'factory';
+    else if (url.includes('/seller/'))   this.portalRole = 'seller';
+    else if (url.includes('/admin/'))    this.portalRole = 'admin';
+    else if (url.includes('/customer/')) this.portalRole = 'customer';
+  }
+
+  this.notifService.receiveAll().subscribe({
+    next: () => {
+      window.dispatchEvent(new CustomEvent('notif-delivered'));
+      this.load();
+    },
+    error: () => this.load()
+  });
+}
 
   get unread(): number {
     return this.notifications.filter(n => !n.isRead).length;
