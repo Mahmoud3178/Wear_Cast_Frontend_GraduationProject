@@ -24,30 +24,25 @@ export class NotificationsDriversComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.notifService.receiveAll().subscribe(() => {
-      window.dispatchEvent(new CustomEvent('notif-delivered'));
+    this.notifService.receiveAll().subscribe({
+      next: () => {
+        window.dispatchEvent(new CustomEvent('notif-delivered'));
+        this.load();
+      },
+      error: () => this.load()
     });
-    this.load();
   }
 
-load() {
-  this.isLoading = true;
-  this.notifService.getAll(1, 50, undefined, { isRead: this.isReadFilter }).subscribe({
-    next: (res: any) => {
-      const prev = this.notifications.length;
-      this.notifications = res?.items ?? res?.data ?? res ?? [];
-
-      // لو في notifications جديدة زود الكونتر
-      const newUnread = this.notifications.filter(n => !n.isRead).length;
-      window.dispatchEvent(new CustomEvent('notif-count-update', {
-        detail: { count: newUnread }
-      }));
-
-      this.isLoading = false;
-    },
-    error: () => { this.isLoading = false; }
-  });
-}
+  load() {
+    this.isLoading = true;
+    this.notifService.getAll(1, 50, undefined, { isRead: this.isReadFilter }).subscribe({
+      next: (res: any) => {
+        this.notifications = res?.items ?? res?.data ?? res ?? [];
+        this.isLoading = false;
+      },
+      error: () => { this.isLoading = false; }
+    });
+  }
 
   get unread() { return this.notifications.filter(n => !n.isRead).length; }
 
@@ -59,7 +54,10 @@ load() {
 
   markRead(n: any) {
     if (!n.isRead) {
-      this.notifService.markAsRead(n.id).subscribe(() => n.isRead = true);
+      this.notifService.markAsRead(n.id).subscribe(() => {
+        n.isRead = true;
+        window.dispatchEvent(new CustomEvent('notif-read'));
+      });
     }
     this.navigate(n);
   }
@@ -78,6 +76,7 @@ load() {
   markAllRead() {
     this.notifService.markAllAsRead().subscribe(() => {
       this.notifications.forEach(n => n.isRead = true);
+      window.dispatchEvent(new CustomEvent('notif-all-read'));
     });
   }
 
