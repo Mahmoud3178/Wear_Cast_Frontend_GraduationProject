@@ -323,10 +323,10 @@
                     <span class="fw-bold text-slate-700">x{{ item.quantity }}</span>
                   </td>
                   <td class="text-end">
-                    <span class="text-slate-600 fw-medium">${{ item.unitPrice | number:'1.2-2' }}</span>
+                    <span class="text-slate-600 fw-medium">{{ item.unitPrice | number:'1.2-2' }}</span>
                   </td>
                   <td class="px-4 text-end">
-                    <span class="fw-bold text-slate-900">${{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</span>
+                    <span class="fw-bold text-slate-900">{{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</span>
                   </td>
                 </tr>
               </tbody>
