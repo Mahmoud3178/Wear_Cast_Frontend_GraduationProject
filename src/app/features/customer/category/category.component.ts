@@ -56,6 +56,9 @@ export class CategoryComponent implements OnInit {
   maxPrice = 99999;
   searchTerm = '';
 
+  availableSizes = ['_XS', '_S', '_M', '_L', '_XL', '_2XL', '_3XL', '_4XL', '_5XL'];
+  selectedSizes: string[] = [];
+
   pageIndex = 1;
   pageSize = 16;
   totalPages = 1;
@@ -192,6 +195,10 @@ export class CategoryComponent implements OnInit {
     if (this.selectedSort !== null) params['SortBy'] = this.selectedSort;
     if (this.searchTerm.trim()) params['SearchTerm'] = this.searchTerm.trim();
 
+    if (this.selectedSizes.length > 0) {
+      params['Sizes'] = this.selectedSizes;
+    }
+
     this.fixedProductService.getAll(params).subscribe({
       next: (res: any) => {
         this.loading = false;
@@ -211,6 +218,16 @@ export class CategoryComponent implements OnInit {
     if (page < 1 || page > this.totalPages || page === this.pageIndex) return;
     this.fetchProducts(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  toggleSize(size: string): void {
+    const idx = this.selectedSizes.indexOf(size);
+    if (idx > -1) {
+      this.selectedSizes.splice(idx, 1);
+    } else {
+      this.selectedSizes.push(size);
+    }
+    this.fetchProducts(1);
   }
 
   audienceLabel(val: number): string {

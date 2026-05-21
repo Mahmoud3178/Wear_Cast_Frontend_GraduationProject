@@ -126,23 +126,17 @@ markRead(n: NotificationItem): void {
   this.navigate(n);
 }
 
-navigate(n: NotificationItem): void {
-  const type = n.notificationType as any;
-  const urlId = (n as any).urlId;
+  navigate(n: NotificationItem): void {
+    const type = n.notificationType as any;
+    const urlId = (n as any).urlId;
 
-  if (this.portalRole === 'factory') {
-    switch (type) {
-      case 'NewOrder':
-      case 5:
-        if (urlId) this.router.navigate(['/factory/orders', urlId]);
-        else this.router.navigate(['/factory/orders']);
-        break;
-      default: break;
+    if (this.portalRole === 'factory') {
+      if (urlId) this.router.navigate(['/factory/orders', urlId]);
+      else this.router.navigate(['/factory/orders']);
+      return;
     }
-    return;
-  }
 
-  if (this.portalRole === 'seller') {
+    if (this.portalRole === 'seller') {
     if (!urlId) return;
     switch (type) {
       case 'NewOrder':

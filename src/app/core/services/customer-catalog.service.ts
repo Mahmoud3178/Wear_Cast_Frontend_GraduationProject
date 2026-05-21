@@ -11,6 +11,7 @@ export interface CatalogProductCard {
   price: number;
   category?: string;
   categoryName?: string;
+  type?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -61,7 +62,8 @@ export class CustomerCatalogService {
             : null)) as string | null,
       price: Number(p['price'] ?? p['Price'] ?? p['basePrice'] ?? 0),
       category: String(p['categoryName'] ?? p['CategoryName'] ?? ''),
-      categoryName: String(p['categoryName'] ?? p['CategoryName'] ?? '')
+      categoryName: String(p['categoryName'] ?? p['CategoryName'] ?? ''),
+      type: String(p['type'] ?? p['Type'] ?? '').toLowerCase().trim()
     })).filter(p => p.id > 0);
   }
 }

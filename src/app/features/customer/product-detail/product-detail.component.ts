@@ -153,6 +153,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.isAuthenticated = !!this.auth.getToken();
     this.route.paramMap.subscribe(params => {
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
       const id = Number(params.get('id'));
       if (!id || isNaN(id)) {
         this.loading = false;

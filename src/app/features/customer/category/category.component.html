@@ -42,6 +42,19 @@
       </div>
 
       <div class="filter-group">
+        <p class="label">Sizes</p>
+        <div class="d-flex flex-wrap gap-2">
+          <button
+            *ngFor="let size of availableSizes"
+            class="chip"
+            [class.chip--active]="selectedSizes.includes(size)"
+            (click)="toggleSize(size)">
+            {{ size.replace('_', '') }}
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-group">
         <p class="label">Sort By</p>
         <select class="form-select form-select-sm mt-2" [(ngModel)]="selectedSort" (change)="fetchProducts()">
           <option [ngValue]="sort.value" *ngFor="let sort of sortOptions">{{sort.label}}</option>

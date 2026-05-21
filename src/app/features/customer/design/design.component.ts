@@ -329,6 +329,9 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
         if (draftDesignId != null) {
           setTimeout(() => this.loadDraftDesign(draftDesignId), 700);
         }
+        if (extraIds && extraIds.length > 0) {
+          setTimeout(() => this.selectCatalogProduct({ id: extraIds[0] }), 1000);
+        }
         // Small delay to let the designer finish init, then search + sync images
         setTimeout(() => this.searchCatalog(), 300);
       },
@@ -336,6 +339,9 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
         this.runDesigner();
         if (draftDesignId != null) {
           setTimeout(() => this.loadDraftDesign(draftDesignId), 700);
+        }
+        if (extraIds && extraIds.length > 0) {
+          setTimeout(() => this.selectCatalogProduct({ id: extraIds[0] }), 1000);
         }
         setTimeout(() => this.searchCatalog(), 300);
       }
