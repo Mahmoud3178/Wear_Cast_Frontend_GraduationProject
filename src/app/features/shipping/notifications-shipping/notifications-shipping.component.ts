@@ -23,23 +23,27 @@ export class NotificationsShippingComponent implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit() {
-    this.notifService.receiveAll().subscribe(() => {
-      window.dispatchEvent(new CustomEvent('notif-delivered'));
-    });
-    this.load();
-  }
+ngOnInit() {
+  this.notifService.receiveAll().subscribe(() => {
+    window.dispatchEvent(new CustomEvent('notif-delivered'));
+  });
+  this.load();
+}
 
-  load() {
-    this.isLoading = true;
-    this.notifService.getAll(1, 50, undefined, this.isReadFilter).subscribe({
-      next: (res: any) => {
-        this.notifications = res?.items ?? res?.data ?? res ?? [];
-        this.isLoading = false;
-      },
-      error: () => { this.isLoading = false; }
-    });
-  }
+load() {
+  this.isLoading = true;
+  this.notifService.getAll(1, 50, undefined, { isRead: this.isReadFilter }).subscribe({
+    next: (res: any) => {
+      this.notifications = res?.items ?? res?.data ?? res ?? [];
+      const newUnread = this.notifications.filter(n => !n.isRead).length;
+      window.dispatchEvent(new CustomEvent('notif-count-update', {
+        detail: { count: newUnread }
+      }));
+      this.isLoading = false;
+    },
+    error: () => { this.isLoading = false; }
+  });
+}
 
   get unread() { return this.notifications.filter(n => !n.isRead).length; }
 
@@ -48,37 +52,45 @@ export class NotificationsShippingComponent implements OnInit {
     this.toastVisible = true;
     setTimeout(() => this.toastVisible = false, 3000);
   }
-
-  markRead(n: any) {
-    if (!n.isRead) {
-      this.notifService.markAsRead(n.id).subscribe(() => n.isRead = true);
-    }
-    this.navigate(n);
-  }
-
-  navigate(n: any) {
-    const type = n.notificationType;
-    const urlId = n.urlId;
-
-    switch (type) {
-      case 'ShipmentUnAssigned':
-      case 'ShipmentAssigned':
-      case 'ShipmentReady':
-        if (urlId) this.router.navigate(['/shipping/shipments', urlId]);
-        break;
-      case 'DriverDeActivated':
-      case 'DriverDeleted':
-        this.router.navigate(['/shipping/shipments']);
-        break;
-      default: break;
-    }
-  }
-
-  markAllRead() {
-    this.notifService.markAllAsRead().subscribe(() => {
-      this.notifications.forEach(n => n.isRead = true);
+markRead(n: any) {
+  if (!n.isRead) {
+    this.notifService.markAsRead(n.id).subscribe(() => {
+      n.isRead = true;
+      window.dispatchEvent(new CustomEvent('notif-read'));
     });
   }
+  this.navigate(n);
+}
+
+ navigate(n: any) {
+  const type = n.notificationType;
+  const urlId = n.urlId;
+
+  switch (type) {
+    case 'NewOrder':
+      if (urlId) this.router.navigate(['/factory/orders', urlId]);
+      break;
+    case 'ShipmentUnAssigned':
+    case 'ShipmentAssigned':
+    case 'ShipmentReady':
+      if (urlId) this.router.navigate(['/shipping/shipments', urlId]);
+      break;
+    case 'DriverDeActivated':
+    case 'DriverDeleted':
+      this.router.navigate(['/shipping/shipments']);
+      break;
+    default: break;
+  }
+}
+
+
+
+markAllRead() {
+  this.notifService.markAllAsRead().subscribe(() => {
+    this.notifications.forEach(n => n.isRead = true);
+    window.dispatchEvent(new CustomEvent('notif-all-read'));
+  });
+}
 
   delete(n: any) {
     this.notifService.delete(n.id).subscribe({

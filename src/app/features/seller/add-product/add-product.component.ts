@@ -129,19 +129,31 @@ readonly sizeMapping: Record<string, number> = {
         this.productId   = res?.id ?? res?.data?.id;
         this.currentStep = 2;
       },
-      error: (err: any) => {
-        this.isCreating = false;
-        const b = err?.error;
-        if (b?.validationErrors) {
-          this.validationErrors = b.validationErrors;
-        } else if (b?.errors) {
-          this.validationErrors = Object.fromEntries(
-            Object.entries(b.errors).map(([k, v]) => [k, (v as string[])[0]])
-          );
-        } else {
-          this.validationErrors = { '_general': b?.message || 'Failed to create product.' };
-        }
-      }
+error: (err: any) => {
+  this.isCreating = false;
+  const b = err?.error;
+
+  console.error('Create product error:', b); // شيل الـ log ده بعد ما تحل المشكلة
+
+  if (b?.validationErrors) {
+    // { "Name": "required", "Price": "must be > 0" }
+    this.validationErrors = b.validationErrors;
+  } else if (b?.errors) {
+    // ASP.NET ModelState { "Name": ["required"] }
+    this.validationErrors = Object.fromEntries(
+      Object.entries(b.errors).map(([k, v]) => [k, Array.isArray(v) ? (v as string[])[0] : String(v)])
+    );
+  } else if (b?.error?.description) {
+    // { error: { description: "..." } }
+    this.validationErrors = { '_general': b.error.description };
+  } else if (b?.message) {
+    this.validationErrors = { '_general': b.message };
+  } else if (typeof b === 'string') {
+    this.validationErrors = { '_general': b };
+  } else {
+    this.validationErrors = { '_general': 'Failed to create product.' };
+  }
+}
     });
   }
 
@@ -170,6 +182,7 @@ readonly sizeMapping: Record<string, number> = {
     ];
     event.target.value = '';
   }
+
 
   removeAdditionalImage(colorIndex: number, imgIndex: number) {
     this.colors[colorIndex].additionalImages.splice(imgIndex, 1);
@@ -216,16 +229,23 @@ readonly sizeMapping: Record<string, number> = {
         this.successMessage = 'Product saved successfully ✅';
         setTimeout(() => this.router.navigate(['/seller/products']), 1500);
       },
-      error: (err: any) => {
-        this.isSaving = false;
-        const b = err?.error;
-        if (b?.validationErrors)  this.saveErrors = Object.values(b.validationErrors) as string[];
-        else if (b?.errors)       this.saveErrors = (Object.values(b.errors) as string[][]).flat();
-        else if (b?.message)      this.saveErrors = [b.message];
-        else                      this.saveErrors = ['Failed to save product. Please check your inputs.'];
-      }
+error: (err: any) => {
+  this.isSaving = false;
+  const b = err?.error;
+
+  console.error('Save product error:', b);
+
+  if (b?.validationErrors)       this.saveErrors = Object.values(b.validationErrors) as string[];
+  else if (b?.errors)            this.saveErrors = (Object.values(b.errors) as string[][]).flat();
+  else if (b?.error?.description) this.saveErrors = [b.error.description];
+  else if (b?.message)           this.saveErrors = [b.message];
+  else if (typeof b === 'string') this.saveErrors = [b];
+  else                           this.saveErrors = ['Failed to save product.'];
+}
     });
   }
 
-  get validationErrorKeys() { return Object.keys(this.validationErrors); }
+get validationErrorKeys() {
+  return Object.keys(this.validationErrors).filter(k => !!this.validationErrors[k]);
+}
 }

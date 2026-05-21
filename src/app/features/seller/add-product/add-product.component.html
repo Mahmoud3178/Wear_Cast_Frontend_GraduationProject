@@ -38,12 +38,14 @@
       <div *ngIf="validationErrors['_general']" class="ap-alert-error">
         <i class="bi bi-exclamation-circle-fill me-2"></i>{{ validationErrors['_general'] }}
       </div>
-      <div *ngIf="validationErrorKeys.length > 0 && !validationErrors['_general']" class="ap-alert-error">
-        <div class="fw-semibold mb-1"><i class="bi bi-exclamation-circle-fill me-2"></i>Please fix the following:</div>
-        <ul class="mb-0 ps-3 mt-1">
-          <li *ngFor="let key of validationErrorKeys">{{ validationErrors[key] }}</li>
-        </ul>
-      </div>
+<div *ngIf="validationErrorKeys.length > 0 && !validationErrors['_general']" class="ap-alert-error">
+  <div class="fw-semibold mb-1"><i class="bi bi-exclamation-circle-fill me-2"></i>Please fix the following:</div>
+  <ul class="mb-0 ps-3 mt-1">
+    <ng-container *ngFor="let key of validationErrorKeys">
+      <li *ngIf="validationErrors[key]">{{ validationErrors[key] }}</li>
+    </ng-container>
+  </ul>
+</div>
 
       <!-- Name + Price -->
       <div class="ap-row-2">
@@ -81,21 +83,24 @@
       <div class="ap-row-2">
         <div class="ap-field">
           <label class="ap-label">Target Audience</label>
-          <select class="ap-select" [(ngModel)]="targetAudience">
-            <option [value]="1">Men</option>
-            <option [value]="2">Women</option>
-            <option [value]="3">Kids</option>
-          </select>
+<select class="ap-select" [(ngModel)]="targetAudience">
+  <option [value]="1">Men</option>
+  <option [value]="2">Women</option>
+  <option [value]="3">Unisex</option>
+  <option [value]="4">Kids</option>
+  <option [value]="8">Babies</option>
+</select>
         </div>
         <div class="ap-field">
           <label class="ap-label">Dress Style <span class="ap-required">*</span></label>
-          <select class="ap-select" [class.ap-input-error]="validationErrors['DressStyle']"
-            [(ngModel)]="dressStyle" (change)="validationErrors['DressStyle'] = ''">
-            <option [value]="null" disabled>Select style...</option>
-            <option [value]="1">Casual</option>
-            <option [value]="2">Formal</option>
-            <option [value]="3">Sport</option>
-          </select>
+ <select class="ap-select" [(ngModel)]="dressStyle">
+  <option [value]="null" disabled>Select style...</option>
+  <option [value]="1">Casual</option>
+  <option [value]="2">Formal</option>
+  <option [value]="3">Party</option>
+  <option [value]="4">Gym</option>
+  <option [value]="5">Sporty</option>
+</select>
           <div *ngIf="validationErrors['DressStyle']" class="ap-field-error">
             <i class="bi bi-exclamation-circle me-1"></i>{{ validationErrors['DressStyle'] }}
           </div>

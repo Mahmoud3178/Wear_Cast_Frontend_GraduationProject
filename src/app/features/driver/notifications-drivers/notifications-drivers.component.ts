@@ -24,15 +24,18 @@ export class NotificationsDriversComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.notifService.receiveAll().subscribe(() => {
-      window.dispatchEvent(new CustomEvent('notif-delivered'));
+    this.notifService.receiveAll().subscribe({
+      next: () => {
+        window.dispatchEvent(new CustomEvent('notif-delivered'));
+        this.load();
+      },
+      error: () => this.load()
     });
-    this.load();
   }
 
   load() {
     this.isLoading = true;
-    this.notifService.getAll(1, 50, undefined, this.isReadFilter).subscribe({
+    this.notifService.getAll(1, 50, undefined, { isRead: this.isReadFilter }).subscribe({
       next: (res: any) => {
         this.notifications = res?.items ?? res?.data ?? res ?? [];
         this.isLoading = false;
@@ -51,7 +54,10 @@ export class NotificationsDriversComponent implements OnInit {
 
   markRead(n: any) {
     if (!n.isRead) {
-      this.notifService.markAsRead(n.id).subscribe(() => n.isRead = true);
+      this.notifService.markAsRead(n.id).subscribe(() => {
+        n.isRead = true;
+        window.dispatchEvent(new CustomEvent('notif-read'));
+      });
     }
     this.navigate(n);
   }
@@ -70,6 +76,7 @@ export class NotificationsDriversComponent implements OnInit {
   markAllRead() {
     this.notifService.markAllAsRead().subscribe(() => {
       this.notifications.forEach(n => n.isRead = true);
+      window.dispatchEvent(new CustomEvent('notif-all-read'));
     });
   }
 

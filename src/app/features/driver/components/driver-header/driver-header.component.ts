@@ -219,17 +219,24 @@ export class DriverHeaderComponent implements OnInit {
   userRole = 'Driver';
   isSearchFocused = false;
 
-  ngOnInit(): void {
-    const role = this.authService.getRole();
-    if (role) {
-      this.userRole = role;
-    }
+ ngOnInit(): void {
+  const role = this.authService.getRole();
+  if (role) this.userRole = role;
 
-    const profile = this.authService.getCustomerProfile();
-    if (profile && profile.firstName) {
-      this.userName = `${profile.firstName} ${profile.lastName}`.trim();
-    }
+  const profile = this.authService.getCustomerProfile();
+  if (profile && profile.firstName) {
+    this.userName = `${profile.firstName} ${profile.lastName}`.trim();
   }
+
+  // ✅ استمع للكونتر
+  window.addEventListener('notif-count-update', (e: any) => {
+    this.undeliveredCount = e.detail.count;
+  });
+
+  window.addEventListener('notif-delivered', () => {
+    this.undeliveredCount = 0;
+  });
+}
 
   logout() {
     this.authService.logout();
