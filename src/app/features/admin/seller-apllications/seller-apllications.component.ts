@@ -119,6 +119,9 @@ approve() {
 reject() {
 
   const email = this.selectedApplication?.managerEmail;
+  console.log('email:', email);
+  console.log('reason:', this.rejectReason);
+  console.log('selectedApplication:', this.selectedApplication);
 
   if (!email) {
     alert('Manager email not found ❌');

@@ -254,34 +254,28 @@ export class AuthService {
    * Seller manager: POST /api/seller-applications/{email}/confirm-email — body { code }.
    * Email is the seller manager email used on the application.
    */
-  confirmSellerEmail(email: string, code: string): Observable<void> {
-    const enc = encodeURIComponent(email.trim());
-    const url = `${this.apiUrl}/api/seller-applications/${enc}/confirm-email`;
-    return this.http
-      .post<ApiEnvelope>(url, { code: code.trim() })
-      .pipe(
-        map(body => {
-          if (!body.isSuccess) {
-            throw this.apiFailure(body);
-          }
-        }),
-        catchError(err => this.handleHttpError(err))
-      );
-  }
-
-  /** Resend seller manager confirmation (no body). */
-  resendSellerConfirmationEmail(email: string): Observable<void> {
-    const enc = encodeURIComponent(email.trim());
-    const url = `${this.apiUrl}/api/seller-applications/${enc}/resend-confirm-email`;
-    return this.http.post<ApiEnvelope>(url, {}).pipe(
+confirmSellerEmail(email: string, code: string): Observable<void> {
+  const url = `${this.apiUrl}/api/auth/confirm-email`;  // ← غيّر السطر ده بس
+  return this.http
+    .post<ApiEnvelope>(url, confirmEmailJson(email, code))
+    .pipe(
       map(body => {
-        if (!body.isSuccess) {
-          throw this.apiFailure(body);
-        }
+        if (!body.isSuccess) throw this.apiFailure(body);
       }),
       catchError(err => this.handleHttpError(err))
     );
-  }
+}
+
+  /** Resend seller manager confirmation (no body). */
+resendSellerConfirmationEmail(email: string): Observable<void> {
+  const url = `${this.apiUrl}/api/auth/resend-confirmation-email`;  // ← غيّر السطر ده بس
+  return this.http.post<ApiEnvelope>(url, authEmailJson(email)).pipe(
+    map(body => {
+      if (!body.isSuccess) throw this.apiFailure(body);
+    }),
+    catchError(err => this.handleHttpError(err))
+  );
+}
 
   /**
    * Factory manager: POST /api/auth/confirm-email — body { email, code }.
@@ -382,6 +376,13 @@ export class AuthService {
       catchError(err => this.handleHttpError(err))
     );
   }
+
+
+
+
+
+
+
 
   saveUser(res: AuthSession): void {
     const stored = this.readCustomerProfileRaw();
@@ -971,3 +972,5 @@ function unwrapAuthPayload(
     ? (payload as Record<string, unknown>)
     : {};
 }
+
+
