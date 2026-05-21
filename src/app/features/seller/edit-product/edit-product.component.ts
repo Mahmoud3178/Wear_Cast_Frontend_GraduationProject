@@ -106,8 +106,13 @@ newColorSizes: { name: string; quantity: number }[] =
           name:           res.name,
           price:          res.price,
           description:    res.description,
-          targetAudience: res.targetAudience === 'Men' ? 1 : res.targetAudience === 'Women' ? 2 : 3,
-          categoryId:     res.category?.id ?? 0,
+targetAudience: res.targetAudience === 'Men' ? 1
+              : res.targetAudience === 'Women' ? 2
+              : res.targetAudience === 'Unisex' ? 3
+              : res.targetAudience === 'Kids' ? 4
+              : res.targetAudience === 'Babies' ? 8
+              : Number(res.targetAudience) || 1,
+                        categoryId:     res.category?.id ?? 0,
           dressStyle:     res.dressStyle ?? 1
         };
 this.sizeDetails = this.allSizes.map(sz => {

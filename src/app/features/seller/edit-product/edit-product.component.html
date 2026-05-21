@@ -74,21 +74,25 @@
             </div>
             <div class="ep-field">
               <label class="ep-label">Target Audience</label>
-              <select class="ep-select" [(ngModel)]="product.targetAudience">
-                <option [value]="1">Men</option>
-                <option [value]="2">Women</option>
-                <option [value]="3">Kids</option>
-              </select>
+<select class="ep-select" [(ngModel)]="product.targetAudience">
+  <option [value]="1">Men</option>
+  <option [value]="2">Women</option>
+  <option [value]="3">Unisex</option>
+  <option [value]="4">Kids</option>
+  <option [value]="8">Babies</option>
+</select>
             </div>
           </div>
 
           <div class="ep-field">
             <label class="ep-label">Dress Style</label>
-            <select class="ep-select" [(ngModel)]="product.dressStyle">
-              <option [value]="1">Casual</option>
-              <option [value]="2">Formal</option>
-              <option [value]="3">Sport</option>
-            </select>
+<select class="ep-select" [(ngModel)]="product.dressStyle">
+  <option [value]="1">Casual</option>
+  <option [value]="2">Formal</option>
+  <option [value]="3">Party</option>
+  <option [value]="4">Gym</option>
+  <option [value]="5">Sporty</option>
+</select>
           </div>
 
           <!-- Size Measurements -->
