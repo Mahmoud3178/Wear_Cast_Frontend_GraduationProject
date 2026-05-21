@@ -183,6 +183,7 @@ error: (err: any) => {
     event.target.value = '';
   }
 
+
   removeAdditionalImage(colorIndex: number, imgIndex: number) {
     this.colors[colorIndex].additionalImages.splice(imgIndex, 1);
   }
@@ -244,5 +245,7 @@ error: (err: any) => {
     });
   }
 
-  get validationErrorKeys() { return Object.keys(this.validationErrors); }
+get validationErrorKeys() {
+  return Object.keys(this.validationErrors).filter(k => !!this.validationErrors[k]);
+}
 }

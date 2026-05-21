@@ -38,12 +38,14 @@
       <div *ngIf="validationErrors['_general']" class="ap-alert-error">
         <i class="bi bi-exclamation-circle-fill me-2"></i>{{ validationErrors['_general'] }}
       </div>
-      <div *ngIf="validationErrorKeys.length > 0 && !validationErrors['_general']" class="ap-alert-error">
-        <div class="fw-semibold mb-1"><i class="bi bi-exclamation-circle-fill me-2"></i>Please fix the following:</div>
-        <ul class="mb-0 ps-3 mt-1">
-          <li *ngFor="let key of validationErrorKeys">{{ validationErrors[key] }}</li>
-        </ul>
-      </div>
+<div *ngIf="validationErrorKeys.length > 0 && !validationErrors['_general']" class="ap-alert-error">
+  <div class="fw-semibold mb-1"><i class="bi bi-exclamation-circle-fill me-2"></i>Please fix the following:</div>
+  <ul class="mb-0 ps-3 mt-1">
+    <ng-container *ngFor="let key of validationErrorKeys">
+      <li *ngIf="validationErrors[key]">{{ validationErrors[key] }}</li>
+    </ng-container>
+  </ul>
+</div>
 
       <!-- Name + Price -->
       <div class="ap-row-2">
