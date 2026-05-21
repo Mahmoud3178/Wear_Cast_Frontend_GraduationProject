@@ -105,67 +105,75 @@ export class NotificationsListComponent implements OnInit {
     setTimeout(() => this.toastVisible = false, 3000);
   }
 
-  markRead(n: NotificationItem): void {
-    if (!n.isRead) {
-      this.notifService.markAsRead(n.id).subscribe({
-        next: () => { n.isRead = true; }
-      });
-    }
-    this.navigate(n);
-  }
-
-  navigate(n: NotificationItem): void {
-    const type = n.notificationType as any;
-    const urlId = (n as any).urlId;
-
-    if (this.portalRole === 'factory') {
-      switch (type) {
-        case 'NewOrder':
-        case 5:
-          this.router.navigate(['/factory/orders']); break;
-        default: break;
-      }
-      return;
-    }
-
-    if (this.portalRole === 'seller') {
-      if (!urlId) return;
-      switch (type) {
-        case 'NewOrder':
-        case 5:
-          this.router.navigate(['/seller/orders', urlId]); break;
-        default: break;
-      }
-      return;
-    }
-
-    if (this.portalRole === 'admin') {
-      switch (type) {
-        case 'ShipmentUpdateStatus':
-        case 'NewShipment':
-        case 'ShipmentUnAssigned':
-        case 'ShipmentAssigned':
-        case 'ShipmentReady':
-          if (urlId) this.router.navigate(['/admin/shipments', urlId]); break;
-        case 'NewSellerApplication':
-          if (urlId) this.router.navigate(['/admin/seller-applications'], { queryParams: { openId: urlId } }); break;
-        case 'NewOrder':
-          if (urlId) this.router.navigate(['/admin/orders', urlId]); break;
-        case 'NewProduct':
-          if (urlId) this.router.navigate(['/admin/products', urlId]); break;
-        default: break;
-      }
-      return;
-    }
-  }
-
-  markAllRead(): void {
-    this.notifService.markAllAsRead().subscribe({
+markRead(n: NotificationItem): void {
+  if (!n.isRead) {
+    this.notifService.markAsRead(n.id).subscribe({
       next: () => {
-        this.notifications.forEach(n => { n.isRead = true; });
+        n.isRead = true;
+        window.dispatchEvent(new CustomEvent('notif-read')); // ← أضف
       }
     });
   }
+  this.navigate(n);
+}
+
+navigate(n: NotificationItem): void {
+  const type = n.notificationType as any;
+  const urlId = (n as any).urlId;
+
+  if (this.portalRole === 'factory') {
+    switch (type) {
+      case 'NewOrder':
+      case 5:
+        if (urlId) this.router.navigate(['/factory/orders', urlId]);
+        else this.router.navigate(['/factory/orders']);
+        break;
+      default: break;
+    }
+    return;
+  }
+
+  if (this.portalRole === 'seller') {
+    if (!urlId) return;
+    switch (type) {
+      case 'NewOrder':
+      case 5:
+        this.router.navigate(['/seller/orders', urlId]); break;
+      default: break;
+    }
+    return;
+  }
+
+  if (this.portalRole === 'admin') {
+    switch (type) {
+      case 'ShipmentUpdateStatus':
+      case 'NewShipment':
+      case 'ShipmentUnAssigned':
+      case 'ShipmentAssigned':
+      case 'ShipmentReady':
+        if (urlId) this.router.navigate(['/admin/shipments', urlId]); break;
+      case 'NewSellerApplication':
+        if (urlId) this.router.navigate(['/admin/seller-applications'], { queryParams: { openId: urlId } }); break;
+      case 'NewOrder':
+        if (urlId) this.router.navigate(['/admin/orders', urlId]); break;
+      case 'NewProduct':
+        if (urlId) this.router.navigate(['/admin/products', urlId]); break;
+      default: break;
+    }
+    return;
+  }
+}
+
+
+
+markAllRead(): void {
+  this.notifService.markAllAsRead().subscribe({
+    next: () => {
+      this.notifications.forEach(n => { n.isRead = true; });
+      window.dispatchEvent(new CustomEvent('notif-all-read')); // ← أضف
+    }
+  });
+}
 
   delete(n: NotificationItem, event: Event): void {
     event.stopPropagation();
