@@ -33,14 +33,14 @@
 
   <!-- Main View -->
   <div *ngIf="!isLoadingDetails && selectedShipmentDetails" class="row g-4 animate-fade-in">
-    
+
     <!-- Left Column: Form / Progress / Orders -->
     <div class="col-12 col-lg-8">
-      
+
       <!-- Shipment Progress & Timelines -->
       <div class="premium-card p-4 bg-white mb-4">
         <h5 class="fw-bold text-dark mb-4">Logistics Timeline</h5>
-        
+
         <div class="status-timeline mt-4">
           <!-- Step 1: Order Placed -->
           <div class="timeline-item" [ngClass]="{'active': isStepActive(selectedShipmentDetails.shipmentStatus, 0)}">
@@ -50,7 +50,7 @@
               <p class="text-muted text-xs mb-0">Created on {{ selectedShipmentDetails.orderTime | date:'MMM d, yyyy h:mm a' }}</p>
             </div>
           </div>
-          
+
           <!-- Step 2: Ready for Pickup -->
           <div class="timeline-item" [ngClass]="{'active': selectedShipmentDetails.readyForPickupAt || getNumericStatus(selectedShipmentDetails.shipmentStatus, ShipmentStatusEnum) >= 2}">
             <div class="timeline-dot"></div>
@@ -105,7 +105,7 @@
 
         <div class="orders-list d-flex flex-column gap-3">
           <div *ngFor="let order of selectedShipmentDetails.orders" class="order-item p-4 bg-light rounded-4 border">
-            
+
             <!-- Standard Non-editing Order View -->
             <div>
               <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
@@ -116,9 +116,9 @@
                   </div>
                   <p class="text-muted text-xs mb-0 mt-1">Vendor Store: <span class="fw-bold text-dark">{{ order.vendorName }}</span></p>
                 </div>
-                
+
                 <div class="text-sm-end">
-                  <p class="fw-bold text-primary mb-1">${{ order.totalAmount | number:'1.2-2' }}</p>
+                  <p class="fw-bold text-primary mb-1">{{ order.totalAmount | number:'1.2-2' }}</p>
                   <span class="text-xxs badge px-2.5 py-1.5 rounded-pill" [ngClass]="{
                     'bg-warning-light text-warning': order.status === 'Pending' || order.status === 'Ready',
                     'bg-success-light text-success': order.status === 'PickedUp',
@@ -169,7 +169,7 @@
       <!-- Shipment Items & Specifications -->
       <div class="premium-card p-4 bg-white">
         <h5 class="fw-bold text-dark mb-4">Shipment Items & Specifications</h5>
-        
+
         <!-- Standard Store Products -->
         <div *ngIf="selectedShipmentFixedItems && selectedShipmentFixedItems.length > 0" class="mb-4 animate-fade-in">
           <span class="badge bg-secondary text-white mb-3 px-3 py-1.5 text-uppercase text-xxs fw-bold">Standard Store Products</span>
@@ -179,10 +179,10 @@
               <div class="flex-grow-1 min-w-0">
                 <h6 class="mb-1 fw-bold text-dark text-truncate text-sm">{{ item.productName }}</h6>
                 <p class="mb-0 text-muted text-xs">
-                  Color: <span class="fw-semibold text-dark">{{ item.colorName }}</span> | 
-                  Price: <span class="fw-semibold text-primary">${{ item.unitPrice | number:'1.2-2' }}</span> | 
-                  Total Qty: <span class="fw-semibold text-dark">{{ item.totalQuantity || 0 }}</span> | 
-                  Total Cost: <span class="fw-semibold text-success">${{ item.totalPrice | number:'1.2-2' }}</span>
+                  Color: <span class="fw-semibold text-dark">{{ item.colorName }}</span> |
+                  Price: <span class="fw-semibold text-primary">{{ item.unitPrice | number:'1.2-2' }}</span> |
+                  Total Qty: <span class="fw-semibold text-dark">{{ item.totalQuantity || 0 }}</span> |
+                  Total Cost: <span class="fw-semibold text-success">{{ item.totalPrice | number:'1.2-2' }}</span>
                 </p>
                 <div class="d-flex flex-wrap gap-1 mt-1">
                   <span *ngFor="let size of item.sizes" class="badge bg-white text-dark border text-xxs">
@@ -203,10 +203,10 @@
               <div class="flex-grow-1 min-w-0">
                 <h6 class="mb-1 fw-bold text-dark text-truncate text-sm">{{ item.productName }}</h6>
                 <p class="mb-0 text-muted text-xs">
-                  Color: <span class="fw-semibold text-dark">{{ item.colorName }}</span> | 
-                  Price: <span class="fw-semibold text-primary">${{ item.unitPrice | number:'1.2-2' }}</span> | 
-                  Total Qty: <span class="fw-semibold text-dark">{{ item.totalQuantity || 0 }}</span> | 
-                  Total Cost: <span class="fw-semibold text-success">${{ item.totalPrice | number:'1.2-2' }}</span>
+                  Color: <span class="fw-semibold text-dark">{{ item.colorName }}</span> |
+                  Price: <span class="fw-semibold text-primary">{{ item.unitPrice | number:'1.2-2' }}</span> |
+                  Total Qty: <span class="fw-semibold text-dark">{{ item.totalQuantity || 0 }}</span> |
+                  Total Cost: <span class="fw-semibold text-success">{{ item.totalPrice | number:'1.2-2' }}</span>
                 </p>
                 <div class="d-flex flex-wrap gap-1 mt-1">
                   <span *ngFor="let size of item.sizes" class="badge bg-white text-dark border text-xxs">
@@ -232,7 +232,7 @@
 
     <!-- Right Column: Sidebar Specs & Destination info -->
     <div class="col-12 col-lg-4">
-      
+
       <!-- Customer Information -->
       <div class="premium-card p-4 bg-white mb-4">
         <h6 class="fw-bold mb-3 text-uppercase text-muted text-xs ls-1">Customer Information</h6>
@@ -265,7 +265,7 @@
         <div *ngIf="selectedShipmentDetails.driverName" class="border-top pt-3 text-xs animate-fade-in">
           <p class="text-muted-custom mb-1"><i class="bi bi-telephone-fill me-2 text-muted"></i>{{ selectedShipmentDetails.driverPhoneNumber || 'N/A' }}</p>
         </div>
-        
+
         <!-- Unassigned Selector and Action Button -->
         <div *ngIf="!selectedShipmentDetails.driverName" class="animate-fade-in">
           <!-- Pending Readiness warning -->
@@ -282,7 +282,7 @@
               <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-warning"></i>
               <div class="text-xs fw-semibold">No driver assigned to this shipment yet.</div>
             </div>
-            
+
             <div class="driver-assign-form p-2 bg-light border rounded-3 text-xs">
               <label class="fw-bold text-slate-500 mb-1 d-block text-xxs">Select Available Driver</label>
               <select class="form-select form-select-sm py-1.5 rounded-2 shadow-none mb-2 text-xs" [(ngModel)]="selectedDriverId">
@@ -322,7 +322,7 @@
         <h6 class="fw-bold mb-3 text-uppercase text-muted text-xs ls-1">Payment Summary</h6>
         <div class="d-flex justify-content-between mb-2">
           <span class="text-muted text-sm">Shipment Total</span>
-          <span class="fw-bold text-primary fs-5">${{ selectedShipmentDetails.price | number:'1.2-2' }}</span>
+          <span class="fw-bold text-primary fs-5">{{ selectedShipmentDetails.price | number:'1.2-2' }}</span>
         </div>
         <div class="d-flex justify-content-between mb-3">
           <span class="text-muted text-sm">Payment Status</span>
