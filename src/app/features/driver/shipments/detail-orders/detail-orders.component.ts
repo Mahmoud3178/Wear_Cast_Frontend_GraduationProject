@@ -10,18 +10,16 @@ import { forkJoin, map, of } from 'rxjs';
 interface DetailedOrder {
   orderId: number;
   shipmentId: number;
-  customerName: string;
-  customerPhoneNumber: string;
-  deliveryCity: string;
-  deliveryStreet: string;
-  deliveryState: string;
-  deliveryBuilding?: string;
-  storeName: string;
+  vendorName: string;
+  vendorPhoneNumber: string;
+  vendorCity: string;
+  vendorStreet: string;
+  vendorState: string;
+  vendorBuilding?: string;
+  orderType: string;
   itemsCount: number;
   status: string;
   orderTime: string;
-  shipmentStatus: any;
-  items: any[];
 }
 
 @Component({
@@ -74,115 +72,57 @@ export class DetailOrdersComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    // Step 1: Load all driver shipments
-    this.driverService.getAllDriverShipments(driverId).subscribe({
-      next: (shipments) => {
-        if (!shipments || shipments.length === 0) {
+    // Step 1: Load all driver orders directly from backend
+    this.driverService.getDriverOrders(driverId).subscribe({
+      next: (response) => {
+        if (!response || !response.items) {
           this.allOrders = [];
           this.filteredOrders = [];
           this.isLoading = false;
           return;
         }
 
-        // Step 2: Fetch detailed items for all active/non-delivered shipments
-        const itemRequests = shipments.map(s => {
-          return this.driverService.getShipmentItems(s.id).pipe(
-            map(res => ({ shipment: s, itemsResponse: res }))
-          );
-        });
+        const consolidatedOrders: DetailedOrder[] = response.items.map((apiOrder: any) => {
+          let currentStatus = apiOrder.orderStatus ?? apiOrder.OrderStatus;
+          
+          if (currentStatus === 0) currentStatus = 'Pending';
+          if (currentStatus === 1) currentStatus = 'Paid';
+          if (currentStatus === 5) currentStatus = 'Ready';
+          if (currentStatus === 6) currentStatus = 'PickedUp';
 
-        forkJoin(itemRequests).subscribe({
-          next: (results) => {
-            const consolidatedOrders: DetailedOrder[] = [];
-
-            results.forEach(({ shipment, itemsResponse }) => {
-              if (!itemsResponse) return;
-
-              // Parse items to extract unique orders
-              const parsedItems: any[] = [];
-              
-              // Standard fixed store items
-              const fixedPaged = itemsResponse.fixedItems ?? itemsResponse.FixedItems;
-              const fixedList = fixedPaged?.items ?? fixedPaged?.Items ?? [];
-              fixedList.forEach((i: any) => {
-                const sizesList = i.sizes ?? i.Sizes ?? [];
-                const orderId = sizesList && sizesList.length > 0 ? sizesList[0].orderId ?? sizesList[0].OrderId : null;
-                parsedItems.push({
-                  productName: i.productName || i.ProductName || 'Fixed Product',
-                  quantity: i.totalQuantity || i.TotalQuantity || 1,
-                  unitPrice: i.unitPrice || i.UnitPrice || 0,
-                  orderId: orderId,
-                  type: 'Fixed',
-                  colorName: i.colorName || i.ColorName || 'Default',
-                  imageUrl: i.imageUrl || i.ImageUrl || null
-                });
-              });
-
-              // Custom designed garments items
-              const designedPaged = itemsResponse.designedItems ?? itemsResponse.DesignedItems;
-              const designedList = designedPaged?.items ?? designedPaged?.Items ?? [];
-              designedList.forEach((d: any) => {
-                const sizesList = d.sizes ?? d.Sizes ?? [];
-                const orderId = sizesList && sizesList.length > 0 ? sizesList[0].orderId ?? sizesList[0].OrderId : null;
-                parsedItems.push({
-                  productName: d.productName || d.ProductName || 'Designed Product',
-                  quantity: d.totalQuantity || d.TotalQuantity || 1,
-                  unitPrice: d.unitPrice || d.UnitPrice || 0,
-                  orderId: orderId,
-                  type: 'Designed',
-                  colorName: d.colorName || d.ColorName || 'Default',
-                  imageUrl: d.frontImageUrl || d.FrontImageUrl || null
-                });
-              });
-
-              // Extract unique orders in this shipment
-              const uniqueOrderIds = Array.from(new Set(parsedItems.map(x => x.orderId).filter(id => id !== null && id !== undefined)));
-              
-              const currentStatusStr = shipment.shipmentStatus.toString();
-              const isAlreadyPickedUp = currentStatusStr === 'OutForDelivery' || 
-                                         currentStatusStr === '5' || 
-                                         currentStatusStr === 'Delivered' || 
-                                         currentStatusStr === '6';
-
-              uniqueOrderIds.forEach(orderId => {
-                const localKey = `shipment_${shipment.id}_order_${orderId}_picked`;
-                const wasPickedLocal = localStorage.getItem(localKey) === 'true';
-                const orderItems = parsedItems.filter(x => x.orderId === orderId);
-
-                consolidatedOrders.push({
-                  orderId: orderId as number,
-                  shipmentId: shipment.id,
-                  customerName: shipment.customerName || 'Customer',
-                  customerPhoneNumber: shipment.customerPhoneNumber || '',
-                  deliveryCity: shipment.deliveryCity || '',
-                  deliveryStreet: shipment.deliveryStreet || '',
-                  deliveryState: '',
-                  deliveryBuilding: (shipment as any).deliveryBuildingNumber ?? (shipment as any).buildingNumber,
-                  storeName: orderItems.find(x => x.orderId === orderId)?.type === 'Fixed' ? 'WearCast Store' : 'Design Factory',
-                  itemsCount: orderItems.reduce((sum, item) => sum + item.quantity, 0),
-                  status: (isAlreadyPickedUp || wasPickedLocal) ? 'PickedUp' : 'Ready',
-                  orderTime: shipment.orderTime ?? new Date().toISOString(),
-                  shipmentStatus: shipment.shipmentStatus,
-                  items: orderItems
-                });
-              });
-            });
-
-            // Sort orders by order time descending
-            this.allOrders = consolidatedOrders.sort((a, b) => new Date(b.orderTime).getTime() - new Date(a.orderTime).getTime());
-            this.applyFilter();
-            this.isLoading = false;
-          },
-          error: (err) => {
-            console.error('Failed to resolve shipment items', err);
-            this.errorMessage = 'Failed to load granular order contents.';
-            this.isLoading = false;
+          // Ensure local override still works for immediate feedback
+          const localKey = `shipment_${apiOrder.shipmentId || apiOrder.ShipmentId}_order_${apiOrder.orderId || apiOrder.OrderId}_picked`;
+          const wasPickedLocal = localStorage.getItem(localKey) === 'true';
+          if (wasPickedLocal) {
+             currentStatus = 'PickedUp';
           }
+
+          const vAddress = apiOrder.vendorAddress ?? apiOrder.VendorAddress ?? {};
+
+          return {
+            orderId: apiOrder.orderId ?? apiOrder.OrderId,
+            shipmentId: apiOrder.shipmentId ?? apiOrder.ShipmentId,
+            vendorName: apiOrder.vendorName ?? apiOrder.VendorName ?? 'Unknown Vendor',
+            vendorPhoneNumber: apiOrder.vendorPhoneNumber ?? apiOrder.VendorPhoneNumber ?? '',
+            vendorCity: vAddress.city ?? vAddress.City ?? '',
+            vendorStreet: vAddress.street ?? vAddress.Street ?? '',
+            vendorState: vAddress.state ?? vAddress.State ?? '',
+            vendorBuilding: vAddress.buildingNumber ?? vAddress.BuildingNumber ?? '',
+            orderType: apiOrder.orderType === 0 ? 'Fixed' : 'Designed',
+            itemsCount: apiOrder.numberOfItems ?? apiOrder.NumberOfItems ?? 0,
+            status: currentStatus,
+            orderTime: apiOrder.createdOn ?? apiOrder.CreatedOn ?? new Date().toISOString()
+          };
         });
+
+        // Sort orders by order time descending
+        this.allOrders = consolidatedOrders.sort((a, b) => new Date(b.orderTime).getTime() - new Date(a.orderTime).getTime());
+        this.applyFilter();
+        this.isLoading = false;
       },
       error: (err) => {
-        console.error('Failed to load active shipments', err);
-        this.errorMessage = 'Failed to load driver shipments.';
+        console.error('Failed to load driver orders', err);
+        this.errorMessage = 'Failed to load driver orders.';
         this.isLoading = false;
       }
     });
@@ -198,9 +138,8 @@ export class DetailOrdersComponent implements OnInit {
     this.filteredOrders = this.allOrders.filter(o => 
       o.orderId.toString().includes(q) ||
       o.shipmentId.toString().includes(q) ||
-      o.customerName.toLowerCase().includes(q) ||
-      o.deliveryCity.toLowerCase().includes(q) ||
-      o.storeName.toLowerCase().includes(q) ||
+      o.vendorName.toLowerCase().includes(q) ||
+      o.vendorCity.toLowerCase().includes(q) ||
       o.status.toLowerCase().includes(q)
     );
   }
@@ -254,28 +193,5 @@ export class DetailOrdersComponent implements OnInit {
         this.errorMessage = `Failed to mark Order #${order.orderId} as Picked Up. Details: ${details || 'Unknown error'}`;
       }
     });
-  }
-
-  isPickingUpStatus(order: DetailedOrder): boolean {
-    const s = order.shipmentStatus.toString();
-    return s === '3' || s === 'Assigned' || s === '4' || s === 'PickingUp';
-  }
-
-  getShipmentStatusName(status: any): string {
-    const s = status.toString();
-    if (s === 'Delivered' || s === '6') return 'Delivered';
-    if (s === 'OutForDelivery' || s === '5') return 'Out for Delivery';
-    if (s === 'PickingUp' || s === '4') return 'Picking Up';
-    if (s === 'Assigned' || s === '3') return 'Assigned';
-    return s;
-  }
-
-  getShipmentStatusClass(status: any): string {
-    const s = status.toString();
-    if (s === 'Delivered' || s === '6') return 'bg-success-soft text-success';
-    if (s === 'OutForDelivery' || s === '5') return 'bg-primary-soft text-primary';
-    if (s === 'PickingUp' || s === '4') return 'bg-warning-soft text-warning';
-    if (s === 'Assigned' || s === '3') return 'bg-info-soft text-info';
-    return 'bg-slate-100 text-slate-500';
   }
 }
