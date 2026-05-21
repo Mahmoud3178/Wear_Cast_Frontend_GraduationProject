@@ -126,15 +126,15 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
         // Update stats array for UI
         this.stats[0].value = (this.dashboardStats.pendingShipments).toLocaleString();
-        this.stats[0].trend = `{this.dashboardStats.unassignedShipments} Unassigned`;
+        this.stats[0].trend = `${this.dashboardStats.unassignedShipments} Unassigned`;
         this.stats[0].trendUp = (this.dashboardStats.unassignedShipments) === 0;
 
         this.stats[1].value = (this.dashboardStats.deliveredShipments).toLocaleString();
         this.stats[1].trend = 'Completed';
         this.stats[1].trendUp = true;
 
-        this.stats[2].value = `{this.dashboardStats.activeDrivers} / {this.dashboardStats.totalDrivers}`;
-        this.stats[2].trend = `{this.dashboardStats.inactiveDrivers} Inactive`;
+        this.stats[2].value = `${this.dashboardStats.activeDrivers} / ${this.dashboardStats.totalDrivers}`;
+        this.stats[2].trend = `${this.dashboardStats.inactiveDrivers} Inactive`;
         this.stats[2].trendUp = (this.dashboardStats.activeDrivers) > 0;
 
         this.stats[3].value =  (this.wallet.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });

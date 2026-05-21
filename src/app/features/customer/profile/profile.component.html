@@ -225,7 +225,7 @@
                 <div class="text-start">
                   <p class="order-id">Shipment #{{ s.id }}</p>
                   <p class="order-date" *ngIf="s.createdAt">{{ s.createdAt | date:'medium' }}</p>
-                  <span class="badge shipment-status-badge" [ngClass]="getShipmentBadgeClass(s.status)">{{ shipmentStatusLabel(s.status) }}</span>
+                  <span class="badge shipment-status-badge" [ngClass]="getShipmentBadgeClass(s.shipmentStatus)">{{ shipmentStatusLabel(s.shipmentStatus) }}</span>
                   <p class="shipment-address small text-muted mb-0" *ngIf="s.deliveryCity || s.deliveryStreet">
                     <i class="fa-solid fa-location-dot shipment-address-icon"></i>
                     {{ s.deliveryCity }}<span *ngIf="s.deliveryCity && s.deliveryStreet"> · </span>{{ s.deliveryStreet }}
@@ -294,12 +294,12 @@
                     <div
                       class="progress-step"
                       *ngFor="let step of d.timeline; let i = index; let last = last"
-                      [class.completed]="step.at"
-                      [class.active]="step.at && (!d.timeline[i+1] || !d.timeline[i+1].at)"
+                      [class.completed]="isStepCompleted(i, d.shipmentStatus)"
+                      [class.active]="isStepActive(i, d.shipmentStatus)"
                     >
                       <div class="step-icon">
-                        <i class="fa-solid fa-check" *ngIf="step.at"></i>
-                        <i class="fa-regular fa-circle" *ngIf="!step.at"></i>
+                        <i class="fa-solid fa-check" *ngIf="isStepCompleted(i, d.shipmentStatus)"></i>
+                        <i class="fa-regular fa-circle" *ngIf="!isStepCompleted(i, d.shipmentStatus)"></i>
                       </div>
                       <div class="step-line" *ngIf="!last"></div>
                       <div class="step-label">

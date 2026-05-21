@@ -419,6 +419,37 @@ export class ProfileComponent implements OnInit {
     return found?.label ?? `Status ${status}`;
   }
 
+  isStepCompleted(stepIndex: number, status: number | null): boolean {
+    if (status == null) return false;
+    switch (stepIndex) {
+      case 0: return status >= 1; // Ordered
+      case 1: return status >= 2; // Ready for pickup (Unassigned/Assigned/PickingUp...)
+      case 2: return status >= 4; // Trip started (PickingUp/OutForDelivery...)
+      case 3: return status >= 5; // Out for delivery (OutForDelivery/Delivered)
+      case 4: return status >= 6; // Delivered
+      default: return false;
+    }
+  }
+
+  isStepActive(stepIndex: number, status: number | null): boolean {
+    if (status == null) return false;
+    switch (status) {
+      case 1:
+        return stepIndex === 0;
+      case 2:
+      case 3:
+        return stepIndex === 1;
+      case 4:
+        return stepIndex === 2;
+      case 5:
+        return stepIndex === 3;
+      case 6:
+        return stepIndex === 4;
+      default:
+        return false;
+    }
+  }
+
   formatSizeLabel(size: string): string {
     if (!size?.trim()) return '';
     return size.trim().replace(/^_/, '');

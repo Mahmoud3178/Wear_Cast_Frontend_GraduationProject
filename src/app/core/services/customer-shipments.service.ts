@@ -5,6 +5,7 @@ import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import { normalizeWearCastApiDateToIso } from '../utils/api-date';
+import { ShipmentStatus } from '../models/shipment.model';
 
 /** Query params for GET /api/CustomerShipments (integers must match backend enums). */
 export interface CustomerShipmentListQuery {
@@ -33,6 +34,7 @@ export interface CustomerShipmentListResult {
 export interface CustomerShipmentRow {
   id: number;
   status: number | null;
+  shipmentStatus: number | null;
   total: number;
   createdAt: string | null;
   deliveryCity: string;
@@ -244,7 +246,8 @@ function mapShipmentRow(r: unknown): CustomerShipmentRow | null {
       'amount',
       'Amount'
     ]) ?? 0;
-  const status = pickNum(o, ['status', 'Status', 'shipmentStatus', 'ShipmentStatus']);
+  const statusVal = o['status'] ?? o['Status'] ?? o['shipmentStatus'] ?? o['ShipmentStatus'];
+  const status = parseStatus(statusVal);
   const createdAt =
     pickDateIso(o, [
       'orderedAt',
@@ -259,6 +262,7 @@ function mapShipmentRow(r: unknown): CustomerShipmentRow | null {
   return {
     id,
     status: status ?? null,
+    shipmentStatus: status ?? null,
     total,
     createdAt,
     deliveryCity: city,
@@ -276,7 +280,8 @@ function normalizeShipmentDetail(
   if (id == null || id <= 0) return null;
   const price =
     pickFloat(raw, ['price', 'Price', 'totalPrice', 'TotalPrice', 'total', 'Total']) ?? 0;
-  const shipmentStatus = pickNum(raw, ['shipmentStatus', 'ShipmentStatus', 'status', 'Status']);
+  const statusVal = raw['shipmentStatus'] ?? raw['ShipmentStatus'] ?? raw['status'] ?? raw['Status'];
+  const shipmentStatus = parseStatus(statusVal);
   const orderedAt =
     pickDateIso(raw, ['orderedAt', 'OrderedAt', 'createdAt', 'CreatedAt']) || null;
   const deliveryCodeRaw = pickStr(raw, [
@@ -640,6 +645,17 @@ function pickNum(o: Record<string, unknown>, keys: string[]): number | null {
     const v = o[k];
     if (typeof v === 'number' && Number.isFinite(v)) return v;
     if (typeof v === 'string' && /^-?\d+$/.test(v)) return parseInt(v, 10);
+  }
+  return null;
+}
+
+function parseStatus(v: unknown): number | null {
+  if (v == null) return null;
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string') {
+    if (/^-?\d+$/.test(v)) return parseInt(v, 10);
+    const mapped = ShipmentStatus[v as keyof typeof ShipmentStatus];
+    if (typeof mapped === 'number') return mapped;
   }
   return null;
 }
