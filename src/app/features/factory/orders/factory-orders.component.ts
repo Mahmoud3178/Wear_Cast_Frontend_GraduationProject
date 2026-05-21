@@ -220,13 +220,8 @@ export class FactoryOrdersComponent implements OnInit {
   }
 
   canSetStatusToReady(order: FactoryOrderSummary): boolean {
-    // Allow setting to Ready if current status is Pending, Processing, Paid, or other pre-production statuses
-    const allowedCurrentStatuses = ['pending', 'processing', 'new', 'confirmed', 'paid', 'created', 'placed'];
-    const status = order.status?.toLowerCase() || '';
-    // Also hide if already Ready or beyond (Shipped, Delivered, Cancelled)
-    const completedStatuses = ['ready', 'shipped', 'delivered', 'cancelled'];
-    if (completedStatuses.includes(status)) return false;
-    return allowedCurrentStatuses.includes(status) || !completedStatuses.includes(status);
+    // Only show the "set to ready" button when the status is Paid
+    return (order.status?.toLowerCase() || '') === 'paid';
   }
 
   setOrderToReady(order: FactoryOrderSummary): void {
