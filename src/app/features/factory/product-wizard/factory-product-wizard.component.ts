@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { NgClass, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -85,11 +85,11 @@ export type WizardStep = 'base' | 'color' | 'photos' | 'sizes';
 @Component({
   selector: 'app-factory-product-wizard',
   standalone: true,
-  imports: [FormsModule, NgIf, NgFor, RouterLink],
+  imports: [FormsModule, NgIf, NgFor, NgClass, RouterLink],
   templateUrl: './factory-product-wizard.component.html',
   styleUrl: './factory-product-wizard.component.css'
 })
-export class FactoryProductWizardComponent implements OnInit {
+export class FactoryProductWizardComponent implements OnInit, OnDestroy {
   readonly targetAudienceOptions = TARGET_AUDIENCE_OPTIONS;
   readonly dressStyleOptions = DRESS_STYLE_OPTIONS;
   readonly sizeOptions: ReadonlyArray<{ label: string; value: WearcastSizeString }> =
@@ -111,6 +111,20 @@ export class FactoryProductWizardComponent implements OnInit {
   };
 
   productId: number | null = null;
+
+  // Image previews for color creation
+  mainImagePreviewUrl: string | null = null;
+  frontImagePreviewUrl: string | null = null;
+  backImagePreviewUrl: string | null = null;
+  rightImagePreviewUrl: string | null = null;
+  leftImagePreviewUrl: string | null = null;
+
+  // Image previews for color editing
+  editColorMainPreviewUrl: string | null = null;
+  editColorFrontPreviewUrl: string | null = null;
+  editColorBackPreviewUrl: string | null = null;
+  editColorRightPreviewUrl: string | null = null;
+  editColorLeftPreviewUrl: string | null = null;
 
   // ── Color step ─────────────────────────────────────────────────────────────
   colorForm = { name: 'Black', hexCode: '#1a1a1a' };
@@ -208,28 +222,66 @@ export class FactoryProductWizardComponent implements OnInit {
 
   pickMainFile(ev: Event): void {
     const input = ev.target as HTMLInputElement;
-    this.mainImageFile = input.files?.[0] ?? null;
+    const file = input.files?.[0] ?? null;
+    this.mainImageFile = file;
+    if (this.mainImagePreviewUrl) URL.revokeObjectURL(this.mainImagePreviewUrl);
+    this.mainImagePreviewUrl = file ? URL.createObjectURL(file) : null;
   }
 
   pickViewFile(ev: Event, side: 'front' | 'back' | 'right' | 'left'): void {
     const input = ev.target as HTMLInputElement;
-    const f = input.files?.[0] ?? null;
-    if (side === 'front') this.frontImageFile = f;
-    if (side === 'back') this.backImageFile = f;
-    if (side === 'right') this.rightImageFile = f;
-    if (side === 'left') this.leftImageFile = f;
+    const file = input.files?.[0] ?? null;
+    if (side === 'front') {
+      this.frontImageFile = file;
+      if (this.frontImagePreviewUrl) URL.revokeObjectURL(this.frontImagePreviewUrl);
+      this.frontImagePreviewUrl = file ? URL.createObjectURL(file) : null;
+    }
+    if (side === 'back') {
+      this.backImageFile = file;
+      if (this.backImagePreviewUrl) URL.revokeObjectURL(this.backImagePreviewUrl);
+      this.backImagePreviewUrl = file ? URL.createObjectURL(file) : null;
+    }
+    if (side === 'right') {
+      this.rightImageFile = file;
+      if (this.rightImagePreviewUrl) URL.revokeObjectURL(this.rightImagePreviewUrl);
+      this.rightImagePreviewUrl = file ? URL.createObjectURL(file) : null;
+    }
+    if (side === 'left') {
+      this.leftImageFile = file;
+      if (this.leftImagePreviewUrl) URL.revokeObjectURL(this.leftImagePreviewUrl);
+      this.leftImagePreviewUrl = file ? URL.createObjectURL(file) : null;
+    }
   }
 
   pickEditColorMainFile(ev: Event): void {
-    this.editColorMainFile = (ev.target as HTMLInputElement).files?.[0] ?? null;
+    const file = (ev.target as HTMLInputElement).files?.[0] ?? null;
+    this.editColorMainFile = file;
+    if (this.editColorMainPreviewUrl) URL.revokeObjectURL(this.editColorMainPreviewUrl);
+    this.editColorMainPreviewUrl = file ? URL.createObjectURL(file) : null;
   }
 
   pickEditColorViewFile(ev: Event, side: 'front' | 'back' | 'right' | 'left'): void {
-    const f = (ev.target as HTMLInputElement).files?.[0] ?? null;
-    if (side === 'front') this.editColorFrontFile = f;
-    if (side === 'back') this.editColorBackFile = f;
-    if (side === 'right') this.editColorRightFile = f;
-    if (side === 'left') this.editColorLeftFile = f;
+    const file = (ev.target as HTMLInputElement).files?.[0] ?? null;
+    if (side === 'front') {
+      this.editColorFrontFile = file;
+      if (this.editColorFrontPreviewUrl) URL.revokeObjectURL(this.editColorFrontPreviewUrl);
+      this.editColorFrontPreviewUrl = file ? URL.createObjectURL(file) : null;
+    }
+    if (side === 'back') {
+      this.editColorBackFile = file;
+      if (this.editColorBackPreviewUrl) URL.revokeObjectURL(this.editColorBackPreviewUrl);
+      this.editColorBackPreviewUrl = file ? URL.createObjectURL(file) : null;
+    }
+    if (side === 'right') {
+      this.editColorRightFile = file;
+      if (this.editColorRightPreviewUrl) URL.revokeObjectURL(this.editColorRightPreviewUrl);
+      this.editColorRightPreviewUrl = file ? URL.createObjectURL(file) : null;
+    }
+    if (side === 'left') {
+      this.editColorLeftFile = file;
+      if (this.editColorLeftPreviewUrl) URL.revokeObjectURL(this.editColorLeftPreviewUrl);
+      this.editColorLeftPreviewUrl = file ? URL.createObjectURL(file) : null;
+    }
   }
 
   categoryValue(c: CategoryDto): number { return resolveCategoryId(c); }
@@ -343,6 +395,38 @@ export class FactoryProductWizardComponent implements OnInit {
     this.rightImageFile = null;
     this.leftImageFile = null;
     this.currentColorId = null;
+    this._resetColorPreviews();
+  }
+
+  private _resetColorPreviews(): void {
+    if (this.mainImagePreviewUrl) URL.revokeObjectURL(this.mainImagePreviewUrl);
+    if (this.frontImagePreviewUrl) URL.revokeObjectURL(this.frontImagePreviewUrl);
+    if (this.backImagePreviewUrl) URL.revokeObjectURL(this.backImagePreviewUrl);
+    if (this.rightImagePreviewUrl) URL.revokeObjectURL(this.rightImagePreviewUrl);
+    if (this.leftImagePreviewUrl) URL.revokeObjectURL(this.leftImagePreviewUrl);
+    this.mainImagePreviewUrl = null;
+    this.frontImagePreviewUrl = null;
+    this.backImagePreviewUrl = null;
+    this.rightImagePreviewUrl = null;
+    this.leftImagePreviewUrl = null;
+  }
+
+  private _resetEditColorPreviews(): void {
+    if (this.editColorMainPreviewUrl) URL.revokeObjectURL(this.editColorMainPreviewUrl);
+    if (this.editColorFrontPreviewUrl) URL.revokeObjectURL(this.editColorFrontPreviewUrl);
+    if (this.editColorBackPreviewUrl) URL.revokeObjectURL(this.editColorBackPreviewUrl);
+    if (this.editColorRightPreviewUrl) URL.revokeObjectURL(this.editColorRightPreviewUrl);
+    if (this.editColorLeftPreviewUrl) URL.revokeObjectURL(this.editColorLeftPreviewUrl);
+    this.editColorMainPreviewUrl = null;
+    this.editColorFrontPreviewUrl = null;
+    this.editColorBackPreviewUrl = null;
+    this.editColorRightPreviewUrl = null;
+    this.editColorLeftPreviewUrl = null;
+  }
+
+  ngOnDestroy(): void {
+    this._resetColorPreviews();
+    this._resetEditColorPreviews();
   }
 
   addSize(): void {
@@ -547,6 +631,7 @@ export class FactoryProductWizardComponent implements OnInit {
 
   cancelEditColor(): void {
     this.editingColorId = null;
+    this._resetEditColorPreviews();
   }
 
   /** Upload new photos for an existing color in edit mode */
@@ -565,7 +650,12 @@ export class FactoryProductWizardComponent implements OnInit {
     if (uploads.length === 0) { this.error = 'Select at least one image to upload.'; return; }
     this.busy = true;
     forkJoin(uploads).subscribe({
-      next: () => { this.busy = false; this.message = 'Photos uploaded successfully!'; this.editingColorId = null; },
+      next: () => {
+        this.busy = false;
+        this.message = 'Photos uploaded successfully!';
+        this.editingColorId = null;
+        this._resetEditColorPreviews();
+      },
       error: (e: Error) => {
         this.busy = false;
         const msg = e.message ?? '';

@@ -6,6 +6,7 @@ import {
   FactoryOrderSummary,
   FactoryOrdersPage
 } from '../../../core/services/factory-api.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-factory-orders',
@@ -30,11 +31,41 @@ export class FactoryOrdersComponent implements OnInit {
   updatingStatusForId: number | null = null;
   statusUpdateError: string | null = null;
   statusUpdateSuccess: string | null = null;
+  private openIdFromParam: number | null = null;
 
-  constructor(private readonly factoryApi: FactoryApiService) {}
+  constructor(
+    private readonly factoryApi: FactoryApiService,
+    private readonly route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const openId = params['openId'];
+      if (openId) {
+        this.openIdFromParam = parseInt(openId, 10);
+        this.handleOpenIdParam();
+      }
+    });
     this.loadOrders();
+  }
+
+  private handleOpenIdParam(): void {
+    if (!this.openIdFromParam) return;
+    if (this.orders && this.orders.length > 0) {
+      const match = this.orders.find(o => o.id === this.openIdFromParam);
+      if (match) {
+        this.toggleItems(match);
+        this.openIdFromParam = null; // Clear so it only opens once
+      } else {
+        // If not found in the current view of orders, reload the first page to check if it's there
+        if (this.pageNumber !== 1) {
+          this.pageNumber = 1;
+          this.loadOrders();
+        } else {
+          this.loadOrders();
+        }
+      }
+    }
   }
 
   loadOrders(): void {
@@ -52,6 +83,14 @@ export class FactoryOrdersComponent implements OnInit {
         };
         this.pageNumber = page.pageNumber;
         this.loadingOrders = false;
+        
+        if (this.openIdFromParam) {
+          const match = this.orders.find(o => o.id === this.openIdFromParam);
+          if (match) {
+            this.toggleItems(match);
+          }
+          this.openIdFromParam = null; // Always clear it to avoid loops
+        }
       },
       error: err => {
         this.loadError = err?.message || 'Failed to load orders.';

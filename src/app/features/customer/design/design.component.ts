@@ -115,6 +115,9 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
   ) {}
 
   ngAfterViewInit(): void {
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
     this.isAuthenticated = !!this.auth.getToken();
     const w = window as Window & {
       __WEARCAST_SAVE_CUSTOMER_DESIGN__?: (
@@ -137,8 +140,9 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
       __WEARCAST_LOAD_DESIGN_ASSETS__?: (
         categoryId: number | null,
         pageIndex?: number,
-        pageSize?: number
-      ) => Promise<DesignAssetRow[]>;
+        pageSize?: number,
+        searchTerm?: string
+      ) => Promise<any>;
       wearcastLoadDesignById?: (id: number) => void;
       wearcastOnProductChanged?: (baseProductId: number) => void;
       __WEARCAST_OPEN_SAVED_DESIGNS_MODAL__?: () => void;
@@ -153,13 +157,15 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
     w.__WEARCAST_LOAD_DESIGN_ASSETS__ = async (
       categoryId: number | null,
       pageIndex = 1,
-      pageSize = 80
+      pageSize = 12,
+      searchTerm = ''
     ) =>
       firstValueFrom(
-        this.designAssetsCatalog.getAssets(
+        this.designAssetsCatalog.getAssetsPaged(
           categoryId != null && categoryId > 0 ? categoryId : undefined,
           pageIndex,
-          pageSize
+          pageSize,
+          searchTerm
         )
       );
     if (this.auth.getToken()) {

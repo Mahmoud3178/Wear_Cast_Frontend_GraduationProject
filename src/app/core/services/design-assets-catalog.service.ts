@@ -43,17 +43,92 @@ export class DesignAssetsCatalogService {
     pageIndex = 1,
     pageSize = 80
   ): Observable<DesignAssetRow[]> {
-    const path =
-      categoryId != null && categoryId > 0
-        ? `/api/design-assets/category/${categoryId}`
-        : '/api/design-assets';
-    const url = `${this.base}${path}`;
-    const params = new HttpParams()
+    const url = `${this.base}/api/design-assets`;
+    let params = new HttpParams()
       .set('pageIndex', String(pageIndex))
       .set('pageSize', String(pageSize));
+    if (categoryId != null && categoryId > 0) {
+      params = params.set('categoryId', String(categoryId));
+    }
     return this.http.get<unknown>(url, { params, ...this.authOpts() }).pipe(
       map(body => normalizeAssetRows(body, raw => this.resolveMediaUrl(raw))),
       catchError(() => of([]))
+    );
+  }
+
+  getAssetsPaged(
+    categoryId: number | undefined,
+    pageIndex = 1,
+    pageSize = 12,
+    searchTerm = ''
+  ): Observable<{ items: DesignAssetRow[]; totalCount: number; totalPages: number }> {
+    const url = `${this.base}/api/design-assets`;
+    let params = new HttpParams()
+      .set('pageIndex', String(pageIndex))
+      .set('pageSize', String(pageSize));
+    if (categoryId != null && categoryId > 0) {
+      params = params.set('categoryId', String(categoryId));
+    }
+    if (searchTerm && searchTerm.trim()) {
+      params = params.set('searchTerm', searchTerm.trim());
+    }
+    return this.http.get<unknown>(url, { params, ...this.authOpts() }).pipe(
+      map(body => {
+        const items = normalizeAssetRows(body, raw => this.resolveMediaUrl(raw));
+        let totalCount = items.length;
+        let totalPages = 1;
+        let wasTotalCountReturned = false;
+        if (body && typeof body === 'object') {
+          const d = body as Record<string, unknown>;
+          const tc = d['totalCount'] ?? d['TotalCount'] ?? d['total'] ?? d['Total'] ??
+                     d['count'] ?? d['Count'] ?? d['records'] ?? d['Records'] ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['totalCount']) ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['TotalCount']) ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['total']) ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['Total']) ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['count']) ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['Count']) ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['records']) ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['Records']);
+          if (tc != null) {
+            if (typeof tc === 'number') {
+              totalCount = tc;
+              wasTotalCountReturned = true;
+            } else if (typeof tc === 'string' && /^\d+$/.test(tc)) {
+              totalCount = parseInt(tc, 10);
+              wasTotalCountReturned = true;
+            }
+          }
+          const tp = d['totalPages'] ?? d['TotalPages'] ??
+                     d['pages'] ?? d['Pages'] ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['totalPages']) ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['TotalPages']) ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['pages']) ??
+                     (d['data'] && (d['data'] as Record<string, unknown>)['Pages']);
+          if (tp != null) {
+            if (typeof tp === 'number') {
+              totalPages = tp;
+            } else if (typeof tp === 'string' && /^\d+$/.test(tp)) {
+              totalPages = parseInt(tp, 10);
+            }
+          }
+        }
+        if (totalPages === 1) {
+          if (totalCount > pageSize) {
+            totalPages = Math.ceil(totalCount / pageSize);
+          } else if (!wasTotalCountReturned && items.length === pageSize) {
+            totalPages = pageIndex + 1;
+          }
+        }
+        
+        let slicedItems = items;
+        if (items.length > pageSize) {
+          slicedItems = items.slice((pageIndex - 1) * pageSize, pageIndex * pageSize);
+        }
+        
+        return { items: slicedItems, totalCount, totalPages };
+      }),
+      catchError(() => of({ items: [], totalCount: 0, totalPages: 1 }))
     );
   }
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -57,7 +57,17 @@ export class FixedProductService {
     pageIndex: number;
   }> {
     const url = `${this.base}/api/FixedProduct/GetAll`;
-    return this.http.get<any>(url, { params }).pipe(
+    let httpParams = new HttpParams();
+    Object.keys(params).forEach(k => {
+      if (Array.isArray(params[k])) {
+        params[k].forEach((val: any) => {
+          httpParams = httpParams.append(k, val);
+        });
+      } else {
+        httpParams = httpParams.set(k, params[k]);
+      }
+    });
+    return this.http.get<any>(url, { params: httpParams }).pipe(
       map(res => {
         const payload = unwrapPayload(res);
         if (Array.isArray(payload)) {

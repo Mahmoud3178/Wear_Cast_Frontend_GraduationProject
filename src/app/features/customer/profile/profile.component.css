@@ -678,6 +678,8 @@
   border-top: 1px solid var(--profile-border);
   border-radius: 0;
   padding: 16px 16px 18px;
+  width: 100%;
+  box-sizing: border-box;
   animation: shipmentPanelIn 0.32s ease;
 }
 

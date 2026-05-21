@@ -172,8 +172,8 @@
         </ng-container>
         <ng-container *ngIf="!recommendationsLoading">
           <article class="wc-card" *ngFor="let p of recommendations"
-                   [routerLink]="(p.type === 'designed product') ? ['/customer/design'] : ['/customer/product', p.id]"
-                   [queryParams]="(p.type === 'designed product') ? { designedProductIds: p.id } : {}">
+                   [routerLink]="(p.type && p.type.includes('designed product')) ? ['/customer/design'] : ['/customer/product', p.id]"
+                   [queryParams]="(p.type && p.type.includes('designed product')) ? { designedProductIds: p.id } : {}">
             <div class="wc-card-image">
               <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" class="wc-card-img">
             </div>

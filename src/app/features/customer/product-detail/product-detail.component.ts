@@ -154,7 +154,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.isAuthenticated = !!this.auth.getToken();
     this.route.paramMap.subscribe(params => {
       if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'instant' });
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
       }
       const id = Number(params.get('id'));
       if (!id || isNaN(id)) {

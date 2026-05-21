@@ -108,6 +108,11 @@
   var productsModal, productsModalClose;
   var sizeQtyModal, sizeQtyRowsEl, sizeQtyModalClose, sizeQtyModalCancel, sizeQtyModalConfirm;
   var designsPanel, designsBackdrop, designModalCloseBtn, designCategorySelect, designSearchInput, designTagsEl, designGridEl;
+  var designAssetsPageIndex = 1;
+  var designAssetsPageSize = 12;
+  var totalDesignAssets = 0;
+  var totalDesignAssetsPages = 1;
+  var designPaginationEl;
 
   let canvas;
   let currentProduct = '';
@@ -352,10 +357,42 @@
     });
 
     canvas.on('object:modified', saveState);
+    canvas.on('object:moving', restrictObjectBoundaries);
+    canvas.on('object:scaling', restrictObjectBoundaries);
     canvas.on('selection:created', onSelectionChange);
     canvas.on('selection:updated', onSelectionChange);
     canvas.on('selection:cleared', onSelectionCleared);
     saveState();
+  }
+
+  function restrictObjectBoundaries(e) {
+    var obj = e.target;
+    if (!obj || !canvas) return;
+    
+    obj.setCoords();
+    var bounds = obj.getBoundingRect();
+    var canvasWidth = canvas.getWidth();
+    var canvasHeight = canvas.getHeight();
+    
+    var maxLeft = Math.max(0, canvasWidth - bounds.width);
+    var maxTop = Math.max(0, canvasHeight - bounds.height);
+    
+    var leftOffset = obj.left - bounds.left;
+    var topOffset = obj.top - bounds.top;
+    
+    var newBoundsLeft = Math.max(0, Math.min(maxLeft, bounds.left));
+    var newBoundsTop = Math.max(0, Math.min(maxTop, bounds.top));
+    
+    if (bounds.width > canvasWidth) newBoundsLeft = leftOffset;
+    if (bounds.height > canvasHeight) newBoundsTop = topOffset;
+    
+    if (bounds.left < 0 || bounds.left > maxLeft) {
+      obj.left = newBoundsLeft + leftOffset;
+    }
+    if (bounds.top < 0 || bounds.top > maxTop) {
+      obj.top = newBoundsTop + topOffset;
+    }
+    obj.setCoords();
   }
 
   function resizeStageAndCanvas() {
@@ -1074,6 +1111,10 @@
   function openDesignsPanel() {
     if (designsPanel) designsPanel.classList.remove('hidden');
     if (designsBackdrop) designsBackdrop.classList.remove('hidden');
+    designAssetsPageIndex = 1;
+    if (designSearchInput) designSearchInput.value = '';
+    if (designCategorySelect) designCategorySelect.value = 'all';
+    renderStickerGrid();
   }
 
   function closeDesignsPanel() {
@@ -1156,22 +1197,78 @@
     }
     var term = designSearchInput ? designSearchInput.value.trim() : '';
     designGridEl.innerHTML = '<p class="design-grid-loading">Loading designs…</p>';
+    if (designPaginationEl) designPaginationEl.innerHTML = '';
     var fn = window.__WEARCAST_LOAD_DESIGN_ASSETS__;
     if (typeof fn !== 'function') {
       designGridEl.innerHTML =
         '<p class="design-grid-empty">Design library is unavailable. Refresh the page or sign in.</p>';
       return;
     }
-    fn(categoryId, 1, 100)
-      .then(function (rows) {
-        lastDesignAssetRows = Array.isArray(rows) ? rows : [];
-        renderStickerGridFromRows(lastDesignAssetRows, term);
+    fn(categoryId, designAssetsPageIndex, designAssetsPageSize, term)
+      .then(function (res) {
+        var rows = [];
+        var totalCount = 0;
+        var totalPages = 1;
+        if (res && Array.isArray(res)) {
+          rows = res;
+          totalCount = res.length;
+          totalPages = Math.ceil(totalCount / designAssetsPageSize) || 1;
+        } else if (res && typeof res === 'object') {
+          rows = Array.isArray(res.items) ? res.items : [];
+          totalCount = typeof res.totalCount === 'number' ? res.totalCount : rows.length;
+          totalPages = typeof res.totalPages === 'number' ? res.totalPages : (Math.ceil(totalCount / designAssetsPageSize) || 1);
+        }
+        lastDesignAssetRows = rows;
+        totalDesignAssets = totalCount;
+        totalDesignAssetsPages = totalPages;
+        renderStickerGridFromRows(lastDesignAssetRows, '');
+        renderDesignPagination();
       })
       .catch(function (err) {
         console.error('[WearCast] design assets load failed', err);
         designGridEl.innerHTML =
           '<p class="design-grid-empty">Could not load designs. Try again later.</p>';
       });
+  }
+
+  function renderDesignPagination() {
+    if (!designPaginationEl) return;
+    designPaginationEl.innerHTML = '';
+    if (totalDesignAssetsPages <= 1) {
+      return;
+    }
+
+    var prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'design-page-btn';
+    prevBtn.textContent = 'Previous';
+    prevBtn.disabled = designAssetsPageIndex <= 1;
+    prevBtn.addEventListener('click', function () {
+      if (designAssetsPageIndex > 1) {
+        designAssetsPageIndex--;
+        renderStickerGrid();
+      }
+    });
+
+    var pageInfo = document.createElement('span');
+    pageInfo.className = 'design-page-info';
+    pageInfo.textContent = 'Page ' + designAssetsPageIndex + ' of ' + totalDesignAssetsPages;
+
+    var nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = 'design-page-btn';
+    nextBtn.textContent = 'Next';
+    nextBtn.disabled = designAssetsPageIndex >= totalDesignAssetsPages;
+    nextBtn.addEventListener('click', function () {
+      if (designAssetsPageIndex < totalDesignAssetsPages) {
+        designAssetsPageIndex++;
+        renderStickerGrid();
+      }
+    });
+
+    designPaginationEl.appendChild(prevBtn);
+    designPaginationEl.appendChild(pageInfo);
+    designPaginationEl.appendChild(nextBtn);
   }
 
   function updateUndoRedoButtons() {
@@ -2479,6 +2576,7 @@
     designSearchInput = document.getElementById('design-search');
     designTagsEl = document.getElementById('design-tags');
     designGridEl = document.getElementById('design-grid');
+    designPaginationEl = document.getElementById('design-pagination');
     productDetailsModal = document.getElementById('product-details-modal');
     productDetailsOpenBtn = document.getElementById('product-details-open');
     productDetailsCloseBtn = document.getElementById('product-details-close');
@@ -2857,17 +2955,18 @@
       if (designCategorySelect) {
         designCategorySelect.addEventListener('change', function () {
           lastDesignAssetRows = [];
+          designAssetsPageIndex = 1;
           renderStickerGrid();
         });
       }
       if (designSearchInput) {
+        var searchTimeout = null;
         designSearchInput.addEventListener('input', function () {
-          var q = designSearchInput.value.trim();
-          if (lastDesignAssetRows.length) {
-            renderStickerGridFromRows(lastDesignAssetRows, q);
-          } else {
+          designAssetsPageIndex = 1;
+          if (searchTimeout) clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(function () {
             renderStickerGrid();
-          }
+          }, 300);
         });
       }
     }

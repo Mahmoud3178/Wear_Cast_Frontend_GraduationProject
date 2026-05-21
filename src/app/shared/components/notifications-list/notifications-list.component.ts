@@ -131,7 +131,7 @@ markRead(n: NotificationItem): void {
     const urlId = (n as any).urlId;
 
     if (this.portalRole === 'factory') {
-      if (urlId) this.router.navigate(['/factory/orders', urlId]);
+      if (urlId) this.router.navigate(['/factory/orders'], { queryParams: { openId: urlId } });
       else this.router.navigate(['/factory/orders']);
       return;
     }

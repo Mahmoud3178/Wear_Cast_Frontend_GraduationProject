@@ -1,17 +1,29 @@
 <div class="container py-4 pb-5">
 
-  <a routerLink="/factory/products" class="small text-decoration-none d-inline-flex align-items-center gap-1 text-secondary mb-3">
-    ← Products
+  <a routerLink="/factory/products" class="wc-back-link text-decoration-none d-inline-flex align-items-center gap-2 mb-3">
+    <i class="fa-solid fa-arrow-left"></i>
+    <span>Back to Products</span>
   </a>
 
-  <h1 class="wc-factory-page-title h3 fw-bold mb-2">
-    {{ isEditMode ? 'Edit designed product' : 'New designed product' }}
-  </h1>
-  <div class="mb-4"></div>
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="wc-factory-page-title h3 fw-bold mb-0">
+      <i class="fa-solid me-2 text-primary" [ngClass]="isEditMode ? 'fa-pen-to-square' : 'fa-square-plus'"></i>
+      {{ isEditMode ? 'Edit designed product' : 'New designed product' }}
+    </h1>
+    <span *ngIf="productId" class="badge bg-light text-dark border py-2 px-3 rounded-pill shadow-sm">
+      <i class="fa-solid fa-fingerprint me-1 text-primary"></i> ID: <code>{{ productId }}</code>
+    </span>
+  </div>
 
   <!-- Alerts -->
-  <div *ngIf="error" class="alert alert-danger py-2 small">{{ error }}</div>
-  <div *ngIf="message" class="alert alert-success py-2 small">{{ message }}</div>
+  <div *ngIf="error" class="alert alert-danger py-2 px-3 mb-3 small d-flex align-items-center gap-2 animate-fade-in">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span>{{ error }}</span>
+  </div>
+  <div *ngIf="message" class="alert alert-success py-2 px-3 mb-3 small d-flex align-items-center gap-2 animate-fade-in">
+    <i class="fa-solid fa-circle-check"></i>
+    <span>{{ message }}</span>
+  </div>
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
        CREATE MODE – Step-based wizard
@@ -21,169 +33,311 @@
     <!-- ── Step progress indicator ── -->
     <div class="wc-step-bar mb-4">
       <div class="wc-step" [class.wc-step--done]="currentStep !== 'base'" [class.wc-step--active]="currentStep === 'base'">
-        <div class="wc-step__circle">1</div>
-        <span class="wc-step__label">Base product</span>
+        <div class="wc-step__circle">
+          <i class="fa-solid" [ngClass]="currentStep !== 'base' ? 'fa-check' : 'fa-sliders'"></i>
+        </div>
+        <span class="wc-step__label">Base details</span>
       </div>
-      <div class="wc-step__line"></div>
+      <div class="wc-step__line" [class.wc-step__line--active]="currentStep !== 'base'"></div>
+      
       <div class="wc-step" [class.wc-step--done]="currentStep === 'photos' || currentStep === 'sizes'" [class.wc-step--active]="currentStep === 'color'">
-        <div class="wc-step__circle">2</div>
+        <div class="wc-step__circle">
+          <i class="fa-solid" [ngClass]="(currentStep === 'photos' || currentStep === 'sizes') ? 'fa-check' : 'fa-palette'"></i>
+        </div>
         <span class="wc-step__label">Add color</span>
       </div>
-      <div class="wc-step__line"></div>
+      <div class="wc-step__line" [class.wc-step__line--active]="currentStep === 'photos' || currentStep === 'sizes'"></div>
+      
       <div class="wc-step" [class.wc-step--done]="currentStep === 'sizes'" [class.wc-step--active]="currentStep === 'photos'">
-        <div class="wc-step__circle">3</div>
+        <div class="wc-step__circle">
+          <i class="fa-solid" [ngClass]="currentStep === 'sizes' ? 'fa-check' : 'fa-images'"></i>
+        </div>
         <span class="wc-step__label">Upload photos</span>
       </div>
-      <div class="wc-step__line"></div>
+      <div class="wc-step__line" [class.wc-step__line--active]="currentStep === 'sizes'"></div>
+      
       <div class="wc-step" [class.wc-step--active]="currentStep === 'sizes'">
-        <div class="wc-step__circle">4</div>
+        <div class="wc-step__circle">
+          <i class="fa-solid fa-ruler-combined"></i>
+        </div>
         <span class="wc-step__label">Sizes</span>
       </div>
     </div>
 
     <!-- ── STEP 1: Base product ── -->
-    <section class="card wc-factory-card border-0 mb-4" *ngIf="currentStep === 'base'">
-      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-        <span class="badge rounded-pill bg-dark">1</span> Base product
+    <section class="card wc-factory-card border-0 mb-4 animate-slide-up" *ngIf="currentStep === 'base'">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2 py-3">
+        <span class="badge rounded-circle bg-primary-soft p-2 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+          <i class="fa-solid fa-info text-white" style="font-size: 0.8rem;"></i>
+        </span>
+        <span class="text-dark">Base Product Information</span>
       </div>
-      <div class="card-body row g-3">
+      <div class="card-body p-4 row g-3">
         <div class="col-md-6">
-          <label class="form-label">Name</label>
-          <input class="form-control" [(ngModel)]="createForm.name" name="pname" required placeholder="e.g. Summer tee">
+          <label class="form-label fw-medium text-secondary">Product Name</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-tag"></i></span>
+            <input class="form-control" [(ngModel)]="createForm.name" name="pname" required placeholder="e.g. Summer Cotton Tee">
+          </div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Category</label>
-          <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat" (ngModelChange)="onCategoryChanged($event)">
-            <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">
-              {{ c.name ?? c.Name ?? 'Category' }}
-            </option>
-          </select>
+        <div class="col-md-3">
+          <label class="form-label fw-medium text-secondary">Category</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-list"></i></span>
+            <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat" (ngModelChange)="onCategoryChanged($event)">
+              <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">
+                {{ c.name ?? c.Name ?? 'Category' }}
+              </option>
+            </select>
+          </div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Dress style</label>
-          <select class="form-select" [(ngModel)]="createForm.dressStyle" name="dressStyle">
-            <option *ngFor="let style of dressStyleOptions" [ngValue]="style.value">{{ style.label }}</option>
-          </select>
+        <div class="col-md-3">
+          <label class="form-label fw-medium text-secondary">Dress Style</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-shirt"></i></span>
+            <select class="form-select" [(ngModel)]="createForm.dressStyle" name="dressStyle">
+              <option *ngFor="let style of dressStyleOptions" [ngValue]="style.value">{{ style.label }}</option>
+            </select>
+          </div>
         </div>
 
-        <div class="col-12">
-          <label class="form-label">Target audience</label>
-          <div class="d-flex flex-wrap gap-3 wc-audience-check">
-            <div *ngFor="let o of targetAudienceOptions" class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                [id]="'aud-' + o.value"
-                [checked]="isAudienceSelected(o.value)"
-                (change)="toggleAudience(o.value)"
-              />
-              <label class="form-check-label" [for]="'aud-' + o.value">{{ o.label }}</label>
-            </div>
+        <div class="col-12 my-3">
+          <label class="form-label fw-medium text-secondary mb-2">Target Audience</label>
+          <div class="d-flex flex-wrap gap-2 wc-audience-chips">
+            <button type="button" *ngFor="let o of targetAudienceOptions"
+              class="btn btn-outline-primary wc-audience-chip"
+              [class.active]="isAudienceSelected(o.value)"
+              (click)="toggleAudience(o.value)">
+              <span class="chip-icon me-1">
+                <i class="fa-solid" [ngClass]="{
+                  'fa-mars': o.value === 1,
+                  'fa-venus': o.value === 2,
+                  'fa-people-arrows': o.value === 3,
+                  'fa-child': o.value === 4,
+                  'fa-baby': o.value === 8
+                }"></i>
+              </span>
+              {{ o.label }}
+              <i class="fa-solid fa-check ms-1 check-indicator" *ngIf="isAudienceSelected(o.value)"></i>
+            </button>
           </div>
         </div>
 
         <div class="col-12">
-          <label class="form-label">Description</label>
-          <textarea class="form-control" rows="2" [(ngModel)]="createForm.description" name="pdesc" placeholder="Short description for the catalog"></textarea>
+          <label class="form-label fw-medium text-secondary">Description</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-align-left"></i></span>
+            <textarea class="form-control" rows="2" [(ngModel)]="createForm.description" name="pdesc" placeholder="Short description for the catalog..."></textarea>
+          </div>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Price</label>
-          <input type="number" class="form-control" [(ngModel)]="createForm.price" name="price" step="0.01" min="0">
+          <label class="form-label fw-medium text-secondary">Price ($)</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-dollar-sign"></i></span>
+            <input type="number" class="form-control" [(ngModel)]="createForm.price" name="price" step="0.01" min="0">
+          </div>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Canvas width (px)</label>
-          <input type="number" class="form-control" [(ngModel)]="createForm.canvasWidth" name="cw" min="1">
+          <label class="form-label fw-medium text-secondary">Canvas Width (px)</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-arrows-left-right"></i></span>
+            <input type="number" class="form-control" [(ngModel)]="createForm.canvasWidth" name="cw" min="1">
+          </div>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Canvas height (px)</label>
-          <input type="number" class="form-control" [(ngModel)]="createForm.canvasHeight" name="ch" min="1">
+          <label class="form-label fw-medium text-secondary">Canvas Height (px)</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-arrows-up-down"></i></span>
+            <input type="number" class="form-control" [(ngModel)]="createForm.canvasHeight" name="ch" min="1">
+          </div>
         </div>
-        <div class="col-12 pt-1">
-          <button type="button" class="btn btn-dark px-4" [disabled]="busy" (click)="createProduct()">
+        <div class="col-12 pt-3">
+          <button type="button" class="btn btn-primary btn-premium px-4" [disabled]="busy" (click)="createProduct()">
             <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
-            Create product &amp; continue →
+            <span>Create Product &amp; Continue</span>
+            <i class="fa-solid fa-chevron-right ms-2" *ngIf="!busy"></i>
           </button>
         </div>
       </div>
     </section>
 
     <!-- ── STEP 2: Add color ── -->
-    <section class="card wc-factory-card border-0 mb-4" *ngIf="currentStep === 'color'">
-      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-        <span class="badge rounded-pill bg-dark">2</span>
-        Add color
-        <span class="ms-auto small text-muted fw-normal">Product id: <code>{{ productId }}</code></span>
+    <section class="card wc-factory-card border-0 mb-4 animate-slide-up" *ngIf="currentStep === 'color'">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2 py-3">
+        <span class="badge rounded-circle bg-primary-soft p-2 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+          <i class="fa-solid fa-palette text-white" style="font-size: 0.8rem;"></i>
+        </span>
+        <span class="text-dark">Add First Product Color</span>
+        <span class="ms-auto small text-muted fw-normal"><i class="fa-solid fa-link me-1"></i> Product ID: <code>{{ productId }}</code></span>
       </div>
-      <div class="card-body row g-3">
+      <div class="card-body p-4 row g-3">
         <!-- Colors added so far -->
         <div class="col-12" *ngIf="savedColors.length > 0">
-          <p class="small fw-semibold mb-2">Colors added so far:</p>
+          <p class="small fw-semibold text-secondary mb-2"><i class="fa-solid fa-circle-info me-1"></i> Colors added so far:</p>
           <div class="d-flex flex-wrap gap-2 mb-3">
-            <span *ngFor="let c of savedColors" class="badge d-flex align-items-center gap-1 py-2 px-3"
-              [style.background]="c.hexCode" [style.color]="'#fff'" style="text-shadow:0 1px 2px rgba(0,0,0,.6)">
-              <span class="wc-color-dot me-1" [style.background]="c.hexCode" style="border:1.5px solid rgba(255,255,255,.5)"></span>
+            <span *ngFor="let c of savedColors" class="badge d-flex align-items-center gap-2 py-2 px-3 shadow-sm border border-light"
+              [style.background]="c.hexCode" [style.color]="'#fff'" style="text-shadow:0 1px 3px rgba(0,0,0,.7)">
+              <span class="wc-color-dot" [style.background]="c.hexCode" style="border:1.5px solid rgba(255,255,255,.6)"></span>
               {{ c.name }}
             </span>
           </div>
         </div>
 
-        <div class="col-md-3">
-          <label class="form-label">Color name</label>
-          <input class="form-control" [(ngModel)]="colorForm.name" name="cname" placeholder="e.g. Midnight Black">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Hex code</label>
+        <div class="col-md-4">
+          <label class="form-label fw-medium text-secondary">Color Name</label>
           <div class="input-group">
-            <input type="color" class="form-control form-control-color" [(ngModel)]="colorForm.hexCode" name="hexPicker" style="max-width:48px">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-paint-brush"></i></span>
+            <input class="form-control" [(ngModel)]="colorForm.name" name="cname" placeholder="e.g. Midnight Black">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-medium text-secondary">Hex Code</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-hashtag"></i></span>
+            <input type="color" class="form-control form-control-color p-1" [(ngModel)]="colorForm.hexCode" name="hexPicker" style="max-width:44px; height: 38px;">
             <input class="form-control" [(ngModel)]="colorForm.hexCode" name="hex" placeholder="#000000">
           </div>
         </div>
+        
         <div class="col-md-5">
-          <label class="form-label">Catalog / Main image <span class="text-danger">*</span></label>
-          <input type="file" class="form-control" accept="image/*" (change)="pickMainFile($event)">
+          <label class="form-label fw-medium text-secondary">Catalog / Main Image <span class="text-danger">*</span></label>
+          <div class="wc-upload-zone" (click)="mainImageFileInput.click()" [class.has-file]="mainImageFile">
+            <input type="file" #mainImageFileInput class="d-none" accept="image/*" (change)="pickMainFile($event)">
+            
+            <div class="wc-upload-content" *ngIf="!mainImageFile">
+              <i class="fa-solid fa-cloud-arrow-up upload-icon text-primary-soft"></i>
+              <div class="upload-title">Choose Catalog Image</div>
+              <small class="upload-subtitle">JPG, PNG or WEBP (Max 5MB)</small>
+            </div>
+            
+            <div class="wc-upload-preview animate-scale-up" *ngIf="mainImageFile">
+              <img [src]="mainImagePreviewUrl" class="upload-thumb" *ngIf="mainImagePreviewUrl" />
+              <div class="upload-details">
+                <i class="fa-solid fa-circle-check text-success fs-5"></i>
+                <span class="file-name fw-medium">{{ mainImageFile.name }}</span>
+                <span class="file-size small text-secondary">Click to change image</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="col-12">
-          <button type="button" class="btn btn-dark" [disabled]="busy" (click)="addColor()">
+
+        <div class="col-12 pt-3 border-top">
+          <button type="button" class="btn btn-primary btn-premium" [disabled]="busy" (click)="addColor()">
             <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
-            Add color &amp; upload photos →
+            <span>Add Color &amp; Upload Photos</span>
+            <i class="fa-solid fa-chevron-right ms-2" *ngIf="!busy"></i>
           </button>
         </div>
       </div>
     </section>
 
     <!-- ── STEP 3: Upload view photos ── -->
-    <section class="card wc-factory-card border-0 mb-4" *ngIf="currentStep === 'photos'">
-      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-        <span class="badge rounded-pill bg-dark">3</span>
-        Upload view photos for this color
-        <span class="ms-auto small text-muted fw-normal">Color id: <code>{{ currentColorId }}</code></span>
+    <section class="card wc-factory-card border-0 mb-4 animate-slide-up" *ngIf="currentStep === 'photos'">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2 py-3">
+        <span class="badge rounded-circle bg-primary-soft p-2 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+          <i class="fa-solid fa-camera text-white" style="font-size: 0.8rem;"></i>
+        </span>
+        <span class="text-dark">Upload View Photos for Color</span>
+        <span class="ms-auto small text-muted fw-normal"><i class="fa-solid fa-link me-1"></i> Color ID: <code>{{ currentColorId }}</code></span>
       </div>
-      <div class="card-body">
+      <div class="card-body p-4">
+        
+        <p class="small text-secondary mb-3">
+          <i class="fa-solid fa-circle-info me-1 text-primary"></i> 
+          Optional: Upload front, back, right, and left views of the product in this color.
+        </p>
+
         <div class="row g-3 mb-4">
-          <div class="col-md-3">
-            <label class="form-label small fw-semibold">Front view</label>
-            <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'front')">
+          <!-- Front view -->
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-secondary">Front View</label>
+            <div class="wc-upload-zone wc-upload-zone--sm" (click)="frontFileInput.click()" [class.has-file]="frontImageFile">
+              <input type="file" #frontFileInput class="d-none" accept="image/*" (change)="pickViewFile($event, 'front')">
+              
+              <div class="wc-upload-content" *ngIf="!frontImageFile">
+                <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                <div class="upload-title">Front View</div>
+              </div>
+              
+              <div class="wc-upload-preview animate-scale-up" *ngIf="frontImageFile">
+                <img [src]="frontImagePreviewUrl" class="upload-thumb" *ngIf="frontImagePreviewUrl" />
+                <div class="upload-details">
+                  <span class="file-name text-truncate" style="max-width: 120px;">{{ frontImageFile.name }}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-semibold">Back view</label>
-            <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'back')">
+
+          <!-- Back view -->
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-secondary">Back View</label>
+            <div class="wc-upload-zone wc-upload-zone--sm" (click)="backFileInput.click()" [class.has-file]="backImageFile">
+              <input type="file" #backFileInput class="d-none" accept="image/*" (change)="pickViewFile($event, 'back')">
+              
+              <div class="wc-upload-content" *ngIf="!backImageFile">
+                <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                <div class="upload-title">Back View</div>
+              </div>
+              
+              <div class="wc-upload-preview animate-scale-up" *ngIf="backImageFile">
+                <img [src]="backImagePreviewUrl" class="upload-thumb" *ngIf="backImagePreviewUrl" />
+                <div class="upload-details">
+                  <span class="file-name text-truncate" style="max-width: 120px;">{{ backImageFile.name }}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-semibold">Right view</label>
-            <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'right')">
+
+          <!-- Right view -->
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-secondary">Right View</label>
+            <div class="wc-upload-zone wc-upload-zone--sm" (click)="rightFileInput.click()" [class.has-file]="rightImageFile">
+              <input type="file" #rightFileInput class="d-none" accept="image/*" (change)="pickViewFile($event, 'right')">
+              
+              <div class="wc-upload-content" *ngIf="!rightImageFile">
+                <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                <div class="upload-title">Right View</div>
+              </div>
+              
+              <div class="wc-upload-preview animate-scale-up" *ngIf="rightImageFile">
+                <img [src]="rightImagePreviewUrl" class="upload-thumb" *ngIf="rightImagePreviewUrl" />
+                <div class="upload-details">
+                  <span class="file-name text-truncate" style="max-width: 120px;">{{ rightImageFile.name }}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-semibold">Left view</label>
-            <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'left')">
+
+          <!-- Left view -->
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-secondary">Left View</label>
+            <div class="wc-upload-zone wc-upload-zone--sm" (click)="leftFileInput.click()" [class.has-file]="leftImageFile">
+              <input type="file" #leftFileInput class="d-none" accept="image/*" (change)="pickViewFile($event, 'left')">
+              
+              <div class="wc-upload-content" *ngIf="!leftImageFile">
+                <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                <div class="upload-title">Left View</div>
+              </div>
+              
+              <div class="wc-upload-preview animate-scale-up" *ngIf="leftImageFile">
+                <img [src]="leftImagePreviewUrl" class="upload-thumb" *ngIf="leftImagePreviewUrl" />
+                <div class="upload-details">
+                  <span class="file-name text-truncate" style="max-width: 120px;">{{ leftImageFile.name }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="d-flex gap-2">
-          <button type="button" class="btn btn-dark" [disabled]="busy" (click)="uploadViewImages()">
+
+        <div class="d-flex gap-2 pt-3 border-top">
+          <button type="button" class="btn btn-primary btn-premium" [disabled]="busy" (click)="uploadViewImages()">
             <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
-            Upload photos &amp; continue →
+            <i class="fa-solid fa-cloud-arrow-up me-2" *ngIf="!busy"></i>
+            <span>Upload Photos &amp; Continue</span>
           </button>
-          <button type="button" class="btn btn-outline-secondary" [disabled]="busy" (click)="skipPhotos()">
-            Skip for now
+          <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1" [disabled]="busy" (click)="skipPhotos()">
+            <span>Skip View Photos</span>
+            <i class="fa-solid fa-forward-step ms-1"></i>
           </button>
         </div>
       </div>
@@ -192,72 +346,133 @@
     <!-- ── STEP 4: Sizes + summary ── -->
     <ng-container *ngIf="currentStep === 'sizes'">
       <!-- Colors summary -->
-      <section class="card wc-factory-card border-0 mb-4">
-        <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-          <span class="badge rounded-pill bg-success">✓</span>
-          Colors added
-          <button type="button" class="btn btn-outline-dark btn-sm ms-auto" (click)="addAnotherColor()">+ Add another color</button>
+      <section class="card wc-factory-card border-0 mb-4 animate-slide-up">
+        <div class="card-header bg-white fw-semibold d-flex align-items-center justify-content-between py-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge rounded-circle bg-success p-1 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+              <i class="fa-solid fa-check text-white" style="font-size: 0.8rem;"></i>
+            </span>
+            <span class="text-dark">Colors Added</span>
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1" (click)="addAnotherColor()">
+            <i class="fa-solid fa-plus"></i>
+            <span>Add Another Color</span>
+          </button>
         </div>
-        <div class="card-body">
-          <div *ngIf="savedColors.length === 0" class="text-muted small">No colors added yet.</div>
+        <div class="card-body p-4">
+          <div *ngIf="savedColors.length === 0" class="text-muted small py-2">
+            <i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i> No colors added yet.
+          </div>
           <div class="d-flex flex-wrap gap-3">
-            <div *ngFor="let c of savedColors" class="wc-color-pill d-flex align-items-center gap-2">
-              <span class="wc-color-swatch" [style.background]="c.hexCode"></span>
-              <span class="fw-medium">{{ c.name }}</span>
-              <small class="text-muted">{{ c.hexCode }}</small>
+            <div *ngFor="let c of savedColors" class="wc-color-pill d-flex align-items-center gap-2 animate-scale-up shadow-sm">
+              <span class="wc-color-swatch shadow-sm" [style.background]="c.hexCode"></span>
+              <div>
+                <span class="fw-semibold text-dark">{{ c.name }}</span>
+                <span class="text-muted small ms-1" style="font-size: 0.75rem;">{{ c.hexCode }}</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       <!-- Sizes -->
-      <section class="card wc-factory-card border-0 mb-4">
-        <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-          <span class="badge rounded-pill bg-secondary">4</span> Sizes (Size string + a/b/c measurements)
+      <section class="card wc-factory-card border-0 mb-4 animate-slide-up">
+        <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2 py-3">
+          <span class="badge rounded-circle bg-primary-soft p-2 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+            <i class="fa-solid fa-ruler-horizontal text-white" style="font-size: 0.8rem;"></i>
+          </span>
+          <span class="text-dark">Product Dimensions &amp; Sizes</span>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
           <div class="row g-4">
-            <div class="col-lg-3">
-              <div class="wc-size-side-preview border rounded p-2 bg-light">
-                <img *ngIf="categoryPreviewImageUrl; else noCatImage" [src]="categoryPreviewImageUrl" alt="Category preview" class="img-fluid rounded">
+            <div class="col-lg-3 d-flex flex-column align-items-center justify-content-center border-end">
+              <label class="form-label fw-semibold text-secondary align-self-start mb-2">Category Model Guide</label>
+              <div class="wc-size-side-preview border rounded p-2 bg-light w-100 shadow-inner">
+                <img *ngIf="categoryPreviewImageUrl; else noCatImage" [src]="categoryPreviewImageUrl" alt="Category preview" class="img-fluid rounded animate-fade-in">
                 <ng-template #noCatImage>
-                  <div class="wc-size-side-empty text-muted small">No category image available</div>
+                  <div class="wc-size-side-empty text-muted small py-4 text-center">
+                    <i class="fa-solid fa-shirt d-block fs-3 mb-2 text-secondary opacity-50"></i>
+                    <span>No category preview model image</span>
+                  </div>
                 </ng-template>
               </div>
             </div>
+            
             <div class="col-lg-9">
-              <div class="row g-3 align-items-end">
+              <div class="row g-2 align-items-end p-3 border rounded bg-light mb-3">
                 <div class="col-md-3">
-                  <label class="form-label">Size</label>
-                  <select class="form-select" [(ngModel)]="sizeForm.size" name="sz">
-                    <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
-                  </select>
+                  <label class="form-label small fw-semibold text-secondary">Size Letter</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white"><i class="fa-solid fa-ruler"></i></span>
+                    <select class="form-select form-select-sm" [(ngModel)]="sizeForm.size" name="sz">
+                      <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="col-md-2"><label class="form-label">A (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.a" name="a" step="0.01"></div>
-                <div class="col-md-2"><label class="form-label">B (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.b" name="b" step="0.01"></div>
-                <div class="col-md-2"><label class="form-label">C (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.c" name="c" step="0.01"></div>
-                <div class="col-md-3"><button type="button" class="btn btn-outline-dark w-100" [disabled]="busy" (click)="addSize()"><span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>Add size</button></div>
+                <div class="col-md-2">
+                  <label class="form-label small fw-semibold text-secondary">A (Chest cm)</label>
+                  <input type="number" class="form-control form-control-sm" [(ngModel)]="sizeForm.a" name="a" step="0.01">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small fw-semibold text-secondary">B (Length cm)</label>
+                  <input type="number" class="form-control form-control-sm" [(ngModel)]="sizeForm.b" name="b" step="0.01">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small fw-semibold text-secondary">C (Sleeve cm)</label>
+                  <input type="number" class="form-control form-control-sm" [(ngModel)]="sizeForm.c" name="c" step="0.01">
+                </div>
+                <div class="col-md-3">
+                  <button type="button" class="btn btn-primary btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-1" [disabled]="busy" (click)="addSize()">
+                    <span *ngIf="busy" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    <i class="fa-solid fa-plus" *ngIf="!busy"></i>
+                    <span>Add Size Row</span>
+                  </button>
+                </div>
               </div>
-              <div class="table-responsive mt-3" *ngIf="existingSizes.length > 0">
-                <table class="table table-sm align-middle">
-                  <thead><tr><th>Size</th><th>A</th><th>B</th><th>C</th><th class="text-end">Actions</th></tr></thead>
+
+              <!-- Sizes Table -->
+              <div class="table-responsive border rounded animate-fade-in" *ngIf="existingSizes.length > 0">
+                <table class="table table-hover table-striped table-sm align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="ps-3 py-2">Size</th>
+                      <th class="py-2">Measurement A (Chest)</th>
+                      <th class="py-2">Measurement B (Length)</th>
+                      <th class="py-2">Measurement C (Sleeve)</th>
+                      <th class="text-end pe-3 py-2">Actions</th>
+                    </tr>
+                  </thead>
                   <tbody>
-                    <tr *ngFor="let sz of existingSizes">
-                      <td>{{ sz.size.replace('_', '') }}</td><td>{{ sz.a }}</td><td>{{ sz.b }}</td><td>{{ sz.c }}</td>
-                      <td class="text-end d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="startEditSize(sz)">Edit</button>
-                        <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy" (click)="deleteSize(sz)">Delete</button>
+                    <tr *ngFor="let sz of existingSizes" class="animate-scale-up">
+                      <td class="ps-3 fw-bold text-primary-dark">{{ sz.size.replace('_', '') }}</td>
+                      <td>{{ sz.a }} cm</td>
+                      <td>{{ sz.b }} cm</td>
+                      <td>{{ sz.c }} cm</td>
+                      <td class="text-end pe-3">
+                        <div class="d-inline-flex gap-2">
+                          <button type="button" class="btn btn-outline-secondary btn-sm p-1 px-2" (click)="startEditSize(sz)" title="Edit">
+                            <i class="fa-solid fa-pen" style="font-size: 0.8rem;"></i>
+                          </button>
+                          <button type="button" class="btn btn-outline-danger btn-sm p-1 px-2" [disabled]="busy" (click)="deleteSize(sz)" title="Delete">
+                            <i class="fa-solid fa-trash-can" style="font-size: 0.8rem;"></i>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
+              <div *ngIf="existingSizes.length === 0" class="alert alert-light border py-3 text-center text-secondary small">
+                <i class="fa-solid fa-ruler d-block fs-3 mb-2 opacity-50"></i>
+                No size measurements added yet. Enter values in the row above to define size specs.
+              </div>
             </div>
           </div>
         </div>
-        <div class="card-footer bg-white border-top-0 pt-0">
-          <a routerLink="/factory/products" class="btn btn-dark px-5">
-            ✓ Finish &amp; go to products
+        <div class="card-footer bg-white border-top-0 pt-0 pb-4 pe-4 d-flex justify-content-end">
+          <a routerLink="/factory/products" class="btn btn-primary btn-premium px-5 py-2 shadow">
+            <i class="fa-solid fa-circle-check me-2"></i>
+            <span>Finish &amp; Go to Products</span>
           </a>
         </div>
       </section>
@@ -272,159 +487,263 @@
   <ng-container *ngIf="isEditMode">
 
     <!-- ── 1. Product details (fully editable) ── -->
-    <section class="card wc-factory-card border-0 mb-4">
-      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-        <span class="badge rounded-pill bg-dark">1</span> Product details
-        <span class="ms-auto small text-muted fw-normal">id: <code>{{ productId }}</code></span>
+    <section class="card wc-factory-card border-0 mb-4 animate-slide-up">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2 py-3">
+        <span class="badge rounded-circle bg-primary-soft p-2 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+          <i class="fa-solid fa-sliders text-white" style="font-size: 0.8rem;"></i>
+        </span>
+        <span class="text-dark">Base Product Specifications</span>
+        <span class="ms-auto small text-muted fw-normal"><i class="fa-solid fa-link me-1"></i> ID: <code>{{ productId }}</code></span>
       </div>
-      <div class="card-body row g-3">
+      <div class="card-body p-4 row g-3">
         <div class="col-md-6">
-          <label class="form-label">Name</label>
-          <input class="form-control" [(ngModel)]="createForm.name" name="pname" required>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Category</label>
-          <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat" (ngModelChange)="onCategoryChanged($event)">
-            <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">{{ c.name ?? c.Name ?? 'Category' }}</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Dress style</label>
-          <select class="form-select" [(ngModel)]="createForm.dressStyle" name="dressStyle">
-            <option *ngFor="let style of dressStyleOptions" [ngValue]="style.value">{{ style.label }}</option>
-          </select>
-        </div>
-        <div class="col-12">
-          <label class="form-label">Target audience</label>
-          <div class="d-flex flex-wrap gap-3 wc-audience-check">
-            <div *ngFor="let o of targetAudienceOptions" class="form-check">
-              <input class="form-check-input" type="checkbox" [id]="'edit-aud-' + o.value"
-                [checked]="isAudienceSelected(o.value)" (change)="toggleAudience(o.value)"/>
-              <label class="form-check-label" [for]="'edit-aud-' + o.value">{{ o.label }}</label>
-            </div>
+          <label class="form-label fw-medium text-secondary">Product Name</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-tag"></i></span>
+            <input class="form-control" [(ngModel)]="createForm.name" name="pname" required>
           </div>
         </div>
+        <div class="col-md-3">
+          <label class="form-label fw-medium text-secondary">Category</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-list"></i></span>
+            <select class="form-select" [(ngModel)]="createForm.categoryId" name="cat" (ngModelChange)="onCategoryChanged($event)">
+              <option *ngFor="let c of categories" [ngValue]="categoryValue(c)">{{ c.name ?? c.Name ?? 'Category' }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-medium text-secondary">Dress Style</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-shirt"></i></span>
+            <select class="form-select" [(ngModel)]="createForm.dressStyle" name="dressStyle">
+              <option *ngFor="let style of dressStyleOptions" [ngValue]="style.value">{{ style.label }}</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="col-12 my-3">
+          <label class="form-label fw-medium text-secondary mb-2">Target Audience</label>
+          <div class="d-flex flex-wrap gap-2 wc-audience-chips">
+            <button type="button" *ngFor="let o of targetAudienceOptions"
+              class="btn btn-outline-primary wc-audience-chip"
+              [class.active]="isAudienceSelected(o.value)"
+              (click)="toggleAudience(o.value)">
+              <span class="chip-icon me-1">
+                <i class="fa-solid" [ngClass]="{
+                  'fa-mars': o.value === 1,
+                  'fa-venus': o.value === 2,
+                  'fa-people-arrows': o.value === 3,
+                  'fa-child': o.value === 4,
+                  'fa-baby': o.value === 8
+                }"></i>
+              </span>
+              {{ o.label }}
+              <i class="fa-solid fa-check ms-1 check-indicator" *ngIf="isAudienceSelected(o.value)"></i>
+            </button>
+          </div>
+        </div>
+
         <div class="col-12">
-          <label class="form-label">Description</label>
-          <textarea class="form-control" rows="2" [(ngModel)]="createForm.description" name="pdesc"></textarea>
+          <label class="form-label fw-medium text-secondary">Description</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-align-left"></i></span>
+            <textarea class="form-control" rows="2" [(ngModel)]="createForm.description" name="pdesc"></textarea>
+          </div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Price</label>
-          <input type="number" class="form-control" [(ngModel)]="createForm.price" name="price" step="0.01" min="0">
+        <div class="col-md-3">
+          <label class="form-label fw-medium text-secondary">Price ($)</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-dollar-sign"></i></span>
+            <input type="number" class="form-control" [(ngModel)]="createForm.price" name="price" step="0.01" min="0">
+          </div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Canvas width (px)</label>
-          <input type="number" class="form-control" [(ngModel)]="createForm.canvasWidth" name="cw" min="1">
+        <div class="col-md-3">
+          <label class="form-label fw-medium text-secondary">Canvas Width (px)</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-arrows-left-right"></i></span>
+            <input type="number" class="form-control" [(ngModel)]="createForm.canvasWidth" name="cw" min="1">
+          </div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Canvas height (px)</label>
-          <input type="number" class="form-control" [(ngModel)]="createForm.canvasHeight" name="ch" min="1">
+        <div class="col-md-3">
+          <label class="form-label fw-medium text-secondary">Canvas Height (px)</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-arrows-up-down"></i></span>
+            <input type="number" class="form-control" [(ngModel)]="createForm.canvasHeight" name="ch" min="1">
+          </div>
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Default color</label>
-          <select class="form-select" [(ngModel)]="selectedDefaultColorId" name="defaultColor">
-            <option [ngValue]="null">— No default —</option>
-            <option *ngFor="let color of savedColors" [ngValue]="color.colorId">
-              {{ color.name }} (id {{ color.colorId }})
-            </option>
-          </select>
+        <div class="col-md-3">
+          <label class="form-label fw-medium text-secondary">Default Catalog Color</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-star"></i></span>
+            <select class="form-select" [(ngModel)]="selectedDefaultColorId" name="defaultColor">
+              <option [ngValue]="null">— No Default —</option>
+              <option *ngFor="let color of savedColors" [ngValue]="color.colorId">
+                {{ color.name }} (ID: {{ color.colorId }})
+              </option>
+            </select>
+          </div>
         </div>
-        <div class="col-12 pt-1">
-          <button type="button" class="btn btn-dark px-4" [disabled]="busy" (click)="saveProductDetails()">
+        <div class="col-12 pt-3 border-top mt-4">
+          <button type="button" class="btn btn-primary btn-premium px-4" [disabled]="busy" (click)="saveProductDetails()">
             <span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>
-            Save changes
+            <i class="fa-solid fa-floppy-disk me-2" *ngIf="!busy"></i>
+            <span>Save Product Specifications</span>
           </button>
         </div>
       </div>
     </section>
 
     <!-- ── 2. Existing colors ── -->
-    <section class="card wc-factory-card border-0 mb-4">
-      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-        <span class="badge rounded-pill bg-dark">2</span> Colors ({{ savedColors.length }})
+    <section class="card wc-factory-card border-0 mb-4 animate-slide-up">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2 py-3">
+        <span class="badge rounded-circle bg-primary-soft p-2 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+          <i class="fa-solid fa-palette text-white" style="font-size: 0.8rem;"></i>
+        </span>
+        <span class="text-dark">Product Colors &amp; Associated Views ({{ savedColors.length }})</span>
       </div>
-      <div class="card-body">
-        <div *ngIf="savedColors.length === 0" class="text-muted small mb-3">No colors on this product yet. Add one below.</div>
+      <div class="card-body p-4">
+        <div *ngIf="savedColors.length === 0" class="text-muted small mb-3">
+          <i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i> No colors on this product yet. Add one below.
+        </div>
 
-        <!-- Color cards -->
-        <div class="row g-3 mb-4">
+        <!-- Color cards grid -->
+        <div class="row g-4 mb-4">
           <div class="col-md-6 col-lg-4" *ngFor="let color of savedColors">
-            <div class="card h-100 border" [class.border-primary]="editingColorId === color.colorId">
-              <div class="card-body">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                  <span class="wc-color-swatch flex-shrink-0" [style.background]="color.hexCode"></span>
-                  <div class="flex-grow-1">
-                    <div class="fw-semibold">{{ color.name }}</div>
-                    <small class="text-muted">{{ color.hexCode }} · id {{ color.colorId }}</small>
-                  </div>
+            <div class="card h-100 wc-color-editor-card shadow-sm border border-light position-relative" [class.editing-active]="editingColorId === color.colorId">
+              <div class="card-header border-bottom-0 bg-transparent py-3 d-flex align-items-center gap-2">
+                <span class="wc-color-swatch flex-shrink-0 shadow-sm" [style.background]="color.hexCode" [style.border-color]="'#fff'"></span>
+                <div class="flex-grow-1">
+                  <div class="fw-bold text-dark">{{ color.name }}</div>
+                  <small class="text-muted" style="font-size: 0.75rem;">Hex: <code>{{ color.hexCode }}</code> · ID: {{ color.colorId }}</small>
                 </div>
-                <div class="d-flex flex-wrap gap-2 mb-2">
-                  <div *ngIf="color.imageUrl" class="text-center">
-                    <img [src]="color.imageUrl" [alt]="color.name + ' main'" class="img-thumbnail" style="max-height:80px; object-fit:cover">
-                    <div class="small text-muted" style="font-size: 0.7rem;">Main</div>
+                <span *ngIf="selectedDefaultColorId === color.colorId" class="badge bg-primary-soft text-primary small rounded-pill py-1 px-2 border" style="font-size: 0.65rem;">
+                  <i class="fa-solid fa-star me-1"></i>Default
+                </span>
+              </div>
+              <div class="card-body pt-0">
+                
+                <div class="d-flex flex-wrap gap-2 mb-3 bg-light p-2 rounded">
+                  <div *ngIf="color.imageUrl" class="wc-thumb-wrap border">
+                    <img [src]="color.imageUrl" [alt]="color.name + ' main'" class="img-thumbnail border-0">
+                    <span class="badge bg-dark rounded-pill">Main</span>
                   </div>
-                  <div *ngIf="color.frontImageUrl" class="text-center">
-                    <img [src]="color.frontImageUrl" [alt]="color.name + ' front'" class="img-thumbnail" style="max-height:80px; object-fit:cover">
-                    <div class="small text-muted" style="font-size: 0.7rem;">Front</div>
+                  <div *ngIf="color.frontImageUrl" class="wc-thumb-wrap border">
+                    <img [src]="color.frontImageUrl" [alt]="color.name + ' front'" class="img-thumbnail border-0">
+                    <span class="badge bg-secondary rounded-pill">Front</span>
                   </div>
-                  <div *ngIf="color.backImageUrl" class="text-center">
-                    <img [src]="color.backImageUrl" [alt]="color.name + ' back'" class="img-thumbnail" style="max-height:80px; object-fit:cover">
-                    <div class="small text-muted" style="font-size: 0.7rem;">Back</div>
+                  <div *ngIf="color.backImageUrl" class="wc-thumb-wrap border">
+                    <img [src]="color.backImageUrl" [alt]="color.name + ' back'" class="img-thumbnail border-0">
+                    <span class="badge bg-secondary rounded-pill">Back</span>
                   </div>
-                  <div *ngIf="color.rightImageUrl" class="text-center">
-                    <img [src]="color.rightImageUrl" [alt]="color.name + ' right'" class="img-thumbnail" style="max-height:80px; object-fit:cover">
-                    <div class="small text-muted" style="font-size: 0.7rem;">Right</div>
+                  <div *ngIf="color.rightImageUrl" class="wc-thumb-wrap border">
+                    <img [src]="color.rightImageUrl" [alt]="color.name + ' right'" class="img-thumbnail border-0">
+                    <span class="badge bg-secondary rounded-pill">Right</span>
                   </div>
-                  <div *ngIf="color.leftImageUrl" class="text-center">
-                    <img [src]="color.leftImageUrl" [alt]="color.name + ' left'" class="img-thumbnail" style="max-height:80px; object-fit:cover">
-                    <div class="small text-muted" style="font-size: 0.7rem;">Left</div>
+                  <div *ngIf="color.leftImageUrl" class="wc-thumb-wrap border">
+                    <img [src]="color.leftImageUrl" [alt]="color.name + ' left'" class="img-thumbnail border-0">
+                    <span class="badge bg-secondary rounded-pill">Left</span>
                   </div>
                 </div>
 
-                <!-- Inline edit form -->
+                <!-- Inline edit photos form -->
                 <ng-container *ngIf="editingColorId === color.colorId">
-                  <hr class="my-2">
-                  <div class="alert alert-info py-2 small mb-2">
-                    <strong>Tip:</strong> Select new images below to replace existing view photos for this color.
+                  <div class="alert alert-info py-2 px-3 small mb-3 animate-fade-in">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Choose replacement photos. View slots already filled cannot be updated with some API restrictions; re-add color if upload fails.
                   </div>
                   <div class="row g-2">
-                    <div class="col-6">
-                      <label class="form-label small">New main image</label>
-                      <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickEditColorMainFile($event)">
-                    </div>
-                    <div class="col-6">
-                      <label class="form-label small">Front view</label>
-                      <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickEditColorViewFile($event, 'front')">
-                    </div>
-                    <div class="col-6">
-                      <label class="form-label small">Back view</label>
-                      <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickEditColorViewFile($event, 'back')">
-                    </div>
-                    <div class="col-6">
-                      <label class="form-label small">Right view</label>
-                      <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickEditColorViewFile($event, 'right')">
-                    </div>
                     <div class="col-12">
-                      <label class="form-label small">Left view</label>
-                      <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickEditColorViewFile($event, 'left')">
+                      <label class="form-label small fw-semibold mb-1 text-secondary">New Main Image</label>
+                      <div class="wc-upload-zone wc-upload-zone--sm" (click)="editMainInput.click()" [class.has-file]="editColorMainFile">
+                        <input type="file" #editMainInput class="d-none" accept="image/*" (change)="pickEditColorMainFile($event)">
+                        <div class="wc-upload-content" *ngIf="!editColorMainFile">
+                          <i class="fa-solid fa-cloud-arrow-up upload-icon text-primary-soft"></i>
+                          <span>Main Image</span>
+                        </div>
+                        <div class="wc-upload-preview animate-scale-up" *ngIf="editColorMainFile">
+                          <img [src]="editColorMainPreviewUrl" class="upload-thumb" *ngIf="editColorMainPreviewUrl" />
+                          <div class="upload-details"><span class="file-name">{{ editColorMainFile.name }}</span></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold mb-1 text-secondary">Front View</label>
+                      <div class="wc-upload-zone wc-upload-zone--sm" (click)="editFrontInput.click()" [class.has-file]="editColorFrontFile">
+                        <input type="file" #editFrontInput class="d-none" accept="image/*" (change)="pickEditColorViewFile($event, 'front')">
+                        <div class="wc-upload-content" *ngIf="!editColorFrontFile">
+                          <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                          <span>Front View</span>
+                        </div>
+                        <div class="wc-upload-preview animate-scale-up" *ngIf="editColorFrontFile">
+                          <img [src]="editColorFrontPreviewUrl" class="upload-thumb" *ngIf="editColorFrontPreviewUrl" />
+                          <div class="upload-details"><span class="file-name">{{ editColorFrontFile.name }}</span></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold mb-1 text-secondary">Back View</label>
+                      <div class="wc-upload-zone wc-upload-zone--sm" (click)="editBackInput.click()" [class.has-file]="editColorBackFile">
+                        <input type="file" #editBackInput class="d-none" accept="image/*" (change)="pickEditColorViewFile($event, 'back')">
+                        <div class="wc-upload-content" *ngIf="!editColorBackFile">
+                          <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                          <span>Back View</span>
+                        </div>
+                        <div class="wc-upload-preview animate-scale-up" *ngIf="editColorBackFile">
+                          <img [src]="editColorBackPreviewUrl" class="upload-thumb" *ngIf="editColorBackPreviewUrl" />
+                          <div class="upload-details"><span class="file-name">{{ editColorBackFile.name }}</span></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold mb-1 text-secondary">Right View</label>
+                      <div class="wc-upload-zone wc-upload-zone--sm" (click)="editRightInput.click()" [class.has-file]="editColorRightFile">
+                        <input type="file" #editRightInput class="d-none" accept="image/*" (change)="pickEditColorViewFile($event, 'right')">
+                        <div class="wc-upload-content" *ngIf="!editColorRightFile">
+                          <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                          <span>Right View</span>
+                        </div>
+                        <div class="wc-upload-preview animate-scale-up" *ngIf="editColorRightFile">
+                          <img [src]="editColorRightPreviewUrl" class="upload-thumb" *ngIf="editColorRightPreviewUrl" />
+                          <div class="upload-details"><span class="file-name">{{ editColorRightFile.name }}</span></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold mb-1 text-secondary">Left View</label>
+                      <div class="wc-upload-zone wc-upload-zone--sm" (click)="editLeftInput.click()" [class.has-file]="editColorLeftFile">
+                        <input type="file" #editLeftInput class="d-none" accept="image/*" (change)="pickEditColorViewFile($event, 'left')">
+                        <div class="wc-upload-content" *ngIf="!editColorLeftFile">
+                          <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                          <span>Left View</span>
+                        </div>
+                        <div class="wc-upload-preview animate-scale-up" *ngIf="editColorLeftFile">
+                          <img [src]="editColorLeftPreviewUrl" class="upload-thumb" *ngIf="editColorLeftPreviewUrl" />
+                          <div class="upload-details"><span class="file-name">{{ editColorLeftFile.name }}</span></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div class="d-flex gap-2 mt-2">
-                    <button type="button" class="btn btn-primary btn-sm" [disabled]="busy" (click)="saveEditColorPhotos()">
+                  <div class="d-flex gap-2 mt-3 pt-3 border-top">
+                    <button type="button" class="btn btn-primary btn-sm flex-grow-1" [disabled]="busy" (click)="saveEditColorPhotos()">
                       <span *ngIf="busy" class="spinner-border spinner-border-sm me-1" role="status"></span>
-                      Upload photos
+                      <i class="fa-solid fa-cloud-arrow-up me-1" *ngIf="!busy"></i>
+                      <span>Upload Photos</span>
                     </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelEditColor()">Cancel</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelEditColor()">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
                   </div>
                 </ng-container>
 
-                <!-- Card actions -->
-                <div class="d-flex gap-2 mt-3" *ngIf="editingColorId !== color.colorId">
-                  <button type="button" class="btn btn-outline-dark btn-sm flex-grow-1" (click)="startEditColor(color)">
-                    ✎ Edit photos
+                <!-- Card Actions -->
+                <div class="d-flex gap-2 mt-2 pt-2 border-top" *ngIf="editingColorId !== color.colorId">
+                  <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1 d-inline-flex align-items-center justify-content-center gap-1" (click)="startEditColor(color)">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Edit Photos</span>
                   </button>
-                  <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy" (click)="deleteColor(color)">
-                    🗑
+                  <button type="button" class="btn btn-outline-danger btn-sm px-3" [disabled]="busy" (click)="deleteColor(color)" title="Delete Color">
+                    <i class="fa-solid fa-trash-can"></i>
                   </button>
                 </div>
               </div>
@@ -433,107 +752,227 @@
         </div>
 
         <!-- Add new color form -->
-        <div class="border rounded p-3 bg-light">
-          <p class="fw-semibold small mb-3">+ Add new color</p>
+        <div class="border rounded-4 p-4 bg-light shadow-sm">
+          <p class="fw-bold text-dark mb-3"><i class="fa-solid fa-plus-circle text-primary me-1"></i> Add New Product Color</p>
           <div class="row g-3">
-            <div class="col-md-3">
-              <label class="form-label small">Color name</label>
-              <input class="form-control form-control-sm" [(ngModel)]="colorForm.name" name="ecname" placeholder="e.g. Ocean Blue">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-secondary">Color Name</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white"><i class="fa-solid fa-paint-brush"></i></span>
+                <input class="form-control form-control-sm" [(ngModel)]="colorForm.name" name="ecname" placeholder="e.g. Ocean Blue">
+              </div>
             </div>
             <div class="col-md-3">
-              <label class="form-label small">Hex code</label>
+              <label class="form-label small fw-semibold text-secondary">Hex Code</label>
               <div class="input-group input-group-sm">
-                <input type="color" class="form-control form-control-color" [(ngModel)]="colorForm.hexCode" name="echexPicker" style="max-width:38px">
+                <span class="input-group-text bg-white"><i class="fa-solid fa-hashtag"></i></span>
+                <input type="color" class="form-control form-control-color p-1" [(ngModel)]="colorForm.hexCode" name="echexPicker" style="max-width:38px; height:31px;">
                 <input class="form-control" [(ngModel)]="colorForm.hexCode" name="echex" placeholder="#000000">
               </div>
             </div>
-            <div class="col-md-4">
-              <label class="form-label small">Catalog image <span class="text-danger">*</span></label>
-              <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickMainFile($event)">
+            <div class="col-md-5">
+              <label class="form-label small fw-semibold text-secondary">Catalog Main Image <span class="text-danger">*</span></label>
+              <div class="wc-upload-zone wc-upload-zone--sm" (click)="newColorMainInput.click()" [class.has-file]="mainImageFile">
+                <input type="file" #newColorMainInput class="d-none" accept="image/*" (change)="pickMainFile($event)">
+                <div class="wc-upload-content" *ngIf="!mainImageFile">
+                  <i class="fa-solid fa-cloud-arrow-up upload-icon text-primary-soft"></i>
+                  <span>Browse catalog image</span>
+                </div>
+                <div class="wc-upload-preview animate-scale-up" *ngIf="mainImageFile">
+                  <img [src]="mainImagePreviewUrl" class="upload-thumb" *ngIf="mainImagePreviewUrl" />
+                  <div class="upload-details"><span class="file-name text-truncate" style="max-width: 140px;">{{ mainImageFile.name }}</span></div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="row g-3 mt-0">
-            <div class="col-md-3">
-              <label class="form-label small">Front view (optional)</label>
-              <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'front')">
+          
+          <div class="row g-3 mt-1 pt-3 border-top">
+            <div class="col-12"><label class="form-label small fw-bold text-secondary mb-1">Optional View Photos</label></div>
+            
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label small text-secondary">Front view</label>
+              <div class="wc-upload-zone wc-upload-zone--sm" (click)="newColorFrontInput.click()" [class.has-file]="frontImageFile">
+                <input type="file" #newColorFrontInput class="d-none" accept="image/*" (change)="pickViewFile($event, 'front')">
+                <div class="wc-upload-content" *ngIf="!frontImageFile">
+                  <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                  <span>Front View</span>
+                </div>
+                <div class="wc-upload-preview animate-scale-up" *ngIf="frontImageFile">
+                  <img [src]="frontImagePreviewUrl" class="upload-thumb" *ngIf="frontImagePreviewUrl" />
+                  <div class="upload-details"><span class="file-name text-truncate" style="max-width: 100px;">{{ frontImageFile.name }}</span></div>
+                </div>
+              </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label small">Back view (optional)</label>
-              <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'back')">
+            
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label small text-secondary">Back view</label>
+              <div class="wc-upload-zone wc-upload-zone--sm" (click)="newColorBackInput.click()" [class.has-file]="backImageFile">
+                <input type="file" #newColorBackInput class="d-none" accept="image/*" (change)="pickViewFile($event, 'back')">
+                <div class="wc-upload-content" *ngIf="!backImageFile">
+                  <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                  <span>Back View</span>
+                </div>
+                <div class="wc-upload-preview animate-scale-up" *ngIf="backImageFile">
+                  <img [src]="backImagePreviewUrl" class="upload-thumb" *ngIf="backImagePreviewUrl" />
+                  <div class="upload-details"><span class="file-name text-truncate" style="max-width: 100px;">{{ backImageFile.name }}</span></div>
+                </div>
+              </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label small">Right view (optional)</label>
-              <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'right')">
+            
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label small text-secondary">Right view</label>
+              <div class="wc-upload-zone wc-upload-zone--sm" (click)="newColorRightInput.click()" [class.has-file]="rightImageFile">
+                <input type="file" #newColorRightInput class="d-none" accept="image/*" (change)="pickViewFile($event, 'right')">
+                <div class="wc-upload-content" *ngIf="!rightImageFile">
+                  <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                  <span>Right View</span>
+                </div>
+                <div class="wc-upload-preview animate-scale-up" *ngIf="rightImageFile">
+                  <img [src]="rightImagePreviewUrl" class="upload-thumb" *ngIf="rightImagePreviewUrl" />
+                  <div class="upload-details"><span class="file-name text-truncate" style="max-width: 100px;">{{ rightImageFile.name }}</span></div>
+                </div>
+              </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label small">Left view (optional)</label>
-              <input type="file" class="form-control form-control-sm" accept="image/*" (change)="pickViewFile($event, 'left')">
+            
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label small text-secondary">Left view</label>
+              <div class="wc-upload-zone wc-upload-zone--sm" (click)="newColorLeftInput.click()" [class.has-file]="leftImageFile">
+                <input type="file" #newColorLeftInput class="d-none" accept="image/*" (change)="pickViewFile($event, 'left')">
+                <div class="wc-upload-content" *ngIf="!leftImageFile">
+                  <i class="fa-solid fa-camera upload-icon text-secondary"></i>
+                  <span>Left View</span>
+                </div>
+                <div class="wc-upload-preview animate-scale-up" *ngIf="leftImageFile">
+                  <img [src]="leftImagePreviewUrl" class="upload-thumb" *ngIf="leftImagePreviewUrl" />
+                  <div class="upload-details"><span class="file-name text-truncate" style="max-width: 100px;">{{ leftImageFile.name }}</span></div>
+                </div>
+              </div>
             </div>
           </div>
-          <button type="button" class="btn btn-dark btn-sm mt-3" [disabled]="busy" (click)="addColorInEditMode()">
+          
+          <button type="button" class="btn btn-primary btn-premium btn-sm mt-4 px-4" [disabled]="busy" (click)="addColorInEditMode()">
             <span *ngIf="busy" class="spinner-border spinner-border-sm me-1" role="status"></span>
-            Add color
+            <i class="fa-solid fa-plus me-1" *ngIf="!busy"></i>
+            <span>Add Color</span>
           </button>
         </div>
       </div>
     </section>
 
     <!-- ── 3. Sizes ── -->
-    <section class="card wc-factory-card border-0 mb-4">
-      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
-        <span class="badge rounded-pill bg-dark">3</span> Add size
+    <section class="card wc-factory-card border-0 mb-4 animate-slide-up">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2 py-3">
+        <span class="badge rounded-circle bg-primary-soft p-2 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+          <i class="fa-solid fa-ruler-combined text-white" style="font-size: 0.8rem;"></i>
+        </span>
+        <span class="text-dark">Size Chart &amp; Measurements</span>
       </div>
-      <div class="card-body">
+      <div class="card-body p-4">
         <div class="row g-4">
-          <div class="col-lg-3">
-            <div class="wc-size-side-preview border rounded p-2 bg-light">
-              <img *ngIf="categoryPreviewImageUrl; else noCatImageEdit" [src]="categoryPreviewImageUrl" alt="Category preview" class="img-fluid rounded">
+          <div class="col-lg-3 d-flex flex-column align-items-center justify-content-center border-end">
+            <label class="form-label fw-semibold text-secondary align-self-start mb-2">Category Model Guide</label>
+            <div class="wc-size-side-preview border rounded p-2 bg-light w-100 shadow-inner">
+              <img *ngIf="categoryPreviewImageUrl; else noCatImageEdit" [src]="categoryPreviewImageUrl" alt="Category preview" class="img-fluid rounded animate-fade-in">
               <ng-template #noCatImageEdit>
-                <div class="wc-size-side-empty text-muted small">No category image available</div>
+                <div class="wc-size-side-empty text-muted small py-4 text-center">
+                  <i class="fa-solid fa-shirt d-block fs-3 mb-2 text-secondary opacity-50"></i>
+                  <span>No category preview model image</span>
+                </div>
               </ng-template>
             </div>
           </div>
+          
           <div class="col-lg-9">
-            <div class="row g-3 align-items-end">
+            <div class="row g-2 align-items-end p-3 border rounded bg-light mb-3">
               <div class="col-md-3">
-                <label class="form-label">Size</label>
-                <select class="form-select" [(ngModel)]="sizeForm.size" name="esz">
-                  <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
-                </select>
+                <label class="form-label small fw-semibold text-secondary">Size Letter</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-white"><i class="fa-solid fa-ruler"></i></span>
+                  <select class="form-select form-select-sm" [(ngModel)]="sizeForm.size" name="esz">
+                    <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
+                  </select>
+                </div>
               </div>
-              <div class="col-md-2"><label class="form-label">A (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.a" name="ea" step="0.01"></div>
-              <div class="col-md-2"><label class="form-label">B (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.b" name="eb" step="0.01"></div>
-              <div class="col-md-2"><label class="form-label">C (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeForm.c" name="ec" step="0.01"></div>
-              <div class="col-md-3"><button type="button" class="btn btn-outline-dark w-100" [disabled]="busy || productId == null" (click)="addSize()"><span *ngIf="busy" class="spinner-border spinner-border-sm me-2" role="status"></span>Add size row</button></div>
+              <div class="col-md-2">
+                <label class="form-label small fw-semibold text-secondary">A (Chest cm)</label>
+                <input type="number" class="form-control form-control-sm" [(ngModel)]="sizeForm.a" name="ea" step="0.01">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small fw-semibold text-secondary">B (Length cm)</label>
+                <input type="number" class="form-control form-control-sm" [(ngModel)]="sizeForm.b" name="eb" step="0.01">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small fw-semibold text-secondary">C (Sleeve cm)</label>
+                <input type="number" class="form-control form-control-sm" [(ngModel)]="sizeForm.c" name="ec" step="0.01">
+              </div>
+              <div class="col-md-3">
+                <button type="button" class="btn btn-primary btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-1" [disabled]="busy || productId == null" (click)="addSize()">
+                  <span *ngIf="busy" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  <i class="fa-solid fa-plus" *ngIf="!busy"></i>
+                  <span>Add Size Row</span>
+                </button>
+              </div>
             </div>
-            <div class="table-responsive mt-3" *ngIf="existingSizes.length > 0">
-              <table class="table table-sm align-middle">
-                <thead><tr><th>Size</th><th>A</th><th>B</th><th>C</th><th class="text-end">Actions</th></tr></thead>
+
+            <!-- Sizes list table -->
+            <div class="table-responsive border rounded mb-3 animate-fade-in" *ngIf="existingSizes.length > 0">
+              <table class="table table-hover table-striped table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3 py-2">Size</th>
+                    <th class="py-2">Measurement A (Chest)</th>
+                    <th class="py-2">Measurement B (Length)</th>
+                    <th class="py-2">Measurement C (Sleeve)</th>
+                    <th class="text-end pe-3 py-2">Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  <tr *ngFor="let sz of existingSizes">
-                    <td>{{ sz.size.replace('_', '') }}</td><td>{{ sz.a }}</td><td>{{ sz.b }}</td><td>{{ sz.c }}</td>
-                    <td class="text-end d-flex justify-content-end gap-2">
-                      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="startEditSize(sz)">Edit</button>
-                      <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy" (click)="deleteSize(sz)">Delete</button>
+                  <tr *ngFor="let sz of existingSizes" class="animate-scale-up" [class.table-primary]="editingSizeId === sz.id">
+                    <td class="ps-3 fw-bold text-primary-dark">{{ sz.size.replace('_', '') }}</td>
+                    <td>{{ sz.a }} cm</td>
+                    <td>{{ sz.b }} cm</td>
+                    <td>{{ sz.c }} cm</td>
+                    <td class="text-end pe-3">
+                      <div class="d-inline-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm p-1 px-2" (click)="startEditSize(sz)" [disabled]="editingSizeId === sz.id" title="Edit">
+                          <i class="fa-solid fa-pen" style="font-size: 0.8rem;"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm p-1 px-2" [disabled]="busy" (click)="deleteSize(sz)" title="Delete">
+                          <i class="fa-solid fa-trash-can" style="font-size: 0.8rem;"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <div class="border rounded p-3 mt-3 bg-light" *ngIf="editingSizeId != null">
-              <div class="row g-3 align-items-end">
+            
+            <div *ngIf="existingSizes.length === 0" class="alert alert-light border py-3 text-center text-secondary small mb-3">
+              <i class="fa-solid fa-ruler d-block fs-3 mb-2 opacity-50"></i>
+              No size measurements defined yet.
+            </div>
+
+            <!-- Edit inline sizing form -->
+            <div class="border rounded-3 p-3 bg-light animate-slide-up" *ngIf="editingSizeId != null">
+              <p class="fw-bold text-dark small mb-2"><i class="fa-solid fa-pen text-primary me-1"></i> Edit Size Row</p>
+              <div class="row g-2 align-items-end">
                 <div class="col-md-3">
-                  <label class="form-label">Size</label>
-                  <select class="form-select" [(ngModel)]="sizeEditForm.size" name="editSz">
+                  <label class="form-label small text-secondary">Size Letter</label>
+                  <select class="form-select form-select-sm" [(ngModel)]="sizeEditForm.size" name="editSz">
                     <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
                   </select>
                 </div>
-                <div class="col-md-2"><label class="form-label">A (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeEditForm.a" name="editA" step="0.01"></div>
-                <div class="col-md-2"><label class="form-label">B (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeEditForm.b" name="editB" step="0.01"></div>
-                <div class="col-md-2"><label class="form-label">C (cm)</label><input type="number" class="form-control" [(ngModel)]="sizeEditForm.c" name="editC" step="0.01"></div>
+                <div class="col-md-2"><label class="form-label small text-secondary">A (Chest cm)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="sizeEditForm.a" name="editA" step="0.01"></div>
+                <div class="col-md-2"><label class="form-label small text-secondary">B (Length cm)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="sizeEditForm.b" name="editB" step="0.01"></div>
+                <div class="col-md-2"><label class="form-label small text-secondary">C (Sleeve cm)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="sizeEditForm.c" name="editC" step="0.01"></div>
                 <div class="col-md-3 d-flex gap-2">
-                  <button type="button" class="btn btn-dark btn-sm flex-grow-1" [disabled]="busy" (click)="saveEditedSize()">Save</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="busy" (click)="cancelEditSize()">Cancel</button>
+                  <button type="button" class="btn btn-primary btn-sm flex-grow-1 d-inline-flex align-items-center justify-content-center gap-1" [disabled]="busy" (click)="saveEditedSize()">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>Save</span>
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="busy" (click)="cancelEditSize()">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
                 </div>
               </div>
             </div>

@@ -2073,4 +2073,47 @@ body {
   cursor: not-allowed;
 }
 
+/* --- Design Assets Pagination --- */
+.design-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(215, 230, 247, 0.9);
+}
+
+.design-page-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #d7e6f7;
+  color: #17324d;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(76, 143, 234, 0.05);
+}
+
+.design-page-btn:hover:not(:disabled) {
+  background: #eaf4ff;
+  border-color: #6fafef;
+  color: #2563eb;
+}
+
+.design-page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5faff;
+  color: #a0aec0;
+}
+
+.design-page-info {
+  font-size: 13px;
+  color: #5f748c;
+  font-weight: 600;
+}
+
 

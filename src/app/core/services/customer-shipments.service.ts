@@ -654,8 +654,11 @@ function parseStatus(v: unknown): number | null {
   if (typeof v === 'number' && Number.isFinite(v)) return v;
   if (typeof v === 'string') {
     if (/^-?\d+$/.test(v)) return parseInt(v, 10);
-    const mapped = ShipmentStatus[v as keyof typeof ShipmentStatus];
-    if (typeof mapped === 'number') return mapped;
+    const lowerV = v.trim().toLowerCase();
+    const match = Object.entries(ShipmentStatus).find(
+      ([key, val]) => key.toLowerCase() === lowerV && typeof val === 'number'
+    );
+    if (match) return match[1] as number;
   }
   return null;
 }

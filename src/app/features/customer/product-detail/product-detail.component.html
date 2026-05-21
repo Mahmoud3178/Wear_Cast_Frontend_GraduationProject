@@ -325,8 +325,8 @@
         </div>
 
         <div class="wc-bestsellers-grid" *ngIf="!recommendationsLoading">
-          <a [routerLink]="(item.type === 'designed product') ? ['/customer/design'] : ['/customer/product', item.id]"
-             [queryParams]="(item.type === 'designed product') ? { designedProductIds: item.id } : {}"
+          <a [routerLink]="(item.type && item.type.includes('designed product')) ? ['/customer/design'] : ['/customer/product', item.id]"
+             [queryParams]="(item.type && item.type.includes('designed product')) ? { designedProductIds: item.id } : {}"
              class="wc-bestseller-card"
              *ngFor="let item of recommendations">
             <div class="wc-bestseller-image">
