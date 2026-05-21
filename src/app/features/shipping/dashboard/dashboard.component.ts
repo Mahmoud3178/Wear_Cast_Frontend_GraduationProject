@@ -34,7 +34,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     { title: 'Pending Shipments', value: '0', icon: 'bi-clock-history', trend: 'Pending', trendUp: true },
     { title: 'Delivered Shipments', value: '0', icon: 'bi-check-circle', trend: 'Completed', trendUp: true },
     { title: 'Active Drivers', value: '0', icon: 'bi-truck', trend: 'Fleet Status', trendUp: true },
-    { title: 'Wallet Balance', value: '$0', icon: 'bi-wallet2', trend: 'Current Balance', trendUp: true }
+    { title: 'Wallet Balance', value: '0', icon: 'bi-wallet2', trend: 'Current Balance', trendUp: true }
   ];
 
   // --- Wallet & Ledger Info ---
