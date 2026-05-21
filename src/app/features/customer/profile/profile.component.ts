@@ -455,6 +455,42 @@ export class ProfileComponent implements OnInit {
     return size.trim().replace(/^_/, '');
   }
 
+  parseSizeDetails(sizeStr: string, totalQty: number): { size: string; quantity: number }[] {
+    if (!sizeStr || sizeStr.trim() === '-' || sizeStr.trim() === '') return [];
+    
+    if (sizeStr.includes(',')) {
+      return sizeStr.split(',').map(part => {
+        const trimmed = part.trim();
+        const match = trimmed.match(/^(.+?)\s*x\s*(\d+)$/i);
+        if (match) {
+          return {
+            size: match[1].replace(/^_/, '').trim(),
+            quantity: parseInt(match[2], 10)
+          };
+        } else {
+          return {
+            size: trimmed.replace(/^_/, '').trim(),
+            quantity: 1
+          };
+        }
+      });
+    }
+
+    const trimmed = sizeStr.trim();
+    const match = trimmed.match(/^(.+?)\s*x\s*(\d+)$/i);
+    if (match) {
+      return [{
+        size: match[1].replace(/^_/, '').trim(),
+        quantity: parseInt(match[2], 10)
+      }];
+    } else {
+      return [{
+        size: trimmed.replace(/^_/, '').trim(),
+        quantity: totalQty || 1
+      }];
+    }
+  }
+
   openShipmentItem(line: CustomerShipmentDetailVm['orderLines'][number]): void {
     this.selectedOrderLine = line;
     this.selectedOrderGalleryIndex = 0;

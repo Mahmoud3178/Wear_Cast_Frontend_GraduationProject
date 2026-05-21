@@ -1213,3 +1213,46 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Baby blue size badges style */
+.baby-size-badges-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.baby-size-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(13, 71, 161, 0.05);
+  transition: all 0.2s ease;
+}
+
+.baby-size-badge:hover {
+  background-color: #bbdefb;
+  transform: translateY(-1px);
+}
+
+.baby-size-label {
+  text-transform: uppercase;
+}
+
+.baby-size-divider {
+  width: 1px;
+  height: 10px;
+  background-color: #90caf9;
+}
+
+.baby-size-qty {
+  font-size: 10px;
+  opacity: 0.85;
+}

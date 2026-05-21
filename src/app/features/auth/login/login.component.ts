@@ -135,4 +135,30 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  resendConfirmation(): void {
+    const email = this.form.email.trim();
+    if (!email) {
+      this.errorMessage = 'Please enter your email address in the Email field first.';
+      this.emailNotConfirmed = false;
+      return;
+    }
+    this.errorMessage = '';
+    this.emailNotConfirmed = false;
+    this.submitting = true;
+    this.auth.resendConfirmationEmail(email).subscribe({
+      next: () => {
+        this.submitting = false;
+        this.showConfirmBox = true;
+        this.confirmCode = '';
+        this.verificationError = '';
+        this.verificationSuccess = 'Confirmation code resent! Please check your email.';
+        setTimeout(() => this.verificationSuccess = '', 4000);
+      },
+      error: (err) => {
+        this.submitting = false;
+        this.errorMessage = err.message || 'Failed to resend confirmation email.';
+      }
+    });
+  }
+
 }

@@ -118,14 +118,20 @@
                   <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                     <div>
                       <div class="fw-semibold">{{ item.productName }}</div>
-                      <div class="small text-muted">
+                      <div class="small text-muted mb-2">
                         {{ item.kind === 'designed' ? 'Designed item' : 'Fixed item' }}
                         <span *ngIf="item.colorName"> · {{ item.colorName }}</span>
                       </div>
+                      <div class="baby-size-badges-container mb-2" *ngIf="item.size && item.size !== '-'">
+                        <div *ngFor="let sizeObj of parseSizeDetails(item.size, item.quantity)" class="baby-size-badge">
+                          <span class="baby-size-label">{{ sizeObj.size }}</span>
+                          <span class="baby-size-divider"></span>
+                          <span class="baby-size-qty">Qty: {{ sizeObj.quantity }}</span>
+                        </div>
+                      </div>
                     </div>
                     <div class="text-end">
-                      <div class="small text-muted">Qty {{ item.quantity }}</div>
-                      <div class="small text-muted" *ngIf="item.size && item.size !== '-'">Size: {{ item.size }}</div>
+                      <div class="small text-muted" *ngIf="!item.size || item.size === '-'">Qty {{ item.quantity }}</div>
                     </div>
                   </div>
                   <div class="d-flex justify-content-between align-items-center mt-2">

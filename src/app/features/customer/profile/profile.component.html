@@ -325,8 +325,14 @@
                             {{ line.title }}
                           </button>
                         </p>
-                        <p class="shipment-order-line__meta" *ngIf="line.subtitle">Size / variant: {{ formatSizeLabel(line.subtitle) }}</p>
-                        <p class="shipment-order-line__meta">Qty {{ line.quantity }}</p>
+                        <div class="baby-size-badges-container" *ngIf="line.subtitle && line.subtitle !== '-'">
+                          <div *ngFor="let item of parseSizeDetails(line.subtitle, line.quantity)" class="baby-size-badge">
+                            <span class="baby-size-label">{{ item.size }}</span>
+                            <span class="baby-size-divider"></span>
+                            <span class="baby-size-qty">Qty: {{ item.quantity }}</span>
+                          </div>
+                        </div>
+                        <p class="shipment-order-line__meta" *ngIf="!line.subtitle || line.subtitle === '-'">Qty {{ line.quantity }}</p>
                       </div>
                       <div class="shipment-order-line__prices">
                         <p *ngIf="line.lineTotal != null">EGP {{ line.lineTotal | number:'1.2-2' }}</p>
@@ -453,9 +459,15 @@
             <p>EGP {{ line.lineTotal | number:'1.2-2' }}</p>
           </div>
         </div>
-        <div class="shipment-item-modal__sizes" *ngIf="line.subtitle">
-          <label>Sizes</label>
-          <p>{{ formatSizeLabel(line.subtitle) }}</p>
+        <div class="shipment-item-modal__sizes" *ngIf="line.subtitle && line.subtitle !== '-'">
+          <label class="mb-2">Sizes & Quantities</label>
+          <div class="baby-size-badges-container">
+            <div *ngFor="let item of parseSizeDetails(line.subtitle, line.quantity)" class="baby-size-badge">
+              <span class="baby-size-label">{{ item.size }}</span>
+              <span class="baby-size-divider"></span>
+              <span class="baby-size-qty">Qty: {{ item.quantity }}</span>
+            </div>
+          </div>
         </div>
         <div class="shipment-item-modal__note">
           <span>Need a quick check?</span>

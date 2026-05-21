@@ -8,7 +8,8 @@ import { AuthService } from '../../../core/services/auth.service';
   selector: 'app-factory-login',
   standalone: true,
   imports: [FormsModule, RouterLink, NgIf],
-  templateUrl: './factory-login.component.html'
+  templateUrl: './factory-login.component.html',
+  styleUrl: './factory-login.component.css'
 })
 export class FactoryLoginComponent {
   form = { email: '', password: '' };
