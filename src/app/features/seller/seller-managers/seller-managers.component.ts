@@ -91,18 +91,20 @@ deleteReason = '';    // حطها بدلها
         this.showToast('Manager added successfully', 'success');
         this.load();
       },
-      error: (e: any) => {
-        this.isAdding = false;
-        const body = e?.error;
-        if (body?.validationErrors) {
-          const raw = body.validationErrors;
-          Object.keys(raw).forEach(k => {
-            this.addFieldErrors[k.charAt(0).toLowerCase() + k.slice(1)] = raw[k];
-          });
-        } else {
-          this.addError = body?.description || body?.message || 'Failed to add manager.';
-        }
-      }
+error: (e: any) => {
+  this.isAdding = false;
+  const err = e?.error;
+  if (err?.validationErrors) {
+    const raw = err.validationErrors;
+    Object.keys(raw).forEach(k => {
+      this.addFieldErrors[k.charAt(0).toLowerCase() + k.slice(1)] = raw[k];
+    });
+  } else if (err?.error?.description) {
+    this.addError = err.error.description;
+  } else {
+    this.addError = err?.description || err?.message || 'Failed to add manager.';
+  }
+}
     });
   }
 
@@ -140,18 +142,20 @@ deleteReason = '';    // حطها بدلها
         this.showToast('Manager updated successfully', 'success');
         this.load();
       },
-      error: (e: any) => {
-        this.isUpdating = false;
-        const err = e?.error;
-        if (err?.validationErrors) {
-          const raw = err.validationErrors;
-          Object.keys(raw).forEach(k => {
-            this.updateFieldErrors[k.charAt(0).toLowerCase() + k.slice(1)] = raw[k];
-          });
-        } else {
-          this.updateError = err?.description || err?.message || 'Failed to update manager.';
-        }
-      }
+  error: (e: any) => {
+  this.isUpdating = false;
+  const err = e?.error;
+  if (err?.validationErrors) {
+    const raw = err.validationErrors;
+    Object.keys(raw).forEach(k => {
+      this.updateFieldErrors[k.charAt(0).toLowerCase() + k.slice(1)] = raw[k];
+    });
+  } else if (err?.error?.description) {
+    this.updateError = err.error.description;
+  } else {
+    this.updateError = err?.description || err?.message || 'Failed to update manager.';
+  }
+}
     });
   }
 

@@ -30,16 +30,24 @@ export class NotificationsDriversComponent implements OnInit {
     this.load();
   }
 
-  load() {
-    this.isLoading = true;
-    this.notifService.getAll(1, 50, undefined, this.isReadFilter).subscribe({
-      next: (res: any) => {
-        this.notifications = res?.items ?? res?.data ?? res ?? [];
-        this.isLoading = false;
-      },
-      error: () => { this.isLoading = false; }
-    });
-  }
+load() {
+  this.isLoading = true;
+  this.notifService.getAll(1, 50, undefined, { isRead: this.isReadFilter }).subscribe({
+    next: (res: any) => {
+      const prev = this.notifications.length;
+      this.notifications = res?.items ?? res?.data ?? res ?? [];
+
+      // لو في notifications جديدة زود الكونتر
+      const newUnread = this.notifications.filter(n => !n.isRead).length;
+      window.dispatchEvent(new CustomEvent('notif-count-update', {
+        detail: { count: newUnread }
+      }));
+
+      this.isLoading = false;
+    },
+    error: () => { this.isLoading = false; }
+  });
+}
 
   get unread() { return this.notifications.filter(n => !n.isRead).length; }
 

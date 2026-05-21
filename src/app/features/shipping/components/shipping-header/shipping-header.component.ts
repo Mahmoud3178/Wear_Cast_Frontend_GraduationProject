@@ -272,7 +272,13 @@ export class ShippingHeaderComponent implements OnInit, OnDestroy {
         }
       }
     });
+  window.addEventListener('notif-count-update', (e: any) => {
+    this.undeliveredCount = e.detail.count;
+  });
 
+  window.addEventListener('notif-delivered', () => {
+    this.undeliveredCount = 0;
+  });
     // Fetch real-time stats (Disabled as endpoint doesn't exist)
     // this.loadStats();
   }
