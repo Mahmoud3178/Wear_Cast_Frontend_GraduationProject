@@ -137,7 +137,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         this.stats[2].trend = `${this.dashboardStats.inactiveDrivers} Inactive`;
         this.stats[2].trendUp = (this.dashboardStats.activeDrivers) > 0;
 
-        this.stats[3].value = '$' + (this.wallet.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        this.stats[3].value =  (this.wallet.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         this.stats[3].trend = 'Gross Earnings';
         this.stats[3].trendUp = (this.wallet.balance) >= 0;
 
