@@ -11,6 +11,7 @@ export interface FixedProductReview {
   comment: string;
   createdAt: string;
   isOwn?: boolean;
+  customerImageUrl?: string | null;
 }
 
 export interface ReviewsPage {
@@ -113,7 +114,8 @@ export class FixedProductReviewService {
       rating: r.rating ?? r.Rate ?? r.rate ?? 0,
       comment: r.comment ?? r.Comment ?? r.body ?? r.text ?? '',
       createdAt: r.createdAt ?? r.CreatedAt ?? r.created ?? r.date ?? '',
-      isOwn
+      isOwn,
+      customerImageUrl: r.customerImageUrl ?? r.CustomerImageUrl ?? r.reviewerImageUrl ?? r.ReviewerImageUrl ?? null
     };
   }
 }

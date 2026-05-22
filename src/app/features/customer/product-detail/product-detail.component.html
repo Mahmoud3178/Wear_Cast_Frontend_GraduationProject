@@ -210,9 +210,15 @@
         <div class="wc-my-review-card" *ngIf="myReview && !showReviewForm">
           <div class="wc-my-review-badge">Your Review</div>
           <div class="wc-review-card-header">
-            <div class="wc-reviewer-info">
-              <span class="wc-reviewer-name">{{ myReview.reviewerName }}</span>
-              <span class="wc-review-date">{{ formatDate(myReview.createdAt) }}</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div class="wc-review-avatar">
+                <img *ngIf="myReview.customerImageUrl" [src]="myReview.customerImageUrl" alt="avatar" />
+                <span *ngIf="!myReview.customerImageUrl">{{ myReview.reviewerName.charAt(0).toUpperCase() }}</span>
+              </div>
+              <div class="wc-reviewer-info">
+                <span class="wc-reviewer-name">{{ myReview.reviewerName }}</span>
+                <span class="wc-review-date">{{ formatDate(myReview.createdAt) }}</span>
+              </div>
             </div>
             <div class="wc-review-stars">
               <span *ngFor="let filled of starArray(myReview.rating)"
@@ -240,9 +246,15 @@
         <div class="wc-reviews-list" *ngIf="!reviewsLoading && reviewsPage && reviewsPage.reviews.length > 0">
           <div class="wc-review-card" *ngFor="let review of reviewsPage.reviews" [class.wc-review-own]="review.reviewId === myReview?.reviewId">
             <div class="wc-review-card-header">
-              <div class="wc-reviewer-info">
-                <span class="wc-reviewer-name">{{ review.reviewerName }}</span>
-                <span class="wc-review-date">{{ formatDate(review.createdAt) }}</span>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="wc-review-avatar">
+                  <img *ngIf="review.customerImageUrl" [src]="review.customerImageUrl" alt="avatar" />
+                  <span *ngIf="!review.customerImageUrl">{{ review.reviewerName.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div class="wc-reviewer-info">
+                  <span class="wc-reviewer-name">{{ review.reviewerName }}</span>
+                  <span class="wc-review-date">{{ formatDate(review.createdAt) }}</span>
+                </div>
               </div>
               <div class="wc-review-stars">
                 <span *ngFor="let filled of starArray(review.rating)"

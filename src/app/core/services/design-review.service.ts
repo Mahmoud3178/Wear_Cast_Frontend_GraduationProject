@@ -12,6 +12,7 @@ export interface DesignReview {
   comment: string;
   createdAt: string;
   isOwn?: boolean;
+  customerImageUrl?: string | null;
 }
 
 export interface CreateReviewRequest {
@@ -50,7 +51,8 @@ export class DesignReviewService {
             rating: r.rating || r.Rate || r.rate || r.Rating || 0,
             comment: r.comment || r.Comment || r.body || r.Body || r.text || r.Text || '',
             createdAt,
-            isOwn: false
+            isOwn: false,
+            customerImageUrl: r.customerImageUrl || r.CustomerImageUrl || r.reviewerImageUrl || r.ReviewerImageUrl || null
           } as DesignReview;
         });
       }),
@@ -80,7 +82,8 @@ export class DesignReviewService {
           rating: r.rating || r.Rate || r.rate || 0,
           comment: r.comment || r.Comment || r.body || r.Body || '',
           createdAt: createdAtMy,
-          isOwn: true
+          isOwn: true,
+          customerImageUrl: r.customerImageUrl || r.CustomerImageUrl || r.reviewerImageUrl || r.ReviewerImageUrl || null
         } as DesignReview;
       }),
       catchError(() => of(null))

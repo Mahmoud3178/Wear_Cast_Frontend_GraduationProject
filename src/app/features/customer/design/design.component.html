@@ -605,7 +605,10 @@
     <!-- My review -->
     <div *ngIf="myReview" class="my-review-card">
       <div class="review-card-header">
-        <div class="review-avatar">{{ myReview.reviewerName.charAt(0).toUpperCase() }}</div>
+        <div class="review-avatar">
+          <img *ngIf="myReview.customerImageUrl" [src]="myReview.customerImageUrl" alt="avatar" class="avatar-img" />
+          <span *ngIf="!myReview.customerImageUrl">{{ myReview.reviewerName.charAt(0).toUpperCase() }}</span>
+        </div>
         <div>
           <p class="review-name">{{ myReview.reviewerName }} <span class="review-own-badge">Your review</span></p>
           <div class="review-stars">
@@ -675,7 +678,10 @@
       </div>
       <div *ngFor="let r of reviews" class="review-card">
         <div class="review-card-header">
-          <div class="review-avatar">{{ r.reviewerName.charAt(0).toUpperCase() }}</div>
+          <div class="review-avatar">
+            <img *ngIf="r.customerImageUrl" [src]="r.customerImageUrl" alt="avatar" class="avatar-img" />
+            <span *ngIf="!r.customerImageUrl">{{ r.reviewerName.charAt(0).toUpperCase() }}</span>
+          </div>
           <div>
             <p class="review-name">{{ r.reviewerName }}</p>
             <div class="review-stars">
