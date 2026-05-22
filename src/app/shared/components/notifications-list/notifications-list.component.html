@@ -85,4 +85,209 @@
       <button type="button" class="btn-page" (click)="changePage(1)" [disabled]="pageIndex >= totalPages">Next</button>
     </div>
   </div>
+
+  <!-- Order Items Modal (Clicking on notification in Factory portal) -->
+  <div *ngIf="showOrderItemsModal" class="notif-modal-backdrop" (click)="closeOrderItemsModal()">
+    <div class="notif-modal-card" (click)="$event.stopPropagation()">
+      <div class="notif-modal-header">
+        <h3 class="notif-modal-title">
+          <i class="bi bi-box-seam me-2 text-primary"></i>
+          Order Details - #{{ selectedOrderId }}
+        </h3>
+        <button type="button" class="btn-close-modal" (click)="closeOrderItemsModal()" aria-label="Close modal">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="notif-modal-body">
+        <div *ngIf="loadingOrderItems" class="notif-modal-loading">
+          <span class="spinner-border text-primary me-2"></span> Loading order items…
+        </div>
+
+        <div *ngIf="!loadingOrderItems && (!selectedOrderItems || selectedOrderItems.length === 0)" class="notif-modal-empty">
+          <i class="bi bi-exclamation-circle text-muted mb-2"></i>
+          <p>No items found for this order.</p>
+        </div>
+
+        <div *ngIf="!loadingOrderItems && selectedOrderItems && selectedOrderItems.length > 0" class="notif-items-list">
+          <div *ngFor="let item of selectedOrderItems" class="notif-order-item">
+            <div class="notif-order-item-main">
+              <img
+                *ngIf="item.imageUrl"
+                [src]="item.imageUrl"
+                [alt]="item.productName"
+                class="notif-order-item-img img-hover-zoom"
+                (click)="openImageModal(item.imageUrl, item.imageUrl ? [item.imageUrl] : [])"
+              >
+              <div *ngIf="!item.imageUrl" class="notif-order-item-img-placeholder">
+                <i class="bi bi-image"></i>
+              </div>
+
+              <div class="notif-order-item-details">
+                <div class="notif-order-item-name">{{ item.productName }}</div>
+                <div class="notif-order-item-subtitle text-muted">
+                  {{ item.kind === 'designed' ? 'Custom Designed' : 'Fixed Product' }}
+                  <span *ngIf="item.colorName"> · {{ item.colorName }}</span>
+                </div>
+                
+                <div class="baby-size-badges-container mb-2" *ngIf="item.size && item.size !== '-'">
+                  <div *ngFor="let sizeObj of parseSizeDetails(item.size, item.quantity)" class="baby-size-badge">
+                    <span class="baby-size-label">{{ sizeObj.size }}</span>
+                    <span class="baby-size-divider"></span>
+                    <span class="baby-size-qty">Qty: {{ sizeObj.quantity }}</span>
+                  </div>
+                </div>
+
+                <div class="notif-order-item-prices">
+                  <div class="price-row">
+                    <span class="price-label">Unit Price:</span>
+                    <span class="price-val">EGP {{ item.unitPrice | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="price-row">
+                    <span class="price-label">Quantity:</span>
+                    <span class="price-val">{{ item.quantity }}</span>
+                  </div>
+                  <div class="price-row total">
+                    <span class="price-label">Subtotal:</span>
+                    <span class="price-val">EGP {{ item.totalPrice | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Custom designs images / gallery -->
+            <div class="notif-order-item-gallery" *ngIf="item.kind === 'designed' && item.galleryImageUrls && item.galleryImageUrls.length > 0">
+              <div class="gallery-title">Design Previews</div>
+              <div class="gallery-scroll">
+                <div *ngFor="let sideImage of item.galleryImageUrls" class="gallery-img-wrapper">
+                  <img
+                    [src]="sideImage"
+                    [alt]="item.productName"
+                    class="gallery-img img-hover-zoom"
+                    (click)="openImageModal(sideImage, item.galleryImageUrls)"
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Design Inspection / Production Blueprint -->
+            <div class="notif-order-item-blueprint" *ngIf="item.kind === 'designed' && inspectedDesigns[item.customerDesignId || 0]">
+              <div class="blueprint-header">
+                <i class="bi bi-search text-primary"></i>
+                <div class="blueprint-header-text">
+                  <span class="blueprint-title">Production Blueprint</span>
+                  <span class="blueprint-subtitle">Custom elements and design specs</span>
+                </div>
+              </div>
+
+              <div class="blueprint-content row g-3">
+                <!-- Custom Text Elements -->
+                <div class="col-md-6" *ngIf="inspectedDesigns[item.customerDesignId || 0].texts.length > 0">
+                  <div class="blueprint-section-title">
+                    <i class="bi bi-fonts me-1"></i> Custom Text
+                  </div>
+                  <div class="blueprint-text-list">
+                    <div *ngFor="let txt of inspectedDesigns[item.customerDesignId || 0].texts" class="blueprint-text-item">
+                      <span class="blueprint-text-value">"{{ txt }}"</span>
+                      <button type="button" class="btn-copy-blueprint" (click)="copyToClipboard(txt)" title="Copy text">
+                        <i class="bi bi-clipboard"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Image Assets -->
+                <div class="col-md-6" *ngIf="inspectedDesigns[item.customerDesignId || 0].images.length > 0">
+                  <div class="blueprint-section-title">
+                    <i class="bi bi-images me-1"></i> Uploaded Assets
+                  </div>
+                  <div class="blueprint-image-list">
+                    <div *ngFor="let assetUrl of inspectedDesigns[item.customerDesignId || 0].images" class="blueprint-image-wrapper border bg-light">
+                      <img
+                        [src]="assetUrl"
+                        class="blueprint-image"
+                        (click)="openImageModal(assetUrl, [assetUrl])"
+                      >
+                      <span class="zoom-indicator"><i class="bi bi-zoom-in text-primary"></i></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notif-modal-footer">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" (click)="closeOrderItemsModal()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full-viewport Lightbox (Avoids component transform hierarchy issues) -->
+  <div
+    class="wc-order-image-lightbox"
+    *ngIf="activeImageUrl"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Image preview"
+  >
+    <div class="wc-order-image-lightbox__backdrop" (click)="closeImageModal()"></div>
+    <div class="wc-order-image-lightbox__panel" (click)="$event.stopPropagation()">
+      <button
+        type="button"
+        class="wc-order-image-lightbox__close btn-close btn-close-white"
+        (click)="closeImageModal()"
+        aria-label="Close"
+      ></button>
+
+      <div class="wc-order-image-lightbox__stage">
+        <button
+          *ngIf="activeImageContext.length > 1"
+          type="button"
+          class="wc-order-image-lightbox__nav wc-order-image-lightbox__nav--prev btn btn-dark rounded-circle shadow"
+          (click)="prevImage($event)"
+        >
+          <i class="bi bi-chevron-left h4 mb-0"></i>
+        </button>
+
+        <img
+          [src]="activeImageUrl"
+          class="wc-order-image-lightbox__img img-fluid rounded shadow-lg"
+          alt=""
+          (click)="$event.stopPropagation()"
+        >
+
+        <button
+          *ngIf="activeImageContext.length > 1"
+          type="button"
+          class="wc-order-image-lightbox__nav wc-order-image-lightbox__nav--next btn btn-dark rounded-circle shadow"
+          (click)="nextImage($event)"
+        >
+          <i class="bi bi-chevron-right h4 mb-0"></i>
+        </button>
+      </div>
+
+      <div class="wc-order-image-lightbox__actions">
+        <a
+          [href]="activeImageUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-light rounded-pill px-4 py-2 fw-semibold shadow"
+          (click)="$event.stopPropagation()"
+        >
+          <i class="bi bi-box-arrow-up-right me-2"></i> Open original
+        </a>
+        <button type="button" class="btn btn-outline-light rounded-pill px-4 py-2 fw-semibold" (click)="closeImageModal()">
+          Close
+        </button>
+      </div>
+
+      <div *ngIf="activeImageContext.length > 1" class="wc-order-image-lightbox__counter text-white-50 small">
+        {{ activeImageIndex + 1 }} / {{ activeImageContext.length }}
+      </div>
+    </div>
+  </div>
 </div>

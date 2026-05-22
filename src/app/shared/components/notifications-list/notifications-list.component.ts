@@ -8,6 +8,7 @@ import {
   NOTIFICATION_SORT_OLDEST,
   NotificationsService
 } from '../../../core/services/notifications.service';
+import { FactoryApiService, FactoryOrderItem } from '../../../core/services/factory-api.service';
 
 type ReadFilter = 'all' | 'unread' | 'read';
 
@@ -42,9 +43,20 @@ export class NotificationsListComponent implements OnInit {
     { label: 'Oldest', value: NOTIFICATION_SORT_OLDEST }
   ];
 
+  showOrderItemsModal = false;
+  loadingOrderItems = false;
+  selectedOrderItems: FactoryOrderItem[] | null = null;
+  selectedOrderId: number | null = null;
+  inspectedDesigns: Record<number, any> = {};
+
+  activeImageUrl: string | null = null;
+  activeImageContext: string[] = [];
+  activeImageIndex = 0;
+
   private readonly notifService = inject(NotificationsService);
   private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly router = inject(Router);
+  private readonly factoryApi = inject(FactoryApiService);
 
  ngOnInit(): void {
   const routeSubtitle = this.route?.snapshot.data['subtitle'];
@@ -131,41 +143,171 @@ markRead(n: NotificationItem): void {
     const urlId = (n as any).urlId;
 
     if (this.portalRole === 'factory') {
-      if (urlId) this.router.navigate(['/factory/orders'], { queryParams: { openId: urlId } });
-      else this.router.navigate(['/factory/orders']);
+      if (urlId) {
+        const orderId = parseInt(urlId, 10);
+        if (!isNaN(orderId)) {
+          this.selectedOrderId = orderId;
+          this.showOrderItemsModal = true;
+          this.loadingOrderItems = true;
+          this.selectedOrderItems = null;
+          this.factoryApi.getFactoryOrderItems(orderId).subscribe({
+            next: items => {
+              this.selectedOrderItems = items;
+              this.loadingOrderItems = false;
+              // Parse design data for each item
+              items.forEach(item => {
+                if (item.kind === 'designed' && item.raw) {
+                  const json = item.raw['viewDesignsJson'] || item.raw['ViewDesignsJson'];
+                  if (json && typeof json === 'string') {
+                    this.inspectedDesigns[item.customerDesignId || 0] = this.parseDesignJson(json);
+                  }
+                }
+              });
+            },
+            error: () => {
+              this.selectedOrderItems = [];
+              this.loadingOrderItems = false;
+            }
+          });
+        } else {
+          this.router.navigate(['/factory/orders']);
+        }
+      } else {
+        this.router.navigate(['/factory/orders']);
+      }
       return;
     }
 
     if (this.portalRole === 'seller') {
-    if (!urlId) return;
-    switch (type) {
-      case 'NewOrder':
-      case 5:
-        this.router.navigate(['/seller/orders', urlId]); break;
-      default: break;
+      if (!urlId) return;
+      switch (type) {
+        case 'NewOrder':
+        case 5:
+          this.router.navigate(['/seller/orders', urlId]); break;
+        default: break;
+      }
+      return;
     }
-    return;
+
+    if (this.portalRole === 'admin') {
+      switch (type) {
+        case 'ShipmentUpdateStatus':
+        case 'NewShipment':
+        case 'ShipmentUnAssigned':
+        case 'ShipmentAssigned':
+        case 'ShipmentReady':
+          if (urlId) this.router.navigate(['/admin/shipments', urlId]); break;
+        case 'NewSellerApplication':
+          if (urlId) this.router.navigate(['/admin/seller-applications'], { queryParams: { openId: urlId } }); break;
+        case 'NewOrder':
+          if (urlId) this.router.navigate(['/admin/orders', urlId]); break;
+        case 'NewProduct':
+          if (urlId) this.router.navigate(['/admin/products', urlId]); break;
+        default: break;
+      }
+      return;
+    }
   }
 
-  if (this.portalRole === 'admin') {
-    switch (type) {
-      case 'ShipmentUpdateStatus':
-      case 'NewShipment':
-      case 'ShipmentUnAssigned':
-      case 'ShipmentAssigned':
-      case 'ShipmentReady':
-        if (urlId) this.router.navigate(['/admin/shipments', urlId]); break;
-      case 'NewSellerApplication':
-        if (urlId) this.router.navigate(['/admin/seller-applications'], { queryParams: { openId: urlId } }); break;
-      case 'NewOrder':
-        if (urlId) this.router.navigate(['/admin/orders', urlId]); break;
-      case 'NewProduct':
-        if (urlId) this.router.navigate(['/admin/products', urlId]); break;
-      default: break;
-    }
-    return;
+  private parseDesignJson(jsonStr: string): { texts: string[], images: string[] } {
+    const texts: string[] = [];
+    const images: string[] = [];
+    try {
+      const data = JSON.parse(jsonStr);
+      Object.values(data).forEach((view: any) => {
+        if (view && Array.isArray(view.objects)) {
+          view.objects.forEach((obj: any) => {
+            if (obj.type === 'i-text' || obj.type === 'text') {
+              if (obj.text && obj.text.trim()) texts.push(obj.text.trim());
+            } else if (obj.type === 'group' && obj.textSource) {
+              if (obj.textSource.trim()) texts.push(obj.textSource.trim());
+            } else if (obj.type === 'image') {
+              if (obj.src) images.push(obj.src);
+            }
+          });
+        }
+      });
+    } catch (e) {}
+    return {
+      texts: [...new Set(texts)],
+      images: [...new Set(images.filter(img => !img.startsWith('data:')))]
+    };
   }
-}
+
+  parseSizeDetails(sizeStr: string, totalQty: number): { size: string; quantity: number }[] {
+    if (!sizeStr || sizeStr.trim() === '-' || sizeStr.trim() === '') return [];
+    
+    if (sizeStr.includes(',')) {
+      return sizeStr.split(',').map(part => {
+        const trimmed = part.trim();
+        const match = trimmed.match(/^(.+?)\s*x\s*(\d+)$/i);
+        if (match) {
+          return {
+            size: match[1].replace(/^_/, '').trim(),
+            quantity: parseInt(match[2], 10)
+          };
+        } else {
+          return {
+            size: trimmed.replace(/^_/, '').trim(),
+            quantity: 1
+          };
+        }
+      });
+    }
+
+    const trimmed = sizeStr.trim();
+    const match = trimmed.match(/^(.+?)\s*x\s*(\d+)$/i);
+    if (match) {
+      return [{
+        size: match[1].replace(/^_/, '').trim(),
+        quantity: parseInt(match[2], 10)
+      }];
+    } else {
+      return [{
+        size: trimmed.replace(/^_/, '').trim(),
+        quantity: totalQty || 1
+      }];
+    }
+  }
+
+  openImageModal(url: string | null, context: string[] = []): void {
+    this.activeImageUrl = url;
+    this.activeImageContext = context.length > 0 ? context : (url ? [url] : []);
+    this.activeImageIndex = url ? this.activeImageContext.indexOf(url) : 0;
+    if (this.activeImageIndex === -1) this.activeImageIndex = 0;
+  }
+
+  nextImage(event: Event): void {
+    event.stopPropagation();
+    if (this.activeImageContext.length <= 1) return;
+    this.activeImageIndex = (this.activeImageIndex + 1) % this.activeImageContext.length;
+    this.activeImageUrl = this.activeImageContext[this.activeImageIndex];
+  }
+
+  prevImage(event: Event): void {
+    event.stopPropagation();
+    if (this.activeImageContext.length <= 1) return;
+    this.activeImageIndex = (this.activeImageIndex - 1 + this.activeImageContext.length) % this.activeImageContext.length;
+    this.activeImageUrl = this.activeImageContext[this.activeImageIndex];
+  }
+
+  closeImageModal(): void {
+    this.activeImageUrl = null;
+    this.activeImageContext = [];
+    this.activeImageIndex = 0;
+  }
+
+  copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      console.log('Copied to clipboard:', text);
+    });
+  }
+
+  closeOrderItemsModal(): void {
+    this.showOrderItemsModal = false;
+    this.selectedOrderItems = null;
+    this.selectedOrderId = null;
+  }
 
 
 

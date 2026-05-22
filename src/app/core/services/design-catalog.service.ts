@@ -117,9 +117,7 @@ export class DesignCatalogService {
   ): Observable<DesignerBootstrap> {
     const extra = options?.extraProductIds ?? [];
     const extraOnly = [...new Set(extra.filter(n => Number.isFinite(n) && n > 0))];
-    if (!token) {
-      return of({ products: {}, colors: [] });
-    }
+
     return this.discoverCatalogIdsFromServer(token, extraOnly).pipe(
       switchMap(ids => {
         if (!ids.length) {
@@ -127,9 +125,9 @@ export class DesignCatalogService {
         }
         const reqs = ids.map(id =>
           this.http
-            .get<unknown>(`${this.base}/api/catalog/designed-products/${id}`, {
+            .get<unknown>(`${this.base}/api/catalog/designed-products/${id}`, token ? {
               headers: { Authorization: `Bearer ${token}` }
-            })
+            } : {})
             .pipe(catchError(() => of(null)))
         );
         return forkJoin(reqs).pipe(
@@ -165,9 +163,9 @@ export class DesignCatalogService {
         }
         const catReqs = uniq.map(cid =>
           this.http
-            .get<unknown>(`${this.base}/api/Category/GetCategoryById/${cid}`, {
+            .get<unknown>(`${this.base}/api/Category/GetCategoryById/${cid}`, token ? {
               headers: { Authorization: `Bearer ${token}` }
-            })
+            } : {})
             .pipe(catchError(() => of(null)))
         );
         return forkJoin(catReqs).pipe(
@@ -215,12 +213,13 @@ export class DesignCatalogService {
   }
 
   private discoverCatalogIdsFromServer(
-    token: string,
+    token: string | null,
     extraProductIds: number[]
   ): Observable<number[]> {
     const url = `${this.base}/api/customer/catalog/designed-products`;
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     return this.http
-      .get<unknown>(url, { headers: { Authorization: `Bearer ${token}` } })
+      .get<unknown>(url, headers)
       .pipe(
         map(body => {
           const ids = extractDesignedProductIdsFromList(body);

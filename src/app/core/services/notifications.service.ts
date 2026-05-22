@@ -20,6 +20,7 @@ export interface NotificationItem {
   message: string;
   notificationType: number;
   isRead: boolean;
+  urlId?: string;
   createdOn?: string;
   createdAt?: string;
 }
@@ -174,12 +175,14 @@ function num(value: unknown): number | null {
 
 function normalizeNotification(row: unknown): NotificationItem {
   const o = unwrapRecord(row) ?? {};
+  const rawUrlId = o['urlId'] ?? o['UrlId'];
   return {
     id: num(o['id'] ?? o['Id']) ?? 0,
     title: String(o['title'] ?? o['Title'] ?? 'Notification'),
     message: String(o['message'] ?? o['Message'] ?? ''),
     notificationType: num(o['notificationType'] ?? o['NotificationType']) ?? 0,
     isRead: Boolean(o['isRead'] ?? o['IsRead']),
+    urlId: rawUrlId !== null && rawUrlId !== undefined ? String(rawUrlId) : undefined,
     createdOn: String(o['createdOn'] ?? o['CreatedOn'] ?? o['createdAt'] ?? o['CreatedAt'] ?? ''),
     createdAt: String(o['createdAt'] ?? o['CreatedAt'] ?? o['createdOn'] ?? o['CreatedOn'] ?? '')
   };

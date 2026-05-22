@@ -12,6 +12,7 @@ import {
   MyCartResponse
 } from '../../../core/services/cart.service';
 import { FixedProductService } from '../../../core/services/fixed-product.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 export interface PriceBreakdownLine {
   label: string;
@@ -79,7 +80,8 @@ export class CartComponent implements OnInit {
 
   constructor(
     private readonly cartService: CartService,
-    private readonly fixedProductService: FixedProductService
+    private readonly fixedProductService: FixedProductService,
+    private readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -95,6 +97,13 @@ export class CartComponent implements OnInit {
   }
 
   private loadCart(forceRefresh = false): void {
+    if (!this.authService.isLoggedIn()) {
+      this.error.set('Please log in or sign in to view your cart.');
+      this.loading.set(false);
+      this.items.set([]);
+      return;
+    }
+
     this.loading.set(true);
     this.error.set(null);
 
@@ -106,8 +115,12 @@ export class CartComponent implements OnInit {
           this.applyMyCart(cart);
           dispatchCartUpdated(cart);
         },
-        error: (err: Error) => {
-          this.error.set(err?.message ?? 'Failed to load cart');
+        error: (err: any) => {
+          if (err?.status === 401 || err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
+            this.error.set('Please log in or sign in to view your cart.');
+          } else {
+            this.error.set(err?.message ?? 'Failed to load cart');
+          }
           this.items.set([]);
         }
       });
