@@ -340,7 +340,8 @@ markAllRead(): void {
   }
 
   filterByType(type: number | undefined): void {
-    this.applyFilters(this.readFilter, type);
+    const newType = this.selectedType === type ? undefined : type;
+    this.applyFilters(this.readFilter, newType);
   }
 
   setReadFilter(filter: ReadFilter): void {

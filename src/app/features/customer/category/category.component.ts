@@ -66,6 +66,7 @@ export class CategoryComponent implements OnInit {
   products: FixedProductSummary[] = [];
   totalCount = 0;
   loading = false;
+  showMobileFilters = false;
   error = '';
 
   ngOnInit(): void {

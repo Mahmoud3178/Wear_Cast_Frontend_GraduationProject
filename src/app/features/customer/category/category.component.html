@@ -2,17 +2,23 @@
 
 <main class="wc-page-category">
   <section class="wc-category-main">
-    <aside class="wc-filters">
-      <h2>Filters</h2>
+    <!-- Mobile Filter Toggle Button -->
+    <button type="button" class="btn-toggle-filters" (click)="showMobileFilters = !showMobileFilters">
+      <i class="bi" [ngClass]="showMobileFilters ? 'bi-x-lg' : 'bi-sliders2-vertical'"></i>
+      <span>{{ showMobileFilters ? 'Hide Filters' : 'Filters & Search' }}</span>
+    </button>
+
+    <aside class="wc-filters" [class.show-mobile]="showMobileFilters">
+      <h2><i class="bi bi-funnel-fill me-2 text-primary animate-pulse"></i>Filters</h2>
 
       <div class="filter-group">
-        <p class="label">Search</p>
+        <p class="label"><i class="bi bi-search me-2 text-primary"></i>Search</p>
         <input type="text" class="form-control form-control-sm" placeholder="Search products..."
           [(ngModel)]="searchTerm" (keyup.enter)="fetchProducts()">
       </div>
 
       <div class="filter-group">
-        <p class="label">Category</p>
+        <p class="label"><i class="bi bi-grid-fill me-2 text-primary"></i>Category</p>
         <select class="form-select form-select-sm" [(ngModel)]="selectedCategory" (change)="fetchProducts()" [disabled]="loadingCategories">
           <option [ngValue]="null">All Categories</option>
           <option *ngFor="let cat of categories" [ngValue]="cat.id ?? cat.Id">{{ cat.name ?? cat.Name }}</option>
@@ -20,29 +26,33 @@
       </div>
 
       <div class="filter-group">
-        <p class="label">Target Audience</p>
-        <button
-          *ngFor="let aud of targetAudiences"
-          class="chip"
-          [class.chip--active]="aud.value === selectedAudience"
-          (click)="selectedAudience = aud.value; fetchProducts()">
-          {{ aud.label }}
-        </button>
+        <p class="label"><i class="bi bi-people-fill me-2 text-primary"></i>Target Audience</p>
+        <div class="chip-container">
+          <button
+            *ngFor="let aud of targetAudiences"
+            class="chip"
+            [class.chip--active]="aud.value === selectedAudience"
+            (click)="selectedAudience = aud.value; fetchProducts()">
+            {{ aud.label }}
+          </button>
+        </div>
       </div>
 
       <div class="filter-group">
-        <p class="label">Dress Style</p>
-        <button
-          *ngFor="let style of dressStyles"
-          class="chip"
-          [class.chip--active]="style.value === selectedStyle"
-          (click)="selectedStyle = style.value; fetchProducts()">
-          {{ style.label }}
-        </button>
+        <p class="label"><i class="bi bi-palette-fill me-2 text-primary"></i>Dress Style</p>
+        <div class="chip-container">
+          <button
+            *ngFor="let style of dressStyles"
+            class="chip"
+            [class.chip--active]="style.value === selectedStyle"
+            (click)="selectedStyle = style.value; fetchProducts()">
+            {{ style.label }}
+          </button>
+        </div>
       </div>
 
       <div class="filter-group">
-        <p class="label">Sizes</p>
+        <p class="label"><i class="bi bi-rulers me-2 text-primary"></i>Sizes</p>
         <div class="d-flex flex-wrap gap-2">
           <button
             *ngFor="let size of availableSizes"
@@ -55,14 +65,14 @@
       </div>
 
       <div class="filter-group">
-        <p class="label">Sort By</p>
+        <p class="label"><i class="bi bi-sort-down me-2 text-primary"></i>Sort By</p>
         <select class="form-select form-select-sm mt-2" [(ngModel)]="selectedSort" (change)="fetchProducts()">
           <option [ngValue]="sort.value" *ngFor="let sort of sortOptions">{{sort.label}}</option>
         </select>
       </div>
 
       <div class="filter-group mt-3">
-        <p class="label">Price Range</p>
+        <p class="label"><i class="bi bi-cash-stack me-2 text-primary"></i>Price Range</p>
         <div class="d-flex gap-2">
           <input type="number" class="form-control form-control-sm" placeholder="Min (0)" [(ngModel)]="minPrice" min="0">
           <input type="number" class="form-control form-control-sm" placeholder="Max (any)" [(ngModel)]="maxPrice" min="0">
@@ -70,7 +80,9 @@
       </div>
 
       <button class="wc-btn-primary" (click)="fetchProducts()" [disabled]="loading">
-        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>Apply filter
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        <i *ngIf="!loading" class="bi bi-check-circle-fill me-2"></i>
+        <span>Apply Filters</span>
       </button>
     </aside>
 

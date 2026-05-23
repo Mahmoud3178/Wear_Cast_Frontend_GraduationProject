@@ -19,7 +19,7 @@
   </div>
 
   <div class="notif-filters">
-    <button type="button" class="filter-pill" [class.active]="readFilter === 'all' && selectedType === undefined" (click)="applyFilters('all', undefined)">
+    <button type="button" class="filter-pill" [class.active]="readFilter === 'all'" (click)="setReadFilter('all')">
       All
       <span class="pill-count">{{ totalCount }}</span>
     </button>
