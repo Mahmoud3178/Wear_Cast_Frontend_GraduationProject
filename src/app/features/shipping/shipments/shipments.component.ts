@@ -36,6 +36,9 @@ export interface DriverListItem {
   status: any;
   vehicleType?: any;
   driverCity?: string;
+  numberOfAssignedShipments?: number;
+  numberOfActiveShipments?: number;
+  numberOfDeliveredShipments?: number;
 }
 
 @Component({
@@ -101,6 +104,16 @@ export class ShipmentsComponent implements OnInit {
   selectedShipment: ShipmentListItem | null = null;
   selectedDriverId: number | null = null;
   isLoadingDrivers = false;
+  searchDriverModalText = '';
+
+  get filteredDrivers() {
+    if (!this.searchDriverModalText) return this.availableDrivers;
+    const term = this.searchDriverModalText.toLowerCase();
+    return this.availableDrivers.filter(d => 
+      (d.driverName?.toLowerCase() || '').includes(term) ||
+      (d.driverCity?.toLowerCase() || '').includes(term)
+    );
+  }
 
   // ── Unassign modal ────────────────────────────────────────────
   showUnassignModal = false;
@@ -238,6 +251,7 @@ export class ShipmentsComponent implements OnInit {
   openAssignModal(shipment: ShipmentListItem): void {
     this.selectedShipment = shipment;
     this.selectedDriverId = null;
+    this.searchDriverModalText = '';
     this.showAssignModal = true;
     this.loadAvailableDrivers();
   }
@@ -332,6 +346,16 @@ export class ShipmentsComponent implements OnInit {
 
   getDriverLabel(d: DriverListItem): string {
     return d.driverName || d.name || `Driver #${d.id}`;
+  }
+
+  getVehicleTypeLabel(type: any): string {
+    const map: Record<number, string> = {
+      0: 'Motorcycle',
+      1: 'Car',
+      2: 'Van',
+      3: 'Truck'
+    };
+    return map[typeof type === 'number' ? type : Number(type)] ?? 'Vehicle';
   }
 
   trackById(_: number, item: any): number { return item.id; }

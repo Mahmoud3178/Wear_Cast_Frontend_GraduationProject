@@ -10,40 +10,58 @@
 
   <!-- ── ASSIGN MODAL ───────────────────────────────────────── -->
   <div *ngIf="showAssignModal" class="modal-backdrop" (click)="closeAssignModal()">
-    <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-card" style="max-width: 500px;" (click)="$event.stopPropagation()">
       <div class="modal-card-header">
         <div class="modal-icon-wrap assign-icon">👤</div>
         <div>
           <h2 class="modal-title">Assign Driver</h2>
-          <p class="modal-sub">Shipment <strong>#{{ selectedShipment?.id }}</strong></p>
+          <p class="modal-sub mb-0">
+            Shipment <strong>#{{ selectedShipment?.id }}</strong> • {{ selectedShipment?.customerName }}
+            <br>
+            <span style="font-size: 12px; color: #64748b;">📍 {{ selectedShipment?.deliveryCity }}<span *ngIf="selectedShipment?.deliveryStreet">, {{ selectedShipment?.deliveryStreet }}</span></span>
+          </p>
         </div>
         <button class="modal-close" (click)="closeAssignModal()">✕</button>
       </div>
 
-      <div class="modal-card-body">
+      <div class="modal-card-body" style="padding-top: 10px;">
+        <div class="filter-field" style="margin-bottom: 15px;">
+          <input type="text" class="filter-input w-100" placeholder="Search driver by name or city..."
+                 [(ngModel)]="searchDriverModalText">
+        </div>
+
         <div *ngIf="isLoadingDrivers" class="drivers-loading">
           <div class="mini-spinner"></div>
           <span>Loading available drivers…</span>
         </div>
 
-        <div *ngIf="!isLoadingDrivers && availableDrivers.length === 0" class="drivers-empty">
+        <div *ngIf="!isLoadingDrivers && filteredDrivers.length === 0" class="drivers-empty">
           <span>😕</span>
-          <p>No available drivers at the moment.</p>
+          <p>No drivers found.</p>
         </div>
 
-        <div *ngIf="!isLoadingDrivers && availableDrivers.length > 0" class="drivers-list">
+        <div *ngIf="!isLoadingDrivers && filteredDrivers.length > 0" class="drivers-list">
           <div
-            *ngFor="let driver of availableDrivers; trackBy: trackById"
+            *ngFor="let driver of filteredDrivers; trackBy: trackById"
             class="driver-item"
+            style="align-items: flex-start; padding: 12px;"
             [class.driver-selected]="selectedDriverId === driver.id"
             (click)="selectedDriverId = driver.id"
           >
-            <div class="driver-avatar">{{ getDriverLabel(driver).charAt(0).toUpperCase() }}</div>
-            <div class="driver-info">
-              <span class="driver-name">{{ getDriverLabel(driver) }}</span>
-              <span class="driver-city" *ngIf="driver.driverCity">📍 {{ driver.driverCity }}</span>
+            <div class="driver-avatar mt-1">{{ getDriverLabel(driver).charAt(0).toUpperCase() }}</div>
+            <div class="driver-info flex-grow-1">
+              <span class="driver-name d-block mb-1">{{ getDriverLabel(driver) }}</span>
+              <div class="d-flex flex-wrap gap-2 mb-1" style="font-size: 11px; color: #64748b;">
+                <span *ngIf="driver.driverCity" class="bg-light px-2 py-1 rounded">📍 {{ driver.driverCity }}</span>
+                <span class="bg-light px-2 py-1 rounded">🚗 {{ getVehicleTypeLabel(driver.vehicleType) }}</span>
+              </div>
+              <div class="d-flex gap-3" style="font-size: 11px; color: #64748b;">
+                <span><strong>{{ driver.numberOfActiveShipments || 0 }}</strong> Active</span>
+                <span><strong>{{ driver.numberOfAssignedShipments || 0 }}</strong> Assigned</span>
+                <span><strong>{{ driver.numberOfDeliveredShipments || 0 }}</strong> Delivered</span>
+              </div>
             </div>
-            <div class="driver-check" *ngIf="selectedDriverId === driver.id">✓</div>
+            <div class="driver-check mt-2" *ngIf="selectedDriverId === driver.id">✓</div>
           </div>
         </div>
       </div>
