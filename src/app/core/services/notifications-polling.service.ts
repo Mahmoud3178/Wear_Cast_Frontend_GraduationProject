@@ -18,10 +18,10 @@ export class NotificationsPollingService implements OnDestroy {
 
   start() {
     if (this.interval) return; // مش تبدأ تاني لو شغالة
-    this.load();
+    this.reload();
     this.ngZone.runOutsideAngular(() => {
       this.interval = setInterval(() => {
-        this.ngZone.run(() => this.load());
+        this.ngZone.run(() => this.reload());
       }, 10000);
     });
   }
@@ -37,11 +37,13 @@ export class NotificationsPollingService implements OnDestroy {
     this._count.next(0);
   }
 
-  private load() {
+  reload() {
     if (!this.auth.isLoggedIn()) { this._count.next(0); return; }
-    this.notifService.getUndeliveredCount().subscribe({
+    // Fetch Unread Count instead of Undelivered Count
+    this.notifService.getAll(1, 1, undefined, { isRead: false }).subscribe({
       next: (res) => {
-        this._count.next(this.notifService.parseUndeliveredCount(res));
+        const parsed = this.notifService.parseListResponse(res);
+        this._count.next(parsed.totalCount);
       },
       error: () => {}
     });

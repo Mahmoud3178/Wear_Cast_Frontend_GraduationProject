@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Subscription } from 'rxjs';
 import { Router, RouterLink, RouterModule } from '@angular/router';
+import { NotificationsPollingService } from '../../../../core/services/notifications-polling.service';
 
 @Component({
   selector: 'app-driver-header',
@@ -208,12 +209,14 @@ import { Router, RouterLink, RouterModule } from '@angular/router';
     .dropdown-toggle::after { display: none; }
   `]
 })
-export class DriverHeaderComponent implements OnInit {
+export class DriverHeaderComponent implements OnInit, OnDestroy {
   @Output() toggleSidebar = new EventEmitter<void>();
 @Input() undeliveredCount = 0;
 
   private authService = inject(AuthService);
   private router = inject(Router);
+  private notifPolling = inject(NotificationsPollingService);
+  private countSub?: Subscription;
 
   userName = 'Driver';
   userRole = 'Driver';
@@ -228,6 +231,11 @@ export class DriverHeaderComponent implements OnInit {
     this.userName = `${profile.firstName} ${profile.lastName}`.trim();
   }
 
+  this.notifPolling.start();
+  this.countSub = this.notifPolling.count$.subscribe(count => {
+    this.undeliveredCount = count;
+  });
+
   // ✅ استمع للكونتر
   window.addEventListener('notif-count-update', (e: any) => {
     this.undeliveredCount = e.detail.count;
@@ -236,6 +244,10 @@ export class DriverHeaderComponent implements OnInit {
   window.addEventListener('notif-delivered', () => {
     this.undeliveredCount = 0;
   });
+}
+
+ngOnDestroy(): void {
+  this.countSub?.unsubscribe();
 }
 
   logout() {

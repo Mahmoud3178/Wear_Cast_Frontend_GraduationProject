@@ -5,6 +5,7 @@ import { ShippingCompanyService } from '../../../../core/services/shipping-compa
 import { Subscription } from 'rxjs';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { ShippingService } from '../../../../core/services/shipping.service';
+import { NotificationsPollingService } from '../../../../core/services/notifications-polling.service';
 
 
 @Component({
@@ -241,6 +242,7 @@ export class ShippingHeaderComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private shippingCompanyService = inject(ShippingCompanyService);
   private shippingService = inject(ShippingService);
+  private notifPolling = inject(NotificationsPollingService);
   private router = inject(Router);
 
   userName = 'Loading...';
@@ -250,6 +252,7 @@ export class ShippingHeaderComponent implements OnInit, OnDestroy {
   managerImageUrl: string | null = null;
   private profileSub?: Subscription;
   private statsSub?: Subscription;
+  private countSub?: Subscription;
 
   ngOnInit(): void {
     this.managerImageUrl = localStorage.getItem('managerImageUrl');
@@ -272,6 +275,12 @@ export class ShippingHeaderComponent implements OnInit, OnDestroy {
         }
       }
     });
+
+    this.notifPolling.start();
+    this.countSub = this.notifPolling.count$.subscribe(count => {
+      this.undeliveredCount = count;
+    });
+
   window.addEventListener('notif-count-update', (e: any) => {
     this.undeliveredCount = e.detail.count;
   });
@@ -295,6 +304,7 @@ export class ShippingHeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.profileSub?.unsubscribe();
     this.statsSub?.unsubscribe();
+    this.countSub?.unsubscribe();
   }
 
   logout() {

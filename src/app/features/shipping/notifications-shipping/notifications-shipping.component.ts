@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NotificationsService } from '../../../core/services/notifications.service';
+import { NotificationsPollingService } from '../../../core/services/notifications-polling.service';
 
 @Component({
   selector: 'app-notifications-shipping',
@@ -20,12 +21,13 @@ export class NotificationsShippingComponent implements OnInit {
 
   constructor(
     private notifService: NotificationsService,
+    private notifPolling: NotificationsPollingService,
     private router: Router
   ) {}
 
 ngOnInit() {
   this.notifService.receiveAll().subscribe(() => {
-    window.dispatchEvent(new CustomEvent('notif-delivered'));
+    this.notifPolling.reload();
   });
   this.load();
 }
@@ -35,10 +37,6 @@ load() {
   this.notifService.getAll(1, 50, undefined, { isRead: this.isReadFilter }).subscribe({
     next: (res: any) => {
       this.notifications = res?.items ?? res?.data ?? res ?? [];
-      const newUnread = this.notifications.filter(n => !n.isRead).length;
-      window.dispatchEvent(new CustomEvent('notif-count-update', {
-        detail: { count: newUnread }
-      }));
       this.isLoading = false;
     },
     error: () => { this.isLoading = false; }
@@ -56,7 +54,7 @@ markRead(n: any) {
   if (!n.isRead) {
     this.notifService.markAsRead(n.id).subscribe(() => {
       n.isRead = true;
-      window.dispatchEvent(new CustomEvent('notif-read'));
+      this.notifPolling.reload();
     });
   }
   this.navigate(n);
@@ -88,7 +86,7 @@ markRead(n: any) {
 markAllRead() {
   this.notifService.markAllAsRead().subscribe(() => {
     this.notifications.forEach(n => n.isRead = true);
-    window.dispatchEvent(new CustomEvent('notif-all-read'));
+    this.notifPolling.reload();
   });
 }
 

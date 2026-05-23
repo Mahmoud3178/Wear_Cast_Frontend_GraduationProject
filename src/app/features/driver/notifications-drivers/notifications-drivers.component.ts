@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NotificationsService } from '../../../core/services/notifications.service';
+import { NotificationsPollingService } from '../../../core/services/notifications-polling.service';
 
 @Component({
   selector: 'app-notifications-drivers',
@@ -20,13 +21,14 @@ export class NotificationsDriversComponent implements OnInit {
 
   constructor(
     private notifService: NotificationsService,
+    private notifPolling: NotificationsPollingService,
     private router: Router
   ) {}
 
   ngOnInit() {
     this.notifService.receiveAll().subscribe({
       next: () => {
-        window.dispatchEvent(new CustomEvent('notif-delivered'));
+        this.notifPolling.reload();
         this.load();
       },
       error: () => this.load()
@@ -56,7 +58,7 @@ export class NotificationsDriversComponent implements OnInit {
     if (!n.isRead) {
       this.notifService.markAsRead(n.id).subscribe(() => {
         n.isRead = true;
-        window.dispatchEvent(new CustomEvent('notif-read'));
+        this.notifPolling.reload();
       });
     }
     this.navigate(n);
@@ -76,7 +78,7 @@ export class NotificationsDriversComponent implements OnInit {
   markAllRead() {
     this.notifService.markAllAsRead().subscribe(() => {
       this.notifications.forEach(n => n.isRead = true);
-      window.dispatchEvent(new CustomEvent('notif-all-read'));
+      this.notifPolling.reload();
     });
   }
 

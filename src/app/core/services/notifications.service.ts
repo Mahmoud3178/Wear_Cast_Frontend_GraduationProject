@@ -123,11 +123,11 @@ getAll(
       normalizeNotification(row)
     );
 
-    const totalCount = num(data?.['totalCount'] ?? data?.['TotalCount']) ?? items.length;
+    const totalCount = num(data?.['totalCount'] ?? data?.['TotalCount'] ?? data?.['records'] ?? data?.['Records']) ?? items.length;
     const pageSize = num(data?.['pageSize'] ?? data?.['PageSize']) ?? 20;
     const pageIndex = num(data?.['pageIndex'] ?? data?.['PageIndex']) ?? 1;
     const totalPages =
-      num(data?.['totalPages'] ?? data?.['TotalPages']) ??
+      num(data?.['totalPages'] ?? data?.['TotalPages'] ?? data?.['pages'] ?? data?.['Pages']) ??
       Math.max(1, Math.ceil(totalCount / Math.max(pageSize, 1)));
 
     return { items, totalCount, totalPages, pageIndex, pageSize };
