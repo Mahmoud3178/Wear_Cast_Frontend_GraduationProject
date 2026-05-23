@@ -90,7 +90,63 @@
   </div>
 
 </div>
+<!-- Wallet -->
+<div class="adm-card" style="margin-top:20px">
+  <div class="adm-card-head">
+    <h3 class="adm-card-title"><i class="bi bi-wallet2"></i> Wallet</h3>
+    <span class="adm-badge badge-indigo" *ngIf="wallet">
+      {{ wallet.balance | number:'1.2-2' }} EGP
+    </span>
+  </div>
+  <div class="adm-card-body">
 
+    <div *ngIf="wallet; else noWallet">
+      <div class="wallet-balance-box">
+        <span class="wallet-label">Current Balance</span>
+        <span class="wallet-amount">{{ wallet.balance | number:'1.2-2' }} EGP</span>
+      </div>
+
+      <div *ngIf="wallet.recentTransactions?.length; else noTx" style="margin-top:16px">
+        <p class="wallet-tx-title">Recent Transactions</p>
+        <div class="wallet-tx-list">
+          <div class="wallet-tx-item" *ngFor="let tx of wallet.recentTransactions">
+            <div class="tx-icon tx-in">
+              <i class="bi bi-arrow-down-circle"></i>
+            </div>
+            <div class="tx-info">
+              <span class="tx-desc">{{ tx.description }}</span>
+              <span class="tx-meta">
+                <i class="bi bi-person"></i> {{ tx.senderName }}
+                &nbsp;&bull;&nbsp;
+                <i class="bi bi-envelope"></i> {{ tx.senderEmail }}
+              </span>
+              <span class="tx-date">{{ tx.createdOn | date:'mediumDate' }}</span>
+            </div>
+            <div class="tx-right">
+              <span class="tx-amount tx-in">+{{ tx.amount | number:'1.2-2' }} EGP</span>
+              <span class="tx-balance-after">Balance: {{ tx.balanceAfter | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noTx>
+        <div class="adm-empty" style="padding:20px">
+          <i class="bi bi-clock-history"></i>
+          <p>No recent transactions</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <ng-template #noWallet>
+      <div class="adm-empty" style="padding:20px">
+        <i class="bi bi-wallet2"></i>
+        <p>Wallet not available</p>
+      </div>
+    </ng-template>
+
+  </div>
+</div>
 <!-- Add Factory Modal -->
 <div class="adm-modal-overlay" *ngIf="showFactoryModal" (click)="closeAddModal()">
   <div class="adm-modal adm-modal-xl" (click)="$event.stopPropagation()">

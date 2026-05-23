@@ -7,6 +7,98 @@
     </div>
   </div>
 
+  <!-- Filter Bar -->
+  <div class="adm-filter-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">First Name</label>
+        <input class="filter-input" [(ngModel)]="filters.customerFirstName" placeholder="Customer first name…">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Last Name</label>
+        <input class="filter-input" [(ngModel)]="filters.customerLastName" placeholder="Customer last name…">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Status</label>
+        <select class="filter-input" [(ngModel)]="filters.shipmentStatus">
+          <option value="">All statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Unassigned">Unassigned</option>
+          <option value="Assigned">Assigned</option>
+          <option value="OutForDelivery">Out for Delivery</option>
+          <option value="Delivered">Delivered</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">City</label>
+        <input class="filter-input" [(ngModel)]="filters.deliveryCity" placeholder="Delivery city…">
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">Min Price (EGP)</label>
+        <input class="filter-input" type="number" min="0" [(ngModel)]="filters.minPrice" placeholder="0">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Max Price (EGP)</label>
+        <input class="filter-input" type="number" min="0" [(ngModel)]="filters.maxPrice" placeholder="∞">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Start Date</label>
+        <input class="filter-input" type="date" [(ngModel)]="filters.startDate">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">End Date</label>
+        <input class="filter-input" type="date" [(ngModel)]="filters.endDate">
+      </div>
+      <div class="filter-actions">
+        <button class="adm-btn-reset" (click)="resetFilters()">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset
+        </button>
+        <button class="adm-btn-apply" (click)="applyFilters()">
+          <i class="bi bi-search"></i> Search
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Filter Chips -->
+    <div class="filter-chips" *ngIf="hasActiveFilters()">
+      <span class="filter-chip" *ngIf="filters.customerFirstName">
+        First: {{filters.customerFirstName}}
+        <button (click)="clearFilter('customerFirstName')"><i class="bi bi-x"></i></button>
+      </span>
+      <span class="filter-chip" *ngIf="filters.customerLastName">
+        Last: {{filters.customerLastName}}
+        <button (click)="clearFilter('customerLastName')"><i class="bi bi-x"></i></button>
+      </span>
+      <span class="filter-chip" *ngIf="filters.shipmentStatus">
+        Status: {{filters.shipmentStatus}}
+        <button (click)="clearFilter('shipmentStatus')"><i class="bi bi-x"></i></button>
+      </span>
+      <span class="filter-chip" *ngIf="filters.deliveryCity">
+        City: {{filters.deliveryCity}}
+        <button (click)="clearFilter('deliveryCity')"><i class="bi bi-x"></i></button>
+      </span>
+      <span class="filter-chip" *ngIf="filters.minPrice != null">
+        Min: {{filters.minPrice}} EGP
+        <button (click)="clearFilter('minPrice')"><i class="bi bi-x"></i></button>
+      </span>
+      <span class="filter-chip" *ngIf="filters.maxPrice != null">
+        Max: {{filters.maxPrice}} EGP
+        <button (click)="clearFilter('maxPrice')"><i class="bi bi-x"></i></button>
+      </span>
+      <span class="filter-chip" *ngIf="filters.startDate">
+        From: {{filters.startDate}}
+        <button (click)="clearFilter('startDate')"><i class="bi bi-x"></i></button>
+      </span>
+      <span class="filter-chip" *ngIf="filters.endDate">
+        To: {{filters.endDate}}
+        <button (click)="clearFilter('endDate')"><i class="bi bi-x"></i></button>
+      </span>
+    </div>
+  </div>
+
   <div class="adm-table-card">
     <table class="adm-table">
       <thead>
@@ -25,7 +117,13 @@
           <td><span class="cell-main">#{{s.id}}</span></td>
           <td><span class="cell-main">{{s.customerName}}</span></td>
           <td>
-            <span class="adm-badge badge-pending">{{s.shipmentStatus}}</span>
+            <span class="adm-badge"
+              [class.badge-pending]="s.shipmentStatus === 'Pending'"
+              [class.badge-delivered]="s.shipmentStatus === 'Delivered'"
+              [class.badge-unassigned]="s.shipmentStatus === 'Unassigned'"
+              [class.badge-outfor]="s.shipmentStatus === 'OutForDelivery'"
+              [class.badge-assigned]="s.shipmentStatus === 'Assigned'"
+            >{{s.shipmentStatus}}</span>
           </td>
           <td><span class="cell-main" style="color:#10b981">{{s.price}} EGP</span></td>
           <td><span class="adm-badge badge-dark">{{s.numberOfOrders}}</span></td>
@@ -33,7 +131,12 @@
           <td class="cell-muted">{{s.orderTime | date:'mediumDate'}}</td>
         </tr>
         <tr *ngIf="!shipments?.length" class="no-click">
-          <td colspan="7"><div class="adm-empty"><i class="bi bi-truck"></i><p>No shipments found</p></div></td>
+          <td colspan="7">
+            <div class="adm-empty">
+              <i class="bi bi-truck"></i>
+              <p>No shipments found</p>
+            </div>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -41,8 +144,12 @@
     <div class="adm-pagination">
       <span class="adm-pagination-info">Page {{pageIndex}} / {{totalPages}}</span>
       <div class="adm-pager">
-        <button class="adm-page-btn" (click)="prev()" [disabled]="pageIndex === 1"><i class="bi bi-chevron-left"></i></button>
-        <button class="adm-page-btn" (click)="next()" [disabled]="pageIndex === totalPages"><i class="bi bi-chevron-right"></i></button>
+        <button class="adm-page-btn" (click)="prev()" [disabled]="pageIndex === 1">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="adm-page-btn" (click)="next()" [disabled]="pageIndex === totalPages">
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
   </div>

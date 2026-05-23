@@ -93,7 +93,57 @@
           </div>
         </div>
       </div>
+        <!-- Wallet -->
+<div class="adm-card">
+  <div class="adm-card-head">
+    <h3 class="adm-card-title"><i class="bi bi-wallet2"></i> Wallet</h3>
+    <span class="adm-badge badge-indigo" *ngIf="wallet">
+      {{ wallet.balance | number:'1.2-2' }} EGP
+    </span>
+  </div>
+  <div class="adm-card-body">
 
+    <div *ngIf="wallet; else noWallet">
+      <div class="wallet-balance-box">
+        <span class="wallet-label">Current Balance</span>
+        <span class="wallet-amount">{{ wallet.balance | number:'1.2-2' }} EGP</span>
+      </div>
+
+      <div *ngIf="wallet.recentTransactions?.length; else noTx" style="margin-top:16px">
+        <p class="wallet-tx-title">Recent Transactions</p>
+        <div class="wallet-tx-list">
+          <div class="wallet-tx-item" *ngFor="let tx of wallet.recentTransactions">
+            <div class="tx-icon" [class.tx-in]="tx.amount > 0" [class.tx-out]="tx.amount < 0">
+              <i class="bi" [class.bi-arrow-down-circle]="tx.amount > 0" [class.bi-arrow-up-circle]="tx.amount < 0"></i>
+            </div>
+            <div class="tx-info">
+              <span class="tx-desc">{{ tx.description || 'Transaction' }}</span>
+              <span class="tx-date">{{ tx.date | date:'mediumDate' }}</span>
+            </div>
+            <span class="tx-amount" [class.tx-in]="tx.amount > 0" [class.tx-out]="tx.amount < 0">
+              {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number:'1.2-2' }} EGP
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noTx>
+        <div class="adm-empty" style="padding:20px">
+          <i class="bi bi-clock-history"></i>
+          <p>No recent transactions</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <ng-template #noWallet>
+      <div class="adm-empty" style="padding:20px">
+        <i class="bi bi-wallet2"></i>
+        <p>Wallet not available</p>
+      </div>
+    </ng-template>
+
+  </div>
+</div>
       <!-- Shipments -->
       <div class="adm-card">
         <div class="adm-card-head">

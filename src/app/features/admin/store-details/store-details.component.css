@@ -1,47 +1,154 @@
-/* ============================================================
-   STORE DETAILS — FULLY RESPONSIVE
-   ============================================================ */
-
-/* Banner */
 .store-banner {
-  display:flex; align-items:center; gap:20px;
-  background:white; border-radius:16px; padding:20px 24px;
-  margin-bottom:20px; border:1px solid #f1f5f9;
-  box-shadow:0 1px 4px rgba(0,0,0,.05); flex-wrap:wrap;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: white;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  flex-wrap: wrap;
 }
+
 .store-banner-logo {
-  width:72px; height:72px; border-radius:14px;
-  object-fit:cover; border:2px solid #e2e8f0; flex-shrink:0;
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 2px solid #e2e8f0;
+  flex-shrink: 0;
 }
-.store-banner-info { flex:1; min-width:0; }
 
-/* Two-col grid */
+.store-banner-info { flex: 1; min-width: 0; }
+
 .two-col-grid {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-/* Four-col grid (address) */
-.four-col-grid {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:16px;
+.wallet-balance-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #6366f1;
+  border-radius: 14px;
+  padding: 20px 24px;
 }
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width:900px) {
-  .four-col-grid { grid-template-columns:repeat(2,1fr); gap:12px; }
+.wallet-label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.75);
+  font-weight: 500;
 }
 
-@media (max-width:768px) {
-  .two-col-grid  { grid-template-columns:1fr; gap:12px; }
-  .store-banner  { padding:16px; gap:14px; }
-  .store-banner-logo { width:56px; height:56px; border-radius:10px; }
+.wallet-amount {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
 }
 
-@media (max-width:480px) {
-  .four-col-grid { grid-template-columns:1fr 1fr; gap:10px; }
+.wallet-tx-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 10px;
+}
+
+.wallet-tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wallet-tx-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+}
+
+.tx-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.tx-icon.tx-in  { background: #dcfce7; color: #16a34a; }
+.tx-icon.tx-out { background: #fee2e2; color: #dc2626; }
+
+.tx-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tx-desc {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tx-meta {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tx-date { font-size: 11px; color: #94a3b8; }
+
+.tx-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.tx-amount {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tx-amount.tx-in  { color: #16a34a; }
+.tx-amount.tx-out { color: #dc2626; }
+
+.tx-balance-after {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+@media (max-width: 900px) {
+  .two-col-grid { grid-template-columns: 1fr; gap: 12px; }
+}
+
+@media (max-width: 768px) {
+  .store-banner { padding: 16px; gap: 14px; }
+  .store-banner-logo { width: 56px; height: 56px; border-radius: 10px; }
+  .wallet-balance-box { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .wallet-amount { font-size: 22px; }
+  .tx-meta { display: none; }
+}
+
+@media (max-width: 480px) {
+  .wallet-tx-item { padding: 10px 12px; }
 }

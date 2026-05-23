@@ -18,6 +18,7 @@ export class DeliveryCompanyComponent implements OnInit {
   editMode = false;
   showCompanyModal = false;
   selectedFile!: File;
+wallet: any = null;
 
   // 👁️ password toggles
   showPassword = false;
@@ -43,6 +44,12 @@ export class DeliveryCompanyComponent implements OnInit {
 
   ngOnInit(): void { this.loadCompany(1); }
 
+loadWallet() {
+  this.service.getCompanyWallet(this.company.id).subscribe({
+    next: (res: any) => { this.wallet = res?.data; },
+    error: () => { this.wallet = null; }
+  });
+}
   loadCompany(id: number) {
     this.loading = true;
     this.service.getCompanyProfile(id).subscribe({
@@ -62,6 +69,8 @@ export class DeliveryCompanyComponent implements OnInit {
           buildingNumber: this.company?.address?.buildingNumber
         };
         this.loading = false;
+        this.loadWallet();
+
       },
       error: () => this.loading = false
     });

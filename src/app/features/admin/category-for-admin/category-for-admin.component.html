@@ -19,28 +19,45 @@
   <div class="adm-card" style="margin-bottom:28px">
     <div class="adm-card-head">
       <h3 class="adm-card-title">
-        <i class="bi bi-plus-circle"></i>
+        <i class="bi" [class.bi-pencil]="editMode" [class.bi-plus-circle]="!editMode"></i>
         {{ editMode ? 'Update Category' : 'Add New Category' }}
       </h3>
     </div>
     <div class="adm-card-body">
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+
         <div style="flex:1;min-width:200px" class="adm-form-group">
           <label>Category Name <span class="adm-req">*</span></label>
           <input class="adm-field" placeholder="Enter category name" [(ngModel)]="name">
         </div>
+
         <div style="flex:1;min-width:200px" class="adm-form-group" *ngIf="activeTab==='product'">
-          <label>Category Image</label>
-          <input type="file" class="adm-field" (change)="onFileChange($event)">
+          <label>Category Image {{ editMode ? '(leave empty to keep current)' : '*' }}</label>
+          <input type="file" accept="image/*" class="adm-field" (change)="onFileChange($event)">
         </div>
-        <button class="adm-btn-primary"
-          (click)="activeTab==='product' ? addProduct() : (editMode ? updateAsset() : addAsset())">
-          <i class="bi" [class.bi-check2]="editMode" [class.bi-plus-lg]="!editMode"></i>
-          {{ editMode ? 'Update' : 'Save Category' }}
-        </button>
-        <button class="adm-btn-secondary" *ngIf="editMode" (click)="editMode=false;name=''">
+
+        <ng-container *ngIf="activeTab==='product'">
+          <button class="adm-btn-primary" *ngIf="!editMode" (click)="addProduct()">
+            <i class="bi bi-plus-lg"></i> Save Category
+          </button>
+          <button class="adm-btn-primary" *ngIf="editMode" (click)="updateProduct()">
+            <i class="bi bi-check2"></i> Update
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="activeTab==='asset'">
+          <button class="adm-btn-primary" *ngIf="!editMode" (click)="addAsset()">
+            <i class="bi bi-plus-lg"></i> Save Category
+          </button>
+          <button class="adm-btn-primary" *ngIf="editMode" (click)="updateAsset()">
+            <i class="bi bi-check2"></i> Update
+          </button>
+        </ng-container>
+
+        <button class="adm-btn-secondary" *ngIf="editMode" (click)="reset()">
           Cancel
         </button>
+
       </div>
     </div>
   </div>
@@ -58,9 +75,14 @@
         </div>
         <div class="cat-body">
           <span class="cat-name">{{ c.name }}</span>
-          <button class="adm-action-btn act-delete" (click)="deleteProduct(c.id)" title="Delete">
-            <i class="bi bi-trash"></i>
-          </button>
+          <div style="display:flex;gap:6px">
+            <button class="adm-action-btn act-edit" (click)="editProduct(c)" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="adm-action-btn act-delete" (click)="deleteProduct(c.id)" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
         </div>
       </div>
 

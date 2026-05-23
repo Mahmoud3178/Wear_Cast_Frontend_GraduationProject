@@ -18,6 +18,7 @@ export class FactoryComponent implements OnInit {
   editMode = false;
   selectedFile!: File;
   showFactoryModal = false;
+wallet: any = null;
 
   // 👁️ password toggles
   showPassword = false;
@@ -41,7 +42,12 @@ export class FactoryComponent implements OnInit {
   ) {}
 
   ngOnInit(): void { this.loadFactory(1); }
-
+loadWallet() {
+  this.service.getFactoryWallet(this.factory.id).subscribe({
+    next: (res: any) => { this.wallet = res?.data; },
+    error: () => { this.wallet = null; }
+  });
+}
   loadFactory(id: number) {
     this.loading = true;
     this.service.getFactoryProfile(id).subscribe({
@@ -63,6 +69,8 @@ export class FactoryComponent implements OnInit {
           managerPhone: '', password: '', confirmPassword: ''
         };
         this.loading = false;
+        this.loadWallet();
+
       },
       error: () => this.loading = false
     });

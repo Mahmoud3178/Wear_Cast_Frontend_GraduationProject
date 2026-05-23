@@ -47,4 +47,10 @@ deleteFactory(id: number, reason: string) {
     body
   });
 }
+
+getFactoryWallet(id: number): Observable<any> {
+  return this.http.get(`${this.api}/factories/wallet`, {
+    params: { id }
+  });
+}
 }

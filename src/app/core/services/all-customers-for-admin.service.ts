@@ -78,4 +78,12 @@ getShipmentItems(shipmentId: number, pageNumber = 1, pageSize = 10) {
     `${this.baseUrl}/api/Orders/shipment/${shipmentId}/items`,
     { params }
   );
-}}
+}
+
+getCustomerWallet(id: number) {
+  return this.http.get(`${this.baseUrl}/api/customers/wallet`, {
+    params: { id }
+  });
+}
+
+}

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AllSellerForAdminService } from '../../../core/services/all-seller-for-admin.service';
 
@@ -10,10 +10,11 @@ import { AllSellerForAdminService } from '../../../core/services/all-seller-for-
   templateUrl: './store-details.component.html',
   styleUrl: './store-details.component.css'
 })
-export class StoreDetailsComponent {
+export class StoreDetailsComponent implements OnInit {
 
   storeId!: number;
   store: any;
+  wallet: any = null;
   isLoading = false;
 
   constructor(
@@ -28,17 +29,23 @@ export class StoreDetailsComponent {
 
   loadStore() {
     this.isLoading = true;
-
     this.sellerService.getSellerProfile(this.storeId).subscribe({
       next: (res: any) => {
-        // 👇 أهم سطر هنا
         this.store = res?.data || res;
         this.isLoading = false;
+        this.loadWallet();
       },
       error: (err) => {
         console.error(err);
         this.isLoading = false;
       }
+    });
+  }
+
+  loadWallet() {
+    this.sellerService.getSellerWallet(this.storeId).subscribe({
+      next: (res: any) => { this.wallet = res?.data; },
+      error: () => { this.wallet = null; }
     });
   }
 }

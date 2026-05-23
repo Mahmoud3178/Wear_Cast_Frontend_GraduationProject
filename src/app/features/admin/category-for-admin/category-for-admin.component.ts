@@ -1,8 +1,8 @@
-import { ToastService } from '../../../core/services/toast.service';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HandelCategoryesForAdminService } from '../../../core/services/handel-categoryes-for-admin.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-category-for-admin',
@@ -21,9 +21,12 @@ export class CategoryForAdminComponent implements OnInit {
   name = '';
   editId: number | null = null;
   editMode = false;
-selectedImage: File | null = null;
-  constructor(private service: HandelCategoryesForAdminService,    private toast: ToastService  // ← أضف السطر ده
-) {}
+  selectedImage: File | null = null;
+
+  constructor(
+    private service: HandelCategoryesForAdminService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit() {
     this.loadAll();
@@ -32,17 +35,25 @@ selectedImage: File | null = null;
   // ================= LOAD =================
 
   loadAll() {
-    this.service.getProductCategories().subscribe((res: any) => {
-      this.productCategories = res?.data ?? res;
+    this.service.getProductCategories().subscribe({
+      next: (res: any) => {
+        this.productCategories = res?.data ?? res ?? [];
+      },
+      error: (e: Error) => this.toast.error(e.message)
     });
 
-    this.service.getAssetCategories().subscribe((res: any) => {
-      this.assetCategories = res?.data ?? res;
+    this.service.getAssetCategories().subscribe({
+      next: (res: any) => {
+        this.assetCategories = res?.data ?? res ?? [];
+      },
+      error: (e: Error) => this.toast.error(e.message)
     });
   }
-onFileChange(event: any) {
-  this.selectedImage = event.target.files[0];
-}
+
+  onFileChange(event: any) {
+    this.selectedImage = event.target.files[0] ?? null;
+  }
+
   // ================= SWITCH =================
 
   setTab(tab: 'product' | 'asset') {
@@ -52,37 +63,81 @@ onFileChange(event: any) {
 
   // ================= PRODUCT =================
 
-addProduct() {
+  addProduct() {
+    if (!this.name.trim()) {
+      this.toast.warning('Category name is required');
+      return;
+    }
+    if (!this.selectedImage) {
+      this.toast.warning('Category image is required');
+      return;
+    }
+    const fd = new FormData();
+    fd.append('Name', this.name.trim());
+    fd.append('Image', this.selectedImage);
 
-  if (!this.name || !this.selectedImage) {
-    this.toast.warning('Name and Image are required');
-    return;
+    this.service.addProductCategory(fd).subscribe({
+      next: () => {
+        this.toast.success('Category added successfully');
+        this.loadAll();
+        this.reset();
+      },
+      error: (e: Error) => this.toast.error(e.message)
+    });
   }
 
-  const formData = new FormData();
+  editProduct(cat: any) {
+    this.editMode = true;
+    this.editId = cat.id;
+    this.name = cat.name;
+    this.selectedImage = null;
+  }
 
-  formData.append('Name', this.name);
-  formData.append('Image', this.selectedImage);
-
-  this.service.addProductCategory(formData)
-    .subscribe(() => {
-      this.loadAll();
-      this.reset();
+  updateProduct() {
+    if (!this.name.trim()) {
+      this.toast.warning('Category name is required');
+      return;
+    }
+    const fd = new FormData();
+    fd.append('Name', this.name.trim());
+    if (this.selectedImage) {
+      fd.append('Image', this.selectedImage);
+    }
+    this.service.updateProductCategory(this.editId!, fd).subscribe({
+      next: () => {
+        this.toast.success('Category updated successfully');
+        this.loadAll();
+        this.reset();
+      },
+      error: (e: Error) => this.toast.error(e.message)
     });
-}
+  }
+
   deleteProduct(id: number) {
-    this.service.deleteProductCategory(id)
-      .subscribe(() => this.loadAll());
+    this.service.deleteProductCategory(id).subscribe({
+      next: () => {
+        this.toast.success('Category deleted');
+        this.loadAll();
+      },
+      error: (e: Error) => this.toast.error(e.message)
+    });
   }
 
   // ================= ASSET =================
 
   addAsset() {
-    this.service.addAssetCategory({ name: this.name })
-      .subscribe(() => {
+    if (!this.name.trim()) {
+      this.toast.warning('Category name is required');
+      return;
+    }
+    this.service.addAssetCategory({ name: this.name.trim() }).subscribe({
+      next: () => {
+        this.toast.success('Category added successfully');
         this.loadAll();
         this.reset();
-      });
+      },
+      error: (e: Error) => this.toast.error(e.message)
+    });
   }
 
   editAsset(cat: any) {
@@ -92,24 +147,37 @@ addProduct() {
   }
 
   updateAsset() {
+    if (!this.name.trim()) {
+      this.toast.warning('Category name is required');
+      return;
+    }
     this.service.updateAssetCategory(this.editId!, {
       id: this.editId,
-      name: this.name
-    }).subscribe(() => {
-      this.loadAll();
-      this.reset();
+      name: this.name.trim()
+    }).subscribe({
+      next: () => {
+        this.toast.success('Category updated successfully');
+        this.loadAll();
+        this.reset();
+      },
+      error: (e: Error) => this.toast.error(e.message)
     });
   }
 
   deleteAsset(id: number) {
-    this.service.deleteAssetCategory(id)
-      .subscribe(() => this.loadAll());
+    this.service.deleteAssetCategory(id).subscribe({
+      next: () => {
+        this.toast.success('Category deleted');
+        this.loadAll();
+      },
+      error: (e: Error) => this.toast.error(e.message)
+    });
   }
 
-reset() {
-  this.name = '';
-  this.editId = null;
-  this.editMode = false;
-  this.selectedImage = null;
-}
+  reset() {
+    this.name = '';
+    this.editId = null;
+    this.editMode = false;
+    this.selectedImage = null;
+  }
 }

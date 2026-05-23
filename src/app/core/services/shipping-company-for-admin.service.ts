@@ -47,4 +47,9 @@ deleteCompany(id: number, reason: string) {
     body
   });
 }
+getCompanyWallet(id: number) {
+  return this.http.get(`${this.baseUrl}/api/shipping-companies/wallet`, {
+    params: { id }
+  });
+}
 }

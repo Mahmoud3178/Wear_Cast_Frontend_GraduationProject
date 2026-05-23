@@ -12,12 +12,15 @@ export class HandelShipmentsForAdminService {
   constructor(private http: HttpClient) {}
 
   // 🔹 GET ALL SHIPMENTS
-  getShipments(pageIndex = 1, pageSize = 10): Observable<any> {
-    const params = new HttpParams()
-      .set('pageIndex', pageIndex)
-      .set('pageSize', pageSize);
-    return this.http.get(`${this.api}/api/Shipments`, { params });
-  }
+getShipments(params: any = {}): Observable<any> {
+  let httpParams = new HttpParams();
+  Object.keys(params).forEach(key => {
+    if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+      httpParams = httpParams.set(key, params[key]);
+    }
+  });
+  return this.http.get(`${this.api}/api/Shipments`, { params: httpParams });
+}
 
   // 🔹 DETAILS — يرجع الشيبمنت مع orders[]
   getShipmentDetails(id: number): Observable<any> {

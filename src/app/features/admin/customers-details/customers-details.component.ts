@@ -21,6 +21,9 @@ export class CustomersDetailsComponent implements OnInit {
   deleteReason: string = '';
   selectedFile: File | null = null;
 
+
+  wallet: any = null;
+
   constructor(
     private route: ActivatedRoute,
     private service: AllCustomersForAdminService,
@@ -32,6 +35,13 @@ export class CustomersDetailsComponent implements OnInit {
     this.customerId = +this.route.snapshot.paramMap.get('id')!;
     this.loadCustomer();
   }
+
+  loadWallet() {
+  this.service.getCustomerWallet(this.customerId).subscribe({
+    next: (res: any) => { this.wallet = res?.data; },
+    error: () => { this.wallet = null; }
+  });
+}
 
   loadCustomer() {
     this.service.getCustomerById(this.customerId).subscribe((res: any) => {
@@ -49,6 +59,8 @@ export class CustomersDetailsComponent implements OnInit {
         buildingNumber: c.address?.buildingNumber || ''
       };
       this.loadShipments();
+      this.loadWallet(); // أضف هنا
+
     });
   }
 

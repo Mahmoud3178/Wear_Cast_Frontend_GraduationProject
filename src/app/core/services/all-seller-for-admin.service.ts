@@ -31,4 +31,10 @@ export class AllSellerForAdminService {
       params: { ProvidedSellerId: id }
     });
   }
+
+  getSellerWallet(id: number) {
+  return this.http.get(`${environment.apiUrl}/api/sellers/wallet`, {
+    params: { id }
+  });
+}
 }
