@@ -440,9 +440,9 @@ export class DriversComponent implements OnInit {
       next: ({ profile, shipmentsData }) => {
         this.selectedDriverDetails = profile;
 
-        const shipmentsList = shipmentsData || [];
+        const shipmentsList = shipmentsData?.items || (shipmentsData as any) || [];
 
-        if (shipmentsList.length > 0) {
+        if (Array.isArray(shipmentsList) && shipmentsList.length > 0) {
           const orderRequests = shipmentsList.map((s: any) =>
             this.shippingService.getOrdersByShipmentId(s.id).pipe(
               map(ordersData => ({
@@ -453,12 +453,12 @@ export class DriversComponent implements OnInit {
           );
           forkJoin(orderRequests).subscribe({
             next: (detailedShipments) => {
-              this.driverShipments = detailedShipments;
+              this.driverShipments = detailedShipments as any[];
               this.isLoadingDetails = false;
             },
             error: (err) => {
               console.error('Failed to load shipment orders', err);
-              this.driverShipments = shipmentsList.map(s => ({ ...s, orders: [] }));
+              this.driverShipments = shipmentsList.map((s: any) => ({ ...s, orders: [] }));
               this.isLoadingDetails = false;
             }
           });

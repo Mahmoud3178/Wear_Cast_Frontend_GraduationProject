@@ -1,9 +1,43 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { DriverService } from '../../../../core/services/driver.service';
-import { DriverShipmentDetails, UpdateShipmentStatusRequest, ShipmentStatus } from '../../../../core/models/shipment.model';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
+
+// ─── Interfaces matching the ACTUAL backend responses ───────────────────────
+
+export interface AddressDto {
+  state: string;
+  city: string;
+  street: string;
+  buildingNumber?: string;
+}
+
+/** GET /api/drivers/shipments/{id} */
+export interface DriverShipmentDetailDto {
+  id: number;
+  deliveryAddress: AddressDto;
+  shipmentStatus: string;
+  orderedAt: string;
+  readyForPickupAt: string | null;
+  tripStartedAt: string | null;
+  outForDeliveryAt: string | null;
+  deliveredAt: string | null;
+  customerName: string;
+  customerPhoneNumber: string;
+}
+
+/** GET /api/Shipments/{id}/Orders  (array item) */
+export interface ShipmentOrderDto {
+  orderId: number;
+  orderType: string;
+  vendorName: string;
+  vendorAddress: AddressDto;
+  vendorPhoneNumber: string;
+  orderStatus: string;
+  numberOfItems: number;
+}
 
 @Component({
   selector: 'app-shipment-details',
@@ -14,438 +48,270 @@ import { DriverShipmentDetails, UpdateShipmentStatusRequest, ShipmentStatus } fr
 })
 export class ShipmentDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  private driverService = inject(DriverService);
+  private router = inject(Router);
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/api`;
 
   shipmentId!: number;
-  shipment: DriverShipmentDetails | null = null;
-  isLoading = false;
+  shipment: DriverShipmentDetailDto | null = null;
+  orders: ShipmentOrderDto[] = [];
+
+  isLoadingShipment = true;
+  isLoadingOrders = true;
   errorMessage = '';
   successMessage = '';
-  showCodePrompt = false;
-  enteredCode = '';
-  pendingStatus: ShipmentStatus | null = null;
 
-  statusOptions = [
-    { value: ShipmentStatus.PickingUp, label: 'Picking Up' },
-    { value: ShipmentStatus.OutForDelivery, label: 'Out For Delivery' },
-    { value: ShipmentStatus.Delivered, label: 'Delivered' }
-  ];
+  // Delivery code modal
+  showCodeModal = false;
+  enteredCode = '';
+
+  // Unassign confirmation modal
+  showUnassignModal = false;
+  isUnassigning = false;
+
+  get isLoading(): boolean {
+    return this.isLoadingShipment || this.isLoadingOrders;
+  }
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.shipmentId = +idParam;
       this.loadShipmentDetails();
+      this.loadOrders();
     }
   }
 
-  shipmentItems: any[] = [];
+  // ─── Load shipment ───────────────────────────────────────────────────────
 
-  loadShipmentDetails() {
-    this.isLoading = true;
-    this.driverService.getDriverShipmentById(this.shipmentId).subscribe({
-      next: (data: any) => {
-        if (data) {
-          // Defensively map properties in case of casing mismatches from backend
-          this.shipment = {
-            id: data.id ?? data.Id ?? this.shipmentId,
-            deliveryAddress: data.deliveryAddress ?? data.DeliveryAddress ?? { state: '', city: '', street: '' },
-            shipmentStatus: data.shipmentStatus ?? data.ShipmentStatus,
-            orderedAt: data.orderedAt ?? data.OrderedAt ?? data.orderTime ?? data.OrderTime ?? new Date().toISOString(),
-            readyForPickupAt: data.readyForPickupAt ?? data.ReadyForPickupAt,
-            tripStartedAt: data.tripStartedAt ?? data.TripStartedAt,
-            outForDeliveryAt: data.outForDeliveryAt ?? data.OutForDeliveryAt,
-            deliveredAt: data.deliveredAt ?? data.DeliveredAt,
-            customerName: data.customerName ?? data.CustomerName ?? '',
-            customerPhoneNumber: data.customerPhoneNumber ?? data.CustomerPhoneNumber ?? '',
-            orders: this.shipment?.orders ?? []
-          };
-        } else {
-          this.shipment = null;
+  loadShipmentDetails(): void {
+    this.isLoadingShipment = true;
+    this.http.get<DriverShipmentDetailDto>(`${this.apiUrl}/drivers/shipments/${this.shipmentId}`)
+      .subscribe({
+        next: (data) => {
+          this.shipment = data;
+          this.isLoadingShipment = false;
+        },
+        error: (err) => {
+          console.error('Failed to load shipment details', err);
+          this.errorMessage = 'Failed to load shipment details. Please try again.';
+          this.isLoadingShipment = false;
         }
-        this.loadShipmentItems();
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Failed to load shipment details', err);
-        this.errorMessage = 'Failed to load shipment details.';
-        this.isLoading = false;
-        // Fallback to mock data
-        this.loadMockData();
-      }
-    });
+      });
   }
 
-  loadShipmentItems() {
-    // We will fetch both items and the full orders (to get real statuses)
-    this.driverService.getShipmentItems(this.shipmentId).subscribe({
-      next: (res) => {
-        const items: any[] = [];
-        if (res) {
-          // Parse fixed items
-          const fixedPaged = res.fixedItems ?? res.FixedItems;
-          const fixedList = fixedPaged?.items ?? fixedPaged?.Items ?? [];
-          fixedList.forEach((i: any) => {
-            const sizesList = i.sizes ?? i.Sizes ?? [];
-            const orderId = sizesList && sizesList.length > 0 ? sizesList[0].orderId ?? sizesList[0].OrderId : null;
-            items.push({
-              productName: i.productName || i.ProductName || 'Fixed Product',
-              quantity: i.totalQuantity || i.TotalQuantity || 1,
-              unitPrice: i.unitPrice || i.UnitPrice || 0,
-              orderId: orderId,
-              type: 'Fixed',
-              colorName: i.colorName || i.ColorName || 'Default',
-              imageUrl: i.imageUrl || i.ImageUrl || null,
-              sizes: sizesList
-            });
-          });
+  // ─── Load orders ─────────────────────────────────────────────────────────
 
-          // Parse designed items
-          const designedPaged = res.designedItems ?? res.DesignedItems;
-          const designedList = designedPaged?.items ?? designedPaged?.Items ?? [];
-          designedList.forEach((d: any) => {
-            const sizesList = d.sizes ?? d.Sizes ?? [];
-            const orderId = sizesList && sizesList.length > 0 ? sizesList[0].orderId ?? sizesList[0].OrderId : null;
-            items.push({
-              productName: d.productName || d.ProductName || 'Designed Product',
-              quantity: d.totalQuantity || d.TotalQuantity || 1,
-              unitPrice: d.unitPrice || d.UnitPrice || 0,
-              orderId: orderId,
-              type: 'Designed',
-              colorName: d.colorName || d.ColorName || 'Default',
-              imageUrl: d.frontImageUrl || d.FrontImageUrl || null,
-              sizes: sizesList
-            });
-          });
+  loadOrders(): void {
+    this.isLoadingOrders = true;
+    this.http.get<ShipmentOrderDto[]>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
+      .subscribe({
+        next: (data) => {
+          this.orders = data ?? [];
+          this.isLoadingOrders = false;
+        },
+        error: (err) => {
+          console.error('Failed to load orders', err);
+          this.orders = [];
+          this.isLoadingOrders = false;
         }
-        this.shipmentItems = items;
-
-        // Fetch real order statuses
-        this.driverService.getShipmentOrders(this.shipmentId).subscribe({
-          next: (orderRes) => {
-            if (this.shipment) {
-              const realOrders = orderRes?.orders ?? orderRes?.Orders ?? [];
-              const uniqueOrderIds = Array.from(new Set(items.map(x => x.orderId).filter(id => id !== null && id !== undefined)));
-              
-              this.shipment.orders = uniqueOrderIds.map(orderId => {
-                const localKey = `shipment_${this.shipmentId}_order_${orderId}_picked`;
-                const wasPickedLocal = localStorage.getItem(localKey) === 'true';
-                
-                // Find the real order to get its true status
-                const realOrder = realOrders.find((ro: any) => (ro.id || ro.Id) === orderId);
-                let currentStatus = realOrder ? (realOrder.status ?? realOrder.Status) : 'Pending';
-
-                // Map integer enums to strings if necessary
-                if (currentStatus === 0) currentStatus = 'Pending';
-                if (currentStatus === 1) currentStatus = 'Paid';
-                if (currentStatus === 5) currentStatus = 'Ready';
-                if (currentStatus === 6) currentStatus = 'PickedUp';
-
-                // If picked up locally, override it
-                if (wasPickedLocal) {
-                  currentStatus = 'PickedUp';
-                }
-
-                return {
-                  orderId: orderId as number,
-                  storeName: items.find(x => x.orderId === orderId)?.type === 'Fixed' ? 'WearCast Store' : 'Design Factory',
-                  itemsCount: items.filter(x => x.orderId === orderId).reduce((sum, current) => sum + current.quantity, 0),
-                  status: currentStatus
-                };
-              });
-            }
-          },
-          error: (err) => {
-             console.error('Failed to load real orders', err);
-             // Fallback
-             if (this.shipment) {
-               const uniqueOrderIds = Array.from(new Set(items.map(x => x.orderId).filter(id => id !== null && id !== undefined)));
-               this.shipment.orders = uniqueOrderIds.map(orderId => ({
-                  orderId: orderId as number,
-                  storeName: items.find(x => x.orderId === orderId)?.type === 'Fixed' ? 'WearCast Store' : 'Design Factory',
-                  itemsCount: items.filter(x => x.orderId === orderId).reduce((sum, current) => sum + current.quantity, 0),
-                  status: 'Pending'
-               }));
-             }
-          }
-        });
-      },
-      error: (err) => {
-        console.error('Failed to load shipment items', err);
-      }
-    });
+      });
   }
 
-  loadMockData() {
-    this.shipment = {
-      id: this.shipmentId,
-      deliveryAddress: {
-        state: 'Gaza State',
-        city: 'Gaza City',
-        street: 'Al-Wehda Street',
-        postalCode: '99000'
-      },
-      shipmentStatus: ShipmentStatus.OutForDelivery,
-      orderedAt: new Date().toISOString(),
-      customerName: 'Ahmed Ali',
-      customerPhoneNumber: '+970599112233',
-      orders: [
-        { orderId: 201, storeName: 'WearCast Palestine Store', itemsCount: 3, status: 'Ready' },
-        { orderId: 202, storeName: 'Google Merch Gaza Store', itemsCount: 1, status: 'Ready' }
-      ]
+  // ─── Status helpers ──────────────────────────────────────────────────────
+
+  getStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      'Pending': 'Pending',
+      'Unassigned': 'Unassigned',
+      'Assigned': 'Assigned',
+      'PickingUp': 'Picking Up',
+      'OutForDelivery': 'Out For Delivery',
+      'Delivered': 'Delivered'
     };
-
-    this.shipmentItems = [
-      {
-        productName: 'Premium Casual T-Shirt',
-        quantity: 2,
-        unitPrice: 15.00,
-        orderId: 201,
-        type: 'Fixed',
-        colorName: 'Indigo Blue',
-        imageUrl: null,
-        sizes: [{ sizeName: 'M', quantity: 2 }]
-      },
-      {
-        productName: 'Signature Denim Jacket',
-        quantity: 1,
-        unitPrice: 45.00,
-        orderId: 201,
-        type: 'Fixed',
-        colorName: 'Charcoal Black',
-        imageUrl: null,
-        sizes: [{ sizeName: 'L', quantity: 1 }]
-      },
-      {
-        productName: 'Custom Designed Hoodie',
-        quantity: 1,
-        unitPrice: 35.00,
-        orderId: 202,
-        type: 'Designed',
-        colorName: 'Teal Green',
-        imageUrl: null,
-        sizes: [{ sizeName: 'XL', quantity: 1 }]
-      }
-    ];
+    return map[status] ?? status;
   }
 
-  getNextStatus(): { value: ShipmentStatus; label: string; btnClass: string } | null {
-    if (!this.shipment) return null;
-    const statusStr = typeof this.shipment.shipmentStatus === 'number'
-      ? this.shipment.shipmentStatus
-      : ShipmentStatus[this.shipment.shipmentStatus as keyof typeof ShipmentStatus];
-
-    const currentStatus = Number(statusStr);
-    switch (currentStatus) {
-      case ShipmentStatus.PickingUp:
-        return { value: ShipmentStatus.OutForDelivery, label: 'Start Delivery Trip', btnClass: 'btn-primary bg-primary text-white' };
-      case ShipmentStatus.OutForDelivery:
-        return { value: ShipmentStatus.Delivered, label: 'Complete Delivery', btnClass: 'btn-success bg-success text-white' };
-      default:
-        return null;
-    }
-  }
-
-  updateStatus(newStatus: ShipmentStatus) {
-    if (!this.shipment) return;
-
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    if (newStatus === ShipmentStatus.Delivered) {
-      this.showCodePrompt = true;
-      this.pendingStatus = newStatus;
-      this.enteredCode = '';
-      return;
-    }
-
-    this.executeStatusUpdate(newStatus);
-  }
-
-  cancelDelivery() {
-    this.showCodePrompt = false;
-    this.enteredCode = '';
-    this.pendingStatus = null;
-  }
-
-  confirmDelivery() {
-    if (!this.enteredCode.trim()) {
-      this.errorMessage = 'Delivery code is required to complete delivery.';
-      this.showCodePrompt = false;
-      return;
-    }
-    this.showCodePrompt = false;
-    this.executeStatusUpdate(this.pendingStatus!, this.enteredCode.trim());
-  }
-
-  executeStatusUpdate(newStatus: ShipmentStatus, deliveryCode?: string) {
-    this.isLoading = true;
-    const request: UpdateShipmentStatusRequest = {
-      shipmentId: this.shipmentId,
-      newStatus: newStatus,
-      deliveryCode: deliveryCode
+  getStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      'Delivered': 'status-delivered',
+      'OutForDelivery': 'status-out',
+      'PickingUp': 'status-picking',
+      'Assigned': 'status-assigned',
+      'Unassigned': 'status-unassigned',
+      'Pending': 'status-pending'
     };
-
-    this.driverService.updateShipmentStatus(this.shipmentId, request).subscribe({
-      next: () => {
-        this.shipment!.shipmentStatus = newStatus;
-        this.isLoading = false;
-        this.successMessage = 'Status updated successfully!';
-        setTimeout(() => this.successMessage = '', 3000);
-      },
-      error: (err) => {
-        console.error('Failed to update status', err);
-        this.isLoading = false;
-
-        let details = '';
-        if (err.error) {
-          if (typeof err.error === 'string') {
-            details = err.error;
-          } else {
-            // Check for standard WearCast Api Result pattern
-            const apiError = err.error.error || err.error;
-            if (apiError && apiError.message) {
-              details = `${apiError.message} (${apiError.code || 'Error'})`;
-            } else if (err.error.message) {
-              details = err.error.message;
-            } else if (err.error.errors) {
-              const errsObj = err.error.errors;
-              details = Object.keys(errsObj)
-                .map(key => `${key}: ${errsObj[key].join(', ')}`)
-                .join('; ');
-            } else if (err.error.title) {
-              details = err.error.title;
-            } else {
-              details = JSON.stringify(err.error);
-            }
-          }
-        } else if (err.message) {
-          details = err.message;
-        }
-
-        const errorData = err.error?.error || err.error;
-        if (errorData && errorData.code) {
-          switch (errorData.code) {
-            case 'Shipment.NotReady':
-              this.errorMessage = 'Cannot start trip: Some orders are not marked as "Ready" by the seller yet. Please contact the store.';
-              break;
-            case 'Shipment.NotPickedUp':
-              this.errorMessage = 'Cannot go out for delivery: You must pick up all items from the store first.';
-              break;
-            case 'Shipment.WrongDeliveryCode':
-              this.errorMessage = 'Incorrect Delivery Code. Please ask the customer for the correct code.';
-              break;
-            case 'Shipment.InvalidTransition':
-              this.errorMessage = 'Invalid status transition. You cannot move to this status now.';
-              break;
-            default:
-              this.errorMessage = `Failed to update status. ${details}`;
-          }
-        } else {
-          this.errorMessage = `Failed to update status. Details: ${details || 'Please try again.'}`;
-        }
-      }
-    });
+    return map[status] ?? 'status-pending';
   }
 
-  updateOrderPickedUp(orderId: number) {
-    this.errorMessage = '';
-    this.successMessage = '';
-    this.isLoading = true;
-
-    this.driverService.updateOrderStatus(orderId, 6).subscribe({
-      next: () => {
-        this.isLoading = false;
-        
-        // Find order in our shipment list and update status
-        const order = this.shipment?.orders.find(o => o.orderId === orderId);
-        if (order) {
-          order.status = 'PickedUp';
-          localStorage.setItem(`shipment_${this.shipmentId}_order_${orderId}_picked`, 'true');
-        }
-
-        // If currently Assigned, transition local state to PickingUp as the backend does
-        if (this.shipment) {
-          const currentStatus = this.shipment.shipmentStatus.toString();
-          if (currentStatus === '3' || currentStatus === 'Assigned') {
-            this.shipment.shipmentStatus = ShipmentStatus.PickingUp;
-          }
-        }
-        
-        this.successMessage = `Order #${orderId} marked as Picked Up!`;
-        setTimeout(() => this.successMessage = '', 3000);
-
-        // Reload details to sync full state (like timestamps) from the backend
-        this.loadShipmentDetails();
-      },
-      error: (err) => {
-        console.error('Failed to update order status', err);
-        this.isLoading = false;
-
-        let details = '';
-        if (err.error) {
-          if (typeof err.error === 'string') {
-            details = err.error;
-          } else {
-            // Check for standard WearCast Api Result pattern
-            const apiError = err.error.error || err.error;
-            if (apiError && apiError.message) {
-              details = `${apiError.message} (${apiError.code || 'Error'})`;
-            } else if (err.error.message) {
-              details = err.error.message;
-            } else if (err.error.errors) {
-              const errsObj = err.error.errors;
-              details = Object.keys(errsObj)
-                .map(key => `${key}: ${errsObj[key].join(', ')}`)
-                .join('; ');
-            } else if (err.error.title) {
-              details = err.error.title;
-            } else {
-              details = JSON.stringify(err.error);
-            }
-          }
-        } else if (err.message) {
-          details = err.message;
-        }
-
-        this.errorMessage = `Failed to mark Order #${orderId} as Picked Up. Details: ${details || 'Unknown error'}`;
-      }
-    });
+  getStatusIcon(status: string): string {
+    const map: Record<string, string> = {
+      'Delivered': '✓',
+      'OutForDelivery': '🚚',
+      'PickingUp': '📦',
+      'Assigned': '👤',
+      'Unassigned': '⏳',
+      'Pending': '⏳'
+    };
+    return map[status] ?? '•';
   }
 
-  isPickingUpStatus(): boolean {
-    if (!this.shipment) return false;
-    const s = this.shipment.shipmentStatus.toString();
-    return s === '3' || s === 'Assigned' || s === '4' || s === 'PickingUp';
+  getOrderStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      'Pending': 'order-status-pending',
+      'Paid': 'order-status-paid',
+      'Ready': 'order-status-ready',
+      'PickedUp': 'order-status-pickedup',
+      'Delivered': 'order-status-delivered',
+      'Cancelled': 'order-status-cancelled'
+    };
+    return map[status] ?? 'order-status-pending';
+  }
+
+  isAssigned(): boolean {
+    return this.shipment?.shipmentStatus === 'Assigned';
   }
 
   isDelivered(): boolean {
-    if (!this.shipment) return false;
-    const s = this.shipment.shipmentStatus.toString();
-    return s === '6' || s === 'Delivered';
+    return this.shipment?.shipmentStatus === 'Delivered';
   }
 
-  isAssignedStatus(): boolean {
-    if (!this.shipment) return false;
-    const s = this.shipment.shipmentStatus.toString();
-    return s === '3' || s === 'Assigned';
+  getTimelineSteps() {
+    return [
+      { label: 'Order Placed',      date: this.shipment?.orderedAt,          icon: '📋' },
+      { label: 'Ready for Pickup',  date: this.shipment?.readyForPickupAt,   icon: '📦' },
+      { label: 'Trip Started',      date: this.shipment?.tripStartedAt,      icon: '🚀' },
+      { label: 'Out for Delivery',  date: this.shipment?.outForDeliveryAt,   icon: '🚚' },
+      { label: 'Delivered',         date: this.shipment?.deliveredAt,        icon: '✅' },
+    ];
   }
 
-  getStatusClass(status: any): string {
-    const s = status.toString();
-    if (s === 'Delivered' || s === '6' || s === ShipmentStatus.Delivered.toString()) return 'bg-success-soft text-success';
-    if (s === 'OutForDelivery' || s === '5' || s === ShipmentStatus.OutForDelivery.toString()) return 'bg-primary-soft text-primary';
-    if (s === 'PickingUp' || s === '4' || s === ShipmentStatus.PickingUp.toString()) return 'bg-warning-soft text-warning';
-    if (s === 'Assigned' || s === '3' || s === ShipmentStatus.Assigned.toString()) return 'bg-info-soft text-info';
-    return 'bg-slate-100 text-slate-500';
+  // ─── Next action ─────────────────────────────────────────────────────────
+
+  getNextAction(): { label: string; class: string; status: string } | null {
+    const s = this.shipment?.shipmentStatus;
+    if (s === 'PickingUp') {
+      return { label: '🚚 Start Delivery Trip', class: 'btn-action-primary', status: 'OutForDelivery' };
+    }
+    if (s === 'OutForDelivery') {
+      return { label: '✅ Complete Delivery', class: 'btn-action-success', status: 'Delivered' };
+    }
+    return null;
   }
 
-  getStatusName(status: any): string {
-    const s = status.toString();
-    if (s === 'Delivered' || s === '6' || s === ShipmentStatus.Delivered.toString()) return 'Delivered';
-    if (s === 'OutForDelivery' || s === '5' || s === ShipmentStatus.OutForDelivery.toString()) return 'Out For Delivery';
-    if (s === 'PickingUp' || s === '4' || s === ShipmentStatus.PickingUp.toString()) return 'Picking Up';
-    if (s === 'Assigned' || s === '3' || s === ShipmentStatus.Assigned.toString()) return 'Assigned';
-    return s;
+  // ─── Status update ───────────────────────────────────────────────────────
+
+  onActionClick(): void {
+    const next = this.getNextAction();
+    if (!next) return;
+    if (next.status === 'Delivered') {
+      this.enteredCode = '';
+      this.showCodeModal = true;
+    } else {
+      this.executeStatusUpdate(next.status);
+    }
   }
+
+  cancelModal(): void {
+    this.showCodeModal = false;
+    this.enteredCode = '';
+  }
+
+  confirmDelivery(): void {
+    if (!this.enteredCode.trim()) {
+      this.showError('Please enter the delivery code provided by the customer.');
+      return;
+    }
+    this.showCodeModal = false;
+    this.executeStatusUpdate('Delivered', this.enteredCode.trim());
+  }
+
+  executeStatusUpdate(status: string, deliveryCode?: string): void {
+    if (!this.shipment) return;
+    this.isLoadingShipment = true;
+    this.errorMessage = '';
+
+    const statusMap: Record<string, number> = {
+      'Pending': 1, 'Unassigned': 2, 'Assigned': 3,
+      'PickingUp': 4, 'OutForDelivery': 5, 'Delivered': 6
+    };
+
+    const body: any = { newStatus: statusMap[status] };
+    if (deliveryCode) body.deliveryCode = deliveryCode;
+
+    this.http.put<void>(`${this.apiUrl}/Shipments/${this.shipmentId}/status`, body)
+      .subscribe({
+        next: () => {
+          this.showSuccess('Shipment status updated successfully!');
+          this.loadShipmentDetails();
+          this.loadOrders();
+        },
+        error: (err) => {
+          this.isLoadingShipment = false;
+          this.handleApiError(err, 'Failed to update shipment status.');
+        }
+      });
+  }
+
+  // ─── Unassign ────────────────────────────────────────────────────────────
+
+  openUnassignModal(): void { this.showUnassignModal = true; }
+  cancelUnassign(): void    { this.showUnassignModal = false; }
+
+  confirmUnassign(): void {
+    this.isUnassigning = true;
+    this.errorMessage = '';
+
+    this.http.put<void>(`${this.apiUrl}/Shipments/${this.shipmentId}/unassign`, {})
+      .subscribe({
+        next: () => {
+          this.isUnassigning = false;
+          this.showUnassignModal = false;
+          this.showSuccess('Shipment unassigned. Redirecting…');
+          setTimeout(() => this.router.navigate(['/driver/shipments']), 1500);
+        },
+        error: (err) => {
+          this.isUnassigning = false;
+          this.showUnassignModal = false;
+          this.handleApiError(err, 'Failed to unassign shipment.');
+        }
+      });
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────
+
+  showSuccess(msg: string): void {
+    this.successMessage = msg;
+    setTimeout(() => this.successMessage = '', 4000);
+  }
+
+  showError(msg: string): void {
+    this.errorMessage = msg;
+    setTimeout(() => this.errorMessage = '', 6000);
+  }
+
+  handleApiError(err: any, fallback: string): void {
+    const apiError = err?.error?.error || err?.error;
+    if (apiError?.code) {
+      const codeMessages: Record<string, string> = {
+        'Shipment.NotReady':           '⚠️ Cannot start trip: Some orders are not yet marked as Ready by the vendor.',
+        'Shipment.NotPickedUp':        '⚠️ Cannot go out for delivery: All orders must be picked up first.',
+        'Shipment.WrongDeliveryCode':  '❌ Incorrect delivery code. Please ask the customer for the correct code.',
+        'Shipment.InvalidTransition':  '⚠️ This status change is not allowed at this stage.'
+      };
+      this.errorMessage = codeMessages[apiError.code] ?? `${fallback} (${apiError.message})`;
+    } else if (apiError?.message) {
+      this.errorMessage = `${fallback} ${apiError.message}`;
+    } else if (typeof err?.error === 'string') {
+      this.errorMessage = `${fallback} ${err.error}`;
+    } else {
+      this.errorMessage = fallback;
+    }
+  }
+
+  getTotalItems(): number {
+    return this.orders.reduce((sum, o) => sum + (o.numberOfItems ?? 0), 0);
+  }
+
+  trackByOrderId(_: number, o: ShipmentOrderDto): number { return o.orderId; }
 }

@@ -1,304 +1,322 @@
-<div class="shipments-container p-4">
-  <div class="page-header mb-4">
-    <div class="header-content">
-      <h1 class="page-title mb-1">Shipment Management</h1>
-      <p class="text-muted-custom">Track and manage all orders and logistics</p>
-    </div>
-    <div class="d-flex gap-2">
+<div class="sm-page">
+
+  <!-- ── TOASTS ─────────────────────────────────────────────── -->
+  <div *ngIf="successMessage" class="toast toast-success">
+    <span class="toast-icon">✓</span><span>{{ successMessage }}</span>
+  </div>
+  <div *ngIf="errorMessage" class="toast toast-error">
+    <span class="toast-icon">!</span><span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- ── ASSIGN MODAL ───────────────────────────────────────── -->
+  <div *ngIf="showAssignModal" class="modal-backdrop" (click)="closeAssignModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-card-header">
+        <div class="modal-icon-wrap assign-icon">👤</div>
+        <div>
+          <h2 class="modal-title">Assign Driver</h2>
+          <p class="modal-sub">Shipment <strong>#{{ selectedShipment?.id }}</strong></p>
+        </div>
+        <button class="modal-close" (click)="closeAssignModal()">✕</button>
+      </div>
+
+      <div class="modal-card-body">
+        <div *ngIf="isLoadingDrivers" class="drivers-loading">
+          <div class="mini-spinner"></div>
+          <span>Loading available drivers…</span>
+        </div>
+
+        <div *ngIf="!isLoadingDrivers && availableDrivers.length === 0" class="drivers-empty">
+          <span>😕</span>
+          <p>No available drivers at the moment.</p>
+        </div>
+
+        <div *ngIf="!isLoadingDrivers && availableDrivers.length > 0" class="drivers-list">
+          <div
+            *ngFor="let driver of availableDrivers; trackBy: trackById"
+            class="driver-item"
+            [class.driver-selected]="selectedDriverId === driver.id"
+            (click)="selectedDriverId = driver.id"
+          >
+            <div class="driver-avatar">{{ getDriverLabel(driver).charAt(0).toUpperCase() }}</div>
+            <div class="driver-info">
+              <span class="driver-name">{{ getDriverLabel(driver) }}</span>
+              <span class="driver-city" *ngIf="driver.driverCity">📍 {{ driver.driverCity }}</span>
+            </div>
+            <div class="driver-check" *ngIf="selectedDriverId === driver.id">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-card-footer">
+        <button class="modal-btn-cancel" (click)="closeAssignModal()">Cancel</button>
+        <button class="modal-btn-primary" [disabled]="!selectedDriverId || isAssigning" (click)="confirmAssign()">
+          <span *ngIf="isAssigning" class="btn-spinner"></span>
+          {{ isAssigning ? 'Assigning…' : 'Assign Driver' }}
+        </button>
+      </div>
     </div>
   </div>
 
-  <div class="premium-card">
-    <div class="premium-card-header border-0 pb-0">
-      <!-- Primary Filters Row -->
-      <div class="row align-items-center g-3 mb-3">
-        <div class="col-12 col-md-3">
-          <label class="text-xs fw-bold text-slate-500 mb-1 d-block">Customer Search</label>
-          <input type="text" class="form-control py-2 shadow-none"
-                 placeholder="Customer Name..."
-                 [(ngModel)]="searchCustomerName"
-                 (input)="loadShipments()">
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="text-xs fw-bold text-slate-500 mb-1 d-block">City Search</label>
-          <input type="text" class="form-control py-2 shadow-none"
-                 placeholder="City..."
-                 [(ngModel)]="searchCity"
-                 (input)="loadShipments()">
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="text-xs fw-bold text-slate-500 mb-1 d-block">Driver Search</label>
-          <input type="text" class="form-control py-2 shadow-none"
-                 placeholder="Driver Name..."
-                 [(ngModel)]="searchDriverName"
-                 (input)="loadShipments()">
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="text-xs fw-bold text-slate-500 mb-1 d-block">Shipment Status</label>
-          <select class="form-select py-2 shadow-none"
-                  [(ngModel)]="statusFilter"
-                  (change)="loadShipments()">
-            <option value="All">All Statuses</option>
-            <option value="1">Pending</option>
-            <option value="2">Unassigned</option>
-            <option value="3">Assigned</option>
-            <option value="4">Picking Up</option>
-            <option value="5">Out For Delivery (In Transit)</option>
-            <option value="6">Delivered</option>
-          </select>
-        </div>
+  <!-- ── UNASSIGN MODAL ─────────────────────────────────────── -->
+  <div *ngIf="showUnassignModal" class="modal-backdrop" (click)="closeUnassignModal()">
+    <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-icon-center danger">⚠️</div>
+      <h2 class="modal-title text-center">Unassign Driver?</h2>
+      <p class="modal-desc text-center">
+        Remove the driver from shipment <strong>#{{ unassignTarget?.id }}</strong>?
+        <br><span class="muted-note">Customer: {{ unassignTarget?.customerName }}</span>
+      </p>
+      <div class="modal-card-footer">
+        <button class="modal-btn-cancel" (click)="closeUnassignModal()">Keep it</button>
+        <button class="modal-btn-danger" [disabled]="isUnassigning" (click)="confirmUnassign()">
+          <span *ngIf="isUnassigning" class="btn-spinner"></span>
+          {{ isUnassigning ? 'Removing…' : 'Yes, Unassign' }}
+        </button>
       </div>
+    </div>
+  </div>
 
-      <!-- Action Row -->
-      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-        <div class="d-flex gap-2">
-          <button class="btn btn-sm btn-light-soft border text-slate-700 rounded-pill px-3 text-xs fw-semibold"
-                  (click)="showAdvancedFilters = !showAdvancedFilters">
-            <i class="bi" [ngClass]="showAdvancedFilters ? 'bi-funnel-fill text-primary' : 'bi-funnel'"></i>
-            {{ showAdvancedFilters ? 'Hide Advanced Filters' : 'Show Advanced Filters' }}
-          </button>
-          <button class="btn btn-sm btn-light-soft border text-danger rounded-pill px-3 text-xs fw-semibold" (click)="clearFilters()">
-            <i class="bi bi-arrow-counterclockwise"></i> Clear All
-          </button>
-        </div>
-
-        <div style="min-width: 220px;">
-          <select class="form-select form-select-sm shadow-none rounded-pill text-xs fw-semibold"
-                  [(ngModel)]="sortBy"
-                  (change)="loadShipments()">
-            <option *ngFor="let opt of sortOptions" [value]="opt.value">Sort By: {{opt.label}}</option>
-          </select>
-        </div>
+  <!-- ── PAGE HEADER ─────────────────────────────────────────── -->
+  <div class="sm-header">
+    <div>
+      <h1 class="sm-title">Shipment <span class="sm-title-accent">Management</span></h1>
+      <p class="sm-subtitle">Track, filter and manage all shipments in real time</p>
+    </div>
+    <div class="sm-header-stats" *ngIf="!isLoading">
+      <div class="header-stat">
+        <span class="header-stat-value">{{ totalRecords }}</span>
+        <span class="header-stat-label">Total</span>
       </div>
+    </div>
+  </div>
 
-      <!-- Advanced Filters Expandable Panel -->
-      <div class="p-4 bg-slate-50 rounded-4 mb-4 border border-slate-100 animate-fade-in" *ngIf="showAdvancedFilters">
-        <div class="row g-3">
-          <!-- State and Street -->
-          <div class="col-12 col-md-3">
-            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">State / Governorate</label>
-            <input type="text" class="form-control form-control-sm py-2 shadow-none bg-white"
-                   placeholder="e.g. Cairo"
-                   [(ngModel)]="searchState"
-                   (input)="loadShipments()">
-          </div>
-          <div class="col-12 col-md-3">
-            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">Street Address</label>
-            <input type="text" class="form-control form-control-sm py-2 shadow-none bg-white"
-                   placeholder="e.g. El Tahrir"
-                   [(ngModel)]="searchStreet"
-                   (input)="loadShipments()">
-          </div>
-          <div class="col-12 col-md-3">
-            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">Driver National ID</label>
-            <input type="text" class="form-control form-control-sm py-2 shadow-none bg-white"
-                   placeholder="14-digit National ID"
-                   [(ngModel)]="searchDriverNationalId"
-                   (input)="loadShipments()">
-          </div>
+  <!-- ── FILTER PANEL ────────────────────────────────────────── -->
+  <div class="filter-panel">
 
-          <!-- Price Range -->
-          <div class="col-12 col-md-3">
-            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">Shipment Price Range</label>
-            <div class="input-group input-group-sm">
-              <input type="number" class="form-control shadow-none bg-white"
-                     placeholder="Min ($)"
-                     [(ngModel)]="minPrice"
-                     (input)="loadShipments()">
-              <input type="number" class="form-control shadow-none bg-white"
-                     placeholder="Max ($)"
-                     [(ngModel)]="maxPrice"
-                     (input)="loadShipments()">
-            </div>
-          </div>
-
-          <!-- Orders Range -->
-          <div class="col-12 col-md-4">
-            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">Number of Orders Range</label>
-            <div class="input-group input-group-sm">
-              <input type="number" class="form-control shadow-none bg-white"
-                     placeholder="Min orders count"
-                     [(ngModel)]="minOrders"
-                     (input)="loadShipments()">
-              <input type="number" class="form-control shadow-none bg-white"
-                     placeholder="Max orders count"
-                     [(ngModel)]="maxOrders"
-                     (input)="loadShipments()">
-            </div>
-          </div>
-
-          <!-- Date Range -->
-          <div class="col-12 col-md-8">
-            <label class="text-xs fw-bold text-slate-600 mb-1 d-block">Date Created Range</label>
-            <div class="input-group input-group-sm">
-              <span class="input-group-text bg-white border-end-0 text-slate-400">From</span>
-              <input type="date" class="form-control shadow-none border-start-0 ps-1"
-                     [(ngModel)]="startDate"
-                     (change)="loadShipments()">
-              <span class="input-group-text bg-white border-end-0 border-start-0 text-slate-400">To</span>
-              <input type="date" class="form-control shadow-none border-start-0 ps-1"
-                     [(ngModel)]="endDate"
-                     (change)="loadShipments()">
-            </div>
-          </div>
-        </div>
+    <!-- Primary filter row -->
+    <div class="filter-row">
+      <div class="filter-field">
+        <label class="filter-label">Customer</label>
+        <input type="text" class="filter-input" placeholder="Search by name…"
+               [(ngModel)]="searchCustomerName" (input)="onFilterChange()">
+      </div>
+      <div class="filter-field">
+        <label class="filter-label">City</label>
+        <input type="text" class="filter-input" placeholder="Delivery city…"
+               [(ngModel)]="searchCity" (input)="onFilterChange()">
+      </div>
+      <div class="filter-field">
+        <label class="filter-label">Driver</label>
+        <input type="text" class="filter-input" placeholder="Driver name…"
+               [(ngModel)]="searchDriverName" (input)="onFilterChange()">
+      </div>
+      <div class="filter-field">
+        <label class="filter-label">Status</label>
+        <select class="filter-input" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="filter-label">Sort By</label>
+        <select class="filter-input" [(ngModel)]="sortBy" (change)="onFilterChange()">
+          <option *ngFor="let s of sortOptions" [value]="s.value">{{ s.label }}</option>
+        </select>
       </div>
     </div>
 
-    <div class="premium-card-body p-0 mt-3">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 custom-table">
-          <thead>
-            <tr>
-              <th class="ps-4">Order ID</th>
-              <th>Destination & Customer</th>
-              <th>Order Time</th>
-              <th>Price</th>
-              <th>Driver</th>
-              <th>Status</th>
-              <th class="text-end pe-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let shipment of filteredShipments">
-              <td class="ps-4">
-                <span class="fw-bold text-primary">#{{ shipment.id }}</span>
-              </td>
-              <td>
-                <div class="d-flex flex-column">
-                  <span class="fw-semibold">{{ shipment.customerName }}</span>
-                  <span class="text-muted-custom text-xs"><i class="bi bi-geo-alt me-1"></i>{{ shipment.deliveryCity }}, {{ shipment.deliveryState ? shipment.deliveryState + ', ' : '' }}{{ shipment.deliveryStreet }}</span>
-                </div>
-              </td>
-              <td class="text-muted-custom text-sm">
-                {{ shipment.orderTime | date:'MMM d, h:mm a' }}
-              </td>
-              <td class="fw-medium">{{ shipment.price | number:'1.2-2' }}</td>
-              <td>
-                <div *ngIf="shipment.driverName" class="d-flex align-items-center mb-1">
-                  <div class="avatar-sm-circle me-2">
-                    <i class="bi bi-person-circle"></i>
-                  </div>
-                  <span>{{ shipment.driverName }}</span>
-                </div>
-                <button *ngIf="getNumericStatus(shipment.shipmentStatus, ShipmentStatusEnum) === ShipmentStatusEnum.Unassigned"
-                        class="btn btn-outline-primary btn-sm me-2"
-                        (click)="openAssignModal(shipment)">
-                  <i class="bi bi-person-plus me-1"></i>Assign
-                </button>
-                <button *ngIf="getNumericStatus(shipment.shipmentStatus, ShipmentStatusEnum) === ShipmentStatusEnum.Assigned"
-                        class="btn btn-outline-danger btn-sm me-2"
-                        (click)="unassignShipment(shipment.id)">
-                  <i class="bi bi-person-dash me-1"></i>Unassign
-                </button>
-              </td>
-              <td>
-                <span class="status-badge" [ngClass]="getStatusBadgeClass(shipment.shipmentStatus)">
-                  <span class="status-dot"></span>
-                  {{ getStatusName(shipment.shipmentStatus) }}
-                </span>
-              </td>
-              <td class="text-end pe-4">
-                <div class="dropdown">
-                  <a class="btn btn-icon btn-light" [routerLink]="['/shipping/shipments', shipment.id]" title="View Details">
-                    <i class="bi bi-eye"></i>
-                  </a>
-                  <button *ngIf="getNumericStatus(shipment.shipmentStatus, ShipmentStatusEnum) === ShipmentStatusEnum.Unassigned"
-                          class="btn btn-icon btn-light ms-2"
-                          (click)="openAssignModal(shipment)"
-                          title="Assign Driver">
-                    <i class="bi bi-person-plus"></i>
-                  </button>
-                  <button *ngIf="getNumericStatus(shipment.shipmentStatus, ShipmentStatusEnum) === ShipmentStatusEnum.Assigned"
-                          class="btn btn-icon btn-light text-danger ms-2"
-                          (click)="unassignShipment(shipment.id)"
-                          title="Unassign Driver">
-                    <i class="bi bi-person-dash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr *ngIf="filteredShipments.length === 0 && !isLoading">
-              <td colspan="7" class="text-center py-5">
-                <div class="empty-state">
-                  <i class="bi bi-inbox fs-1 text-muted opacity-50 mb-3 d-block"></i>
-                  <p class="text-muted fw-medium">No shipments found matching your criteria</p>
-                </div>
-              </td>
-            </tr>
-            <tr *ngIf="isLoading">
-              <td colspan="7" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <!-- Pagination Controls -->
-      <div class="d-flex justify-content-between align-items-center p-3 border-top">
-        <div class="text-muted text-sm">
-          Showing page <span class="fw-bold">{{ currentPage }}</span> of <span class="fw-bold">{{ totalPages }}</span>
+    <!-- Actions row -->
+    <div class="filter-actions">
+      <button class="filter-toggle-btn" (click)="showAdvancedFilters = !showAdvancedFilters">
+        <span>{{ showAdvancedFilters ? '▲' : '▼' }}</span>
+        {{ showAdvancedFilters ? 'Hide' : 'More' }} Filters
+      </button>
+      <button class="filter-clear-btn" (click)="clearFilters()">✕ Clear All</button>
+    </div>
+
+    <!-- Advanced filters -->
+    <div *ngIf="showAdvancedFilters" class="advanced-filters animate-in">
+      <div class="filter-row">
+        <div class="filter-field">
+          <label class="filter-label">State</label>
+          <input type="text" class="filter-input" placeholder="e.g. California"
+                 [(ngModel)]="searchState" (input)="onFilterChange()">
         </div>
-        <div class="btn-group">
-          <button class="btn btn-sm btn-white" [disabled]="currentPage === 1" (click)="previousPage()">
-            <i class="bi bi-chevron-left me-1"></i>Previous
-          </button>
-          <button class="btn btn-sm btn-white" [disabled]="currentPage === totalPages" (click)="nextPage()">
-            Next<i class="bi bi-chevron-right ms-1"></i>
-          </button>
+        <div class="filter-field">
+          <label class="filter-label">Street</label>
+          <input type="text" class="filter-input" placeholder="Street address…"
+                 [(ngModel)]="searchStreet" (input)="onFilterChange()">
+        </div>
+        <div class="filter-field">
+          <label class="filter-label">National ID</label>
+          <input type="text" class="filter-input" placeholder="14-digit ID"
+                 [(ngModel)]="searchDriverNationalId" (input)="onFilterChange()">
+        </div>
+        <div class="filter-field">
+          <label class="filter-label">Price Range ($)</label>
+          <div class="range-group">
+            <input type="number" class="filter-input" placeholder="Min"
+                   [(ngModel)]="minPrice" (input)="onFilterChange()">
+            <span class="range-sep">–</span>
+            <input type="number" class="filter-input" placeholder="Max"
+                   [(ngModel)]="maxPrice" (input)="onFilterChange()">
+          </div>
+        </div>
+        <div class="filter-field">
+          <label class="filter-label">Orders Count</label>
+          <div class="range-group">
+            <input type="number" class="filter-input" placeholder="Min"
+                   [(ngModel)]="minOrders" (input)="onFilterChange()">
+            <span class="range-sep">–</span>
+            <input type="number" class="filter-input" placeholder="Max"
+                   [(ngModel)]="maxOrders" (input)="onFilterChange()">
+          </div>
+        </div>
+        <div class="filter-field">
+          <label class="filter-label">Date Range</label>
+          <div class="range-group">
+            <input type="date" class="filter-input" [(ngModel)]="startDate" (change)="onFilterChange()">
+            <span class="range-sep">–</span>
+            <input type="date" class="filter-input" [(ngModel)]="endDate" (change)="onFilterChange()">
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
+  <!-- ── TABLE CARD ──────────────────────────────────────────── -->
+  <div class="table-card">
 
-
-<!-- Assign Driver Modal -->
-<div class="modal-overlay" *ngIf="showAssignModal" (click)="closeAssignModal()">
-  <div class="modal-card small-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header-premium">
-      <h4 class="mb-0 fw-bold">Assign Driver</h4>
-      <button class="btn-close-premium" (click)="closeAssignModal()"><i class="bi bi-x"></i></button>
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="table-loading">
+      <div class="loading-ring"></div>
+      <p>Loading shipments…</p>
     </div>
-    <div class="modal-body p-4">
-      <p class="text-muted-custom mb-4">Select an available driver for Shipment <strong>#{{ selectedShipmentForAssign?.id }}</strong></p>
 
-      <div class="form-group mb-4">
-        <label class="form-label fw-bold text-muted-custom small text-uppercase mb-2">Available Drivers</label>
-        <div class="driver-selection-list">
-          <div *ngFor="let driver of availableDrivers"
-               class="driver-select-item"
-               [ngClass]="{'selected': selectedDriverId === driver.id}"
-               (click)="selectedDriverId = driver.id">
-            <div class="d-flex align-items-center">
-              <div class="avatar-sm me-3 bg-light d-flex align-items-center justify-content-center">
-                <i class="bi bi-person"></i>
+    <!-- Table -->
+    <div *ngIf="!isLoading" class="table-responsive">
+      <table class="sm-table">
+        <thead>
+          <tr>
+            <th class="col-id">ID</th>
+            <th class="col-customer">Customer & Destination</th>
+            <th class="col-orders">Orders</th>
+            <th class="col-price">Price</th>
+            <th class="col-driver">Driver</th>
+            <th class="col-status">Status</th>
+            <th class="col-date">Date</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Data rows -->
+          <tr *ngFor="let s of shipments; trackBy: trackById" class="sm-row">
+
+            <!-- ID -->
+            <td class="col-id">
+              <span class="shipment-id">#{{ s.id }}</span>
+            </td>
+
+            <!-- Customer & address -->
+            <td class="col-customer">
+              <div class="customer-name">{{ s.customerName }}</div>
+              <div class="customer-addr">
+                📍 {{ s.deliveryCity }}<span *ngIf="s.deliveryState">, {{ s.deliveryState }}</span>
+                <span *ngIf="s.deliveryStreet"> · {{ s.deliveryStreet }}</span>
               </div>
-              <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-center">
-                  <p class="fw-semibold mb-0">{{ driver.driverName }}</p>
-                  <span class="badge bg-light text-primary border text-xs px-2">{{ getVehicleTypeName(driver.vehicleType) }}</span>
-                </div>
-                <p class="text-muted text-xs mb-0"><i class="bi bi-geo-alt me-1"></i>{{ driver.driverCity }}</p>
+            </td>
+
+            <!-- Orders count -->
+            <td class="col-orders">
+              <span class="orders-badge">{{ s.numberOfOrders }}</span>
+            </td>
+
+            <!-- Price -->
+            <td class="col-price">
+              <span class="price-value">${{ s.price | number:'1.2-2' }}</span>
+            </td>
+
+            <!-- Driver -->
+            <td class="col-driver">
+              <div *ngIf="s.driverName" class="driver-cell">
+                <div class="driver-dot">{{ s.driverName.charAt(0) }}</div>
+                <span>{{ s.driverName }}</span>
               </div>
-              <div class="selection-indicator ms-3">
-                <i class="bi bi-check-circle-fill text-primary" *ngIf="selectedDriverId === driver.id"></i>
-                <div class="circle-outline" *ngIf="selectedDriverId !== driver.id"></div>
+              <span *ngIf="!s.driverName" class="no-driver">—</span>
+            </td>
+
+            <!-- Status -->
+            <td class="col-status">
+              <span class="status-badge" [ngClass]="getStatusClass(s.shipmentStatus)">
+                {{ getStatusLabel(s.shipmentStatus) }}
+              </span>
+            </td>
+
+            <!-- Date -->
+            <td class="col-date">
+              <span class="date-value">{{ s.orderTime | date:'MMM d, y' }}</span>
+              <span class="time-value">{{ s.orderTime | date:'h:mm a' }}</span>
+            </td>
+
+            <!-- Actions -->
+            <td class="col-actions">
+              <div class="action-group">
+                <a [routerLink]="['/shipping/shipments', s.id]" class="action-btn view-btn" title="View Details">
+                  👁
+                </a>
+                <button
+                  *ngIf="canAssign(s.shipmentStatus)"
+                  class="action-btn assign-btn"
+                  title="Assign Driver"
+                  (click)="openAssignModal(s)">
+                  ➕
+                </button>
+                <button
+                  *ngIf="canUnassign(s.shipmentStatus)"
+                  class="action-btn unassign-btn"
+                  title="Unassign Driver"
+                  (click)="openUnassignModal(s)">
+                  ✖
+                </button>
               </div>
-            </div>
-          </div>
-          <div *ngIf="availableDrivers.length === 0" class="text-center py-4 text-muted italic">
-            <i class="bi bi-info-circle me-1"></i> No available drivers found at the moment.
-          </div>
-        </div>
+            </td>
+          </tr>
+
+          <!-- Empty state -->
+          <tr *ngIf="shipments.length === 0">
+            <td colspan="8" class="empty-row">
+              <div class="empty-state">
+                <div class="empty-icon">📦</div>
+                <h3>No shipments found</h3>
+                <p>Try adjusting your filters or clearing the search.</p>
+                <button class="filter-clear-btn" (click)="clearFilters()">Clear Filters</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── PAGINATION ────────────────────────────────────────── -->
+    <div *ngIf="!isLoading && totalPages > 1" class="pagination-bar">
+      <span class="pagination-info">
+        Page <strong>{{ currentPage }}</strong> of <strong>{{ totalPages }}</strong>
+        &nbsp;·&nbsp; {{ totalRecords }} shipments
+      </span>
+      <div class="pagination-controls">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(1)">«</button>
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">‹</button>
+        <button
+          *ngFor="let p of pageNumbers"
+          class="page-btn"
+          [class.page-active]="p === currentPage"
+          (click)="goToPage(p)">
+          {{ p }}
+        </button>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">›</button>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)">»</button>
       </div>
     </div>
-    <div class="modal-footer border-0 p-4 pt-0">
-      <button class="btn btn-light px-4 me-2" (click)="closeAssignModal()">Cancel</button>
-      <button class="btn btn-premium flex-grow-1" [disabled]="!selectedDriverId" (click)="assignDriver()">Assign Driver</button>
-    </div>
+
   </div>
 </div>

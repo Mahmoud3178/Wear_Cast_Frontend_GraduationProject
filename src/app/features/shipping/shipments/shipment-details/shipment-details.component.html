@@ -1,342 +1,334 @@
-<div class="shipment-details-page container-fluid py-4">
-  <!-- Page Header -->
-  <div class="page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-    <div class="d-flex align-items-center">
-      <a routerLink="/shipping/shipments" class="btn btn-icon btn-light me-3 shadow-sm rounded-circle">
-        <i class="bi bi-arrow-left fs-5"></i>
-      </a>
-      <div>
-        <div class="d-flex align-items-center gap-3 flex-wrap">
-          <h2 class="mb-0 fw-extrabold text-dark page-title">Shipment Control Center</h2>
-          <span class="badge bg-primary-light text-primary border px-2 py-1 text-xxs font-monospace">#{{ shipmentId }}</span>
-          <span *ngIf="selectedShipmentDetails" class="status-badge" [ngClass]="getStatusBadgeClass(selectedShipmentDetails.shipmentStatus)">
-            <span class="status-dot"></span>
-            {{ getStatusName(selectedShipmentDetails.shipmentStatus) }}
-          </span>
+<div class="sd-page">
+
+  <!-- ── ASSIGN MODAL ───────────────────────────────────────── -->
+  <div *ngIf="showAssignModal" class="modal-backdrop" (click)="closeAssignModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header-row">
+        <div class="modal-icon-box assign-color">👤</div>
+        <div>
+          <h2 class="modal-title">Assign Driver</h2>
+          <p class="modal-sub">Shipment <strong>#{{ shipmentId }}</strong></p>
         </div>
-        <p class="text-muted-custom text-sm mb-0">Manage shipment logistics, track delivery status, and coordinate driver assignments</p>
+        <button class="modal-x" (click)="closeAssignModal()">✕</button>
+      </div>
+
+      <div class="modal-body-scroll">
+        <div *ngIf="isLoadingDrivers" class="mini-loader">
+          <div class="mini-ring"></div><span>Loading drivers…</span>
+        </div>
+        <div *ngIf="!isLoadingDrivers && availableDrivers.length === 0" class="drivers-empty">
+          <span>😕</span><p>No available drivers right now.</p>
+        </div>
+        <div *ngIf="!isLoadingDrivers && availableDrivers.length > 0" class="drivers-list">
+          <div
+            *ngFor="let d of availableDrivers"
+            class="driver-item" [class.driver-sel]="selectedDriverId === d.id"
+            (click)="selectedDriverId = d.id">
+            <div class="d-avatar">{{ getDriverLabel(d).charAt(0).toUpperCase() }}</div>
+            <div class="d-info">
+              <span class="d-name">{{ getDriverLabel(d) }}</span>
+              <span class="d-city" *ngIf="d.driverCity">📍 {{ d.driverCity }}</span>
+            </div>
+            <div class="d-check" *ngIf="selectedDriverId === d.id">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-row">
+        <button class="mbtn-cancel" (click)="closeAssignModal()">Cancel</button>
+        <button class="mbtn-primary" [disabled]="!selectedDriverId || isAssigning" (click)="confirmAssign()">
+          <span *ngIf="isAssigning" class="btn-spinner"></span>
+          {{ isAssigning ? 'Assigning…' : 'Assign Driver' }}
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Premium Error Alert Banner -->
-  <div *ngIf="errorMessage" class="alert alert-danger border-0 p-3 mb-4 d-flex align-items-center rounded-4 shadow-sm animate-fade-in">
-    <i class="bi bi-exclamation-octagon-fill fs-4 me-2 text-danger"></i>
-    <div class="text-sm fw-semibold">{{ errorMessage }}</div>
+  <!-- ── UNASSIGN MODAL ─────────────────────────────────────── -->
+  <div *ngIf="showUnassignModal" class="modal-backdrop" (click)="closeUnassignModal()">
+    <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-icon-center">⚠️</div>
+      <h2 class="modal-title text-center">Unassign Driver?</h2>
+      <p class="modal-desc">
+        Remove <strong>{{ shipment?.driverName }}</strong> from shipment <strong>#{{ shipmentId }}</strong>?
+      </p>
+      <div class="modal-footer-row">
+        <button class="mbtn-cancel" (click)="closeUnassignModal()">Keep</button>
+        <button class="mbtn-danger" [disabled]="isUnassigning" (click)="confirmUnassign()">
+          <span *ngIf="isUnassigning" class="btn-spinner"></span>
+          {{ isUnassigning ? 'Removing…' : 'Yes, Unassign' }}
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="isLoadingDetails" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="text-muted mt-2">Loading shipment specifications...</p>
+  <!-- ── TOASTS ─────────────────────────────────────────────── -->
+  <div *ngIf="successMessage" class="toast toast-success">
+    <span class="toast-icon">✓</span><span>{{ successMessage }}</span>
+  </div>
+  <div *ngIf="errorMessage" class="toast toast-error">
+    <span class="toast-icon">!</span><span>{{ errorMessage }}</span>
   </div>
 
-  <!-- Main View -->
-  <div *ngIf="!isLoadingDetails && selectedShipmentDetails" class="row g-4 animate-fade-in">
+  <!-- ── HEADER ─────────────────────────────────────────────── -->
+  <div class="sd-header">
+    <a routerLink="/shipping/shipments" class="back-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back
+    </a>
+    <div class="header-info">
+      <h1 class="sd-title">Shipment <span class="sd-id">#{{ shipmentId }}</span></h1>
+      <p class="sd-sub">Manage logistics, driver assignment and delivery tracking</p>
+    </div>
+    <div class="header-right" *ngIf="shipment">
+      <span class="status-pill" [ngClass]="getStatusClass(shipment.shipmentStatus)">
+        {{ getStatusLabel(shipment.shipmentStatus) }}
+      </span>
+      <button *ngIf="canAssign()" class="btn-assign" (click)="openAssignModal()">
+        ➕ Assign Driver
+      </button>
+      <button *ngIf="canUnassign()" class="btn-unassign" (click)="openUnassignModal()">
+        ✖ Unassign
+      </button>
+    </div>
+  </div>
 
-    <!-- Left Column: Form / Progress / Orders -->
-    <div class="col-12 col-lg-8">
+  <!-- ── LOADING ────────────────────────────────────────────── -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-ring"></div>
+    <p>Loading shipment…</p>
+  </div>
 
-      <!-- Shipment Progress & Timelines -->
-      <div class="premium-card p-4 bg-white mb-4">
-        <h5 class="fw-bold text-dark mb-4">Logistics Timeline</h5>
+  <!-- ── CONTENT ────────────────────────────────────────────── -->
+  <div *ngIf="!isLoading && shipment" class="sd-layout animate-in">
 
-        <div class="status-timeline mt-4">
-          <!-- Step 1: Order Placed -->
-          <div class="timeline-item" [ngClass]="{'active': isStepActive(selectedShipmentDetails.shipmentStatus, 0)}">
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <p class="fw-bold mb-0 text-dark">Order Placed</p>
-              <p class="text-muted text-xs mb-0">Created on {{ selectedShipmentDetails.orderTime | date:'MMM d, yyyy h:mm a' }}</p>
-            </div>
-          </div>
+    <!-- LEFT: Timeline + Orders ─────────────────────────────── -->
+    <div class="sd-main">
 
-          <!-- Step 2: Ready for Pickup -->
-          <div class="timeline-item" [ngClass]="{'active': selectedShipmentDetails.readyForPickupAt || getNumericStatus(selectedShipmentDetails.shipmentStatus, ShipmentStatusEnum) >= 2}">
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <p class="fw-bold mb-0 text-dark">Ready for Pickup</p>
-              <p class="text-muted text-xs mb-0" *ngIf="selectedShipmentDetails.readyForPickupAt">Ready at {{ selectedShipmentDetails.readyForPickupAt | date:'MMM d, yyyy h:mm a' }}</p>
-              <p class="text-muted text-xs mb-0" *ngIf="!selectedShipmentDetails.readyForPickupAt">Awaiting seller readiness</p>
-            </div>
-          </div>
+      <!-- Quick Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-val">${{ shipment.price | number:'1.2-2' }}</span>
+          <span class="stat-lbl">Price</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-val">{{ orders.length }}</span>
+          <span class="stat-lbl">Orders</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-val">{{ getTotalItems() }}</span>
+          <span class="stat-lbl">Items</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-val code-val">{{ shipment.deliveryCode || '—' }}</span>
+          <span class="stat-lbl">Delivery Code</span>
+        </div>
+      </div>
 
-          <!-- Step 3: Driver Assigned -->
-          <div class="timeline-item" [ngClass]="{'active': isStepActive(selectedShipmentDetails.shipmentStatus, 2)}">
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <p class="fw-bold mb-0 text-dark">Driver Assigned</p>
-              <p class="text-muted text-xs mb-0" *ngIf="selectedShipmentDetails.driverName">Assigned to: {{ selectedShipmentDetails.driverName }}</p>
-              <p class="text-muted text-xs mb-0" *ngIf="!selectedShipmentDetails.driverName">Awaiting driver assignment</p>
-            </div>
-          </div>
-
-          <!-- Step 4: In Transit (Picking Up / Out for Delivery) -->
-          <div class="timeline-item" [ngClass]="{'active': isStepActive(selectedShipmentDetails.shipmentStatus, 4)}">
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <p class="fw-bold mb-0 text-dark">In Transit</p>
-              <p class="text-muted text-xs mb-0" *ngIf="selectedShipmentDetails.tripStartedAt">Picked up at {{ selectedShipmentDetails.tripStartedAt | date:'MMM d, yyyy h:mm a' }}</p>
-              <p class="text-muted text-xs mb-0" *ngIf="selectedShipmentDetails.outForDeliveryAt">Out for delivery at {{ selectedShipmentDetails.outForDeliveryAt | date:'MMM d, yyyy h:mm a' }}</p>
-              <p class="text-muted text-xs mb-0" *ngIf="!selectedShipmentDetails.tripStartedAt && !selectedShipmentDetails.outForDeliveryAt">Awaiting pickup from store</p>
-            </div>
-          </div>
-
-          <!-- Step 5: Delivered -->
-          <div class="timeline-item" [ngClass]="{'active': isStepActive(selectedShipmentDetails.shipmentStatus, 5)}">
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <p class="fw-bold mb-0 text-dark">Delivered</p>
-              <p class="text-muted text-xs mb-0" *ngIf="selectedShipmentDetails.deliveredAt">Delivered at {{ selectedShipmentDetails.deliveredAt | date:'MMM d, yyyy h:mm a' }}</p>
-              <p class="text-muted text-xs mb-0" *ngIf="!selectedShipmentDetails.deliveredAt">Awaiting delivery completion</p>
+      <!-- Timeline -->
+      <div class="section-card">
+        <div class="section-hdr"><h2 class="section-title">📅 Logistics Timeline</h2></div>
+        <div class="timeline">
+          <div
+            *ngFor="let step of getTimelineSteps()"
+            class="tl-step" [class.tl-done]="!!step.date" [class.tl-pending]="!step.date">
+            <div class="tl-dot"></div>
+            <div class="tl-body">
+              <span class="tl-icon">{{ step.icon }}</span>
+              <div class="tl-content">
+                <div class="tl-label">{{ step.label }}</div>
+                <div class="tl-date" *ngIf="step.date && step.label !== 'Driver Assigned'">
+                  {{ step.date | date:'EEE, MMM d · h:mm a' }}
+                </div>
+                <div class="tl-date" *ngIf="step.label === 'Driver Assigned' && step.customText">
+                  {{ step.customText }}
+                </div>
+                <div class="tl-date tl-pend" *ngIf="!step.date && step.label !== 'Driver Assigned'">
+                  Not yet
+                </div>
+                <div class="tl-date tl-pend" *ngIf="step.label === 'Driver Assigned' && !step.customText">
+                  Awaiting assignment
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Included Orders List -->
-      <div class="premium-card p-4 bg-white mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-          <div>
-            <h5 class="fw-bold text-dark mb-1">Included Customer Orders</h5>
-            <p class="text-muted-custom text-xs mb-0">Track order statuses, pricing details, and customer shipping destinations</p>
-          </div>
+      <!-- Orders -->
+      <div class="section-card">
+        <div class="section-hdr">
+          <h2 class="section-title">🛍️ Orders <span class="count-badge">{{ orders.length }}</span></h2>
         </div>
 
-        <div class="orders-list d-flex flex-column gap-3">
-          <div *ngFor="let order of selectedShipmentDetails.orders" class="order-item p-4 bg-light rounded-4 border">
+        <div *ngIf="orders.length === 0" class="empty-state">
+          <div class="empty-icon">📋</div>
+          <p>No orders found for this shipment.</p>
+        </div>
 
-            <!-- Standard Non-editing Order View -->
-            <div>
-              <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
-                <div>
-                  <span class="badge bg-primary-light text-primary mb-1 text-uppercase text-xxs fw-bold">{{ order.orderType || 'Product Order' }}</span>
-                  <div class="d-flex align-items-center gap-2">
-                    <h6 class="fw-bold mb-0 text-dark">Order #{{ order.id }}</h6>
-                  </div>
-                  <p class="text-muted text-xs mb-0 mt-1">Vendor Store: <span class="fw-bold text-dark">{{ order.vendorName }}</span></p>
-                </div>
+        <div *ngIf="orders.length > 0" class="orders-list">
+          <div *ngFor="let order of orders; trackBy: trackByOrderId" class="order-card">
 
-                <div class="text-sm-end">
-                  <p class="fw-bold text-primary mb-1">{{ order.totalAmount | number:'1.2-2' }}</p>
-                  <span class="text-xxs badge px-2.5 py-1.5 rounded-pill" [ngClass]="{
-                    'bg-warning-light text-warning': order.status === 'Pending' || order.status === 'Ready',
-                    'bg-success-light text-success': order.status === 'PickedUp',
-                    'bg-info-light text-info': order.status === 'Paid',
-                    'bg-danger-light text-danger': order.status === 'Failed' || order.status === 'Cancelled',
-                    'bg-secondary-light text-secondary': order.status === 'Refunded'
-                  }">{{ order.status }}</span>
+            <div class="order-hdr">
+              <div class="order-id-grp">
+                <span class="order-num">Order #{{ order.orderId }}</span>
+                <span class="order-type-badge">{{ order.orderType }}</span>
+              </div>
+              <span class="order-status-badge" [ngClass]="getOrderStatusClass(order.orderStatus)">
+                {{ order.orderStatus }}
+              </span>
+            </div>
+
+            <div class="order-body">
+              <div class="ob-section">
+                <div class="ob-title">🏪 Vendor</div>
+                <div class="ob-val">{{ order.vendorName || 'N/A' }}</div>
+                <a *ngIf="order.vendorPhoneNumber" href="tel:{{ order.vendorPhoneNumber }}" class="ob-phone">
+                  📞 {{ order.vendorPhoneNumber }}
+                </a>
+              </div>
+              <div class="ob-section" *ngIf="order.vendorAddress">
+                <div class="ob-title">📍 Vendor Address</div>
+                <div class="ob-val">{{ order.vendorAddress.city }}, {{ order.vendorAddress.state }}</div>
+                <div class="ob-muted">
+                  {{ order.vendorAddress.buildingNumber ? '#' + order.vendorAddress.buildingNumber + ', ' : '' }}{{ order.vendorAddress.street }}
                 </div>
               </div>
-
-              <!-- Recipient & Shipping Addresses -->
-              <div class="border-top pt-3 mt-2 text-xs">
-                <div class="row g-3">
-                  <div class="col-12 col-sm-6 text-muted-custom">
-                    <p class="mb-1 text-uppercase text-xxs fw-bold">Customer Recipient</p>
-                    <div class="d-flex align-items-center gap-2 mt-1">
-                      <div class="avatar-sm-circle"><i class="bi bi-person"></i></div>
-                      <span class="fw-bold text-dark">{{ order.recipientName || 'N/A' }}</span>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6 text-muted-custom">
-                    <p class="mb-1 text-uppercase text-xxs fw-bold">Contact Phone</p>
-                    <div class="d-flex align-items-center gap-2 mt-1">
-                      <div class="avatar-sm-circle"><i class="bi bi-telephone"></i></div>
-                      <span class="fw-bold text-dark">{{ order.recipientPhoneNumber || 'N/A' }}</span>
-                    </div>
-                  </div>
-                  <div class="col-12 text-muted-custom">
-                    <p class="mb-1 text-uppercase text-xxs fw-bold">Shipping Destination Address</p>
-                    <div class="d-flex align-items-center gap-2 mt-1">
-                      <div class="avatar-sm-circle"><i class="bi bi-geo-alt"></i></div>
-                      <span class="text-dark">
-                        {{ order.shippingAddress?.buildingNumber ? order.shippingAddress.buildingNumber + ' ' : '' }}{{ order.shippingAddress?.street }}, {{ order.shippingAddress?.city }}, {{ order.shippingAddress?.state }}
-                      </span>
-                    </div>
-                  </div>
+              <div class="ob-section">
+                <div class="ob-title">📦 Items</div>
+                <div class="items-display">
+                  <span class="items-num">{{ order.numberOfItems }}</span>
+                  <span class="items-unit">item{{ order.numberOfItems !== 1 ? 's' : '' }}</span>
                 </div>
               </div>
             </div>
-
-          </div>
-          <div *ngIf="!selectedShipmentDetails.orders || selectedShipmentDetails.orders.length === 0" class="text-muted text-sm italic py-2 text-center bg-light rounded-3">
-            No detailed orders found in this shipment.
           </div>
         </div>
       </div>
-
-      <!-- Shipment Items & Specifications -->
-      <div class="premium-card p-4 bg-white">
-        <h5 class="fw-bold text-dark mb-4">Shipment Items & Specifications</h5>
-
-        <!-- Standard Store Products -->
-        <div *ngIf="selectedShipmentFixedItems && selectedShipmentFixedItems.length > 0" class="mb-4 animate-fade-in">
-          <span class="badge bg-secondary text-white mb-3 px-3 py-1.5 text-uppercase text-xxs fw-bold">Standard Store Products</span>
-          <div class="d-flex flex-column gap-2">
-            <div *ngFor="let item of selectedShipmentFixedItems" class="d-flex align-items-center border-0 p-3 bg-light rounded-3 mb-1">
-              <img [src]="item.imageUrl || 'assets/placeholder.png'" class="rounded me-3 border" style="width: 54px; height: 54px; object-fit: cover;" alt="Product Image">
-              <div class="flex-grow-1 min-w-0">
-                <h6 class="mb-1 fw-bold text-dark text-truncate text-sm">{{ item.productName }}</h6>
-                <p class="mb-0 text-muted text-xs">
-                  Color: <span class="fw-semibold text-dark">{{ item.colorName }}</span> |
-                  Price: <span class="fw-semibold text-primary">{{ item.unitPrice | number:'1.2-2' }}</span> |
-                  Total Qty: <span class="fw-semibold text-dark">{{ item.totalQuantity || 0 }}</span> |
-                  Total Cost: <span class="fw-semibold text-success">{{ item.totalPrice | number:'1.2-2' }}</span>
-                </p>
-                <div class="d-flex flex-wrap gap-1 mt-1">
-                  <span *ngFor="let size of item.sizes" class="badge bg-white text-dark border text-xxs">
-                    Size: <span class="fw-bold">{{ size.sizeName }}</span> ({{ size.quantity }})
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Custom Designed Products -->
-        <div *ngIf="selectedShipmentDesignedItems && selectedShipmentDesignedItems.length > 0" class="animate-fade-in">
-          <span class="badge bg-primary text-white mb-3 px-3 py-1.5 text-uppercase text-xxs fw-bold">Custom Designed Items</span>
-          <div class="d-flex flex-column gap-2">
-            <div *ngFor="let item of selectedShipmentDesignedItems" class="d-flex align-items-center border-0 p-3 bg-light rounded-3 mb-1">
-              <img [src]="item.frontImageUrl || 'assets/placeholder.png'" class="rounded me-3 border" style="width: 54px; height: 54px; object-fit: cover;" alt="Garment Image">
-              <div class="flex-grow-1 min-w-0">
-                <h6 class="mb-1 fw-bold text-dark text-truncate text-sm">{{ item.productName }}</h6>
-                <p class="mb-0 text-muted text-xs">
-                  Color: <span class="fw-semibold text-dark">{{ item.colorName }}</span> |
-                  Price: <span class="fw-semibold text-primary">{{ item.unitPrice | number:'1.2-2' }}</span> |
-                  Total Qty: <span class="fw-semibold text-dark">{{ item.totalQuantity || 0 }}</span> |
-                  Total Cost: <span class="fw-semibold text-success">{{ item.totalPrice | number:'1.2-2' }}</span>
-                </p>
-                <div class="d-flex flex-wrap gap-1 mt-1">
-                  <span *ngFor="let size of item.sizes" class="badge bg-white text-dark border text-xxs">
-                    Size: <span class="fw-bold">{{ size.sizeName }}</span> ({{ size.quantity }})
-                  </span>
-                </div>
-              </div>
-              <div *ngIf="item.backImageUrl || item.leftImageUrl || item.rightImageUrl" class="d-flex gap-1 ms-3 align-self-start">
-                <img *ngIf="item.backImageUrl" [src]="item.backImageUrl" class="rounded border bg-white" style="width: 32px; height: 32px; object-fit: cover;" title="Back View">
-                <img *ngIf="item.leftImageUrl" [src]="item.leftImageUrl" class="rounded border bg-white" style="width: 32px; height: 32px; object-fit: cover;" title="Left View">
-                <img *ngIf="item.rightImageUrl" [src]="item.rightImageUrl" class="rounded border bg-white" style="width: 32px; height: 32px; object-fit: cover;" title="Right View">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div *ngIf="(!selectedShipmentFixedItems || selectedShipmentFixedItems.length === 0) && (!selectedShipmentDesignedItems || selectedShipmentDesignedItems.length === 0)" class="text-muted text-sm italic py-2 text-center bg-light rounded-3">
-          No specific item details loaded for this shipment.
-        </div>
-      </div>
-
     </div>
 
-    <!-- Right Column: Sidebar Specs & Destination info -->
-    <div class="col-12 col-lg-4">
+    <!-- RIGHT: Sidebar ──────────────────────────────────────── -->
+    <div class="sd-sidebar">
 
-      <!-- Customer Information -->
-      <div class="premium-card p-4 bg-white mb-4">
-        <h6 class="fw-bold mb-3 text-uppercase text-muted text-xs ls-1">Customer Information</h6>
-        <div class="d-flex align-items-center mb-3">
-          <div class="avatar-sm me-3 bg-white border text-primary d-flex align-items-center justify-content-center fw-bold text-uppercase fs-5">
-            {{ selectedShipmentDetails.customerName?.charAt(0) || 'C' }}
-          </div>
-          <div>
-            <p class="fw-bold mb-0 text-dark">{{ selectedShipmentDetails.customerName || 'Anonymous Customer' }}</p>
-            <span class="text-xs text-muted">ID: #{{ selectedShipmentDetails.customerId }}</span>
-          </div>
+      <!-- Customer Card -->
+      <div class="side-card">
+        <div class="side-card-hdr">
+          <div class="side-icon cust-icon">👤</div>
+          <h3>Customer</h3>
         </div>
-        <div class="border-top pt-3 text-xs">
-          <p class="text-muted-custom mb-1"><i class="bi bi-telephone-fill me-2 text-muted"></i>{{ selectedShipmentDetails.customerPhoneNumber || 'No Phone Registered' }}</p>
-        </div>
-      </div>
-
-      <!-- Carrier / Driver Information -->
-      <div class="premium-card p-4 bg-white mb-4">
-        <h6 class="fw-bold mb-3 text-uppercase text-muted text-xs ls-1">Driver Information</h6>
-        <div *ngIf="selectedShipmentDetails.driverName" class="d-flex align-items-center mb-3 animate-fade-in">
-          <div class="avatar-sm me-3 bg-white border text-success d-flex align-items-center justify-content-center fw-bold text-uppercase fs-5">
-            {{ selectedShipmentDetails.driverName?.charAt(0) || 'D' }}
+        <div class="side-rows">
+          <div class="side-row">
+            <span class="side-lbl">Name</span>
+            <span class="side-val">{{ shipment.customerName || 'N/A' }}</span>
           </div>
-          <div>
-            <p class="fw-bold mb-0 text-dark">{{ selectedShipmentDetails.driverName }}</p>
-            <span class="text-xs text-muted">National ID: {{ selectedShipmentDetails.driverNationalId || 'N/A' }}</span>
+          <div class="side-row">
+            <span class="side-lbl">Phone</span>
+            <a class="side-val side-phone" href="tel:{{ shipment.customerPhoneNumber }}">
+              {{ shipment.customerPhoneNumber || 'N/A' }}
+            </a>
           </div>
-        </div>
-        <div *ngIf="selectedShipmentDetails.driverName" class="border-top pt-3 text-xs animate-fade-in">
-          <p class="text-muted-custom mb-1"><i class="bi bi-telephone-fill me-2 text-muted"></i>{{ selectedShipmentDetails.driverPhoneNumber || 'N/A' }}</p>
-        </div>
-
-        <!-- Unassigned Selector and Action Button -->
-        <div *ngIf="!selectedShipmentDetails.driverName" class="animate-fade-in">
-          <!-- Pending Readiness warning -->
-          <div *ngIf="getNumericStatus(selectedShipmentDetails.shipmentStatus, ShipmentStatusEnum) === 1" class="alert alert-info border-0 p-3 mb-3 d-flex align-items-start rounded-3 shadow-none">
-            <i class="bi bi-hourglass-split fs-5 me-2 text-info animate-pulse"></i>
-            <div class="text-xs fw-semibold">
-              Pending Readiness: Orders are still being prepared by sellers. Driver assignment will unlock once all orders are Ready.
-            </div>
-          </div>
-
-          <!-- Unassigned ready to assign -->
-          <div *ngIf="getNumericStatus(selectedShipmentDetails.shipmentStatus, ShipmentStatusEnum) === 2">
-            <div class="alert alert-warning border-0 p-3 mb-3 d-flex align-items-center rounded-3">
-              <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-warning"></i>
-              <div class="text-xs fw-semibold">No driver assigned to this shipment yet.</div>
-            </div>
-
-            <div class="driver-assign-form p-2 bg-light border rounded-3 text-xs">
-              <label class="fw-bold text-slate-500 mb-1 d-block text-xxs">Select Available Driver</label>
-              <select class="form-select form-select-sm py-1.5 rounded-2 shadow-none mb-2 text-xs" [(ngModel)]="selectedDriverId">
-                <option [value]="null" disabled selected>-- Choose Available Driver --</option>
-                <option *ngFor="let d of availableDrivers" [value]="d.id">
-                  {{ d.driverName }} ({{ getVehicleTypeName(d.vehicleType) }})
-                </option>
-              </select>
-              <button class="btn btn-xs btn-primary w-100 py-1.5 rounded-2 fw-semibold text-xxs shadow-sm d-flex align-items-center justify-content-center gap-1"
-                      (click)="assignDriver()"
-                      [disabled]="!selectedDriverId || isAssigningDriver">
-                <span *ngIf="isAssigningDriver" class="spinner-border spinner-border-sm" style="width: 10px; height: 10px;"></span>
-                <i class="bi bi-person-plus-fill"></i> Assign Driver
-              </button>
-            </div>
+          <div class="side-row">
+            <span class="side-lbl">ID</span>
+            <span class="side-val">#{{ shipment.customerId }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Shipping Destination Address -->
-      <div class="premium-card p-4 bg-white mb-4">
-        <h6 class="fw-bold mb-3 text-uppercase text-muted text-xs ls-1">Shipping Destination</h6>
-        <div class="d-flex align-items-start text-xs">
-          <i class="bi bi-geo-alt-fill text-primary me-2 fs-5"></i>
-          <div>
-            <p class="fw-bold mb-1 text-dark">
-              {{ selectedShipmentDetails.deliveryAddress?.buildingNumber ? selectedShipmentDetails.deliveryAddress.buildingNumber + ' ' : '' }}{{ selectedShipmentDetails.deliveryAddress?.street }}
-            </p>
-            <p class="text-muted-custom mb-1">{{ selectedShipmentDetails.deliveryAddress?.city }}</p>
-            <span class="badge bg-secondary-light text-secondary text-xxs fw-bold text-uppercase" *ngIf="selectedShipmentDetails.deliveryAddress?.state">{{ selectedShipmentDetails.deliveryAddress?.state }}</span>
+      <!-- Driver Card -->
+      <div class="side-card">
+        <div class="side-card-hdr">
+          <div class="side-icon driver-icon">🚗</div>
+          <h3>Driver</h3>
+        </div>
+
+        <!-- Has driver -->
+        <div *ngIf="shipment.driverName" class="side-rows animate-in">
+          <div class="side-row">
+            <span class="side-lbl">Name</span>
+            <span class="side-val">{{ shipment.driverName }}</span>
+          </div>
+          <div class="side-row">
+            <span class="side-lbl">Phone</span>
+            <a *ngIf="shipment.driverPhoneNumber" class="side-val side-phone"
+               href="tel:{{ shipment.driverPhoneNumber }}">
+              {{ shipment.driverPhoneNumber }}
+            </a>
+          </div>
+          <div class="side-row">
+            <span class="side-lbl">National ID</span>
+            <span class="side-val mono">{{ shipment.driverNationalId || 'N/A' }}</span>
+          </div>
+          <div class="side-row">
+            <span class="side-lbl">Driver ID</span>
+            <span class="side-val">#{{ shipment.driverId }}</span>
+          </div>
+        </div>
+
+        <!-- No driver -->
+        <div *ngIf="!shipment.driverName" class="no-driver-state">
+          <span>🚫</span>
+          <p>No driver assigned yet</p>
+          <button *ngIf="canAssign()" class="btn-assign-sm" (click)="openAssignModal()">
+            Assign Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Delivery Address Card -->
+      <div class="side-card">
+        <div class="side-card-hdr">
+          <div class="side-icon addr-icon">📍</div>
+          <h3>Delivery Address</h3>
+        </div>
+        <div class="addr-display">
+          <div class="addr-city">{{ shipment.deliveryAddress?.city }}, {{ shipment.deliveryAddress?.state }}</div>
+          <div class="addr-street">
+            {{ shipment.deliveryAddress?.buildingNumber ? '#' + shipment.deliveryAddress.buildingNumber + ', ' : '' }}
+            {{ shipment.deliveryAddress?.street }}
           </div>
         </div>
       </div>
 
-      <!-- Payment Summary -->
-      <div class="premium-card p-4 bg-white">
-        <h6 class="fw-bold mb-3 text-uppercase text-muted text-xs ls-1">Payment Summary</h6>
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted text-sm">Shipment Total</span>
-          <span class="fw-bold text-primary fs-5">{{ selectedShipmentDetails.price | number:'1.2-2' }}</span>
+      <!-- Payment Card -->
+      <div class="side-card">
+        <div class="side-card-hdr">
+          <div class="side-icon pay-icon">💳</div>
+          <h3>Payment</h3>
         </div>
-        <div class="d-flex justify-content-between mb-3">
-          <span class="text-muted text-sm">Payment Status</span>
-          <span class="badge bg-success-light text-success rounded-pill px-2.5 py-1 text-xxs fw-bold">Paid via Stripe</span>
-        </div>
-        <div class="border-top pt-3 mt-2 text-xs" *ngIf="selectedShipmentDetails.deliveryCode">
-          <div class="d-flex justify-content-between mb-1">
-            <span class="text-muted">Delivery Security Code</span>
-            <span class="font-monospace fw-bold text-dark">{{ selectedShipmentDetails.deliveryCode }}</span>
+        <div class="side-rows">
+          <div class="side-row">
+            <span class="side-lbl">Total Price</span>
+            <span class="side-val price-val">${{ shipment.price | number:'1.2-2' }}</span>
+          </div>
+          <div class="side-row">
+            <span class="side-lbl">Method</span>
+            <span class="side-val">Stripe</span>
+          </div>
+          <div class="side-row" *ngIf="shipment.deliveryCode">
+            <span class="side-lbl">Delivery Code</span>
+            <span class="side-val code-badge">{{ shipment.deliveryCode }}</span>
+          </div>
+          <div class="side-row">
+            <span class="side-lbl">Placed</span>
+            <span class="side-val">{{ shipment.orderTime | date:'MMM d, y' }}</span>
           </div>
         </div>
       </div>
 
     </div>
+  </div>
 
+  <!-- ── NOT FOUND ──────────────────────────────────────────── -->
+  <div *ngIf="!isLoading && !shipment" class="empty-page">
+    <div class="empty-icon">🔍</div>
+    <h3>Shipment Not Found</h3>
+    <p>This shipment does not exist or you don't have permission to view it.</p>
+    <a routerLink="/shipping/shipments" class="back-btn">← Back to Shipments</a>
   </div>
 </div>

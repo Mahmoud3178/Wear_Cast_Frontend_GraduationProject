@@ -2,33 +2,36 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ShippingCompanyService } from '../../../core/services/shipping-company.service';
-import { OrderService } from '../../../core/services/order.service';
-import { ShippingService } from '../../../core/services/shipping.service';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 
-export enum OrderStatus {
-  Pending = 0,
-  Paid = 1,
-  Failed = 2,
-  Cancelled = 3,
-  Refunded = 4,
-  Ready = 5,
-  PickedUp = 6
+// ─── Interfaces matching actual backend DTOs ─────────────────────────────────
+
+export interface AddressDto {
+  state: string;
+  city: string;
+  street: string;
+  buildingNumber?: string;
 }
 
-export enum OrderType {
-  Fixed = 0,
-  Designed = 1
+/** GET /api/ShippingCompany/Orders — response item */
+export interface OrderListItem {
+  orderId: number;
+  shipmentId: number;
+  orderType: string;       // "Fixed" | "Designed"
+  vendorName: string;
+  vendorAddress: AddressDto;
+  vendorPhoneNumber: string;
+  orderStatus: string;     // "Pending" | "Paid" | "Failed" | "Cancelled" | "Refunded" | "Ready" | "PickedUp"
+  numberOfItems: number;
+  shipmentStatus: string;  // "Pending" | "Unassigned" | "Assigned" | "PickingUp" | "OutForDelivery" | "Delivered"
+  createdOn: string;
 }
 
-export enum ShipmentStatus {
-  Pending = 0,
-  Unassigned = 1,
-  Assigned = 2,
-  PickingUp = 3,
-  OutForDelivery = 4,
-  Delivered = 5
+export interface PaginatedOrders {
+  items: OrderListItem[];
+  records: number;
+  pages: number;
 }
 
 @Component({
@@ -39,292 +42,191 @@ export enum ShipmentStatus {
   styleUrl: './orders.component.css'
 })
 export class OrdersComponent implements OnInit {
-  private shippingCompanyService = inject(ShippingCompanyService);
-  private orderService = inject(OrderService);
-  private shippingService = inject(ShippingService);
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/api`;
 
-  orders: any[] = [];
+  // ── Data ─────────────────────────────────────────────────────
+  orders: OrderListItem[] = [];
   isLoading = false;
-  isLoadingDetails = false;
-  private searchTimeout: any;
 
-  // Pagination
+  // ── Pagination ────────────────────────────────────────────────
   currentPage = 1;
   pageSize = 10;
   totalRecords = 0;
   totalPages = 0;
 
-  // Filters & Sorting
-  searchTerm = '';
-  statusFilter: number | 'All' = 'All';
-  typeFilter: number | 'All' = 'All';
-  shipmentStatusFilter: number | 'All' = 'All';
-  sortBy = 1; // Default to Newest (1)
+  // ── Filters ───────────────────────────────────────────────────
+  vendorCityFilter = '';
+  orderStatusFilter = '';
+  orderTypeFilter = '';
+  shipmentStatusFilter = '';
+  sortBy = 'Newest';
 
-  // Details Drawer/Modal
-  selectedOrder: any | null = null;
-  selectedOrderItems: any[] = [];
-  selectedOrderDesignedItems: any[] = [];
-  showDetailsDrawer = false;
+  // ── Toast ─────────────────────────────────────────────────────
+  successMessage = '';
+  errorMessage = '';
 
-  OrderStatusEnum = OrderStatus;
-  OrderTypeEnum = OrderType;
-  ShipmentStatusEnum = ShipmentStatus;
-  apiUrl = environment.apiUrl;
-
+  // ── Options ───────────────────────────────────────────────────
   sortOptions = [
-    { value: 1, label: 'Newest first' },
-    { value: 2, label: 'Oldest first' },
-    { value: 14, label: 'Items: Low to High' },
-    { value: 15, label: 'Items: High to Low' }
+    { value: 'Newest', label: 'Newest First' },
+    { value: 'Oldest', label: 'Oldest First' }
   ];
 
-  statusList = [
-    { value: OrderStatus.Pending, label: 'Pending' },
-    { value: OrderStatus.Paid, label: 'Paid' },
-    { value: OrderStatus.Failed, label: 'Failed' },
-    { value: OrderStatus.Cancelled, label: 'Cancelled' },
-    { value: OrderStatus.Refunded, label: 'Refunded' },
-    { value: OrderStatus.Ready, label: 'Ready' },
-    { value: OrderStatus.PickedUp, label: 'Picked Up' }
+  orderStatusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: '0', label: 'Pending' },
+    { value: '1', label: 'Paid' },
+    { value: '2', label: 'Failed' },
+    { value: '3', label: 'Cancelled' },
+    { value: '4', label: 'Refunded' },
+    { value: '5', label: 'Ready' },
+    { value: '6', label: 'Picked Up' }
   ];
 
-  shipmentStatusList = [
-    { value: ShipmentStatus.Unassigned, label: 'Unassigned (Awaiting Driver)' },
-    { value: ShipmentStatus.PickingUp, label: 'Picking Up' },
-    { value: ShipmentStatus.OutForDelivery, label: 'Out for Delivery' },
-    { value: ShipmentStatus.Delivered, label: 'Delivered' }
+  orderTypeOptions = [
+    { value: '', label: 'All Types' },
+    { value: '0', label: 'Fixed (Store)' },
+    { value: '1', label: 'Designed (Custom)' }
   ];
 
-  get totalPagesArray(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  shipmentStatusOptions = [
+    { value: '', label: 'All Shipment Statuses' },
+    { value: '0', label: 'Pending' },
+    { value: '1', label: 'Unassigned' },
+    { value: '2', label: 'Assigned' },
+    { value: '3', label: 'Picking Up' },
+    { value: '4', label: 'Out for Delivery' },
+    { value: '5', label: 'Delivered' }
+  ];
+
+  private debounceTimer: any;
+
+  ngOnInit(): void {
+    this.loadOrders();
   }
 
-  get visiblePages(): (number | string)[] {
+  // ─── Load ──────────────────────────────────────────────────────
+
+  loadOrders(): void {
+    this.isLoading = true;
+
+    let params = new HttpParams()
+      .set('PageIndex', this.currentPage)
+      .set('PageSize', this.pageSize)
+      .set('SortBy', this.sortBy);
+
+    if (this.orderStatusFilter)    params = params.set('OrderStatus', this.orderStatusFilter);
+    if (this.orderTypeFilter)      params = params.set('OrderType', this.orderTypeFilter);
+    if (this.shipmentStatusFilter) params = params.set('ShipmentStatus', this.shipmentStatusFilter);
+    if (this.vendorCityFilter.trim()) params = params.set('VendorCity', this.vendorCityFilter.trim());
+
+    this.http.get<PaginatedOrders>(`${this.apiUrl}/ShippingCompany/Orders`, { params })
+      .subscribe({
+        next: (data) => {
+          this.orders = data.items ?? [];
+          this.totalRecords = data.records ?? 0;
+          this.totalPages = data.pages ?? 0;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Failed to load orders', err);
+          this.isLoading = false;
+        }
+      });
+  }
+
+  // ─── Pagination ────────────────────────────────────────────────
+
+  goToPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages && p !== this.currentPage) {
+      this.currentPage = p;
+      this.loadOrders();
+    }
+  }
+
+  get pageNumbers(): (number | string)[] {
     const total = this.totalPages;
-    const current = this.currentPage;
-    const pages: (number | string)[] = [];
-    const boundary = 2; // Pages to display on each side of the current page
+    const cur   = this.currentPage;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
 
-    if (total <= 9) {
-      for (let i = 1; i <= total; i++) {
-        pages.push(i);
-      }
-      return pages;
-    }
-
-    pages.push(1);
-
-    const start = Math.max(2, current - boundary);
-    const end = Math.min(total - 1, current + boundary);
-
-    if (start > 2) {
-      pages.push('...');
-    }
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-
-    if (end < total - 1) {
-      pages.push('...');
-    }
-
+    const pages: (number | string)[] = [1];
+    const start = Math.max(2, cur - 2);
+    const end   = Math.min(total - 1, cur + 2);
+    if (start > 2) pages.push('…');
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (end < total - 1) pages.push('…');
     pages.push(total);
-
     return pages;
   }
 
-  ngOnInit() {
+  // ─── Filters ──────────────────────────────────────────────────
+
+  onFilterChange(): void {
+    this.currentPage = 1;
     this.loadOrders();
   }
 
-  loadOrders() {
-    this.isLoading = true;
-    const params: any = {
-      PageIndex: this.currentPage,
-      PageSize: this.pageSize,
-      SortBy: this.sortBy
+  onCityInput(): void {
+    clearTimeout(this.debounceTimer);
+    this.debounceTimer = setTimeout(() => this.onFilterChange(), 400);
+  }
+
+  clearFilters(): void {
+    this.vendorCityFilter = '';
+    this.orderStatusFilter = '';
+    this.orderTypeFilter = '';
+    this.shipmentStatusFilter = '';
+    this.sortBy = 'Newest';
+    this.currentPage = 1;
+    this.loadOrders();
+  }
+
+  // ─── Status helpers ────────────────────────────────────────────
+
+  getOrderStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      'Pending': 'Pending', 'Paid': 'Paid', 'Failed': 'Failed',
+      'Cancelled': 'Cancelled', 'Refunded': 'Refunded',
+      'Ready': 'Ready', 'PickedUp': 'Picked Up'
     };
-
-    if (this.statusFilter !== 'All') {
-      params.OrderStatus = this.statusFilter;
-    }
-
-    if (this.typeFilter !== 'All') {
-      params.OrderType = this.typeFilter;
-    }
-
-    if (this.shipmentStatusFilter !== 'All') {
-      params.ShipmentStatus = this.shipmentStatusFilter;
-    }
-
-    if (this.searchTerm.trim()) {
-      params.SearchTerm = this.searchTerm.trim();
-    }
-
-    this.shippingCompanyService.getOrders(params).subscribe({
-      next: (res: any) => {
-        const data = res?.data ?? res;
-        this.orders = data?.items || [];
-        this.totalRecords = data?.records || 0;
-        this.totalPages = data?.pages || 0;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Failed to load orders', err);
-        this.isLoading = false;
-      }
-    });
+    return map[status] ?? status;
   }
 
-  applyFilters() {
-    this.currentPage = 1;
-    this.loadOrders();
+  getOrderStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      'Pending': 'os-pending', 'Paid': 'os-paid', 'Ready': 'os-ready',
+      'PickedUp': 'os-pickedup', 'Failed': 'os-failed',
+      'Cancelled': 'os-cancelled', 'Refunded': 'os-refunded'
+    };
+    return map[status] ?? 'os-pending';
   }
 
-  onSearchInput() {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-    this.searchTimeout = setTimeout(() => {
-      this.applyFilters();
-    }, 500); // 500ms debounce
+  getShipmentStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      'Pending': 'Pending', 'Unassigned': 'Unassigned', 'Assigned': 'Assigned',
+      'PickingUp': 'Picking Up', 'OutForDelivery': 'Out for Delivery', 'Delivered': 'Delivered'
+    };
+    return map[status] ?? status;
   }
 
-  clearFilters() {
-    this.searchTerm = '';
-    this.statusFilter = 'All';
-    this.typeFilter = 'All';
-    this.shipmentStatusFilter = 'All';
-    this.sortBy = 1;
-    this.currentPage = 1;
-    this.loadOrders();
+  getShipmentStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      'Delivered': 'ss-delivered', 'OutForDelivery': 'ss-transit',
+      'PickingUp': 'ss-picking', 'Assigned': 'ss-assigned',
+      'Unassigned': 'ss-unassigned', 'Pending': 'ss-pending'
+    };
+    return map[status] ?? 'ss-pending';
   }
 
-  nextPage() {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.loadOrders();
-    }
+  getOrderTypeLabel(type: string): string {
+    if (type === 'Fixed' || type === '0') return 'Fixed';
+    if (type === 'Designed' || type === '1') return 'Designed';
+    return type;
   }
 
-  previousPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.loadOrders();
-    }
+  getOrderTypeClass(type: string): string {
+    return (type === 'Fixed' || type === '0') ? 'type-fixed' : 'type-designed';
   }
 
-  goToPage(page: number | string) {
-    const num = typeof page === 'string' ? parseInt(page, 10) : page;
-    if (!isNaN(num) && num >= 1 && num <= this.totalPages) {
-      this.currentPage = num;
-      this.loadOrders();
-    }
-  }
-
-  viewOrderDetails(order: any) {
-    this.selectedOrder = order;
-    this.selectedOrderItems = [];
-    this.selectedOrderDesignedItems = [];
-    this.isLoadingDetails = true;
-    this.showDetailsDrawer = true;
-
-    this.shippingCompanyService.getOrderDetails(order.orderId).subscribe({
-      next: (res: any) => {
-        const details = res?.data ?? res;
-        // Merge full recipient, address & payout info from the return object if available
-        if (details) {
-          this.selectedOrder = {
-            ...this.selectedOrder,
-            ...details
-          };
-          this.selectedOrderItems = details.items || [];
-          this.selectedOrderDesignedItems = details.designedItems || [];
-        }
-        this.isLoadingDetails = false;
-      },
-      error: (err) => {
-        console.error('Failed to load order details items', err);
-        this.isLoadingDetails = false;
-      }
-    });
-  }
-
-  closeDetailsDrawer() {
-    this.showDetailsDrawer = false;
-    this.selectedOrder = null;
-    this.selectedOrderItems = [];
-    this.selectedOrderDesignedItems = [];
-  }
-
-  // Helper formatting methods
-  getStatusLabel(status: any): string {
-    const s = this.getNumericStatus(status, OrderStatus);
-    switch (s) {
-      case OrderStatus.Pending: return 'Pending';
-      case OrderStatus.Paid: return 'Paid';
-      case OrderStatus.Failed: return 'Failed';
-      case OrderStatus.Cancelled: return 'Cancelled';
-      case OrderStatus.Refunded: return 'Refunded';
-      case OrderStatus.Ready: return 'Ready';
-      case OrderStatus.PickedUp: return 'Picked Up';
-      default: return 'Unknown';
-    }
-  }
-
-  getStatusBadgeClass(status: any): string {
-    const s = this.getNumericStatus(status, OrderStatus);
-    switch (s) {
-      case OrderStatus.Paid: return 'status-success';
-      case OrderStatus.Ready: return 'status-info';
-      case OrderStatus.PickedUp: return 'status-info';
-      case OrderStatus.Pending: return 'status-warning';
-      case OrderStatus.Failed:
-      case OrderStatus.Cancelled: return 'status-danger';
-      default: return 'status-secondary';
-    }
-  }
-
-  getShipmentStatusLabel(status: any): string {
-    const s = this.getNumericStatus(status, ShipmentStatus);
-    switch (s) {
-      case ShipmentStatus.Pending: return 'Pending';
-      case ShipmentStatus.Unassigned: return 'Unassigned';
-      case ShipmentStatus.Assigned: return 'Assigned';
-      case ShipmentStatus.PickingUp: return 'Picking Up';
-      case ShipmentStatus.OutForDelivery: return 'Out for Delivery';
-      case ShipmentStatus.Delivered: return 'Delivered';
-      default: return 'Pending';
-    }
-  }
-
-  getShipmentStatusBadgeClass(status: any): string {
-    const s = this.getNumericStatus(status, ShipmentStatus);
-    switch (s) {
-      case ShipmentStatus.Delivered: return 'shipment-success';
-      case ShipmentStatus.OutForDelivery:
-      case ShipmentStatus.PickingUp: return 'shipment-info';
-      case ShipmentStatus.Assigned: return 'shipment-info';
-      case ShipmentStatus.Unassigned: return 'shipment-warning';
-      default: return 'shipment-secondary';
-    }
-  }
-
-  getNumericStatus(status: any, enumObj: any): number {
-    if (status === null || status === undefined) return -1;
-    if (typeof status === 'number') return status;
-    if (typeof status === 'string') {
-      if (!isNaN(Number(status))) return Number(status);
-      return enumObj[status as keyof typeof enumObj] as unknown as number;
-    }
-    return -1;
-  }
-
-  resolveImageUrl(img: string | null): string {
-    if (!img) return 'assets/images/placeholder.png';
-    if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    return `${this.apiUrl}/${img}`;
-  }
+  trackByOrderId(_: number, o: OrderListItem): number { return o.orderId; }
 }

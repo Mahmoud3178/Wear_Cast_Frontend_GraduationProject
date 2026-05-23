@@ -67,15 +67,18 @@ export class DriverService {
     return this.http.delete<void>(`${this.apiUrl}/Drivers/${id}`);
   }
 
-  // --- Driver Shipments ---
-  getAllDriverShipments(driverId: number, status?: string): Observable<DriverShipment[]> {
-    let params = new HttpParams().set('DriverId', driverId.toString());
-    if (status) {
-      params = params.set('ShipmentStatus', status);
-    }
-    return this.http.get<PaginatedResponse<DriverShipment>>(`${this.apiUrl}/DriverShipments`, { params }).pipe(
-      map(response => response.items || [])
-    );
+  getAllDriverShipments(filters: any): Observable<PaginatedResponse<DriverShipment>> {
+    let params = new HttpParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+        params = params.set(key, filters[key].toString());
+      }
+    });
+    return this.http.get<PaginatedResponse<DriverShipment>>(`${this.apiUrl}/DriverShipments`, { params });
+  }
+
+  unassignShipment(shipmentId: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/Shipments/${shipmentId}/unassign`, {});
   }
 
   getDriverShipmentById(id: number): Observable<DriverShipmentDetails> {
@@ -87,7 +90,7 @@ export class DriverService {
   }
 
   getShipmentOrders(shipmentId: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/Orders/shipment/${shipmentId}`);
+    return this.http.get<any>(`${this.apiUrl}/Shipments/${shipmentId}/Orders`);
   }
 
   getDriverOrders(driverId: number, pageIndex: number = 1, pageSize: number = 100): Observable<any> {

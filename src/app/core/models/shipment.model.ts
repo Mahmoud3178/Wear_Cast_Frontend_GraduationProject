@@ -20,6 +20,11 @@ export interface OrderSummary {
   storeName: string;
   itemsCount: number;
   status?: string;
+  vendorPhoneNumber?: string;
+  recipientName?: string;
+  recipientPhoneNumber?: string;
+  totalAmount?: number;
+  orderType?: string;
 }
 
 export interface Shipment {
@@ -89,6 +94,13 @@ export interface DriverShipmentDetails {
   customerPhoneNumber: string;
   orders: OrderSummary[];
   shippingCompany?: any;
+  price?: number;
+  deliveryCode?: string;
+  customerId?: number;
+  driverId?: number;
+  driverName?: string;
+  driverPhoneNumber?: string;
+  driverNationalId?: string;
 }
 
 export interface UpdateShipmentStatusRequest {

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { DriverService } from '../../../../core/services/driver.service';
 import { DriverShipment, ShipmentStatus } from '../../../../core/models/shipment.model';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -16,22 +16,65 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class ShipmentsListComponent implements OnInit {
   private driverService = inject(DriverService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private authService = inject(AuthService);
 
   shipments: DriverShipment[] = [];
-  filteredShipments: DriverShipment[] = [];
   isLoading = false;
   errorMessage = '';
 
+  // Backend filters mapping to GetAllDriverShipmentsRequestDTO
+  pageIndex = 1;
+  pageSize = 100; // Keeping it large for now to avoid pagination UI if not strictly required, or adjust as needed
+  sortBy = 1; // Assuming 1 is Newest
+  selectedStatus: string | null = null;
+  deliveryCity: string | null = null;
+  deliveryStreet: string | null = null;
+  customerFirstName: string | null = null;
+  customerLastName: string | null = null;
+
+  // Single search field that we'll try to smartly parse, or we can just use explicit fields
   searchTerm = '';
-  selectedStatus = '';
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      if (params['status']) {
-        this.selectedStatus = params['status'];
-      }
+      this.selectedStatus = params['status'] || null;
+      this.deliveryCity = params['city'] || null;
+      this.searchTerm = params['search'] || '';
+      
+      this.parseSearchTerm();
       this.loadShipments();
+    });
+  }
+
+  parseSearchTerm() {
+    // Basic logic to split a search term into first/last name if it looks like a name, or just pass it as first name.
+    if (this.searchTerm && this.searchTerm.trim() !== '') {
+      const parts = this.searchTerm.trim().split(' ');
+      if (parts.length > 1) {
+        this.customerFirstName = parts[0];
+        this.customerLastName = parts.slice(1).join(' ');
+      } else {
+        this.customerFirstName = this.searchTerm.trim();
+        this.customerLastName = null;
+      }
+    } else {
+      this.customerFirstName = null;
+      this.customerLastName = null;
+    }
+  }
+
+  onSearchChange() {
+    this.pageIndex = 1; // Reset to first page
+    // Update URL query params
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { 
+        status: this.selectedStatus || null,
+        city: this.deliveryCity || null,
+        search: this.searchTerm || null
+      },
+      queryParamsHandling: 'merge'
     });
   }
 
@@ -43,65 +86,58 @@ export class ShipmentsListComponent implements OnInit {
       console.error('Driver ID not found in token');
       this.errorMessage = 'Driver ID not found. Please log in again.';
       this.isLoading = false;
-      this.loadMockData();
       return;
     }
 
-    this.driverService.getAllDriverShipments(driverId).subscribe({
-      next: (data) => {
-        this.shipments = data;
-        this.applyFilters();
+    const filters: any = {
+      DriverId: driverId,
+      PageIndex: this.pageIndex,
+      PageSize: this.pageSize,
+      SortBy: this.sortBy
+    };
+
+    if (this.selectedStatus && this.selectedStatus !== '') {
+      filters.ShipmentStatus = this.selectedStatus;
+    }
+    if (this.deliveryCity) {
+      filters.DeliveryCity = this.deliveryCity;
+    }
+    if (this.customerFirstName) {
+      filters.CustomerFirstName = this.customerFirstName;
+    }
+    if (this.customerLastName) {
+      filters.CustomerLastName = this.customerLastName;
+    }
+
+    this.driverService.getAllDriverShipments(filters).subscribe({
+      next: (data: any) => {
+        // Handle PaginatedResponse logic where items are in .items
+        this.shipments = data.items || data.Items || data || [];
         this.isLoading = false;
       },
       error: (err) => {
         console.error('Failed to load shipments', err);
         this.errorMessage = 'Failed to load shipments from server.';
         this.isLoading = false;
-        // Fallback to mock data if API fails or returns empty
-        this.loadMockData();
       }
     });
   }
 
-  loadMockData() {
-    this.shipments = [
-      { id: 101, deliveryCity: 'Gaza', deliveryStreet: 'Al-Wehda St', shipmentStatus: ShipmentStatus.Delivered, orderTime: new Date().toISOString(), customerName: 'Ahmed Ali', customerPhoneNumber: '+970599112233', numberOfOrders: 3 },
-      { id: 102, deliveryCity: 'Rafah', deliveryStreet: 'Main St', shipmentStatus: ShipmentStatus.OutForDelivery, orderTime: new Date().toISOString(), customerName: 'Sarah Salem', customerPhoneNumber: '+970599445566', numberOfOrders: 2 },
-      { id: 103, deliveryCity: 'Khan Younis', deliveryStreet: 'Al-Bahr St', shipmentStatus: ShipmentStatus.Assigned, orderTime: new Date().toISOString(), customerName: 'Khaled Hassan', customerPhoneNumber: '+970599778899', numberOfOrders: 1 },
-      { id: 104, deliveryCity: 'Gaza', deliveryStreet: 'Remal', shipmentStatus: ShipmentStatus.PickingUp, orderTime: new Date().toISOString(), customerName: 'Fatma Nasr', customerPhoneNumber: '+970599001122', numberOfOrders: 4 }
-    ] as any[];
-    this.applyFilters();
-  }
-
-  applyFilters() {
-    this.filteredShipments = this.shipments.filter(s => {
-      const matchesSearch = s.id.toString().includes(this.searchTerm) || 
-                            s.deliveryCity?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                            s.deliveryStreet?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                            s.customerName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                            s.customerPhoneNumber?.toLowerCase().includes(this.searchTerm);
-      
-      const matchesStatus = !this.selectedStatus || s.shipmentStatus.toString() === this.selectedStatus;
-      
-      return matchesSearch && matchesStatus;
-    });
-  }
-
   getStatusClass(status: any): string {
-    const s = status.toString();
-    if (s === 'Delivered' || s === '6' || s === ShipmentStatus.Delivered.toString()) return 'bg-success-soft text-success';
-    if (s === 'OutForDelivery' || s === '5' || s === ShipmentStatus.OutForDelivery.toString()) return 'bg-primary-soft text-primary';
-    if (s === 'PickingUp' || s === '4' || s === ShipmentStatus.PickingUp.toString()) return 'bg-warning-soft text-warning';
-    if (s === 'Assigned' || s === '3' || s === ShipmentStatus.Assigned.toString()) return 'bg-info-soft text-info';
+    const s = status?.toString() || '';
+    if (s === 'Delivered' || s === '6') return 'bg-success-soft text-success';
+    if (s === 'OutForDelivery' || s === '5') return 'bg-primary-soft text-primary';
+    if (s === 'PickingUp' || s === '4') return 'bg-warning-soft text-warning';
+    if (s === 'Assigned' || s === '3') return 'bg-info-soft text-info';
     return 'bg-slate-100 text-slate-500';
   }
 
   getStatusName(status: any): string {
-    const s = status.toString();
-    if (s === 'Delivered' || s === '6' || s === ShipmentStatus.Delivered.toString()) return 'Delivered';
-    if (s === 'OutForDelivery' || s === '5' || s === ShipmentStatus.OutForDelivery.toString()) return 'Out For Delivery';
-    if (s === 'PickingUp' || s === '4' || s === ShipmentStatus.PickingUp.toString()) return 'Picking Up';
-    if (s === 'Assigned' || s === '3' || s === ShipmentStatus.Assigned.toString()) return 'Assigned';
+    const s = status?.toString() || '';
+    if (s === 'Delivered' || s === '6') return 'Delivered';
+    if (s === 'OutForDelivery' || s === '5') return 'Out For Delivery';
+    if (s === 'PickingUp' || s === '4') return 'Picking Up';
+    if (s === 'Assigned' || s === '3') return 'Assigned';
     return s;
   }
 }

@@ -21,20 +21,20 @@
       <div class="col-12 col-md-6">
         <div class="search-bar d-flex align-items-center px-3 py-2 rounded-4 border bg-white">
           <i class="bi bi-search text-slate-400 me-2"></i>
-          <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" class="form-control border-0 bg-transparent shadow-none p-0 text-sm" placeholder="Search by ID, destination, or customer...">
+          <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" (keyup.enter)="onSearchChange()" class="form-control border-0 bg-transparent shadow-none p-0 text-sm" placeholder="Search by destination or customer...">
         </div>
       </div>
       <div class="col-12 col-md-3">
-        <select [(ngModel)]="selectedStatus" (ngModelChange)="applyFilters()" class="form-select rounded-4 border-slate-200 text-sm">
-          <option value="">All Statuses</option>
-          <option value="Assigned">Assigned</option>
-          <option value="PickingUp">Picking Up</option>
-          <option value="OutForDelivery">Out For Delivery</option>
-          <option value="Delivered">Delivered</option>
+        <select [(ngModel)]="selectedStatus" (ngModelChange)="onSearchChange()" class="form-select rounded-4 border-slate-200 text-sm">
+          <option [ngValue]="null">All Statuses</option>
+          <option value="3">Assigned</option>
+          <option value="4">Picking Up</option>
+          <option value="5">Out For Delivery</option>
+          <option value="6">Delivered</option>
         </select>
       </div>
       <div class="col-12 col-md-3 text-md-end">
-        <span class="text-sm text-slate-500 fw-medium">Showing {{ filteredShipments.length }} results</span>
+        <span class="text-sm text-slate-500 fw-medium">Showing {{ shipments.length }} results</span>
       </div>
     </div>
   </div>
@@ -66,7 +66,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let shipment of filteredShipments" class="cursor-pointer" [routerLink]="['/driver/shipments', shipment.id]">
+          <tr *ngFor="let shipment of shipments" class="cursor-pointer" [routerLink]="['/driver/shipments', shipment.id]">
             <td class="px-4">
               <div class="d-flex align-items-center gap-3">
                 <div class="pkg-icon bg-slate-100 text-slate-500 rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
@@ -100,7 +100,7 @@
               </button>
             </td>
           </tr>
-          <tr *ngIf="filteredShipments.length === 0">
+          <tr *ngIf="shipments.length === 0">
             <td colspan="7" class="text-center py-5 text-muted">No shipments found matching the filters.</td>
           </tr>
         </tbody>

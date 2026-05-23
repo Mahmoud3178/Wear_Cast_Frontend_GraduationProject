@@ -2,11 +2,41 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
-import { ShippingService } from '../../../core/services/shipping.service';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import { DriverService } from '../../../core/services/driver.service';
-import { Shipment, ShipmentDetails, ShipmentStatus } from '../../../core/models/shipment.model';
-import { Driver, DriverStatus, DeliveryVehicleType } from '../../../core/models/driver.model';
+import { DriverStatus, DeliveryVehicleType } from '../../../core/models/driver.model';
+
+// ─── Interfaces matching actual backend DTOs ────────────────────────────────
+
+export interface ShipmentListItem {
+  id: number;
+  orderTime: string;
+  shipmentStatus: string;   // string enum from backend e.g. "Assigned"
+  price: number;
+  numberOfOrders: number;
+  deliveryState: string;
+  deliveryCity: string;
+  deliveryStreet: string;
+  deliveryCode: string;
+  driverName: string | null;
+  customerName: string;
+}
+
+export interface PaginatedShipments {
+  items: ShipmentListItem[];
+  records: number;
+  pages: number;
+}
+
+export interface DriverListItem {
+  id: number;
+  driverName?: string;
+  name?: string;
+  status: any;
+  vehicleType?: any;
+  driverCity?: string;
+}
 
 @Component({
   selector: 'app-shipments',
@@ -16,116 +46,104 @@ import { Driver, DriverStatus, DeliveryVehicleType } from '../../../core/models/
   styleUrl: './shipments.component.css'
 })
 export class ShipmentsComponent implements OnInit {
-  private shippingService = inject(ShippingService);
+  private http = inject(HttpClient);
   private driverService = inject(DriverService);
+  private apiUrl = `${environment.apiUrl}/api`;
 
-  searchTerm: string = '';
-  statusFilter: number | 'All' = 'All';
-
-  allShipments: Shipment[] = [];
-  filteredShipments: Shipment[] = [];
-  drivers: Driver[] = [];
-  availableDrivers: Driver[] = [];
+  // ── Data ──────────────────────────────────────────────────────
+  shipments: ShipmentListItem[] = [];
+  availableDrivers: DriverListItem[] = [];
   isLoading = true;
+  isAssigning = false;
 
-  currentPage: number = 1;
-  pageSize: number = 10;
-  totalRecords: number = 0;
-  totalPages: number = 0;
+  // ── Pagination ────────────────────────────────────────────────
+  currentPage = 1;
+  pageSize = 10;
+  totalRecords = 0;
+  totalPages = 0;
+
+  // ── Filters ───────────────────────────────────────────────────
   searchCustomerName = '';
   searchCity = '';
-  sortBy = 'Newest';
-  
   searchState = '';
   searchStreet = '';
   searchDriverName = '';
+  searchDriverNationalId = '';
+  statusFilter = '';
+  sortBy = 'Newest';
   minPrice: number | null = null;
   maxPrice: number | null = null;
   minOrders: number | null = null;
   maxOrders: number | null = null;
-  startDate: string | null = null;
-  endDate: string | null = null;
-  searchDriverNationalId = '';
-  
-  sortOptions = [
-    { value: 'Newest', label: 'Newest' },
-    { value: 'PriceAsc', label: 'Price (Low to High)' },
-    { value: 'PriceDesc', label: 'Price (High to Low)' },
-    { value: 'NumberOfOrdersDesc', label: 'Orders (High to Low)' }
-  ];
-
-  // View Details Modal
-  showDetailsModal = false;
-  selectedShipmentDetails: any | null = null;
-  selectedShipmentFixedItems: any[] = [];
-  selectedShipmentDesignedItems: any[] = [];
-  isLoadingDetails = false;
-
-  // Assign Driver Modal
-  showAssignModal = false;
-  selectedShipmentForAssign: Shipment | null = null;
-  selectedDriverId: number | null = null;
-
-  ShipmentStatusEnum = ShipmentStatus;
+  startDate = '';
+  endDate = '';
   showAdvancedFilters = false;
 
-  constructor() { }
+  sortOptions = [
+    { value: 'Newest',             label: 'Newest First' },
+    { value: 'PriceAsc',           label: 'Price ↑' },
+    { value: 'PriceDesc',          label: 'Price ↓' },
+    { value: 'NumberOfOrdersDesc', label: 'Orders ↓' }
+  ];
 
-  public clearFilters() {
-    this.searchCustomerName = '';
-    this.searchCity = '';
-    this.searchState = '';
-    this.searchStreet = '';
-    this.searchDriverName = '';
-    this.searchDriverNationalId = '';
-    this.minPrice = null;
-    this.maxPrice = null;
-    this.minOrders = null;
-    this.maxOrders = null;
-    this.startDate = null;
-    this.endDate = null;
-    this.sortBy = 'Newest';
-    this.statusFilter = 'All';
-    this.currentPage = 1;
-    this.loadShipments();
-  }
+  statusOptions = [
+    { value: '',              label: 'All Statuses' },
+    { value: '1',             label: 'Pending' },
+    { value: '2',             label: 'Unassigned' },
+    { value: '3',             label: 'Assigned' },
+    { value: '4',             label: 'Picking Up' },
+    { value: '5',             label: 'Out for Delivery' },
+    { value: '6',             label: 'Delivered' }
+  ];
+
+  // ── Assign modal ──────────────────────────────────────────────
+  showAssignModal = false;
+  selectedShipment: ShipmentListItem | null = null;
+  selectedDriverId: number | null = null;
+  isLoadingDrivers = false;
+
+  // ── Unassign modal ────────────────────────────────────────────
+  showUnassignModal = false;
+  unassignTarget: ShipmentListItem | null = null;
+  isUnassigning = false;
+
+  // ── Toast ─────────────────────────────────────────────────────
+  successMessage = '';
+  errorMessage = '';
 
   ngOnInit(): void {
     this.loadShipments();
-    this.loadDrivers();
   }
 
-  public loadShipments() {
+  // ─── Load Shipments ──────────────────────────────────────────
+
+  loadShipments(): void {
     this.isLoading = true;
-    const params: any = {
-      PageIndex: this.currentPage,
-      PageSize: this.pageSize,
-      SortBy: this.sortBy
-    };
 
-    if (this.searchCustomerName.trim()) params.CustomerFirstName = this.searchCustomerName.trim();
-    if (this.searchCity.trim()) params.DeliveryCity = this.searchCity.trim();
-    if (this.searchState.trim()) params.DeliveryState = this.searchState.trim();
-    if (this.searchStreet.trim()) params.DeliveryStreet = this.searchStreet.trim();
-    if (this.searchDriverName.trim()) params.DriverFirstName = this.searchDriverName.trim();
-    if (this.searchDriverNationalId.trim()) params.DriverNationalId = this.searchDriverNationalId.trim();
-    
-    if (this.minPrice !== null) params.MinPrice = this.minPrice;
-    if (this.maxPrice !== null) params.MaxPrice = this.maxPrice;
-    if (this.minOrders !== null) params.MinNumberOfOrders = this.minOrders;
-    if (this.maxOrders !== null) params.MaxNumberOfOrders = this.maxOrders;
-    
-    if (this.startDate) params.StartDate = this.startDate;
-    if (this.endDate) params.EndDate = this.endDate;
+    let params = new HttpParams()
+      .set('PageIndex', this.currentPage)
+      .set('PageSize', this.pageSize)
+      .set('SortBy', this.sortBy);
 
-    if (this.statusFilter !== 'All') params.ShipmentStatus = this.statusFilter;
+    if (this.searchCustomerName.trim()) params = params.set('CustomerFirstName', this.searchCustomerName.trim());
+    if (this.searchCity.trim())         params = params.set('DeliveryCity', this.searchCity.trim());
+    if (this.searchState.trim())        params = params.set('DeliveryState', this.searchState.trim());
+    if (this.searchStreet.trim())       params = params.set('DeliveryStreet', this.searchStreet.trim());
+    if (this.searchDriverName.trim())   params = params.set('DriverFirstName', this.searchDriverName.trim());
+    if (this.searchDriverNationalId.trim()) params = params.set('DriverNationalId', this.searchDriverNationalId.trim());
+    if (this.statusFilter)              params = params.set('ShipmentStatus', this.statusFilter);
+    if (this.minPrice !== null)         params = params.set('MinPrice', this.minPrice);
+    if (this.maxPrice !== null)         params = params.set('MaxPrice', this.maxPrice);
+    if (this.minOrders !== null)        params = params.set('MinNumberOfOrders', this.minOrders);
+    if (this.maxOrders !== null)        params = params.set('MaxNumberOfOrders', this.maxOrders);
+    if (this.startDate)                 params = params.set('StartDate', this.startDate);
+    if (this.endDate)                   params = params.set('EndDate', this.endDate);
 
-    this.shippingService.getAllShipments(params).subscribe({
+    this.http.get<PaginatedShipments>(`${this.apiUrl}/Shipments`, { params }).subscribe({
       next: (data) => {
-        this.allShipments = data.items || [];
-        this.totalRecords = data.records;
-        this.totalPages = data.pages;
-        this.filterShipments();
+        this.shipments = data.items ?? [];
+        this.totalRecords = data.records ?? 0;
+        this.totalPages = data.pages ?? 0;
         this.isLoading = false;
       },
       error: (err) => {
@@ -135,183 +153,186 @@ export class ShipmentsComponent implements OnInit {
     });
   }
 
-  public loadDrivers() {
-    this.driverService.getAllDrivers().subscribe({
-      next: (data) => {
-        const drivers = data.items || [];
-        this.drivers = drivers;
-        // Filter only available drivers for the assignment dropdown
-        this.availableDrivers = drivers.filter((d: any) => {
-          const status = this.getNumericStatus(d.status, DriverStatus);
-          return status === DriverStatus.Available;
-        });
-      },
-      error: (err) => console.error('Failed to load drivers', err)
-    });
-  }
+  // ─── Pagination ──────────────────────────────────────────────
 
-  public filterShipments() {
-    this.filteredShipments = this.allShipments;
-  }
-
-  public nextPage() {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.loadShipments();
-    }
-  }
-
-  public previousPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.loadShipments();
-    }
-  }
-
-  public goToPage(page: number) {
-    if (page >= 1 && page <= this.totalPages) {
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
       this.currentPage = page;
       this.loadShipments();
     }
   }
 
-  public openDetailsModal(shipment: Shipment) {
-    this.showDetailsModal = true;
-    this.isLoadingDetails = true;
-    this.selectedShipmentFixedItems = [];
-    this.selectedShipmentDesignedItems = [];
-
-    forkJoin({
-      details: this.shippingService.getShipmentById(shipment.id),
-      ordersData: this.shippingService.getOrdersByShipmentId(shipment.id),
-      itemsData: this.shippingService.getShipmentOrderItems(shipment.id)
-    }).subscribe({
-      next: ({ details, ordersData, itemsData }) => {
-        this.selectedShipmentDetails = {
-          ...details,
-          orders: ordersData?.orders || []
-        };
-        this.selectedShipmentFixedItems = itemsData?.fixedItems?.items || [];
-        this.selectedShipmentDesignedItems = itemsData?.designedItems?.items || [];
-        this.isLoadingDetails = false;
-      },
-      error: (err) => {
-        console.error('Failed to load shipment details', err);
-        this.isLoadingDetails = false;
-      }
-    });
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const cur = this.currentPage;
+    const delta = 2;
+    const pages: number[] = [];
+    for (let i = Math.max(1, cur - delta); i <= Math.min(total, cur + delta); i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
-  public closeDetailsModal() {
-    this.showDetailsModal = false;
-    this.selectedShipmentDetails = null;
-    this.selectedShipmentFixedItems = [];
-    this.selectedShipmentDesignedItems = [];
+  // ─── Filters ─────────────────────────────────────────────────
+
+  clearFilters(): void {
+    this.searchCustomerName = '';
+    this.searchCity = '';
+    this.searchState = '';
+    this.searchStreet = '';
+    this.searchDriverName = '';
+    this.searchDriverNationalId = '';
+    this.statusFilter = '';
+    this.sortBy = 'Newest';
+    this.minPrice = null;
+    this.maxPrice = null;
+    this.minOrders = null;
+    this.maxOrders = null;
+    this.startDate = '';
+    this.endDate = '';
+    this.currentPage = 1;
+    this.loadShipments();
   }
 
-  public openAssignModal(shipment: Shipment) {
-    this.selectedShipmentForAssign = shipment;
+  onFilterChange(): void {
+    this.currentPage = 1;
+    this.loadShipments();
+  }
+
+  // ─── Status helpers ──────────────────────────────────────────
+
+  getStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      'Pending':         'Pending',
+      'Unassigned':      'Unassigned',
+      'Assigned':        'Assigned',
+      'PickingUp':       'Picking Up',
+      'OutForDelivery':  'Out for Delivery',
+      'Delivered':       'Delivered'
+    };
+    return map[status] ?? status;
+  }
+
+  getStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      'Pending':         'st-pending',
+      'Unassigned':      'st-unassigned',
+      'Assigned':        'st-assigned',
+      'PickingUp':       'st-picking',
+      'OutForDelivery':  'st-transit',
+      'Delivered':       'st-delivered'
+    };
+    return map[status] ?? 'st-pending';
+  }
+
+  canAssign(status: string): boolean {
+    return status === 'Unassigned' || status === 'Pending';
+  }
+
+  canUnassign(status: string): boolean {
+    return status === 'Assigned';
+  }
+
+  // ─── Assign ──────────────────────────────────────────────────
+
+  openAssignModal(shipment: ShipmentListItem): void {
+    this.selectedShipment = shipment;
     this.selectedDriverId = null;
     this.showAssignModal = true;
+    this.loadAvailableDrivers();
   }
 
-  public closeAssignModal() {
+  closeAssignModal(): void {
     this.showAssignModal = false;
-    this.selectedShipmentForAssign = null;
+    this.selectedShipment = null;
     this.selectedDriverId = null;
   }
 
-  public assignDriver() {
-    if (!this.selectedShipmentForAssign || !this.selectedDriverId) return;
+  loadAvailableDrivers(): void {
+    this.isLoadingDrivers = true;
+    this.driverService.getAllDrivers({ PageSize: 100 }).subscribe({
+      next: (data: any) => {
+        const all: DriverListItem[] = data.items ?? data ?? [];
+        this.availableDrivers = all.filter((d: any) => {
+          const s = typeof d.status === 'string' ? d.status : '';
+          const n = typeof d.status === 'number' ? d.status : -1;
+          return s === 'Available' || s === '1' || n === 1;
+        });
+        this.isLoadingDrivers = false;
+      },
+      error: () => { this.isLoadingDrivers = false; }
+    });
+  }
 
-    this.shippingService.assignDriver({
-      shipmentId: this.selectedShipmentForAssign.id,
-      driverId: this.selectedDriverId
-    }).subscribe({
+  confirmAssign(): void {
+    if (!this.selectedShipment || !this.selectedDriverId) return;
+    this.isAssigning = true;
+
+    this.http.put<void>(
+      `${this.apiUrl}/Shipments/${this.selectedShipment.id}/assign`,
+      { driverId: this.selectedDriverId }
+    ).subscribe({
       next: () => {
+        this.isAssigning = false;
         this.closeAssignModal();
+        this.showToast('Driver assigned successfully!', 'success');
         this.loadShipments();
-        this.loadDrivers(); // Refresh drivers list to update availability
       },
       error: (err) => {
-        console.error('Failed to assign driver', err);
-        const errorMessage = err.error?.message || err.error || 'Failed to assign driver. Please ensure the driver is available and the shipment is Unassigned.';
-        alert(errorMessage);
+        this.isAssigning = false;
+        const msg = err?.error?.message || err?.error?.error?.message || 'Failed to assign driver.';
+        this.showToast(msg, 'error');
       }
     });
   }
 
-  public unassignShipment(shipmentId: number) {
-    if (!confirm('Are you sure you want to unassign the driver from this shipment?')) return;
+  // ─── Unassign ────────────────────────────────────────────────
 
-    this.isLoading = true;
-    this.shippingService.unassignDriver(shipmentId).subscribe({
-      next: () => {
-        this.loadShipments();
-        this.loadDrivers(); // Refresh availability
-      },
-      error: (err) => {
-        console.error('Failed to unassign driver', err);
-        const errorMessage = err.error?.message || err.error || 'Failed to unassign driver.';
-        alert(errorMessage);
-        this.isLoading = false;
-      }
-    });
+  openUnassignModal(shipment: ShipmentListItem): void {
+    this.unassignTarget = shipment;
+    this.showUnassignModal = true;
   }
 
-  public getStatusName(status: any): string {
-    const s = this.getNumericStatus(status, ShipmentStatus);
-    switch (s) {
-      case ShipmentStatus.Pending: return 'Pending';
-      case ShipmentStatus.Unassigned: return 'Unassigned';
-      case ShipmentStatus.Assigned: return 'Assigned';
-      case ShipmentStatus.PickingUp: return 'Picking Up';
-      case ShipmentStatus.OutForDelivery: return 'Out for Delivery';
-      case ShipmentStatus.Delivered: return 'Delivered';
-      default: return 'Unknown';
+  closeUnassignModal(): void {
+    this.showUnassignModal = false;
+    this.unassignTarget = null;
+  }
+
+  confirmUnassign(): void {
+    if (!this.unassignTarget) return;
+    this.isUnassigning = true;
+
+    this.http.put<void>(`${this.apiUrl}/Shipments/${this.unassignTarget.id}/unassign`, {})
+      .subscribe({
+        next: () => {
+          this.isUnassigning = false;
+          this.closeUnassignModal();
+          this.showToast('Driver unassigned successfully!', 'success');
+          this.loadShipments();
+        },
+        error: (err) => {
+          this.isUnassigning = false;
+          const msg = err?.error?.message || err?.error?.error?.message || 'Failed to unassign driver.';
+          this.showToast(msg, 'error');
+        }
+      });
+  }
+
+  // ─── Toast ───────────────────────────────────────────────────
+
+  showToast(msg: string, type: 'success' | 'error'): void {
+    if (type === 'success') {
+      this.successMessage = msg;
+      setTimeout(() => this.successMessage = '', 4000);
+    } else {
+      this.errorMessage = msg;
+      setTimeout(() => this.errorMessage = '', 6000);
     }
   }
 
-  public getVehicleTypeName(type: any): string {
-    const t = this.getNumericStatus(type, DeliveryVehicleType);
-    switch (t) {
-      case DeliveryVehicleType.Bicycle: return 'Bicycle';
-      case DeliveryVehicleType.Motorcycle: return 'Motorcycle';
-      case DeliveryVehicleType.Car: return 'Car';
-      case DeliveryVehicleType.Van: return 'Van';
-      default: return 'Vehicle';
-    }
+  getDriverLabel(d: DriverListItem): string {
+    return d.driverName || d.name || `Driver #${d.id}`;
   }
 
-  public getStatusBadgeClass(status: any): string {
-    const s = this.getNumericStatus(status, ShipmentStatus);
-    switch (s) {
-      case ShipmentStatus.Pending: return 'status-pending';
-      case ShipmentStatus.Unassigned: return 'status-unassigned';
-      case ShipmentStatus.Assigned: return 'status-assigned';
-      case ShipmentStatus.PickingUp:
-      case ShipmentStatus.OutForDelivery: return 'status-transit';
-      case ShipmentStatus.Delivered: return 'status-delivered';
-      default: return 'status-unknown';
-    }
-  }
-
-  public isStepActive(currentStatus: any, stepValue: number): boolean {
-    const s = this.getNumericStatus(currentStatus, ShipmentStatus);
-    return s >= stepValue;
-  }
-
-  public getNumericStatus(status: any, enumObj: any): number {
-    if (status === null || status === undefined) return -1;
-    if (typeof status === 'number') return status;
-    if (typeof status === 'string') {
-      if (!isNaN(Number(status))) return Number(status);
-      return enumObj[status as keyof typeof enumObj] as unknown as number;
-    }
-    return -1;
-  }
-
-  public openCreateShipmentModal() {
-    alert('Note: Shipments are automatically generated when a customer completes a payment via Stripe. Manual shipment creation is currently disabled to ensure sync with the order system.');
-  }
+  trackById(_: number, item: any): number { return item.id; }
 }
