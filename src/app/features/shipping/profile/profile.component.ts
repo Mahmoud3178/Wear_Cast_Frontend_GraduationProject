@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShippingCompanyService } from '../../../core/services/shipping-company.service';
 import { ShippingCompany, ShippingCompanyManager, UpdateShippingCompanyRequest, UpdateManagerRequest } from '../../../core/models/shipping-company.model';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-shipping-profile',
@@ -13,6 +14,38 @@ import { ShippingCompany, ShippingCompanyManager, UpdateShippingCompanyRequest, 
 })
 export class ShippingProfileComponent implements OnInit {
   private profileService = inject(ShippingCompanyService);
+  private authService = inject(AuthService);
+
+  errorMessage = '';
+  successMessage = '';
+
+  passwordData = {
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  };
+  isChangingPassword = false;
+  isPasswordModalOpen = false;
+
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+
+  passwordErrorMessage = '';
+  passwordSuccessMessage = '';
+
+  openPasswordModal() {
+    this.isPasswordModalOpen = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.passwordErrorMessage = '';
+    this.passwordSuccessMessage = '';
+    this.passwordData = { currentPassword: '', newPassword: '', confirmNewPassword: '' };
+  }
+
+  closePasswordModal() {
+    this.isPasswordModalOpen = false;
+  }
 
   company: ShippingCompany | null = null;
   manager: ShippingCompanyManager | null = null;
@@ -189,5 +222,39 @@ export class ShippingProfileComponent implements OnInit {
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  changePassword(passwordForm: any) {
+    if (this.passwordData.newPassword !== this.passwordData.confirmNewPassword) {
+      this.passwordErrorMessage = 'New passwords do not match.';
+      setTimeout(() => this.passwordErrorMessage = '', 5000);
+      return;
+    }
+
+    this.isChangingPassword = true;
+    this.passwordErrorMessage = '';
+    this.authService.changePassword(this.passwordData).subscribe({
+      next: () => {
+        this.isChangingPassword = false;
+        this.passwordSuccessMessage = 'Password changed successfully!';
+        setTimeout(() => this.passwordSuccessMessage = '', 4000);
+        this.passwordData = { currentPassword: '', newPassword: '', confirmNewPassword: '' };
+        if (passwordForm) {
+          passwordForm.resetForm();
+        }
+        setTimeout(() => this.closePasswordModal(), 1500);
+      },
+      error: (err) => {
+        console.error('Failed to change password', err);
+        let msg = 'Failed to change password.';
+        if (err?.error?.description) msg = err.error.description;
+        else if (err?.error?.message) msg = err.error.message;
+        else if (err?.error?.error?.message) msg = err.error.error.message;
+        
+        this.passwordErrorMessage = msg;
+        this.isChangingPassword = false;
+        setTimeout(() => this.passwordErrorMessage = '', 5000);
+      }
+    });
   }
 }

@@ -15,6 +15,16 @@
     </div>
   </div>
 
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''" aria-label="Close"></button>
+  </div>
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''" aria-label="Close"></button>
+  </div>
+
   <!-- Loading State -->
   <div *ngIf="isLoadingCompany || isLoadingManager" class="loading-overlay d-flex flex-column align-items-center justify-content-center p-5">
     <div class="spinner-premium mb-3"></div>
@@ -215,8 +225,97 @@
                 </div>
               </div>
             </form>
+
+            <div class="mt-4 pt-4 border-top border-slate-100">
+              <div class="d-flex justify-content-between align-items-center cursor-pointer p-3 bg-slate-50 rounded-4 transition-all" (click)="openPasswordModal()">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="icon-box-sm bg-danger-soft text-danger rounded-circle d-flex align-items-center justify-content-center">
+                    <i class="bi bi-shield-lock-fill fs-5"></i>
+                  </div>
+                  <div>
+                    <p class="mb-0 text-xs text-slate-500 fw-bold uppercase-tracking">Security</p>
+                    <p class="mb-0 fw-bold text-slate-900">Change Password</p>
+                  </div>
+                </div>
+                <div>
+                  <i class="bi bi-chevron-right text-slate-400"></i>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Password Change Modal -->
+<div class="modal fade show d-block" *ngIf="isPasswordModalOpen" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-slate-50 border-bottom border-slate-100 p-4">
+        <div class="d-flex align-items-center gap-3">
+          <div class="icon-box-refined bg-danger-soft text-danger" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;">
+            <i class="bi bi-shield-lock-fill fs-5"></i>
+          </div>
+          <div>
+            <h5 class="mb-0 fw-bold text-slate-900">Security</h5>
+            <p class="mb-0 text-xs text-slate-500 fw-medium uppercase-tracking">Change Password</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close" (click)="closePasswordModal()"></button>
+      </div>
+      <div class="modal-body p-4 p-md-5">
+        <form #passwordFormRef="ngForm" (ngSubmit)="changePassword(passwordFormRef)">
+          
+          <div *ngIf="passwordErrorMessage" class="alert alert-danger py-2 px-3 text-sm mb-4 d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>{{ passwordErrorMessage }}</span>
+          </div>
+
+          <div *ngIf="passwordSuccessMessage" class="alert alert-success py-2 px-3 text-sm mb-4 d-flex align-items-center gap-2">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>{{ passwordSuccessMessage }}</span>
+          </div>
+
+          <div class="form-field-premium is-editing mb-4">
+            <label class="d-block mb-2 text-xs fw-bold text-slate-500 uppercase-tracking">Current Password</label>
+            <div class="input-group">
+              <input [type]="showCurrentPassword ? 'text' : 'password'" class="form-control bg-slate-50 border-slate-200 p-3" name="currentPassword" [(ngModel)]="passwordData.currentPassword" required>
+              <button type="button" class="btn btn-outline-secondary bg-slate-50 border-slate-200" (click)="showCurrentPassword = !showCurrentPassword">
+                <i class="bi" [class.bi-eye]="showCurrentPassword" [class.bi-eye-slash]="!showCurrentPassword"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-field-premium is-editing mb-4">
+            <label class="d-block mb-2 text-xs fw-bold text-slate-500 uppercase-tracking">New Password</label>
+            <div class="input-group">
+              <input [type]="showNewPassword ? 'text' : 'password'" class="form-control bg-slate-50 border-slate-200 p-3" name="newPassword" [(ngModel)]="passwordData.newPassword" required>
+              <button type="button" class="btn btn-outline-secondary bg-slate-50 border-slate-200" (click)="showNewPassword = !showNewPassword">
+                <i class="bi" [class.bi-eye]="showNewPassword" [class.bi-eye-slash]="!showNewPassword"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-field-premium is-editing mb-5">
+            <label class="d-block mb-2 text-xs fw-bold text-slate-500 uppercase-tracking">Confirm New Password</label>
+            <div class="input-group">
+              <input [type]="showConfirmPassword ? 'text' : 'password'" class="form-control bg-slate-50 border-slate-200 p-3" name="confirmNewPassword" [(ngModel)]="passwordData.confirmNewPassword" required>
+              <button type="button" class="btn btn-outline-secondary bg-slate-50 border-slate-200" (click)="showConfirmPassword = !showConfirmPassword">
+                <i class="bi" [class.bi-eye]="showConfirmPassword" [class.bi-eye-slash]="!showConfirmPassword"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="d-flex justify-content-end gap-3 mt-4">
+            <button type="button" class="btn btn-light px-4 py-2 fw-bold text-slate-600 rounded-pill" (click)="closePasswordModal()" [disabled]="isChangingPassword">Cancel</button>
+            <button type="submit" class="btn btn-dark px-4 py-2 fw-bold rounded-pill d-flex align-items-center" [disabled]="!passwordFormRef.valid || isChangingPassword">
+              <span *ngIf="isChangingPassword" class="spinner-border spinner-border-sm me-2"></span>
+              <i *ngIf="!isChangingPassword" class="bi bi-key-fill me-2"></i>Update Password
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

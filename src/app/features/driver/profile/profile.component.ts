@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { DriverService } from '../../../core/services/driver.service';
-import { DeliveryVehicleType, UpdateDriverRequest } from '../../../core/models/driver.model';
+import { DeliveryVehicleType, UpdateDriverRequest, DriverStatus } from '../../../core/models/driver.model';
 
 @Component({
   selector: 'app-driver-profile',
@@ -20,6 +20,33 @@ export class ProfileComponent implements OnInit {
   isEditing = false;
   errorMessage = '';
   successMessage = '';
+  passwordData = {
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  };
+  isChangingPassword = false;
+  isPasswordModalOpen = false;
+
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+
+  passwordErrorMessage = '';
+  passwordSuccessMessage = '';
+
+  openPasswordModal() {
+    this.isPasswordModalOpen = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.passwordErrorMessage = '';
+    this.passwordSuccessMessage = '';
+    this.passwordData = { currentPassword: '', newPassword: '', confirmNewPassword: '' };
+  }
+
+  closePasswordModal() {
+    this.isPasswordModalOpen = false;
+  }
 
   driver: any = {
     firstName: '',
@@ -34,7 +61,8 @@ export class ProfileComponent implements OnInit {
       city: '',
       street: '',
       buildingNumber: ''
-    }
+    },
+    status: DriverStatus.Available
   };
 
   driverForm: any = { ...this.driver, address: { ...this.driver.address } };
@@ -67,6 +95,13 @@ export class ProfileComponent implements OnInit {
             vehicleType = mapped;
           }
         }
+        
+        let statusValue = DriverStatus.Available;
+        if (profile.status === 'Available' || profile.status === 1) {
+          statusValue = DriverStatus.Available;
+        } else if (profile.status === 'NotAvailable' || profile.status === 2 || profile.status === 'Not Available') {
+          statusValue = DriverStatus.NotAvailable;
+        }
 
         this.driver = {
           firstName: profile.firstName,
@@ -76,7 +111,8 @@ export class ProfileComponent implements OnInit {
           nationalId: profile.nationalId,
           vehicleType: vehicleType,
           vehiclePlateNumber: profile.vehiclePlateNumber,
-          address: profile.address || { state: '', city: '', street: '', buildingNumber: '' }
+          address: profile.address || { state: '', city: '', street: '', buildingNumber: '' },
+          status: statusValue
         };
         this.driverForm = { ...this.driver, address: { ...this.driver.address } };
         this.isLoading = false;
@@ -146,5 +182,75 @@ export class ProfileComponent implements OnInit {
       case DeliveryVehicleType.Van: return 'Van';
       default: return 'Unknown';
     }
+  }
+
+  toggleStatus(event: Event) {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    const newStatus = isChecked ? DriverStatus.Available : DriverStatus.NotAvailable;
+
+    const driverId = this.authService.getDriverId();
+    if (!driverId) return;
+
+    this.isLoading = true;
+    this.driverService.changeDriverStatus(driverId, { driverId, newStatus }).subscribe({
+      next: () => {
+        this.driver.status = newStatus;
+        this.isLoading = false;
+        this.successMessage = `Status updated to ${newStatus === DriverStatus.Available ? 'Available' : 'Not Available'}`;
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (err) => {
+        console.error('Failed to change status', err);
+        // Revert the toggle visually by forcing change detection to pick up original status
+        (event.target as HTMLInputElement).checked = !isChecked;
+        
+        let msg = 'Failed to update status.';
+        if (err?.error?.description) {
+          msg = err.error.description;
+        } else if (err?.error?.message) {
+          msg = err.error.message;
+        } else if (err?.error?.error?.message) {
+          msg = err.error.error.message;
+        }
+        
+        this.errorMessage = msg;
+        this.isLoading = false;
+        setTimeout(() => this.errorMessage = '', 5000);
+      }
+    });
+  }
+
+  changePassword(passwordForm: any) {
+    if (this.passwordData.newPassword !== this.passwordData.confirmNewPassword) {
+      this.passwordErrorMessage = 'New passwords do not match.';
+      setTimeout(() => this.passwordErrorMessage = '', 5000);
+      return;
+    }
+
+    this.isChangingPassword = true;
+    this.passwordErrorMessage = '';
+    this.authService.changePassword(this.passwordData).subscribe({
+      next: () => {
+        this.isChangingPassword = false;
+        this.passwordSuccessMessage = 'Password changed successfully!';
+        setTimeout(() => this.passwordSuccessMessage = '', 4000);
+        this.passwordData = { currentPassword: '', newPassword: '', confirmNewPassword: '' };
+        if (passwordForm) {
+          passwordForm.resetForm();
+        }
+        setTimeout(() => this.closePasswordModal(), 1500);
+      },
+      error: (err) => {
+        console.error('Failed to change password', err);
+        let msg = 'Failed to change password.';
+        if (err?.error?.description) msg = err.error.description;
+        else if (err?.error?.message) msg = err.error.message;
+        else if (err?.error?.error?.message) msg = err.error.error.message;
+        
+        this.passwordErrorMessage = msg;
+        this.isChangingPassword = false;
+        setTimeout(() => this.passwordErrorMessage = '', 5000);
+      }
+    });
   }
 }
