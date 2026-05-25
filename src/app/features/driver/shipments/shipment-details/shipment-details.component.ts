@@ -95,15 +95,14 @@ export class ShipmentDetailsComponent implements OnInit {
   loadShipmentDetails(): void {
     this.isLoadingShipment = true;
     this.http.get<DriverShipmentDetailDto>(`${this.apiUrl}/drivers/shipments/${this.shipmentId}`)
+      .pipe(finalize(() => this.isLoadingShipment = false))
       .subscribe({
         next: (data) => {
           this.shipment = data ?? null;
-          this.isLoadingShipment = false;
         },
         error: (err) => {
           console.error('Failed to load shipment details', err);
           this.errorMessage = 'Failed to load shipment details. Please go back and try again.';
-          this.isLoadingShipment = false;
         }
       });
   }
@@ -113,6 +112,7 @@ export class ShipmentDetailsComponent implements OnInit {
   loadOrders(): void {
     this.isLoadingOrders = true;
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
+      .pipe(finalize(() => this.isLoadingOrders = false))
       .subscribe({
         next: (data: any) => {
           try {
@@ -128,12 +128,10 @@ export class ShipmentDetailsComponent implements OnInit {
           } catch {
             this.orders = [];
           }
-          this.isLoadingOrders = false;
         },
         error: (err) => {
           console.error('Failed to load orders', err);
           this.orders = [];
-          this.isLoadingOrders = false;
         }
       });
   }
@@ -210,9 +208,6 @@ export class ShipmentDetailsComponent implements OnInit {
 
   getNextAction(): { label: string; class: string; status: string } | null {
     const s = this.shipment?.shipmentStatus;
-    if (s === 'Assigned') {
-      return { label: '📦 Start Picking Up', class: 'btn-action-primary', status: 'PickingUp' };
-    }
     if (s === 'PickingUp') {
       return { label: '🚚 Start Delivery Trip', class: 'btn-action-primary', status: 'OutForDelivery' };
     }
