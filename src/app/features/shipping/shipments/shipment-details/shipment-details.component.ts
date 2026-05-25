@@ -88,6 +88,10 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   showUnassignModal = false;
   isUnassigning = false;
 
+  // Delivery code modal
+  showCodeModal = false;
+  enteredCode = '';
+
   // Toast
   successMessage = '';
   errorMessage = '';
@@ -212,6 +216,103 @@ export class ShippingShipmentDetailsComponent implements OnInit {
     } catch {
       return 0;
     }
+  }
+
+  // ─── Actions ───────────────────────────────────────────────────
+
+  updateOrderToPickedUp(order: ShipmentOrderDto): void {
+    this.isLoadingOrders = true;
+    this.driverService.updateOrderStatus(order.orderId, 6).subscribe({
+      next: () => {
+        this.showSuccess(`Order #${order.orderId} marked as Picked Up!`);
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.isLoadingOrders = false;
+        const msg = err?.error?.message || err?.error?.error?.message || `Failed to update Order #${order.orderId}.`;
+        this.showError(msg);
+      }
+    });
+  }
+
+  getNextAction(): { label: string; class: string; status: string } | null {
+    const s = this.shipment?.shipmentStatus;
+    if (s === 'Assigned') {
+      return { label: '📦 Start Picking Up', class: 'btn-action-primary', status: 'PickingUp' };
+    }
+    if (s === 'PickingUp') {
+      return { label: '🚚 Start Delivery Trip', class: 'btn-action-primary', status: 'OutForDelivery' };
+    }
+    if (s === 'OutForDelivery') {
+      return { label: '✅ Complete Delivery', class: 'btn-action-success', status: 'Delivered' };
+    }
+    return null;
+  }
+
+  onActionClick(): void {
+    const next = this.getNextAction();
+    if (!next) return;
+    if (next.status === 'Delivered') {
+      this.enteredCode = '';
+      this.showCodeModal = true;
+    } else {
+      this.executeStatusUpdate(next.status);
+    }
+  }
+
+  cancelModal(): void {
+    this.showCodeModal = false;
+    this.enteredCode = '';
+  }
+
+  confirmDelivery(): void {
+    if (!this.enteredCode.trim()) {
+      this.showError('Please enter the delivery code provided by the customer.');
+      return;
+    }
+    this.showCodeModal = false;
+    this.executeStatusUpdate('Delivered', this.enteredCode.trim());
+  }
+
+  executeStatusUpdate(status: string, deliveryCode?: string): void {
+    if (!this.shipment) return;
+    this.isLoadingShipment = true;
+
+    const statusMap: Record<string, number> = {
+      'Pending': 1, 'Unassigned': 2, 'Assigned': 3,
+      'PickingUp': 4, 'OutForDelivery': 5, 'Delivered': 6
+    };
+
+    const body: any = { newStatus: statusMap[status] };
+    if (deliveryCode) body.deliveryCode = deliveryCode;
+
+    this.http.put<void>(`${this.apiUrl}/Shipments/${this.shipmentId}/status`, body)
+      .pipe(finalize(() => this.isLoadingShipment = false))
+      .subscribe({
+        next: () => {
+          this.showSuccess('Shipment status updated successfully!');
+          this.loadShipment();
+          this.loadOrders();
+        },
+        error: (err) => {
+          const apiError = err?.error?.error || err?.error;
+          let msg = 'Failed to update shipment status.';
+          if (apiError?.code) {
+            const codeMessages: Record<string, string> = {
+              'Shipment.NotReady': '⚠️ Cannot start trip: Some orders are not yet marked as Ready.',
+              'Shipment.NotPickedUp': '⚠️ Cannot go out for delivery: All orders must be picked up first.',
+              'Shipment.WrongDeliveryCode': '❌ Incorrect delivery code. Please check with the customer.',
+              'Shipment.InvalidTransition': '⚠️ This status change is not allowed at this stage.'
+            };
+            msg = codeMessages[apiError.code] ?? msg;
+          } else if (apiError?.message) {
+            msg = apiError.message;
+          } else if (typeof err?.error === 'string') {
+            msg = err.error;
+          }
+          this.showError(msg);
+        }
+      });
   }
 
   // ─── Assign Driver ─────────────────────────────────────────────

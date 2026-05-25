@@ -1,5 +1,37 @@
 <div class="sd-page">
 
+  <!-- ── DELIVERY CODE MODAL ──────────────────────────────────── -->
+  <div *ngIf="showCodeModal" class="modal-backdrop" (click)="cancelModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header-row">
+        <div class="modal-icon-box assign-color">🔐</div>
+        <div>
+          <h2 class="modal-title">Enter Delivery Code</h2>
+          <p class="modal-sub">Ask the customer for their 6-digit delivery code.</p>
+        </div>
+        <button class="modal-x" (click)="cancelModal()">✕</button>
+      </div>
+      <div class="modal-body-scroll">
+        <input
+          id="delivery-code-input"
+          type="text"
+          class="code-input"
+          [(ngModel)]="enteredCode"
+          placeholder="• • • • • •"
+          maxlength="6"
+          autocomplete="off"
+          style="width: 100%; text-align: center; font-size: 2rem; letter-spacing: 0.5rem; padding: 1rem; border: 2px solid #e5eaf3; border-radius: 8px; margin-top: 1rem;"
+        />
+      </div>
+      <div class="modal-footer-row">
+        <button class="mbtn-cancel" (click)="cancelModal()">Cancel</button>
+        <button class="mbtn-primary" [disabled]="!enteredCode.trim()" (click)="confirmDelivery()">
+          Confirm Delivery
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── ASSIGN MODAL ───────────────────────────────────────── -->
   <div *ngIf="showAssignModal" class="modal-backdrop" (click)="closeAssignModal()">
     <div class="modal-card" (click)="$event.stopPropagation()">
@@ -108,6 +140,22 @@
     <!-- LEFT: Timeline + Orders ─────────────────────────────── -->
     <div class="sd-main">
 
+      <!-- Action Banner -->
+      <div class="action-banner" *ngIf="getNextAction() as action" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e5eaf3;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <span style="font-size: 1.5rem;">🎯</span>
+          <div>
+            <strong style="display: block; font-size: 0.9rem; color: #18202e;">Next Step</strong>
+            <p style="margin: 0; font-size: 0.8rem; color: #8896ab;">
+              Advance the shipment status manually if needed.
+            </p>
+          </div>
+        </div>
+        <button class="{{ action.class }}" style="padding: 0.5rem 1rem;" (click)="onActionClick()" [disabled]="isLoadingShipment || isLoadingOrders">
+          {{ action.label }}
+        </button>
+      </div>
+
       <!-- Quick Stats Bar -->
       <div class="stats-bar">
         <div class="stat-item">
@@ -180,9 +228,16 @@
                 <span class="order-num">Order #{{ order.orderId }}</span>
                 <span class="order-type-badge">{{ order.orderType }}</span>
               </div>
-              <span class="order-status-badge" [ngClass]="getOrderStatusClass(order.orderStatus)">
-                {{ order.orderStatus }}
-              </span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="order-status-badge" [ngClass]="getOrderStatusClass(order.orderStatus)">
+                  {{ order.orderStatus }}
+                </span>
+                <button *ngIf="order.orderStatus === 'Ready' && shipment?.shipmentStatus === 'PickingUp'" 
+                        (click)="updateOrderToPickedUp(order)"
+                        style="font-size: 11px; padding: 4px 10px; border: none; border-radius: 20px; background-color: #0d6efd; color: white; cursor: pointer; font-weight: bold;">
+                  Mark Picked Up
+                </button>
+              </div>
             </div>
 
             <div class="order-body">
