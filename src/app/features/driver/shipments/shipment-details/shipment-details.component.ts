@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
@@ -53,6 +53,7 @@ export class ShipmentDetailsComponent implements OnInit {
   private router = inject(Router);
   private http = inject(HttpClient);
   private driverService = inject(DriverService);
+  private cdr = inject(ChangeDetectorRef);
   private apiUrl = `${environment.apiUrl}/api`;
 
   shipmentId!: number;
@@ -103,6 +104,7 @@ export class ShipmentDetailsComponent implements OnInit {
       .pipe(finalize(() => {
         console.log('[DRIVER loadShipmentDetails] Finalize block executed. Setting isLoadingShipment = false');
         this.isLoadingShipment = false;
+        this.cdr.detectChanges();
       }))
       .subscribe({
         next: (data) => {
@@ -125,6 +127,7 @@ export class ShipmentDetailsComponent implements OnInit {
       .pipe(finalize(() => {
         console.log('[DRIVER loadOrders] Finalize block executed. Setting isLoadingOrders = false');
         this.isLoadingOrders = false;
+        this.cdr.detectChanges();
       }))
       .subscribe({
         next: (data: any) => {
