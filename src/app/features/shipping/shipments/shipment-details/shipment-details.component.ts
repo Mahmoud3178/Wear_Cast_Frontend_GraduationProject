@@ -114,14 +114,15 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   loadShipment(): void {
     this.isLoadingShipment = true;
     this.http.get<AdminShipmentDetail>(`${this.apiUrl}/Shipments/${this.shipmentId}`)
-      .pipe(finalize(() => this.isLoadingShipment = false))
       .subscribe({
         next: (data) => {
           this.shipment = data ?? null;
+          this.isLoadingShipment = false;
         },
         error: (err) => {
           console.error('Failed to load shipment', err);
           this.showError('Failed to load shipment details.');
+          this.isLoadingShipment = false;
         }
       });
   }
@@ -131,7 +132,6 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   loadOrders(): void {
     this.isLoadingOrders = true;
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
-      .pipe(finalize(() => this.isLoadingOrders = false))
       .subscribe({
         next: (data: any) => {
           try {
@@ -147,10 +147,12 @@ export class ShippingShipmentDetailsComponent implements OnInit {
           } catch {
             this.orders = [];
           }
+          this.isLoadingOrders = false;
         },
         error: (err) => {
           console.error('Failed to load orders', err);
           this.orders = [];
+          this.isLoadingOrders = false;
         }
       });
   }
