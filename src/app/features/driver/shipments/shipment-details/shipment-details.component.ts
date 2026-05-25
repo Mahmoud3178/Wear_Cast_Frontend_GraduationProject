@@ -58,10 +58,9 @@ export class ShipmentDetailsComponent implements OnInit {
 
   shipmentId!: number;
   shipment: DriverShipmentDetailDto | null = null;
-  orders: ShipmentOrderDto[] = [];
+  orders: ShipmentOrderDto[] | null = null;
 
-  isLoadingShipment = true;
-  isLoadingOrders = true;
+  isLoading = true;
   errorMessage = '';
   successMessage = '';
 
@@ -73,9 +72,7 @@ export class ShipmentDetailsComponent implements OnInit {
   showUnassignModal = false;
   isUnassigning = false;
 
-  get isLoading(): boolean {
-    return this.isLoadingShipment || this.isLoadingOrders;
-  }
+
 
   ngOnInit(): void {
     console.log('[DRIVER ngOnInit] Component initializing...');
@@ -88,9 +85,7 @@ export class ShipmentDetailsComponent implements OnInit {
       this.loadOrders();
     } else {
       console.warn('[DRIVER ngOnInit] Invalid shipment ID found.');
-      // No valid ID — stop loading immediately
-      this.isLoadingShipment = false;
-      this.isLoadingOrders = false;
+      this.isLoading = false;
       this.errorMessage = 'Invalid shipment ID.';
     }
   }
@@ -98,20 +93,18 @@ export class ShipmentDetailsComponent implements OnInit {
   // ─── Load shipment ───────────────────────────────────────────────────────
 
   loadShipmentDetails(): void {
-    console.log('[DRIVER loadShipmentDetails] Started. Setting isLoadingShipment = true');
-    this.isLoadingShipment = true;
+    console.log('[DRIVER loadShipmentDetails] Started.');
     this.http.get<DriverShipmentDetailDto>(`${this.apiUrl}/drivers/shipments/${this.shipmentId}`)
       .subscribe({
         next: (data) => {
-          console.log('[DRIVER loadShipmentDetails] Success! Data received:', data);
+          console.log('[DRIVER loadShipmentDetails] Success!');
           this.shipment = data ?? null;
-          this.isLoadingShipment = false;
-          this.cdr.detectChanges();
+          this.checkLoadingState();
         },
         error: (err) => {
           console.error('[DRIVER loadShipmentDetails] ERROR:', err);
           this.errorMessage = 'Failed to load shipment details. Please go back and try again.';
-          this.isLoadingShipment = false;
+          this.isLoading = false;
           this.cdr.detectChanges();
         }
       });
@@ -120,41 +113,40 @@ export class ShipmentDetailsComponent implements OnInit {
   // ─── Load orders ─────────────────────────────────────────────────────────
 
   loadOrders(): void {
-    console.log('[DRIVER loadOrders] Started. Setting isLoadingOrders = true');
-    this.isLoadingOrders = true;
+    console.log('[DRIVER loadOrders] Started.');
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
       .subscribe({
         next: (data: any) => {
-          console.log('[DRIVER loadOrders] Success! Raw Data received:', JSON.stringify(data).substring(0, 200) + '...');
+          console.log('[DRIVER loadOrders] Success!');
           try {
             if (Array.isArray(data)) {
-              console.log('[DRIVER loadOrders] Data is an array. Length:', data.length);
               this.orders = data;
             } else if (data && Array.isArray(data.items)) {
-              console.log('[DRIVER loadOrders] Data has an items array. Length:', data.items.length);
               this.orders = data.items;
             } else if (data && Array.isArray(data.Items)) {
-              console.log('[DRIVER loadOrders] Data has an Items array. Length:', data.Items.length);
               this.orders = data.Items;
             } else {
-              console.warn('[DRIVER loadOrders] Data format not recognized. Defaulting to empty array. Data:', data);
               this.orders = [];
             }
           } catch (e) {
-            console.error('[DRIVER loadOrders] Error parsing orders:', e);
             this.orders = [];
           }
-          console.log('[DRIVER loadOrders] Orders array successfully set. Final count:', this.orders.length);
-          this.isLoadingOrders = false;
-          this.cdr.detectChanges();
+          this.checkLoadingState();
         },
         error: (err) => {
           console.error('[DRIVER loadOrders] ERROR:', err);
           this.orders = [];
-          this.isLoadingOrders = false;
+          this.isLoading = false;
           this.cdr.detectChanges();
         }
       });
+  }
+
+  checkLoadingState() {
+    if (this.shipment !== null && this.orders !== null) {
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }
   }
 
   // ─── Status helpers ──────────────────────────────────────────────────────

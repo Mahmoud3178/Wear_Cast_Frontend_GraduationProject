@@ -73,10 +73,9 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   shipmentId!: number;
   shipment: AdminShipmentDetail | null = null;
-  orders: ShipmentOrderDto[] = [];
+  orders: ShipmentOrderDto[] | null = null;
 
-  isLoadingShipment = true;
-  isLoadingOrders = true;
+  isLoading = true;
 
   // Assign
   showAssignModal = false;
@@ -97,9 +96,7 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   successMessage = '';
   errorMessage = '';
 
-  get isLoading(): boolean {
-    return this.isLoadingShipment || this.isLoadingOrders;
-  }
+
 
   ngOnInit(): void {
     console.log('[MANAGER ngOnInit] Component initializing...');
@@ -112,8 +109,7 @@ export class ShippingShipmentDetailsComponent implements OnInit {
       this.loadOrders();
     } else {
       console.warn('[MANAGER ngOnInit] Invalid shipment ID found.');
-      this.isLoadingShipment = false;
-      this.isLoadingOrders = false;
+      this.isLoading = false;
       this.errorMessage = 'Invalid shipment ID.';
     }
   }
@@ -121,20 +117,18 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   // ─── Load Shipment ────────────────────────────────────────────
 
   loadShipment(): void {
-    console.log('[MANAGER loadShipment] Started. Setting isLoadingShipment = true');
-    this.isLoadingShipment = true;
+    console.log('[MANAGER loadShipment] Started.');
     this.http.get<AdminShipmentDetail>(`${this.apiUrl}/Shipments/${this.shipmentId}`)
       .subscribe({
         next: (data) => {
-          console.log('[MANAGER loadShipment] Success! Data received:', data);
+          console.log('[MANAGER loadShipment] Success!');
           this.shipment = data ?? null;
-          this.isLoadingShipment = false;
-          this.cdr.detectChanges();
+          this.checkLoadingState();
         },
         error: (err) => {
           console.error('[MANAGER loadShipment] ERROR:', err);
           this.showError('Failed to load shipment details.');
-          this.isLoadingShipment = false;
+          this.isLoading = false;
           this.cdr.detectChanges();
         }
       });
@@ -143,41 +137,40 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   // ─── Load Orders ──────────────────────────────────────────────
 
   loadOrders(): void {
-    console.log('[MANAGER loadOrders] Started. Setting isLoadingOrders = true');
-    this.isLoadingOrders = true;
+    console.log('[MANAGER loadOrders] Started.');
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
       .subscribe({
         next: (data: any) => {
-          console.log('[MANAGER loadOrders] Success! Raw Data received:', JSON.stringify(data).substring(0, 200) + '...');
+          console.log('[MANAGER loadOrders] Success!');
           try {
             if (Array.isArray(data)) {
-              console.log('[MANAGER loadOrders] Data is an array. Length:', data.length);
               this.orders = data;
             } else if (data && Array.isArray(data.items)) {
-              console.log('[MANAGER loadOrders] Data has an items array. Length:', data.items.length);
               this.orders = data.items;
             } else if (data && Array.isArray(data.Items)) {
-              console.log('[MANAGER loadOrders] Data has an Items array. Length:', data.Items.length);
               this.orders = data.Items;
             } else {
-              console.warn('[MANAGER loadOrders] Data format not recognized. Defaulting to empty array. Data:', data);
               this.orders = [];
             }
           } catch (e) {
-            console.error('[MANAGER loadOrders] Error parsing orders:', e);
             this.orders = [];
           }
-          console.log('[MANAGER loadOrders] Orders array successfully set. Final count:', this.orders.length);
-          this.isLoadingOrders = false;
-          this.cdr.detectChanges();
+          this.checkLoadingState();
         },
         error: (err) => {
           console.error('[MANAGER loadOrders] ERROR:', err);
           this.orders = [];
-          this.isLoadingOrders = false;
+          this.isLoading = false;
           this.cdr.detectChanges();
         }
       });
+  }
+
+  checkLoadingState() {
+    if (this.shipment !== null && this.orders !== null) {
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }
   }
 
   // ─── Status helpers ───────────────────────────────────────────
