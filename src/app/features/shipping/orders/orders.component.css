@@ -240,6 +240,7 @@
 .col-order-status{ width: 130px; }
 .col-ship-status { width: 145px; }
 .col-date        { width: 115px; }
+.col-actions     { width: 120px; text-align: center; }
 
 /* ── Cell styles ─────────────────────────────────────────── */
 .order-id {

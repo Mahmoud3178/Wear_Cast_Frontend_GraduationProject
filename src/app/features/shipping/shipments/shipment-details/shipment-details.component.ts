@@ -201,7 +201,8 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   }
 
   canUnassign(): boolean {
-    return this.shipment?.shipmentStatus === 'Assigned';
+    const s = this.shipment?.shipmentStatus;
+    return s === 'Assigned' || s === 'PickingUp';
   }
 
   getTotalItems(): number {

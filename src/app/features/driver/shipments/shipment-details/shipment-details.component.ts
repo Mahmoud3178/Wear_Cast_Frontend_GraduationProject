@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
+import { DriverService } from '../../../../core/services/driver.service';
 
 // ─── Interfaces matching the ACTUAL backend responses ───────────────────────
 
@@ -51,6 +52,7 @@ export class ShipmentDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private http = inject(HttpClient);
+  private driverService = inject(DriverService);
   private apiUrl = `${environment.apiUrl}/api`;
 
   shipmentId!: number;
@@ -208,6 +210,9 @@ export class ShipmentDetailsComponent implements OnInit {
 
   getNextAction(): { label: string; class: string; status: string } | null {
     const s = this.shipment?.shipmentStatus;
+    if (s === 'Assigned') {
+      return { label: '📦 Start Picking Up', class: 'btn-action-primary', status: 'PickingUp' };
+    }
     if (s === 'PickingUp') {
       return { label: '🚚 Start Delivery Trip', class: 'btn-action-primary', status: 'OutForDelivery' };
     }
@@ -272,6 +277,20 @@ export class ShipmentDetailsComponent implements OnInit {
   }
 
   // ─── Unassign ────────────────────────────────────────────────────────────
+
+  updateOrderToPickedUp(order: ShipmentOrderDto): void {
+    this.isLoadingOrders = true;
+    this.driverService.updateOrderStatus(order.orderId, 6).subscribe({
+      next: () => {
+        this.showSuccess(`Order #${order.orderId} marked as Picked Up!`);
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.isLoadingOrders = false;
+        this.handleApiError(err, `Failed to update Order #${order.orderId}.`);
+      }
+    });
+  }
 
   openUnassignModal(): void { this.showUnassignModal = true; }
   cancelUnassign(): void    { this.showUnassignModal = false; }

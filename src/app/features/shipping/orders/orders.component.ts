@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { DriverService } from '../../../core/services/driver.service';
 
 // ─── Interfaces matching actual backend DTOs ─────────────────────────────────
 
@@ -43,6 +44,7 @@ export interface PaginatedOrders {
 })
 export class OrdersComponent implements OnInit {
   private http = inject(HttpClient);
+  private driverService = inject(DriverService);
   private apiUrl = `${environment.apiUrl}/api`;
 
   // ── Data ─────────────────────────────────────────────────────
@@ -133,6 +135,22 @@ export class OrdersComponent implements OnInit {
           this.isLoading = false;
         }
       });
+  }
+
+  updateOrderToPickedUp(order: OrderListItem): void {
+    this.isLoading = true;
+    this.driverService.updateOrderStatus(order.orderId, 6).subscribe({
+      next: () => {
+        this.successMessage = `Order #${order.orderId} marked as Picked Up!`;
+        setTimeout(() => this.successMessage = '', 4000);
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = `Failed to update Order #${order.orderId}.`;
+        setTimeout(() => this.errorMessage = '', 6000);
+      }
+    });
   }
 
   // ─── Pagination ────────────────────────────────────────────────
