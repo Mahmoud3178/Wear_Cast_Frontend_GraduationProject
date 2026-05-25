@@ -129,11 +129,13 @@ export class ShippingShipmentDetailsComponent implements OnInit {
           console.log('[MANAGER loadShipment] Success! Data received:', data);
           this.shipment = data ?? null;
           this.isLoadingShipment = false;
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('[MANAGER loadShipment] ERROR:', err);
           this.showError('Failed to load shipment details.');
           this.isLoadingShipment = false;
+          this.cdr.detectChanges();
         }
       });
   }
@@ -167,11 +169,13 @@ export class ShippingShipmentDetailsComponent implements OnInit {
           }
           console.log('[MANAGER loadOrders] Orders array successfully set. Final count:', this.orders.length);
           this.isLoadingOrders = false;
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('[MANAGER loadOrders] ERROR:', err);
           this.orders = [];
           this.isLoadingOrders = false;
+          this.cdr.detectChanges();
         }
       });
   }

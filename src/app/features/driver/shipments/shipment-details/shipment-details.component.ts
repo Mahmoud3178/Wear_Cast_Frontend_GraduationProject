@@ -106,11 +106,13 @@ export class ShipmentDetailsComponent implements OnInit {
           console.log('[DRIVER loadShipmentDetails] Success! Data received:', data);
           this.shipment = data ?? null;
           this.isLoadingShipment = false;
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('[DRIVER loadShipmentDetails] ERROR:', err);
           this.errorMessage = 'Failed to load shipment details. Please go back and try again.';
           this.isLoadingShipment = false;
+          this.cdr.detectChanges();
         }
       });
   }
@@ -144,11 +146,13 @@ export class ShipmentDetailsComponent implements OnInit {
           }
           console.log('[DRIVER loadOrders] Orders array successfully set. Final count:', this.orders.length);
           this.isLoadingOrders = false;
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('[DRIVER loadOrders] ERROR:', err);
           this.orders = [];
           this.isLoadingOrders = false;
+          this.cdr.detectChanges();
         }
       });
   }
