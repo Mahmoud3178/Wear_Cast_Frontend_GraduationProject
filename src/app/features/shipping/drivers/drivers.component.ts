@@ -1,7 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { forkJoin, map } from 'rxjs';
+import { forkJoin, map, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { DriverService } from '../../../core/services/driver.service';
 import { ShippingService } from '../../../core/services/shipping.service';
 import { Driver, DriverStatus, DeliveryVehicleType, CreateDriverRequest, UpdateDriverRequest } from '../../../core/models/driver.model';
@@ -309,20 +310,41 @@ export class DriversComponent implements OnInit {
 
     this.driverService.updateDriver(request).subscribe({
       next: () => {
+        const observables = [];
+
         if (this.selectedDriver && this.newDriver.status !== this.selectedDriver.status) {
-          this.driverService.changeDriverStatus(this.selectedDriver.id, {
-            driverId: this.selectedDriver.id,
-            newStatus: this.newDriver.status
-          }).subscribe({
-            next: () => {
-              this.isSubmitting = false;
-              this.closeRegisterModal();
-              this.loadInitialData();
-            },
-            error: (err: any) => {
-              this.isSubmitting = false;
+          observables.push(
+            this.driverService.changeDriverStatus(this.selectedDriver.id, {
+              driverId: this.selectedDriver.id,
+              newStatus: this.newDriver.status
+            }).pipe(catchError(err => {
               console.error('Update status error', err);
               alert('Profile updated, but failed to update status.');
+              return of(null);
+            }))
+          );
+        }
+
+        if (this.selectedFile) {
+          const formData = new FormData();
+          formData.append('NewImage', this.selectedFile);
+          if (this.selectedDriver?.id) {
+            formData.append('ProvidedDriverId', this.selectedDriver.id.toString());
+          }
+          
+          observables.push(
+            this.driverService.updateProfileImage(formData).pipe(catchError(err => {
+              console.error('Update image error', err);
+              alert('Profile updated, but failed to update image.');
+              return of(null);
+            }))
+          );
+        }
+
+        if (observables.length > 0) {
+          forkJoin(observables).subscribe({
+            next: () => {
+              this.isSubmitting = false;
               this.closeRegisterModal();
               this.loadInitialData();
             }
@@ -435,7 +457,7 @@ export class DriversComponent implements OnInit {
 
     forkJoin({
       profile: this.driverService.getDriverById(driver.id),
-      shipmentsData: this.driverService.getAllDriverShipments(driver.id)
+      shipmentsData: this.driverService.getAllDriverShipments({ DriverId: driver.id })
     }).subscribe({
       next: ({ profile, shipmentsData }) => {
         this.selectedDriverDetails = profile;
