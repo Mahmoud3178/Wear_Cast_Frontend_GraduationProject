@@ -199,7 +199,7 @@ export class ShippingProfileComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('NewLogo', file);
       this.profileService.updateCompanyImage(formData).subscribe({
         next: () => {
           this.loadCompanyProfile();
