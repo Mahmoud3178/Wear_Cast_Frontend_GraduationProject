@@ -95,7 +95,6 @@
             <th class="col-order-status">Order Status</th>
             <th class="col-ship-status">Shipment Status</th>
             <th class="col-date">Created</th>
-            <th class="col-actions">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -158,21 +157,11 @@
               <span class="time-val">{{ order.createdOn | date:'h:mm a' }}</span>
             </td>
 
-            <!-- Actions -->
-            <td class="col-actions">
-              <button *ngIf="order.orderStatus === 'Ready' && (order.shipmentStatus === 'Assigned' || order.shipmentStatus === 'PickingUp')"
-                      class="btn btn-sm btn-primary py-0 px-2 rounded-pill shadow-none"
-                      style="font-size: 11px; padding: 4px 10px; border: none; border-radius: 20px; background-color: #0d6efd; color: white; cursor: pointer; font-weight: bold;"
-                      (click)="updateOrderToPickedUp(order)">
-                Mark Picked Up
-              </button>
-            </td>
-
           </tr>
 
           <!-- Empty state -->
           <tr *ngIf="orders.length === 0">
-            <td colspan="8" class="empty-td">
+            <td colspan="7" class="empty-td">
               <div class="empty-state">
                 <div class="empty-icon">📋</div>
                 <h3>No orders found</h3>

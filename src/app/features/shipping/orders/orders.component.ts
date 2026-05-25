@@ -137,22 +137,6 @@ export class OrdersComponent implements OnInit {
       });
   }
 
-  updateOrderToPickedUp(order: OrderListItem): void {
-    this.isLoading = true;
-    this.driverService.updateOrderStatus(order.orderId, 6).subscribe({
-      next: () => {
-        this.successMessage = `Order #${order.orderId} marked as Picked Up!`;
-        setTimeout(() => this.successMessage = '', 4000);
-        this.loadOrders();
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.errorMessage = `Failed to update Order #${order.orderId}.`;
-        setTimeout(() => this.errorMessage = '', 6000);
-      }
-    });
-  }
-
   // ─── Pagination ────────────────────────────────────────────────
 
   goToPage(p: number): void {

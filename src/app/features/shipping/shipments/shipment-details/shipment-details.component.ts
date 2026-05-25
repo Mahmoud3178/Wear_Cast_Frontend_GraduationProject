@@ -220,26 +220,8 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   // ─── Actions ───────────────────────────────────────────────────
 
-  updateOrderToPickedUp(order: ShipmentOrderDto): void {
-    this.isLoadingOrders = true;
-    this.driverService.updateOrderStatus(order.orderId, 6).subscribe({
-      next: () => {
-        this.showSuccess(`Order #${order.orderId} marked as Picked Up!`);
-        this.loadOrders();
-      },
-      error: (err) => {
-        this.isLoadingOrders = false;
-        const msg = err?.error?.message || err?.error?.error?.message || `Failed to update Order #${order.orderId}.`;
-        this.showError(msg);
-      }
-    });
-  }
-
   getNextAction(): { label: string; class: string; status: string } | null {
     const s = this.shipment?.shipmentStatus;
-    if (s === 'Assigned') {
-      return { label: '📦 Start Picking Up', class: 'btn-action-primary', status: 'PickingUp' };
-    }
     if (s === 'PickingUp') {
       return { label: '🚚 Start Delivery Trip', class: 'btn-action-primary', status: 'OutForDelivery' };
     }
