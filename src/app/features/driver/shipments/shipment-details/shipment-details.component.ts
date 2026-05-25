@@ -77,12 +77,16 @@ export class ShipmentDetailsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('[DRIVER ngOnInit] Component initializing...');
     const idParam = this.route.snapshot.paramMap.get('id');
+    console.log('[DRIVER ngOnInit] Raw idParam from route:', idParam);
     if (idParam && !isNaN(+idParam)) {
       this.shipmentId = +idParam;
+      console.log('[DRIVER ngOnInit] Parsed shipmentId:', this.shipmentId, 'Calling loadShipmentDetails and loadOrders');
       this.loadShipmentDetails();
       this.loadOrders();
     } else {
+      console.warn('[DRIVER ngOnInit] Invalid shipment ID found.');
       // No valid ID — stop loading immediately
       this.isLoadingShipment = false;
       this.isLoadingOrders = false;
@@ -93,15 +97,20 @@ export class ShipmentDetailsComponent implements OnInit {
   // ─── Load shipment ───────────────────────────────────────────────────────
 
   loadShipmentDetails(): void {
+    console.log('[DRIVER loadShipmentDetails] Started. Setting isLoadingShipment = true');
     this.isLoadingShipment = true;
     this.http.get<DriverShipmentDetailDto>(`${this.apiUrl}/drivers/shipments/${this.shipmentId}`)
-      .pipe(finalize(() => this.isLoadingShipment = false))
+      .pipe(finalize(() => {
+        console.log('[DRIVER loadShipmentDetails] Finalize block executed. Setting isLoadingShipment = false');
+        this.isLoadingShipment = false;
+      }))
       .subscribe({
         next: (data) => {
+          console.log('[DRIVER loadShipmentDetails] Success! Data received:', data);
           this.shipment = data ?? null;
         },
         error: (err) => {
-          console.error('Failed to load shipment details', err);
+          console.error('[DRIVER loadShipmentDetails] ERROR:', err);
           this.errorMessage = 'Failed to load shipment details. Please go back and try again.';
         }
       });
@@ -110,27 +119,38 @@ export class ShipmentDetailsComponent implements OnInit {
   // ─── Load orders ─────────────────────────────────────────────────────────
 
   loadOrders(): void {
+    console.log('[DRIVER loadOrders] Started. Setting isLoadingOrders = true');
     this.isLoadingOrders = true;
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
-      .pipe(finalize(() => this.isLoadingOrders = false))
+      .pipe(finalize(() => {
+        console.log('[DRIVER loadOrders] Finalize block executed. Setting isLoadingOrders = false');
+        this.isLoadingOrders = false;
+      }))
       .subscribe({
         next: (data: any) => {
+          console.log('[DRIVER loadOrders] Success! Raw Data received:', JSON.stringify(data).substring(0, 200) + '...');
           try {
             if (Array.isArray(data)) {
+              console.log('[DRIVER loadOrders] Data is an array. Length:', data.length);
               this.orders = data;
             } else if (data && Array.isArray(data.items)) {
+              console.log('[DRIVER loadOrders] Data has an items array. Length:', data.items.length);
               this.orders = data.items;
             } else if (data && Array.isArray(data.Items)) {
+              console.log('[DRIVER loadOrders] Data has an Items array. Length:', data.Items.length);
               this.orders = data.Items;
             } else {
+              console.warn('[DRIVER loadOrders] Data format not recognized. Defaulting to empty array. Data:', data);
               this.orders = [];
             }
-          } catch {
+          } catch (e) {
+            console.error('[DRIVER loadOrders] Error parsing orders:', e);
             this.orders = [];
           }
+          console.log('[DRIVER loadOrders] Orders array successfully set. Final count:', this.orders.length);
         },
         error: (err) => {
-          console.error('Failed to load orders', err);
+          console.error('[DRIVER loadOrders] ERROR:', err);
           this.orders = [];
         }
       });

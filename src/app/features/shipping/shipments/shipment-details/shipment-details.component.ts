@@ -101,12 +101,16 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('[MANAGER ngOnInit] Component initializing...');
     const idParam = this.route.snapshot.paramMap.get('id');
+    console.log('[MANAGER ngOnInit] Raw idParam from route:', idParam);
     if (idParam && !isNaN(+idParam)) {
       this.shipmentId = +idParam;
+      console.log('[MANAGER ngOnInit] Parsed shipmentId:', this.shipmentId, 'Calling loadShipment and loadOrders');
       this.loadShipment();
       this.loadOrders();
     } else {
+      console.warn('[MANAGER ngOnInit] Invalid shipment ID found.');
       this.isLoadingShipment = false;
       this.isLoadingOrders = false;
       this.errorMessage = 'Invalid shipment ID.';
@@ -116,15 +120,20 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   // ─── Load Shipment ────────────────────────────────────────────
 
   loadShipment(): void {
+    console.log('[MANAGER loadShipment] Started. Setting isLoadingShipment = true');
     this.isLoadingShipment = true;
     this.http.get<AdminShipmentDetail>(`${this.apiUrl}/Shipments/${this.shipmentId}`)
-      .pipe(finalize(() => this.isLoadingShipment = false))
+      .pipe(finalize(() => {
+        console.log('[MANAGER loadShipment] Finalize block executed. Setting isLoadingShipment = false');
+        this.isLoadingShipment = false;
+      }))
       .subscribe({
         next: (data) => {
+          console.log('[MANAGER loadShipment] Success! Data received:', data);
           this.shipment = data ?? null;
         },
         error: (err) => {
-          console.error('Failed to load shipment', err);
+          console.error('[MANAGER loadShipment] ERROR:', err);
           this.showError('Failed to load shipment details.');
         }
       });
@@ -133,27 +142,38 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   // ─── Load Orders ──────────────────────────────────────────────
 
   loadOrders(): void {
+    console.log('[MANAGER loadOrders] Started. Setting isLoadingOrders = true');
     this.isLoadingOrders = true;
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
-      .pipe(finalize(() => this.isLoadingOrders = false))
+      .pipe(finalize(() => {
+        console.log('[MANAGER loadOrders] Finalize block executed. Setting isLoadingOrders = false');
+        this.isLoadingOrders = false;
+      }))
       .subscribe({
         next: (data: any) => {
+          console.log('[MANAGER loadOrders] Success! Raw Data received:', JSON.stringify(data).substring(0, 200) + '...');
           try {
             if (Array.isArray(data)) {
+              console.log('[MANAGER loadOrders] Data is an array. Length:', data.length);
               this.orders = data;
             } else if (data && Array.isArray(data.items)) {
+              console.log('[MANAGER loadOrders] Data has an items array. Length:', data.items.length);
               this.orders = data.items;
             } else if (data && Array.isArray(data.Items)) {
+              console.log('[MANAGER loadOrders] Data has an Items array. Length:', data.Items.length);
               this.orders = data.Items;
             } else {
+              console.warn('[MANAGER loadOrders] Data format not recognized. Defaulting to empty array. Data:', data);
               this.orders = [];
             }
-          } catch {
+          } catch (e) {
+            console.error('[MANAGER loadOrders] Error parsing orders:', e);
             this.orders = [];
           }
+          console.log('[MANAGER loadOrders] Orders array successfully set. Final count:', this.orders.length);
         },
         error: (err) => {
-          console.error('Failed to load orders', err);
+          console.error('[MANAGER loadOrders] ERROR:', err);
           this.orders = [];
         }
       });
