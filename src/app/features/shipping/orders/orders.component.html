@@ -160,7 +160,7 @@
 
             <!-- Actions -->
             <td class="col-actions">
-              <button *ngIf="order.orderStatus === 'Ready'"
+              <button *ngIf="order.orderStatus === 'Ready' && (order.shipmentStatus === 'Assigned' || order.shipmentStatus === 'PickingUp')"
                       class="btn btn-sm btn-primary py-0 px-2 rounded-pill shadow-none"
                       style="font-size: 11px; padding: 4px 10px; border: none; border-radius: 20px; background-color: #0d6efd; color: white; cursor: pointer; font-weight: bold;"
                       (click)="updateOrderToPickedUp(order)">

@@ -190,12 +190,12 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   getTimelineSteps() {
     return [
-      { label: 'Order Placed',      icon: '📋', date: this.shipment?.orderTime ?? null },
-      { label: 'Ready for Pickup',  icon: '📦', date: this.shipment?.readyForPickupAt ?? null },
-      { label: 'Driver Assigned',   icon: '👤', date: this.shipment?.driverName ? this.shipment.orderTime : null, customText: this.shipment?.driverName ?? null },
-      { label: 'Trip Started',      icon: '🚀', date: this.shipment?.tripStartedAt ?? null },
-      { label: 'Out for Delivery',  icon: '🚚', date: this.shipment?.outForDeliveryAt ?? null },
-      { label: 'Delivered',         icon: '✅', date: this.shipment?.deliveredAt ?? null },
+      { label: 'Order Placed', icon: '📋', date: this.shipment?.orderTime ?? null },
+      { label: 'Ready for Pickup', icon: '📦', date: this.shipment?.readyForPickupAt ?? null },
+      { label: 'Driver Assigned', icon: '👤', date: this.shipment?.driverName ? this.shipment.orderTime : null, customText: this.shipment?.driverName ?? null },
+      { label: 'Trip Started', icon: '🚀', date: this.shipment?.tripStartedAt ?? null },
+      { label: 'Out for Delivery', icon: '🚚', date: this.shipment?.outForDeliveryAt ?? null },
+      { label: 'Delivered', icon: '✅', date: this.shipment?.deliveredAt ?? null },
     ];
   }
 
@@ -349,7 +349,7 @@ export class ShippingShipmentDetailsComponent implements OnInit {
             this.availableDrivers = [];
           }
         },
-        error: () => { 
+        error: () => {
           this.availableDrivers = [];
         }
       });
@@ -363,17 +363,17 @@ export class ShippingShipmentDetailsComponent implements OnInit {
       `${this.apiUrl}/Shipments/${this.shipmentId}/assign`,
       { driverId: this.selectedDriverId }
     ).pipe(finalize(() => this.isAssigning = false))
-     .subscribe({
-      next: () => {
-        this.closeAssignModal();
-        this.showSuccess('Driver assigned successfully!');
-        this.loadShipment();
-      },
-      error: (err) => {
-        const msg = err?.error?.message || err?.error?.error?.message || 'Failed to assign driver.';
-        this.showError(msg);
-      }
-    });
+      .subscribe({
+        next: () => {
+          this.closeAssignModal();
+          this.showSuccess('Driver assigned successfully!');
+          this.loadShipment();
+        },
+        error: (err) => {
+          const msg = err?.error?.message || err?.error?.error?.message || 'Failed to assign driver.';
+          this.showError(msg);
+        }
+      });
   }
 
   // ─── Unassign Driver ───────────────────────────────────────────
