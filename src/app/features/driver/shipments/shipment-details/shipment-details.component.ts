@@ -101,19 +101,16 @@ export class ShipmentDetailsComponent implements OnInit {
     console.log('[DRIVER loadShipmentDetails] Started. Setting isLoadingShipment = true');
     this.isLoadingShipment = true;
     this.http.get<DriverShipmentDetailDto>(`${this.apiUrl}/drivers/shipments/${this.shipmentId}`)
-      .pipe(finalize(() => {
-        console.log('[DRIVER loadShipmentDetails] Finalize block executed. Setting isLoadingShipment = false');
-        this.isLoadingShipment = false;
-        this.cdr.detectChanges();
-      }))
       .subscribe({
         next: (data) => {
           console.log('[DRIVER loadShipmentDetails] Success! Data received:', data);
           this.shipment = data ?? null;
+          this.isLoadingShipment = false;
         },
         error: (err) => {
           console.error('[DRIVER loadShipmentDetails] ERROR:', err);
           this.errorMessage = 'Failed to load shipment details. Please go back and try again.';
+          this.isLoadingShipment = false;
         }
       });
   }
@@ -124,11 +121,6 @@ export class ShipmentDetailsComponent implements OnInit {
     console.log('[DRIVER loadOrders] Started. Setting isLoadingOrders = true');
     this.isLoadingOrders = true;
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
-      .pipe(finalize(() => {
-        console.log('[DRIVER loadOrders] Finalize block executed. Setting isLoadingOrders = false');
-        this.isLoadingOrders = false;
-        this.cdr.detectChanges();
-      }))
       .subscribe({
         next: (data: any) => {
           console.log('[DRIVER loadOrders] Success! Raw Data received:', JSON.stringify(data).substring(0, 200) + '...');
@@ -151,10 +143,12 @@ export class ShipmentDetailsComponent implements OnInit {
             this.orders = [];
           }
           console.log('[DRIVER loadOrders] Orders array successfully set. Final count:', this.orders.length);
+          this.isLoadingOrders = false;
         },
         error: (err) => {
           console.error('[DRIVER loadOrders] ERROR:', err);
           this.orders = [];
+          this.isLoadingOrders = false;
         }
       });
   }

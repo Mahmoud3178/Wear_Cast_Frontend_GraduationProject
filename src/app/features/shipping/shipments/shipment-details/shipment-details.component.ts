@@ -124,19 +124,16 @@ export class ShippingShipmentDetailsComponent implements OnInit {
     console.log('[MANAGER loadShipment] Started. Setting isLoadingShipment = true');
     this.isLoadingShipment = true;
     this.http.get<AdminShipmentDetail>(`${this.apiUrl}/Shipments/${this.shipmentId}`)
-      .pipe(finalize(() => {
-        console.log('[MANAGER loadShipment] Finalize block executed. Setting isLoadingShipment = false');
-        this.isLoadingShipment = false;
-        this.cdr.detectChanges();
-      }))
       .subscribe({
         next: (data) => {
           console.log('[MANAGER loadShipment] Success! Data received:', data);
           this.shipment = data ?? null;
+          this.isLoadingShipment = false;
         },
         error: (err) => {
           console.error('[MANAGER loadShipment] ERROR:', err);
           this.showError('Failed to load shipment details.');
+          this.isLoadingShipment = false;
         }
       });
   }
@@ -147,11 +144,6 @@ export class ShippingShipmentDetailsComponent implements OnInit {
     console.log('[MANAGER loadOrders] Started. Setting isLoadingOrders = true');
     this.isLoadingOrders = true;
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
-      .pipe(finalize(() => {
-        console.log('[MANAGER loadOrders] Finalize block executed. Setting isLoadingOrders = false');
-        this.isLoadingOrders = false;
-        this.cdr.detectChanges();
-      }))
       .subscribe({
         next: (data: any) => {
           console.log('[MANAGER loadOrders] Success! Raw Data received:', JSON.stringify(data).substring(0, 200) + '...');
@@ -174,10 +166,12 @@ export class ShippingShipmentDetailsComponent implements OnInit {
             this.orders = [];
           }
           console.log('[MANAGER loadOrders] Orders array successfully set. Final count:', this.orders.length);
+          this.isLoadingOrders = false;
         },
         error: (err) => {
           console.error('[MANAGER loadOrders] ERROR:', err);
           this.orders = [];
+          this.isLoadingOrders = false;
         }
       });
   }
