@@ -68,6 +68,8 @@ export class ShipmentDetailsComponent implements OnInit {
   showUnassignModal = false;
   isUnassigning = false;
 
+  
+
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam && !isNaN(+idParam)) {

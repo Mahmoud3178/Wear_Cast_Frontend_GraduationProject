@@ -73,9 +73,11 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   shipmentId!: number;
   shipment: AdminShipmentDetail | null = null;
-  orders: ShipmentOrderDto[] | null = null;
+  orders: ShipmentOrderDto[] = [];   // ← مش null، array فاضي من الأول
 
   isLoading = true;
+  isLoadingShipment = false;         // ← إضافة المتغير الناقص
+  isLoadingOrders = false;           // ← إضافة المتغير الناقص
 
   // Assign
   showAssignModal = false;
@@ -96,19 +98,13 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   successMessage = '';
   errorMessage = '';
 
-
-
   ngOnInit(): void {
-    console.log('[MANAGER ngOnInit] Component initializing...');
     const idParam = this.route.snapshot.paramMap.get('id');
-    console.log('[MANAGER ngOnInit] Raw idParam from route:', idParam);
     if (idParam && !isNaN(+idParam)) {
       this.shipmentId = +idParam;
-      console.log('[MANAGER ngOnInit] Parsed shipmentId:', this.shipmentId, 'Calling loadShipment and loadOrders');
       this.loadShipment();
       this.loadOrders();
     } else {
-      console.warn('[MANAGER ngOnInit] Invalid shipment ID found.');
       this.isLoading = false;
       this.errorMessage = 'Invalid shipment ID.';
     }
@@ -117,16 +113,13 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   // ─── Load Shipment ────────────────────────────────────────────
 
   loadShipment(): void {
-    console.log('[MANAGER loadShipment] Started.');
     this.http.get<AdminShipmentDetail>(`${this.apiUrl}/Shipments/${this.shipmentId}`)
       .subscribe({
         next: (data) => {
-          console.log('[MANAGER loadShipment] Success!');
           this.shipment = data ?? null;
           this.checkLoadingState();
         },
         error: (err) => {
-          console.error('[MANAGER loadShipment] ERROR:', err);
           this.showError('Failed to load shipment details.');
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -137,11 +130,11 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   // ─── Load Orders ──────────────────────────────────────────────
 
   loadOrders(): void {
-    console.log('[MANAGER loadOrders] Started.');
+    this.isLoadingOrders = true;
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
+      .pipe(finalize(() => { this.isLoadingOrders = false; }))
       .subscribe({
         next: (data: any) => {
-          console.log('[MANAGER loadOrders] Success!');
           try {
             if (Array.isArray(data)) {
               this.orders = data;
@@ -152,13 +145,12 @@ export class ShippingShipmentDetailsComponent implements OnInit {
             } else {
               this.orders = [];
             }
-          } catch (e) {
+          } catch {
             this.orders = [];
           }
           this.checkLoadingState();
         },
-        error: (err) => {
-          console.error('[MANAGER loadOrders] ERROR:', err);
+        error: () => {
           this.orders = [];
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -166,8 +158,9 @@ export class ShippingShipmentDetailsComponent implements OnInit {
       });
   }
 
-  checkLoadingState() {
-    if (this.shipment !== null && this.orders !== null) {
+  checkLoadingState(): void {
+    // orders دلوقتي array دايمًا، بس بنستنى الـ shipment يجي
+    if (this.shipment !== null && !this.isLoadingOrders) {
       this.isLoading = false;
       this.cdr.detectChanges();
     }
@@ -202,12 +195,12 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   getTimelineSteps() {
     return [
-      { label: 'Order Placed', icon: '📋', date: this.shipment?.orderTime ?? null },
-      { label: 'Ready for Pickup', icon: '📦', date: this.shipment?.readyForPickupAt ?? null },
-      { label: 'Driver Assigned', icon: '👤', date: this.shipment?.driverName ? this.shipment.orderTime : null, customText: this.shipment?.driverName ?? null },
-      { label: 'Trip Started', icon: '🚀', date: this.shipment?.tripStartedAt ?? null },
-      { label: 'Out for Delivery', icon: '🚚', date: this.shipment?.outForDeliveryAt ?? null },
-      { label: 'Delivered', icon: '✅', date: this.shipment?.deliveredAt ?? null },
+      { label: 'Order Placed',      icon: '📋', date: this.shipment?.orderTime ?? null,         customText: null },
+      { label: 'Ready for Pickup',  icon: '📦', date: this.shipment?.readyForPickupAt ?? null,   customText: null },
+      { label: 'Driver Assigned',   icon: '👤', date: this.shipment?.driverName ? this.shipment.orderTime : null, customText: this.shipment?.driverName ?? null },
+      { label: 'Trip Started',      icon: '🚀', date: this.shipment?.tripStartedAt ?? null,      customText: null },
+      { label: 'Out for Delivery',  icon: '🚚', date: this.shipment?.outForDeliveryAt ?? null,   customText: null },
+      { label: 'Delivered',         icon: '✅', date: this.shipment?.deliveredAt ?? null,        customText: null },
     ];
   }
 
@@ -223,14 +216,13 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   getTotalItems(): number {
     try {
-      if (!Array.isArray(this.orders)) return 0;
       return this.orders.reduce((sum, o) => sum + (o?.numberOfItems ?? 0), 0);
     } catch {
       return 0;
     }
   }
 
-  // ─── Actions ───────────────────────────────────────────────────
+  // ─── Actions ──────────────────────────────────────────────────
 
   getNextAction(): { label: string; class: string; status: string } | null {
     const s = this.shipment?.shipmentStatus;
@@ -271,6 +263,7 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   executeStatusUpdate(status: string, deliveryCode?: string): void {
     if (!this.shipment) return;
     this.isLoadingShipment = true;
+    this.errorMessage = '';
 
     const statusMap: Record<string, number> = {
       'Pending': 1, 'Unassigned': 2, 'Assigned': 3,
@@ -281,7 +274,7 @@ export class ShippingShipmentDetailsComponent implements OnInit {
     if (deliveryCode) body.deliveryCode = deliveryCode;
 
     this.http.put<void>(`${this.apiUrl}/Shipments/${this.shipmentId}/status`, body)
-      .pipe(finalize(() => this.isLoadingShipment = false))
+      .pipe(finalize(() => { this.isLoadingShipment = false; }))
       .subscribe({
         next: () => {
           this.showSuccess('Shipment status updated successfully!');
@@ -293,8 +286,8 @@ export class ShippingShipmentDetailsComponent implements OnInit {
           let msg = 'Failed to update shipment status.';
           if (apiError?.code) {
             const codeMessages: Record<string, string> = {
-              'Shipment.NotReady': '⚠️ Cannot start trip: Some orders are not yet marked as Ready.',
-              'Shipment.NotPickedUp': '⚠️ Cannot go out for delivery: All orders must be picked up first.',
+              'Shipment.NotReady':          '⚠️ Cannot start trip: Some orders are not yet marked as Ready.',
+              'Shipment.NotPickedUp':       '⚠️ Cannot go out for delivery: All orders must be picked up first.',
               'Shipment.WrongDeliveryCode': '❌ Incorrect delivery code. Please check with the customer.',
               'Shipment.InvalidTransition': '⚠️ This status change is not allowed at this stage.'
             };
@@ -325,7 +318,7 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   loadAvailableDrivers(): void {
     this.isLoadingDrivers = true;
     this.driverService.getAllDrivers({ PageSize: 100 })
-      .pipe(finalize(() => this.isLoadingDrivers = false))
+      .pipe(finalize(() => { this.isLoadingDrivers = false; }))
       .subscribe({
         next: (data: any) => {
           try {
@@ -356,7 +349,7 @@ export class ShippingShipmentDetailsComponent implements OnInit {
     this.http.put<void>(
       `${this.apiUrl}/Shipments/${this.shipmentId}/assign`,
       { driverId: this.selectedDriverId }
-    ).pipe(finalize(() => this.isAssigning = false))
+    ).pipe(finalize(() => { this.isAssigning = false; }))
       .subscribe({
         next: () => {
           this.closeAssignModal();
@@ -372,13 +365,13 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   // ─── Unassign Driver ───────────────────────────────────────────
 
-  openUnassignModal(): void { this.showUnassignModal = true; }
+  openUnassignModal(): void  { this.showUnassignModal = true; }
   closeUnassignModal(): void { this.showUnassignModal = false; }
 
   confirmUnassign(): void {
     this.isUnassigning = true;
     this.http.put<void>(`${this.apiUrl}/Shipments/${this.shipmentId}/unassign`, {})
-      .pipe(finalize(() => this.isUnassigning = false))
+      .pipe(finalize(() => { this.isUnassigning = false; }))
       .subscribe({
         next: () => {
           this.closeUnassignModal();
@@ -396,12 +389,12 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   showSuccess(msg: string): void {
     this.successMessage = msg;
-    setTimeout(() => this.successMessage = '', 4000);
+    setTimeout(() => { this.successMessage = ''; }, 4000);
   }
 
   showError(msg: string): void {
     this.errorMessage = msg;
-    setTimeout(() => this.errorMessage = '', 6000);
+    setTimeout(() => { this.errorMessage = ''; }, 6000);
   }
 
   getDriverLabel(d: DriverItem): string {

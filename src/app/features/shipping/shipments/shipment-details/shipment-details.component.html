@@ -141,7 +141,10 @@
     <div class="sd-main">
 
       <!-- Action Banner -->
-      <div class="action-banner" *ngIf="getNextAction() as action" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e5eaf3;">
+      <div class="action-banner" *ngIf="getNextAction() as action"
+           style="display: flex; align-items: center; justify-content: space-between; background: #fff;
+                  padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e5eaf3;">
         <div style="display: flex; align-items: center; gap: 1rem;">
           <span style="font-size: 1.5rem;">🎯</span>
           <div>
@@ -151,7 +154,11 @@
             </p>
           </div>
         </div>
-        <button class="{{ action.class }}" style="padding: 0.5rem 1rem;" (click)="onActionClick()" [disabled]="isLoadingShipment || isLoadingOrders">
+        <!-- ✅ إصلاح: استخدام isLoadingShipment بدل isLoadingOrders -->
+        <button [ngClass]="action.class" style="padding: 0.5rem 1rem;"
+                (click)="onActionClick()"
+                [disabled]="isLoadingShipment">
+          <span *ngIf="isLoadingShipment" class="btn-spinner"></span>
           {{ action.label }}
         </button>
       </div>
@@ -164,6 +171,7 @@
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
+          <!-- ✅ إصلاح: orders دلوقتي array مش null -->
           <span class="stat-val">{{ orders.length }}</span>
           <span class="stat-lbl">Orders</span>
         </div>
@@ -212,9 +220,11 @@
       <!-- Orders -->
       <div class="section-card">
         <div class="section-hdr">
+          <!-- ✅ إصلاح: orders دلوقتي array مش null -->
           <h2 class="section-title">🛍️ Orders <span class="count-badge">{{ orders.length }}</span></h2>
         </div>
 
+        <!-- ✅ إصلاح: orders دلوقتي array مش null -->
         <div *ngIf="orders.length === 0" class="empty-state">
           <div class="empty-icon">📋</div>
           <p>No orders found for this shipment.</p>
@@ -258,6 +268,7 @@
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -381,4 +392,5 @@
     <p>This shipment does not exist or you don't have permission to view it.</p>
     <a routerLink="/shipping/shipments" class="back-btn">← Back to Shipments</a>
   </div>
+
 </div>
