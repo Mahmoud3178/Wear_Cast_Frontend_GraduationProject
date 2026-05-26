@@ -94,6 +94,9 @@
   max-width: 100%;
   box-sizing: border-box;
 }
+
+
+
 @media (max-width: 992px) {
   .wc-seller-shell {
     grid-template-columns: 1fr;

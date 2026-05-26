@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-edit-product',
@@ -79,7 +80,9 @@ newColorSizes: { name: string; quantity: number }[] =
   constructor(
     private productService: ProductService,
     private route: ActivatedRoute,
-    public  router: Router
+    public  router: Router,
+      private toast: ToastService  // أضف هنا
+
   ) {}
 
   ngOnInit(): void {
@@ -165,8 +168,8 @@ this.sizeDetails = this.allSizes.map(sz => {
         setTimeout(() => this.saveMsg = '', 3000);
       },
 error: (err: any) => {
-  this.isSaving  = false;
-  const errBody  = err?.error;
+  this.isSaving = false;
+  const errBody = err?.error;
 
   if (errBody?.validationErrors) {
     this.saveError = Object.entries(errBody.validationErrors)
@@ -175,6 +178,7 @@ error: (err: any) => {
   } else {
     this.saveError = errBody?.description || errBody?.message || errBody?.title || 'Update failed ❌';
   }
+  this.toast.error(this.saveError); // أضف هنا
 }
     });
   }
@@ -220,6 +224,7 @@ error: (err: any) => {
   } else {
     this.colorMsg[color.id] = '❌ ' + (errBody?.description || errBody?.message || 'Failed');
   }
+  this.toast.error(this.colorMsg[color.id].replace('❌ ', '')); // أضف هنا
 }
     });
   }
@@ -228,8 +233,10 @@ error: (err: any) => {
     if (!confirm(`Delete color "${color.colorName}"? This cannot be undone.`)) return;
     this.productService.deleteColor(color.id).subscribe({
       next: () => { this.colors = this.colors.filter(c => c.id !== color.id); },
-      error: (err: any) => alert('Delete failed: ' + (err?.error?.message || ''))
-    });
+error: (err: any) => {
+  this.toast.error('Delete failed: ' + (err?.error?.message || '')); // بدل alert
+}
+  });
   }
 
   // ── Gallery images ────────────────────────────────────
@@ -290,9 +297,7 @@ error: (err: any) => {
   closeAdjust() { this.adjustingColor = null; }
 
 saveAdjust() {
-
-  const changed = this.adjustSizes
-    .filter(s => s.newQty !== s.currentQty);
+  const changed = this.adjustSizes.filter(s => s.newQty !== s.currentQty);
 
   if (!changed.length) {
     this.closeAdjust();
@@ -303,7 +308,7 @@ saveAdjust() {
     colorId: this.adjustingColor.id,
     adjustments: changed.map(s => ({
       size: this.sizeMapping[s.size],
-      quantity: Number(s.newQty)
+      quantity: Number(s.newQty) - Number(s.currentQty)  // الفرق مش القيمة الجديدة
     }))
   };
 
@@ -313,7 +318,7 @@ saveAdjust() {
       this.loadProduct();
     },
     error: () => {
-      alert('Failed to adjust quantities');
+      this.toast.error('Failed to adjust quantities');
     }
   });
 }
@@ -370,10 +375,11 @@ saveAdjust() {
 ].map(n => ({ name: n, quantity: 0 }));
         this.loadProduct();
       },
-      error: (err: any) => {
-        this.isAddingColor = false;
-        alert('Add color failed: ' + (err?.error?.message || err?.error?.description || ''));
-      }
+error: (err: any) => {
+  this.isAddingColor = false;
+  const msg = err?.error?.message || err?.error?.description || 'Add color failed';
+  this.toast.error(msg); // بدل alert
+}
     });
   }
 }

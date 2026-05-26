@@ -7,8 +7,6 @@ import { finalize } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { DriverService } from '../../../../core/services/driver.service';
 
-// ─── Interfaces matching the ACTUAL backend responses ───────────────────────
-
 export interface AddressDto {
   state?: string | null;
   city?: string | null;
@@ -16,7 +14,6 @@ export interface AddressDto {
   buildingNumber?: string | null;
 }
 
-/** GET /api/drivers/shipments/{id} */
 export interface DriverShipmentDetailDto {
   id: number;
   deliveryAddress?: AddressDto | null;
@@ -30,7 +27,6 @@ export interface DriverShipmentDetailDto {
   customerPhoneNumber?: string | null;
 }
 
-/** GET /api/Shipments/{id}/Orders  (array item) */
 export interface ShipmentOrderDto {
   orderId: number;
   orderType?: string | null;
@@ -58,51 +54,40 @@ export class ShipmentDetailsComponent implements OnInit {
 
   shipmentId!: number;
   shipment: DriverShipmentDetailDto | null = null;
-  orders: ShipmentOrderDto[] | null = null;
+  orders: ShipmentOrderDto[] = [];
 
   isLoading = true;
+  isLoadingShipment = false;
+  isLoadingOrders = false;
   errorMessage = '';
   successMessage = '';
 
-  // Delivery code modal
   showCodeModal = false;
   enteredCode = '';
 
-  // Unassign confirmation modal
   showUnassignModal = false;
   isUnassigning = false;
 
-
-
   ngOnInit(): void {
-    console.log('[DRIVER ngOnInit] Component initializing...');
     const idParam = this.route.snapshot.paramMap.get('id');
-    console.log('[DRIVER ngOnInit] Raw idParam from route:', idParam);
     if (idParam && !isNaN(+idParam)) {
       this.shipmentId = +idParam;
-      console.log('[DRIVER ngOnInit] Parsed shipmentId:', this.shipmentId, 'Calling loadShipmentDetails and loadOrders');
       this.loadShipmentDetails();
       this.loadOrders();
     } else {
-      console.warn('[DRIVER ngOnInit] Invalid shipment ID found.');
       this.isLoading = false;
       this.errorMessage = 'Invalid shipment ID.';
     }
   }
 
-  // ─── Load shipment ───────────────────────────────────────────────────────
-
   loadShipmentDetails(): void {
-    console.log('[DRIVER loadShipmentDetails] Started.');
     this.http.get<DriverShipmentDetailDto>(`${this.apiUrl}/drivers/shipments/${this.shipmentId}`)
       .subscribe({
         next: (data) => {
-          console.log('[DRIVER loadShipmentDetails] Success!');
           this.shipment = data ?? null;
           this.checkLoadingState();
         },
         error: (err) => {
-          console.error('[DRIVER loadShipmentDetails] ERROR:', err);
           this.errorMessage = 'Failed to load shipment details. Please go back and try again.';
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -110,31 +95,22 @@ export class ShipmentDetailsComponent implements OnInit {
       });
   }
 
-  // ─── Load orders ─────────────────────────────────────────────────────────
-
   loadOrders(): void {
-    console.log('[DRIVER loadOrders] Started.');
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
       .subscribe({
         next: (data: any) => {
-          console.log('[DRIVER loadOrders] Success!');
-          try {
-            if (Array.isArray(data)) {
-              this.orders = data;
-            } else if (data && Array.isArray(data.items)) {
-              this.orders = data.items;
-            } else if (data && Array.isArray(data.Items)) {
-              this.orders = data.Items;
-            } else {
-              this.orders = [];
-            }
-          } catch (e) {
+          if (Array.isArray(data)) {
+            this.orders = data;
+          } else if (data && Array.isArray(data.items)) {
+            this.orders = data.items;
+          } else if (data && Array.isArray(data.Items)) {
+            this.orders = data.Items;
+          } else {
             this.orders = [];
           }
           this.checkLoadingState();
         },
-        error: (err) => {
-          console.error('[DRIVER loadOrders] ERROR:', err);
+        error: () => {
           this.orders = [];
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -142,14 +118,12 @@ export class ShipmentDetailsComponent implements OnInit {
       });
   }
 
-  checkLoadingState() {
-    if (this.shipment !== null && this.orders !== null) {
+  checkLoadingState(): void {
+    if (this.shipment !== null) {
       this.isLoading = false;
       this.cdr.detectChanges();
     }
   }
-
-  // ─── Status helpers ──────────────────────────────────────────────────────
 
   getStatusLabel(status: string | null | undefined): string {
     const map: Record<string, string> = {
@@ -209,15 +183,13 @@ export class ShipmentDetailsComponent implements OnInit {
 
   getTimelineSteps() {
     return [
-      { label: 'Order Placed',      date: this.shipment?.orderedAt ?? null,          icon: '📋' },
-      { label: 'Ready for Pickup',  date: this.shipment?.readyForPickupAt ?? null,   icon: '📦' },
-      { label: 'Trip Started',      date: this.shipment?.tripStartedAt ?? null,      icon: '🚀' },
-      { label: 'Out for Delivery',  date: this.shipment?.outForDeliveryAt ?? null,   icon: '🚚' },
-      { label: 'Delivered',         date: this.shipment?.deliveredAt ?? null,        icon: '✅' },
+      { label: 'Order Placed',      date: this.shipment?.orderedAt ?? null,        icon: '📋' },
+      { label: 'Ready for Pickup',  date: this.shipment?.readyForPickupAt ?? null, icon: '📦' },
+      { label: 'Trip Started',      date: this.shipment?.tripStartedAt ?? null,    icon: '🚀' },
+      { label: 'Out for Delivery',  date: this.shipment?.outForDeliveryAt ?? null, icon: '🚚' },
+      { label: 'Delivered',         date: this.shipment?.deliveredAt ?? null,      icon: '✅' },
     ];
   }
-
-  // ─── Next action ─────────────────────────────────────────────────────────
 
   getNextAction(): { label: string; class: string; status: string } | null {
     const s = this.shipment?.shipmentStatus;
@@ -229,8 +201,6 @@ export class ShipmentDetailsComponent implements OnInit {
     }
     return null;
   }
-
-  // ─── Status update ───────────────────────────────────────────────────────
 
   onActionClick(): void {
     const next = this.getNextAction();
@@ -284,8 +254,6 @@ export class ShipmentDetailsComponent implements OnInit {
       });
   }
 
-  // ─── Unassign ────────────────────────────────────────────────────────────
-
   updateOrderToPickedUp(order: ShipmentOrderDto): void {
     this.isLoadingOrders = true;
     this.driverService.updateOrderStatus(order.orderId, 6).subscribe({
@@ -322,8 +290,6 @@ export class ShipmentDetailsComponent implements OnInit {
       });
   }
 
-  // ─── Helpers ─────────────────────────────────────────────────────────────
-
   showSuccess(msg: string): void {
     this.successMessage = msg;
     setTimeout(() => this.successMessage = '', 4000);
@@ -339,10 +305,10 @@ export class ShipmentDetailsComponent implements OnInit {
       const apiError = err?.error?.error || err?.error;
       if (apiError?.code) {
         const codeMessages: Record<string, string> = {
-          'Shipment.NotReady':           '⚠️ Cannot start trip: Some orders are not yet marked as Ready by the vendor.',
-          'Shipment.NotPickedUp':        '⚠️ Cannot go out for delivery: All orders must be picked up first.',
-          'Shipment.WrongDeliveryCode':  '❌ Incorrect delivery code. Please ask the customer for the correct code.',
-          'Shipment.InvalidTransition':  '⚠️ This status change is not allowed at this stage.'
+          'Shipment.NotReady':          '⚠️ Cannot start trip: Some orders are not yet marked as Ready by the vendor.',
+          'Shipment.NotPickedUp':       '⚠️ Cannot go out for delivery: All orders must be picked up first.',
+          'Shipment.WrongDeliveryCode': '❌ Incorrect delivery code. Please ask the customer for the correct code.',
+          'Shipment.InvalidTransition': '⚠️ This status change is not allowed at this stage.'
         };
         this.errorMessage = codeMessages[apiError.code] ?? `${fallback} (${apiError.message})`;
       } else if (apiError?.message) {
@@ -359,7 +325,6 @@ export class ShipmentDetailsComponent implements OnInit {
 
   getTotalItems(): number {
     try {
-      if (!Array.isArray(this.orders)) return 0;
       return this.orders.reduce((sum, o) => sum + (o?.numberOfItems ?? 0), 0);
     } catch {
       return 0;
