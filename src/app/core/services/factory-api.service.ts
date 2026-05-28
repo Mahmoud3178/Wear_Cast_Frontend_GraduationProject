@@ -1357,8 +1357,26 @@ export class FactoryApiService {
         if (!res.isSuccess) {
           throw this.envErr(res);
         }
-        const data = (res.data ?? {}) as Record<string, unknown>;
-        const id = this.toNum(data['id'] ?? data['Id'] ?? data['sizeId'] ?? data['SizeId']) ?? undefined;
+        const rawData = res.data;
+        let id: number | undefined = undefined;
+        if (typeof rawData === 'number' && Number.isFinite(rawData)) {
+          id = rawData;
+        } else if (typeof rawData === 'string' && /^\d+$/.test(rawData)) {
+          id = parseInt(rawData, 10);
+        } else if (rawData && typeof rawData === 'object') {
+          const dataObj = rawData as Record<string, unknown>;
+          id =
+            this.toNum(
+              dataObj['id'] ??
+                dataObj['Id'] ??
+                dataObj['sizeId'] ??
+                dataObj['SizeId'] ??
+                dataObj['productSizeId'] ??
+                dataObj['ProductSizeId'] ??
+                dataObj['sizeDetailId'] ??
+                dataObj['SizeDetailId']
+            ) ?? undefined;
+        }
         return { id };
       }),
       catchError(e => this.mapErr(e))

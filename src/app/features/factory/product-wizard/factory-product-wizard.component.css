@@ -1,3 +1,28 @@
+/* ─── Sticky Alerts Container ─── */
+.wc-sticky-alerts-container {
+  position: fixed;
+  top: 85px;
+  right: 24px;
+  z-index: 10000;
+  width: calc(100% - 48px);
+  max-width: 400px;
+  pointer-events: none;
+}
+.wc-sticky-alerts-container .alert {
+  pointer-events: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(76, 143, 234, 0.15);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+}
+@media (max-width: 576px) {
+  .wc-sticky-alerts-container {
+    top: 16px;
+    right: 16px;
+    width: calc(100% - 32px);
+  }
+}
+
 /* ─── Back Link ─── */
 .wc-back-link {
   color: var(--baby-text-muted, #5f748c);

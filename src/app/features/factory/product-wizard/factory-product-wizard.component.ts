@@ -147,6 +147,7 @@ export class FactoryProductWizardComponent implements OnInit, OnDestroy {
   editingSizeId: number | null = null;
   sizeEditForm = { size: '_M' as WearcastSizeString, a: 26.5, b: 20, c: 24.5 };
   categoryPreviewImageUrl: string | null = null;
+  dtoCategoryName: string | null = null;
 
   // ── State ───────────────────────────────────────────────────────────────────
   busy = false;
@@ -197,10 +198,7 @@ export class FactoryProductWizardComponent implements OnInit, OnDestroy {
     this.factory.getCategories().subscribe({
       next: rows => {
         this.categories = sortCategories(rows);
-        const ids = this.categories.map(c => resolveCategoryId(c)).filter(id => id > 0);
-        if (!ids.includes(this.createForm.categoryId) && ids.length) {
-          this.createForm.categoryId = ids[0];
-        }
+        this.resolveAndSetCategory();
       },
       error: () => { this.error = 'Could not load categories.'; }
     });
@@ -445,7 +443,7 @@ export class FactoryProductWizardComponent implements OnInit, OnDestroy {
           ...this.existingSizes,
           { id: id ?? null, size, a: this.sizeForm.a, b: this.sizeForm.b, c: this.sizeForm.c }
         ];
-        if (id == null && this.isEditMode && this.productId != null) {
+        if (id == null && this.productId != null) {
           // Some API variants do not return created size id; re-fetch to discover ids.
           this.loadExistingProduct(this.productId);
         }
@@ -750,8 +748,9 @@ export class FactoryProductWizardComponent implements OnInit, OnDestroy {
     const ch = num(merged['canvasHeight'] ?? merged['CanvasHeight']);
     if (cw != null) this.createForm.canvasWidth = cw;
     if (ch != null) this.createForm.canvasHeight = ch;
-    const cat = num(merged['categoryId'] ?? merged['CategoryId']);
-    if (cat != null && cat > 0) this.createForm.categoryId = cat;
+    
+    this.resolveAndSetCategory(dto);
+
     const style = num(merged['dressStyle'] ?? merged['DressStyle']);
     if (style != null && style > 0) this.createForm.dressStyle = style;
     const ta = merged['targetAudiences'] ?? merged['TargetAudiences'] ?? merged['targetAudience'] ?? merged['TargetAudience'];
@@ -764,6 +763,51 @@ export class FactoryProductWizardComponent implements OnInit, OnDestroy {
     }
     const defColor = num(merged['defaultColorId'] ?? merged['DefaultColorId']);
     if (defColor != null && defColor > 0) this.selectedDefaultColorId = defColor;
+  }
+
+  private resolveAndSetCategory(dto: Record<string, unknown> | null = null): void {
+    let catId: number | null = null;
+    if (dto) {
+      const merged = mergeNestedProductShape(dto);
+      catId = num(merged['categoryId'] ?? merged['CategoryId']);
+      const categoryObj = merged['category'] ?? merged['Category'];
+      if (categoryObj && typeof categoryObj === 'object') {
+        const cObj = categoryObj as Record<string, unknown>;
+        const parsedId = num(cObj['id'] ?? cObj['Id']);
+        if (parsedId != null && parsedId > 0) {
+          catId = parsedId;
+        }
+        const catName = pickStr(cObj, ['name', 'Name']);
+        if (catName) {
+          this.dtoCategoryName = catName;
+        }
+      }
+    }
+
+    if (catId != null && catId > 0) {
+      this.createForm.categoryId = catId;
+    }
+
+    if (this.dtoCategoryName && this.categories.length > 0) {
+      const matched = this.categories.find(c => {
+        const name = String(c.name ?? c.Name ?? '').trim();
+        return name.toLowerCase() === this.dtoCategoryName!.toLowerCase();
+      });
+      if (matched) {
+        const matchedId = resolveCategoryId(matched);
+        if (matchedId > 0) {
+          this.createForm.categoryId = matchedId;
+          return;
+        }
+      }
+    }
+
+    if (this.categories.length > 0) {
+      const ids = this.categories.map(c => resolveCategoryId(c)).filter(id => id > 0);
+      if (!ids.includes(this.createForm.categoryId)) {
+        this.createForm.categoryId = ids[0];
+      }
+    }
   }
 
   private loadCategoryPreviewImage(categoryId: number): void {

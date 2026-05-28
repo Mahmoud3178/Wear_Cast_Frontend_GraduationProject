@@ -520,49 +520,62 @@ body {
 
 .angular-product-modal-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
-  max-height: 50vh;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 20px;
+  max-height: 52vh;
   overflow-y: auto;
-  padding: 4px;
+  padding: 8px;
 }
 
 .angular-product-card {
-  background: linear-gradient(145deg, #ffffff 0%, #f5faff 100%);
+  background: linear-gradient(145deg, #ffffff 0%, #fafdff 100%);
   border: 1px solid #d7e6f7;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 14px;
+  padding: 14px;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  box-shadow: 0 4px 14px rgba(76, 143, 234, 0.08);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s, border-color 0.25s;
+  box-shadow: 0 4px 14px rgba(76, 143, 234, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 270px;
 }
 
 .angular-product-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
   border-color: #6fafef;
-  box-shadow: 0 10px 22px rgba(76, 143, 234, 0.16);
+  box-shadow: 0 12px 24px rgba(76, 143, 234, 0.14);
 }
 
 .angular-product-card img {
   width: 100%;
-  height: 140px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  background: #eaf4ff;
+  height: 145px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  padding: 10px;
+  border: 1px solid #eaf4ff;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+}
+
+.angular-product-card:hover img {
+  transform: scale(1.04);
 }
 
 .angular-product-card .no-img {
   width: 100%;
-  height: 140px;
+  height: 145px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #eaf4ff;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  color: #5f748c;
+  background: #f8fcff;
+  border: 1px solid #eaf4ff;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  color: #8fa6bf;
   font-size: 0.85rem;
   font-weight: 500;
 }
@@ -570,11 +583,14 @@ body {
 .angular-product-card h4 {
   color: #17324d !important;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-size: 0.92rem;
 }
 
 .angular-product-card p {
   color: #5f748c !important;
+  font-size: 0.8rem;
+  margin-bottom: 2px;
 }
 
 .wc-filters {
