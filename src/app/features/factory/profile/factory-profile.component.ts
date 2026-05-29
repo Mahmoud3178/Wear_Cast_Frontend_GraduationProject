@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgIf, NgFor, NgClass, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth.service';
 import {
   FactoryApiService,
   FactoryProfile,
@@ -54,8 +55,23 @@ export class FactoryProfileComponent implements OnInit {
     phoneNumber: ''
   };
 
+  // Password change form
+  showChangePassword = false;
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmNewPassword = false;
+  passwordForm = {
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  };
+  passwordError = '';
+  passwordSuccess = '';
+  passwordBusy = false;
+
   constructor(
-    private readonly factoryApi: FactoryApiService
+    private readonly factoryApi: FactoryApiService,
+    private readonly auth: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -249,6 +265,64 @@ export class FactoryProfileComponent implements OnInit {
       this.saving = false;
       this.errorMsg = 'Choose what to edit first.';
     }
+  }
+
+  toggleChangePassword(): void {
+    this.showChangePassword = !this.showChangePassword;
+    this.passwordError = '';
+    this.passwordSuccess = '';
+    this.showCurrentPassword = false;
+    this.showNewPassword = false;
+    this.showConfirmNewPassword = false;
+    this.passwordForm = {
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: ''
+    };
+  }
+
+  savePassword(): void {
+    const { currentPassword, newPassword, confirmNewPassword } = this.passwordForm;
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      this.passwordError = 'All fields are required.';
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      this.passwordError = 'New passwords do not match.';
+      return;
+    }
+    if (newPassword.length < 6) {
+      this.passwordError = 'Password must be at least 6 characters.';
+      return;
+    }
+
+    this.passwordBusy = true;
+    this.passwordError = '';
+    this.passwordSuccess = '';
+
+    this.auth.changePassword({ currentPassword, newPassword, confirmNewPassword }).subscribe({
+      next: () => {
+        this.passwordBusy = false;
+        this.passwordSuccess = 'Password changed successfully!';
+        this.passwordForm = {
+          currentPassword: '',
+          newPassword: '',
+          confirmNewPassword: ''
+        };
+        // Auto close after 2 seconds
+        setTimeout(() => {
+          this.showChangePassword = false;
+          this.passwordSuccess = '';
+          this.showCurrentPassword = false;
+          this.showNewPassword = false;
+          this.showConfirmNewPassword = false;
+        }, 2000);
+      },
+      error: (err: Error) => {
+        this.passwordBusy = false;
+        this.passwordError = err.message || 'Failed to change password.';
+      }
+    });
   }
 
   onImageSelected(event: Event): void {

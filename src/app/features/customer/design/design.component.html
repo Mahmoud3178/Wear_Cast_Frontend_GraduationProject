@@ -338,7 +338,7 @@
     <div *ngIf="totalPages > 1" class="d-flex justify-content-center align-items-center gap-2 mt-4">
       <button
         type="button"
-        class="btn btn-sm btn-outline-light"
+        class="btn btn-sm btn-outline-primary"
         (click)="prevPage()"
         [disabled]="searchParams.PageIndex === 1 || loadingProducts"
       >
@@ -349,7 +349,7 @@
       </span>
       <button
         type="button"
-        class="btn btn-sm btn-outline-light"
+        class="btn btn-sm btn-outline-primary"
         (click)="nextPage()"
         [disabled]="searchParams.PageIndex === totalPages || loadingProducts"
       >

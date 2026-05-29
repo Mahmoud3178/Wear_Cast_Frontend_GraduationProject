@@ -8,12 +8,66 @@
       <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" (click)="startEditManager()" [disabled]="!managerProfile">
         <i class="bi bi-person-gear me-1"></i> Edit Manager Profile
       </button>
+      <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" (click)="toggleChangePassword()">
+        <i class="bi bi-shield-lock me-1"></i> Change Password
+      </button>
     </div>
   </div>
 
   <div *ngIf="errorMsg" class="alert alert-danger py-2 small">{{ errorMsg }}</div>
   <div *ngIf="successMsg" class="alert alert-success py-2 small">{{ successMsg }}</div>
   <div *ngIf="loading" class="text-muted small mb-2">Loading profile...</div>
+
+  <!-- Change Password Card -->
+  <div class="card wc-factory-card border-0 mb-4 animate-slide-up shadow-sm" *ngIf="showChangePassword" style="border: 1px solid rgba(220, 53, 69, 0.2) !important;">
+    <div class="card-body p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="h5 mb-0 text-danger"><i class="bi bi-key-fill me-2"></i>Change Password</h3>
+        <button type="button" class="btn-close" (click)="toggleChangePassword()"></button>
+      </div>
+      <div *ngIf="passwordError" class="alert alert-danger py-2 small mb-3">{{ passwordError }}</div>
+      <div *ngIf="passwordSuccess" class="alert alert-success py-2 small mb-3">{{ passwordSuccess }}</div>
+      
+      <form (ngSubmit)="savePassword()">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold text-secondary">Current Password</label>
+            <div class="input-group">
+              <input [type]="showCurrentPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="passwordForm.currentPassword" name="currentPassword" required>
+              <button type="button" class="btn btn-outline-secondary" (click)="showCurrentPassword = !showCurrentPassword" aria-label="Toggle password visibility">
+                <i class="bi" [ngClass]="showCurrentPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold text-secondary">New Password</label>
+            <div class="input-group">
+              <input [type]="showNewPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="passwordForm.newPassword" name="newPassword" required>
+              <button type="button" class="btn btn-outline-secondary" (click)="showNewPassword = !showNewPassword" aria-label="Toggle password visibility">
+                <i class="bi" [ngClass]="showNewPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold text-secondary">Confirm New Password</label>
+            <div class="input-group">
+              <input [type]="showConfirmNewPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="passwordForm.confirmNewPassword" name="confirmNewPassword" required>
+              <button type="button" class="btn btn-outline-secondary" (click)="showConfirmNewPassword = !showConfirmNewPassword" aria-label="Toggle password visibility">
+                <i class="bi" [ngClass]="showConfirmNewPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-danger btn-sm px-4" [disabled]="passwordBusy">
+            <span *ngIf="passwordBusy" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            Change Password
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="toggleChangePassword()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Manager Profile View -->
   <div class="card wc-factory-card border-0 mb-4" *ngIf="!isEditing && managerProfile">
@@ -208,10 +262,6 @@
           <div class="col-12" *ngIf="editingType === 'factory'">
             <label class="form-label">Description <span class="text-danger">*</span></label>
             <textarea class="form-control" [(ngModel)]="factoryEditForm.description" name="description" rows="3" required></textarea>
-          </div>
-          <div class="col-md-6" *ngIf="editingType === 'factory'">
-            <label class="form-label">Country</label>
-            <input type="text" class="form-control" [(ngModel)]="factoryEditForm.address.country" name="country">
           </div>
           <div class="col-md-6" *ngIf="editingType === 'factory'">
             <label class="form-label">State/Province</label>

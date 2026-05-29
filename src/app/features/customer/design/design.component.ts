@@ -382,20 +382,37 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
   searchCatalog(): void {
     this.loadingProducts = true;
     const url = `${environment.apiUrl}/api/customer/catalog/designed-products`;
-    const params: any = { ...this.searchParams };
-
-    // Clean nulls
-    Object.keys(params).forEach(k => {
-      if (params[k] === null || params[k] === '') {
-        delete params[k];
+    
+    // Construct query parameters supporting multiple casings and naming conventions
+    const params: any = {};
+    Object.keys(this.searchParams).forEach(k => {
+      const v = this.searchParams[k];
+      if (v !== null && v !== '') {
+        params[k] = v;
+        // Duplicate key as camelCase
+        const camelKey = k.charAt(0).toLowerCase() + k.slice(1);
+        if (camelKey !== k) {
+          params[camelKey] = v;
+        }
       }
     });
+
+    // Explicitly add common pagination parameter variations
+    if (this.searchParams.PageIndex !== undefined) {
+      params['pageIndex'] = this.searchParams.PageIndex;
+      params['pageNumber'] = this.searchParams.PageIndex;
+      params['page'] = this.searchParams.PageIndex;
+    }
+    if (this.searchParams.PageSize !== undefined) {
+      params['pageSize'] = this.searchParams.PageSize;
+      params['limit'] = this.searchParams.PageSize;
+    }
 
     this.http.get<any>(url, { params }).subscribe({
       next: (res) => {
         this.loadingProducts = false;
         this.initialProductsLoading = false;
-        // Handle paginated response: { data: { items, totalCount, totalPages, pageIndex, pageSize } }
+        
         let arr = res;
         let responseData = res;
         if (arr && typeof arr === 'object' && 'data' in arr) {
@@ -405,9 +422,14 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
         if (arr && typeof arr === 'object' && 'items' in arr) {
           arr = arr.items;
         }
-        // Update pagination info
-        this.totalProducts = responseData?.totalCount || (Array.isArray(arr) ? arr.length : 0);
-        this.totalPages = responseData?.totalPages || Math.ceil(this.totalProducts / this.searchParams.PageSize) || 1;
+        
+        // Extract total count and total pages robustly using all common backend API keys
+        const tc = responseData?.totalCount ?? responseData?.total ?? responseData?.records ?? responseData?.totalRecords ?? responseData?.count;
+        this.totalProducts = typeof tc === 'number' ? tc : (Array.isArray(arr) ? arr.length : 0);
+
+        const tp = responseData?.totalPages ?? responseData?.pages ?? responseData?.totalPagesCount;
+        this.totalPages = typeof tp === 'number' ? tp : Math.ceil(this.totalProducts / this.searchParams.PageSize) || 1;
+
         this.catalogSearchResults = (Array.isArray(arr) ? arr : (Array.isArray(res?.data) ? res.data : [])).map((item: any) => {
           let o = item || {};
           const nested = o.product || o.Product || o.designedProduct || o.DesignedProduct || {};
