@@ -227,21 +227,75 @@
 
 .wc-tryon-progress {
   margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(232, 244, 255, 0.95) 0%, rgba(214, 235, 255, 0.85) 100%);
+  border: 1px solid rgba(111, 175, 239, 0.35);
+}
+
+.wc-tryon-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.wc-tryon-progress-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #3d6a9e;
+}
+
+.wc-tryon-progress-pct {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #4c8fea;
+  font-variant-numeric: tabular-nums;
 }
 
 .wc-tryon-progress-bar {
-  height: 8px;
-  background: rgba(111, 175, 239, 0.25);
+  height: 10px;
+  background: rgba(111, 175, 239, 0.22);
   border-radius: 999px;
   overflow: hidden;
   margin-bottom: 8px;
+  box-shadow: inset 0 1px 2px rgba(23, 50, 77, 0.08);
+}
+
+.wc-tryon-progress-bar--indeterminate .wc-tryon-progress-fill {
+  width: 38% !important;
+  animation: wcTryonProgressSlide 1.35s ease-in-out infinite;
 }
 
 .wc-tryon-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6fafef, #4c8fea);
+  min-width: 4%;
+  background: linear-gradient(90deg, #7dbbff 0%, #4c8fea 50%, #6fafef 100%);
+  background-size: 200% 100%;
   border-radius: 999px;
-  transition: width 0.3s ease;
+  transition: width 0.35s ease;
+  animation: wcTryonProgressShine 2.2s linear infinite;
+}
+
+@keyframes wcTryonProgressSlide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+@keyframes wcTryonProgressShine {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }
 
 .wc-tryon-status {

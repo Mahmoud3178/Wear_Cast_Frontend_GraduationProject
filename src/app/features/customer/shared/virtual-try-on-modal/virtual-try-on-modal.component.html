@@ -30,9 +30,19 @@
         </div>
       </div>
       <div *ngIf="error" class="wc-tryon-alert" role="alert">{{ error }}</div>
-      <div class="wc-tryon-progress" *ngIf="busy || progress != null || statusMessage">
-        <div class="wc-tryon-progress-bar" *ngIf="progress != null">
-          <div class="wc-tryon-progress-fill" [style.width.%]="progress"></div>
+      <div class="wc-tryon-progress" *ngIf="busy || progress != null || statusMessage" role="status" aria-live="polite">
+        <div class="wc-tryon-progress-head">
+          <span class="wc-tryon-progress-label">{{ busy ? 'Generating preview' : 'Complete' }}</span>
+          <span class="wc-tryon-progress-pct" *ngIf="displayProgress != null">{{ displayProgress }}%</span>
+        </div>
+        <div
+          class="wc-tryon-progress-bar"
+          [class.wc-tryon-progress-bar--indeterminate]="busy && displayProgress == null"
+        >
+          <div
+            class="wc-tryon-progress-fill"
+            [style.width.%]="displayProgress ?? 0"
+          ></div>
         </div>
         <p class="wc-tryon-status">{{ statusMessage || (busy ? 'Working…' : '') }}</p>
       </div>

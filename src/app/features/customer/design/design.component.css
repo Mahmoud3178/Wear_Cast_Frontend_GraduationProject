@@ -235,21 +235,48 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
-  background: var(--bg-canvas);
+  padding: 40px 24px;
   position: relative;
-  /* Subtle dot grid for dark mode */
-  background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(125, 187, 255, 0.18), transparent 58%),
+    linear-gradient(180deg, #eef7ff 0%, #e4f1fd 48%, #dceeff 100%);
+}
+
+/* Side dot grids + centered product (no border on the image) */
+.wc-design-canvas-stage {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  max-width: 1180px;
+  min-height: 480px;
+}
+
+.wc-design-canvas-dots {
+  flex: 1 1 0;
+  min-width: 56px;
+  background-image: radial-gradient(circle, rgba(76, 143, 234, 0.42) 1.6px, transparent 1.6px);
+  background-size: 22px 22px;
+  background-position: center;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.wc-design-canvas-dots--left {
+  mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 100%);
+}
+
+.wc-design-canvas-dots--right {
+  mask-image: linear-gradient(270deg, transparent 0%, #000 28%, #000 100%);
 }
 
 .canvas-wrap {
   position: relative;
+  flex: 0 0 auto;
   border-radius: var(--radius-lg);
-  /* Glowing aura around the canvas */
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--border-color);
   overflow: hidden;
-  background: var(--bg-deep);
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(76, 143, 234, 0.1);
 }
 
 .product-stage {
@@ -1984,6 +2011,15 @@ body {
 
   .canvas-area {
     padding: 18px 12px;
+  }
+
+  .wc-design-canvas-stage {
+    min-height: 420px;
+  }
+
+  .wc-design-canvas-dots {
+    min-width: 24px;
+    background-size: 18px 18px;
   }
 }
 

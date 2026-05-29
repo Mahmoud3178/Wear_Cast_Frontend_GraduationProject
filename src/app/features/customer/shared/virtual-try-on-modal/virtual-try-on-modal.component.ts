@@ -82,4 +82,12 @@ export class VirtualTryOnModalComponent implements OnChanges, OnDestroy {
       file && file.type.startsWith('image/') ? file : null;
     this.personFileChange.emit(imageFile);
   }
+
+  /** Shown in the bar; when busy with no numeric value, the bar uses indeterminate styling. */
+  get displayProgress(): number | null {
+    if (this.progress == null) {
+      return null;
+    }
+    return Math.min(100, Math.max(0, Math.round(this.progress)));
+  }
 }

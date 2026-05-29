@@ -24,6 +24,10 @@ import {
 import { environment } from '../../../../environments/environment';
 import { parseWearCastApiDate } from '../../../core/utils/api-date';
 import {
+  startTryOnEtaProgressTimer,
+  type TryOnProgressTimer
+} from '../../../core/utils/try-on-progress.util';
+import {
   CustomerCatalogService,
   type CatalogProductCard
 } from '../../../core/services/customer-catalog.service';
@@ -143,6 +147,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   tryOnResultUrl: string | null = null;
   /** Fires once after ETA, then `/result/{task}` is fetched. */
   private tryOnResultDelayTimeout: ReturnType<typeof setTimeout> | null = null;
+  private tryOnProgressTimer: TryOnProgressTimer | null = null;
   /** When true, result callbacks no-op (success, error, or modal closed). */
   private tryOnPipelineDone = false;
   /** Ensures `/result/{task}` is invoked at most once for this run. */
@@ -616,7 +621,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.tryOnBusy = true;
     this.tryOnError = '';
     this.tryOnResultUrl = null;
-    this.tryOnProgress = null;
+    this.tryOnProgress = 5;
     this.tryOnStatusMessage = 'Loading garment photo…';
     this.tryOnRevokeResultBlobUrl();
     this.tryOnResultFetched = false;
@@ -630,6 +635,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
           .startTryOn(this.tryOnPersonFile!, garmentBlob, `garment.${ext}`)
           .subscribe({
             next: start => {
+              this.tryOnProgress = 12;
+              this.tryOnStatusMessage = 'Try-on started…';
               this.scheduleTryOnResultAfterEta(start.taskId, start.estimatedSeconds);
             },
             error: (e: Error) => {
@@ -652,6 +659,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       clearTimeout(this.tryOnResultDelayTimeout);
       this.tryOnResultDelayTimeout = null;
     }
+    this.tryOnProgressTimer?.stop();
+    this.tryOnProgressTimer = null;
   }
 
   private tryOnRevokeResultBlobUrl(): void {
@@ -698,14 +707,30 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.tryOnResultFetched = false;
     if (this.tryOnPipelineDone) return;
 
-    this.tryOnProgress = null;
     const etaSec = Math.max(1, estimatedSeconds ?? 90);
-    this.tryOnStatusMessage = `Processing… (~${etaSec}s estimated)`;
+    this.tryOnProgress = 10;
+    this.tryOnStatusMessage = `Processing… ~${etaSec}s estimated`;
 
-    // Wait full ETA plus a small slack so the worker usually finishes before we hit /result once.
     const waitMs = Math.min(Math.max(etaSec * 1000 + 3000, 8000), 900_000);
+    this.tryOnProgressTimer = startTryOnEtaProgressTimer(
+      etaSec,
+      (pct, remaining) => {
+        if (!this.tryOnPipelineDone) {
+          this.tryOnProgress = pct;
+          this.tryOnStatusMessage =
+            remaining > 0
+              ? `Processing… ~${remaining}s left (${etaSec}s estimated)`
+              : 'Almost done…';
+        }
+      },
+      { startPercent: 10, capPercent: 95 }
+    );
+
     this.tryOnResultDelayTimeout = window.setTimeout(() => {
       if (this.tryOnPipelineDone || this.tryOnResultFetched) return;
+      this.tryOnProgressTimer?.stop();
+      this.tryOnProgressTimer = null;
+      this.tryOnProgress = 94;
       this.tryOnStatusMessage = 'Loading result…';
       this.fetchTryOnResultSingle(taskId);
     }, waitMs);

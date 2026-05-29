@@ -30,6 +30,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { TryOnService } from '../../../core/services/try-on.service';
+import {
+  startTryOnEtaProgressTimer,
+  type TryOnProgressTimer
+} from '../../../core/utils/try-on-progress.util';
 
 @Component({
   selector: 'app-customer-design',
@@ -99,6 +103,7 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
   tryOnStatusMessage = '';
   tryOnResultUrl: string | null = null;
   private tryOnResultDelayTimeout: ReturnType<typeof setTimeout> | null = null;
+  private tryOnProgressTimer: TryOnProgressTimer | null = null;
   private tryOnPipelineDone = false;
   private tryOnResultFetched = false;
   private tryOnResultBlobRevokeUrl: string | null = null;
@@ -995,7 +1000,7 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
     this.tryOnBusy = true;
     this.tryOnError = '';
     this.tryOnResultUrl = null;
-    this.tryOnProgress = null;
+    this.tryOnProgress = 5;
     this.tryOnStatusMessage = 'Rendering your design on the garment…';
     this.tryOnRevokeResultBlobUrl();
     this.tryOnResultFetched = false;
@@ -1005,6 +1010,7 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
     fn()
       .then(garmentBlob => {
         this.tryOnStatusMessage = 'Starting try-on…';
+        this.tryOnProgress = 12;
         this.tryOnService
           .startTryOn(this.tryOnPersonFile!, garmentBlob, 'garment.png')
           .subscribe({
@@ -1027,6 +1033,8 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
       clearTimeout(this.tryOnResultDelayTimeout);
       this.tryOnResultDelayTimeout = null;
     }
+    this.tryOnProgressTimer?.stop();
+    this.tryOnProgressTimer = null;
   }
 
   private tryOnRevokeResultBlobUrl(): void {
@@ -1068,12 +1076,30 @@ export class CustomerDesignComponent implements AfterViewInit, OnDestroy {
     this.clearTryOnPipeline();
     this.tryOnResultFetched = false;
     if (this.tryOnPipelineDone) return;
-    this.tryOnProgress = null;
     const etaSec = Math.max(1, estimatedSeconds ?? 90);
-    this.tryOnStatusMessage = `Processing… (~${etaSec}s estimated)`;
+    this.tryOnProgress = 10;
+    this.tryOnStatusMessage = `Processing… ~${etaSec}s estimated`;
+
     const waitMs = Math.min(Math.max(etaSec * 1000 + 3000, 8000), 900_000);
+    this.tryOnProgressTimer = startTryOnEtaProgressTimer(
+      etaSec,
+      (pct, remaining) => {
+        if (!this.tryOnPipelineDone) {
+          this.tryOnProgress = pct;
+          this.tryOnStatusMessage =
+            remaining > 0
+              ? `Processing… ~${remaining}s left (${etaSec}s estimated)`
+              : 'Almost done…';
+        }
+      },
+      { startPercent: 10, capPercent: 95 }
+    );
+
     this.tryOnResultDelayTimeout = window.setTimeout(() => {
       if (this.tryOnPipelineDone || this.tryOnResultFetched) return;
+      this.tryOnProgressTimer?.stop();
+      this.tryOnProgressTimer = null;
+      this.tryOnProgress = 94;
       this.tryOnStatusMessage = 'Loading result…';
       this.fetchTryOnResultSingle(taskId);
     }, waitMs);

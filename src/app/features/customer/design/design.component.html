@@ -51,11 +51,15 @@
 
   <!-- Center - canvas area -->
   <main class="canvas-area">
-    <div class="canvas-wrap">
-      <div class="product-stage" id="product-stage">
-        <img id="product-image" class="product-image" src="assets/hoodie-front.jpg" alt="Product">
-        <canvas id="design-canvas"></canvas>
+    <div class="wc-design-canvas-stage">
+      <div class="wc-design-canvas-dots wc-design-canvas-dots--left" aria-hidden="true"></div>
+      <div class="canvas-wrap">
+        <div class="product-stage" id="product-stage">
+          <img id="product-image" class="product-image" src="assets/hoodie-front.jpg" alt="Product">
+          <canvas id="design-canvas"></canvas>
+        </div>
       </div>
+      <div class="wc-design-canvas-dots wc-design-canvas-dots--right" aria-hidden="true"></div>
     </div>
     <div class="view-angles" id="view-angles" aria-label="Product views">
       <button type="button" class="view-btn active" data-view="front">Front</button>
