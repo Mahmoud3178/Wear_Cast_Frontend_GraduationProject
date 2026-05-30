@@ -213,14 +213,22 @@ markRead(n: NotificationItem): void {
     if (this.portalRole === 'shipping') {
       switch (type) {
         case 'NewOrder':
-          if (urlId) this.router.navigate(['/factory/orders', urlId]); // As per old shipping logic
+          if (urlId) {
+            this.router.navigate(['/factory/orders', urlId]);
+          } else {
+            this.router.navigate(['/factory/orders']);
+          }
           break;
         case 'ShipmentUnAssigned':
         case 'ShipmentAssigned':
         case 'ShipmentReady':
         case 'NewShipment':
         case 'ShipmentUpdateStatus':
-          if (urlId) this.router.navigate(['/shipping/shipments', urlId]);
+          if (urlId) {
+            this.router.navigate(['/shipping/shipments', urlId]);
+          } else {
+            this.router.navigate(['/shipping/shipments']);
+          }
           break;
         case 'DriverDeActivated':
         case 'DriverDeleted':
@@ -236,7 +244,11 @@ markRead(n: NotificationItem): void {
         case 'ShipmentAssigned':
         case 'ShipmentUpdateStatus':
         case 'NewShipment':
-          if (urlId) this.router.navigate(['/driver/shipments', urlId]);
+          if (urlId) {
+            this.router.navigate(['/driver/shipments', urlId]);
+          } else {
+            this.router.navigate(['/driver/shipments']);
+          }
           break;
         default: break;
       }
@@ -412,8 +424,18 @@ markAllRead(): void {
       'ShipmentReady': 'Shipment Ready',
       'DriverDeActivated': 'Driver Deactivated',
       'DriverDeleted': 'Driver Deleted',
+      '1': 'Shipment Update',
+      '2': 'Driver Deactivated',
+      '3': 'Driver Deleted',
+      '4': 'Seller Application',
+      '5': 'New Order',
+      '6': 'New Shipment',
+      '7': 'New Product',
+      '8': 'Shipment Unassigned',
+      '9': 'Shipment Assigned',
+      '10': 'Shipment Ready',
     };
-    return map[type] ?? 'Notification';
+    return map[String(type)] ?? 'Notification';
   }
 
   typeIcon(type: any): string {
@@ -428,8 +450,18 @@ markAllRead(): void {
       'ShipmentReady': 'bi-check-circle',
       'DriverDeActivated': 'bi-person-x',
       'DriverDeleted': 'bi-person-dash',
+      '1': 'bi-truck',
+      '2': 'bi-person-x',
+      '3': 'bi-person-dash',
+      '4': 'bi-shop',
+      '5': 'bi-bag-check',
+      '6': 'bi-box-seam',
+      '7': 'bi-tag',
+      '8': 'bi-truck',
+      '9': 'bi-truck',
+      '10': 'bi-check-circle',
     };
-    return map[type] ?? 'bi-bell';
+    return map[String(type)] ?? 'bi-bell';
   }
 
   typeColor(type: any): string {
@@ -444,7 +476,17 @@ markAllRead(): void {
       'ShipmentReady': 'notif-icon--green',
       'DriverDeActivated': 'notif-icon--red',
       'DriverDeleted': 'notif-icon--red',
+      '1': 'notif-icon--indigo',
+      '2': 'notif-icon--red',
+      '3': 'notif-icon--red',
+      '4': 'notif-icon--yellow',
+      '5': 'notif-icon--green',
+      '6': 'notif-icon--cyan',
+      '7': 'notif-icon--purple',
+      '8': 'notif-icon--yellow',
+      '9': 'notif-icon--green',
+      '10': 'notif-icon--green',
     };
-    return map[type] ?? 'notif-icon--muted';
+    return map[String(type)] ?? 'notif-icon--muted';
   }
 }

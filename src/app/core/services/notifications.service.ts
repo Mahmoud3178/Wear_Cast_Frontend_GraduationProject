@@ -18,7 +18,7 @@ export interface NotificationItem {
   id: number;
   title: string;
   message: string;
-  notificationType: number;
+  notificationType: number | string;
   isRead: boolean;
   urlId?: string;
   createdOn?: string;
@@ -180,7 +180,7 @@ function normalizeNotification(row: unknown): NotificationItem {
     id: num(o['id'] ?? o['Id']) ?? 0,
     title: String(o['title'] ?? o['Title'] ?? 'Notification'),
     message: String(o['message'] ?? o['Message'] ?? ''),
-    notificationType: num(o['notificationType'] ?? o['NotificationType']) ?? 0,
+    notificationType: (o['notificationType'] ?? o['NotificationType'] ?? 0) as string | number,
     isRead: Boolean(o['isRead'] ?? o['IsRead']),
     urlId: rawUrlId !== null && rawUrlId !== undefined ? String(rawUrlId) : undefined,
     createdOn: String(o['createdOn'] ?? o['CreatedOn'] ?? o['createdAt'] ?? o['CreatedAt'] ?? ''),
