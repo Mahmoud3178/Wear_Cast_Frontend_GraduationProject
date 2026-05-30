@@ -20,9 +20,13 @@ export const DRIVER_ROUTES: Routes = [
       {
         path: 'notifications',
         loadComponent: () =>
-          import('./notifications-drivers/notifications-drivers.component').then(
-            m => m.NotificationsDriversComponent
-          )
+          import('../../shared/components/notifications-list/notifications-list.component').then(
+            m => m.NotificationsListComponent
+          ),
+        data: {
+          portalRole: 'driver',
+          subtitle: 'Manage Your Delivery Notifications'
+        }
       }
     ]
   }

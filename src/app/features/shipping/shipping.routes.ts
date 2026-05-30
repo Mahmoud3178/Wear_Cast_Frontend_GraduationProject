@@ -28,9 +28,13 @@ export const SHIPPING_ROUTES: Routes = [
       {
         path: 'notifications',
         loadComponent: () =>
-          import('./notifications-shipping/notifications-shipping.component').then(
-            m => m.NotificationsShippingComponent
-          )
+          import('../../shared/components/notifications-list/notifications-list.component').then(
+            m => m.NotificationsListComponent
+          ),
+        data: {
+          portalRole: 'shipping',
+          subtitle: 'Manage Shipping & Driver Notifications'
+        }
       }
     ]
   }

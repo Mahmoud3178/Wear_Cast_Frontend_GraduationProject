@@ -21,7 +21,7 @@ type ReadFilter = 'all' | 'unread' | 'read';
 })
 export class NotificationsListComponent implements OnInit {
   @Input() pageSubtitle = 'Stay updated on your account activity';
-  @Input() portalRole: 'factory' | 'seller' | 'customer' | 'admin' = 'factory';
+  @Input() portalRole: 'factory' | 'seller' | 'customer' | 'admin' | 'shipping' | 'driver' = 'factory';
 
   notifications: NotificationItem[] = [];
   isLoading = false;
@@ -74,6 +74,8 @@ export class NotificationsListComponent implements OnInit {
     else if (url.includes('/seller/'))   this.portalRole = 'seller';
     else if (url.includes('/admin/'))    this.portalRole = 'admin';
     else if (url.includes('/customer/')) this.portalRole = 'customer';
+    else if (url.includes('/shipping/')) this.portalRole = 'shipping';
+    else if (url.includes('/driver/'))   this.portalRole = 'driver';
   }
 
   this.notifService.receiveAll().subscribe({
@@ -203,6 +205,39 @@ markRead(n: NotificationItem): void {
           if (urlId) this.router.navigate(['/admin/orders', urlId]); break;
         case 'NewProduct':
           if (urlId) this.router.navigate(['/admin/products', urlId]); break;
+        default: break;
+      }
+      return;
+    }
+
+    if (this.portalRole === 'shipping') {
+      switch (type) {
+        case 'NewOrder':
+          if (urlId) this.router.navigate(['/factory/orders', urlId]); // As per old shipping logic
+          break;
+        case 'ShipmentUnAssigned':
+        case 'ShipmentAssigned':
+        case 'ShipmentReady':
+        case 'NewShipment':
+        case 'ShipmentUpdateStatus':
+          if (urlId) this.router.navigate(['/shipping/shipments', urlId]);
+          break;
+        case 'DriverDeActivated':
+        case 'DriverDeleted':
+          this.router.navigate(['/shipping/shipments']);
+          break;
+        default: break;
+      }
+      return;
+    }
+
+    if (this.portalRole === 'driver') {
+      switch (type) {
+        case 'ShipmentAssigned':
+        case 'ShipmentUpdateStatus':
+        case 'NewShipment':
+          if (urlId) this.router.navigate(['/driver/shipments', urlId]);
+          break;
         default: break;
       }
       return;
