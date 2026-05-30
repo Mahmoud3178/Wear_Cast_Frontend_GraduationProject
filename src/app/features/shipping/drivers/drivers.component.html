@@ -38,7 +38,11 @@
           <input type="text" class="form-control py-2 shadow-none" 
                  placeholder="National ID" 
                  [(ngModel)]="searchNationalId" 
-                 (input)="loadDrivers()">
+                 (input)="onNationalIdInput()"
+                 [class.border-danger]="searchNationalId.trim().length > 0 && searchNationalId.trim().length < 14">
+          <div *ngIf="searchNationalId.trim().length > 0 && searchNationalId.trim().length < 14" class="text-danger mt-1" style="font-size: 0.75rem;">
+            <i class="bi bi-exclamation-circle me-1"></i>Must be exactly 14 digits to search.
+          </div>
         </div>
         <div class="col-md-2 col-sm-6">
           <select class="form-select py-2 shadow-none" 

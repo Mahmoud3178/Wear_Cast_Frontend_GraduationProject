@@ -242,6 +242,11 @@
                 <span class="order-status-badge" [ngClass]="getOrderStatusClass(order.orderStatus)">
                   {{ order.orderStatus }}
                 </span>
+                <button *ngIf="order.orderStatus === 'Ready' || order.orderStatus === '5'" 
+                        (click)="updateOrderToPickedUp(order)"
+                        style="font-size: 11px; padding: 4px 10px; border: none; border-radius: 20px; background-color: #0d6efd; color: white; cursor: pointer; font-weight: bold;">
+                  Mark Picked Up
+                </button>
               </div>
             </div>
 

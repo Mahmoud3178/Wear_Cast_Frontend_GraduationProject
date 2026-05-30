@@ -131,7 +131,11 @@ export class DriversComponent implements OnInit {
     if (this.searchFirstName.trim()) params.DriverFirstName = this.searchFirstName.trim();
     if (this.searchLastName.trim()) params.DriverLastName = this.searchLastName.trim();
     if (this.searchCity.trim()) params.DriverCity = this.searchCity.trim();
-    if (this.searchNationalId.trim()) params.DriverNationalId = this.searchNationalId.trim();
+    
+    // Only send to backend if exactly 14 digits, since backend enforces strict length
+    if (this.searchNationalId.trim() && this.searchNationalId.trim().length === 14) {
+      params.DriverNationalId = this.searchNationalId.trim();
+    }
 
     if (this.searchVehicleType) {
       params.VehicleType = Number(this.searchVehicleType);
@@ -223,6 +227,14 @@ export class DriversComponent implements OnInit {
     this.applyFilters();
   }
 
+  onNationalIdInput() {
+    const len = this.searchNationalId.trim().length;
+    // Only search if exactly 14 digits, or if the field is cleared
+    if (len === 14 || len === 0) {
+      this.loadDrivers();
+    }
+  }
+
   onStatusFilterChange(status: string) {
     this.selectedFilter = status;
     this.applyFilters();
@@ -231,20 +243,17 @@ export class DriversComponent implements OnInit {
   applyFilters() {
     let result = [...this.drivers];
 
-    // Search filter
-    if (this.searchQuery.trim()) {
-      const q = this.searchQuery.toLowerCase();
+    // Search filter (handles Name, City, Phone)
+    const q = this.searchQuery?.trim().toLowerCase() || '';
+    if (q) {
       result = result.filter(d =>
-        d.driverName.toLowerCase().includes(q) ||
-        d.driverCity.toLowerCase().includes(q)
+        (d.driverName && d.driverName.toLowerCase().includes(q)) ||
+        (d.driverCity && d.driverCity.toLowerCase().includes(q)) ||
+        (d.driverPhone && d.driverPhone.toLowerCase().includes(q))
       );
     }
 
-    // Status filter
-    if (this.selectedFilter !== 'all') {
-      const statusNum = this.selectedFilter === 'NotAvailable' ? DriverStatus.Available : DriverStatus.NotAvailable;
-      result = result.filter(d => d.status === statusNum);
-    }
+    // Status filter is handled by backend correctly! We do not need local status filter.
 
     this.filteredDrivers = result;
   }

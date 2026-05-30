@@ -185,6 +185,22 @@ export class OrdersComponent implements OnInit {
 
   // ─── Status helpers ────────────────────────────────────────────
 
+  updateOrderToPickedUp(order: OrderListItem): void {
+    this.isLoading = true;
+    this.driverService.updateOrderStatus(order.orderId, 6).subscribe({
+      next: () => {
+        this.successMessage = `Order #${order.orderId} marked as Picked Up!`;
+        setTimeout(() => this.successMessage = '', 4000);
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = `Failed to update Order #${order.orderId}.`;
+        setTimeout(() => this.errorMessage = '', 6000);
+      }
+    });
+  }
+
   getOrderStatusLabel(status: string): string {
     const map: Record<string, string> = {
       'Pending': 'Pending', 'Paid': 'Paid', 'Failed': 'Failed',
@@ -204,20 +220,29 @@ export class OrdersComponent implements OnInit {
   }
 
   getShipmentStatusLabel(status: string): string {
+    const s = status?.toString() ?? '';
     const map: Record<string, string> = {
-      'Pending': 'Pending', 'Unassigned': 'Unassigned', 'Assigned': 'Assigned',
-      'PickingUp': 'Picking Up', 'OutForDelivery': 'Out for Delivery', 'Delivered': 'Delivered'
+      'Pending': 'Pending', '1': 'Pending',
+      'Unassigned': 'Unassigned', '2': 'Unassigned',
+      'Assigned': 'Assigned', '3': 'Assigned',
+      'PickingUp': 'Picking Up', '4': 'Picking Up',
+      'OutForDelivery': 'Out for Delivery', '5': 'Out for Delivery',
+      'Delivered': 'Delivered', '6': 'Delivered'
     };
-    return map[status] ?? status;
+    return map[s] ?? s;
   }
 
   getShipmentStatusClass(status: string): string {
+    const s = status?.toString() ?? '';
     const map: Record<string, string> = {
-      'Delivered': 'ss-delivered', 'OutForDelivery': 'ss-transit',
-      'PickingUp': 'ss-picking', 'Assigned': 'ss-assigned',
-      'Unassigned': 'ss-unassigned', 'Pending': 'ss-pending'
+      'Delivered': 'ss-delivered', '6': 'ss-delivered',
+      'OutForDelivery': 'ss-transit', '5': 'ss-transit',
+      'PickingUp': 'ss-picking', '4': 'ss-picking',
+      'Assigned': 'ss-assigned', '3': 'ss-assigned',
+      'Unassigned': 'ss-unassigned', '2': 'ss-unassigned',
+      'Pending': 'ss-pending', '1': 'ss-pending'
     };
-    return map[status] ?? 'ss-pending';
+    return map[s] ?? 'ss-pending';
   }
 
   getOrderTypeLabel(type: string): string {

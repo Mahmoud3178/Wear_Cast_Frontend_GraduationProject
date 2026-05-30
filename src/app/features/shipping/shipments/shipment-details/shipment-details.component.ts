@@ -191,20 +191,29 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   // ─── Status helpers ───────────────────────────────────────────
 
   getStatusLabel(status: string | null | undefined): string {
+    const s = status?.toString() ?? '';
     const map: Record<string, string> = {
-      'Pending': 'Pending', 'Unassigned': 'Unassigned', 'Assigned': 'Assigned',
-      'PickingUp': 'Picking Up', 'OutForDelivery': 'Out for Delivery', 'Delivered': 'Delivered'
+      'Pending': 'Pending', '1': 'Pending',
+      'Unassigned': 'Unassigned', '2': 'Unassigned',
+      'Assigned': 'Assigned', '3': 'Assigned',
+      'PickingUp': 'Picking Up', '4': 'Picking Up',
+      'OutForDelivery': 'Out for Delivery', '5': 'Out for Delivery',
+      'Delivered': 'Delivered', '6': 'Delivered'
     };
-    return map[status ?? ''] ?? (status ?? '');
+    return map[s] ?? s;
   }
 
   getStatusClass(status: string | null | undefined): string {
+    const s = status?.toString() ?? '';
     const map: Record<string, string> = {
-      'Delivered': 'st-delivered', 'OutForDelivery': 'st-transit',
-      'PickingUp': 'st-picking', 'Assigned': 'st-assigned',
-      'Unassigned': 'st-unassigned', 'Pending': 'st-pending'
+      'Delivered': 'st-delivered', '6': 'st-delivered',
+      'OutForDelivery': 'st-transit', '5': 'st-transit',
+      'PickingUp': 'st-picking', '4': 'st-picking',
+      'Assigned': 'st-assigned', '3': 'st-assigned',
+      'Unassigned': 'st-unassigned', '2': 'st-unassigned',
+      'Pending': 'st-pending', '1': 'st-pending'
     };
-    return map[status ?? ''] ?? 'st-pending';
+    return map[s] ?? 'st-pending';
   }
 
   getOrderStatusClass(status: string | null | undefined): string {
@@ -227,13 +236,13 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   }
 
   canAssign(): boolean {
-    const s = this.shipment?.shipmentStatus ?? '';
-    return s === 'Unassigned' || s === 'Pending';
+    const s = this.shipment?.shipmentStatus?.toString() ?? '';
+    return s === 'Unassigned' || s === '2' || s === 'Pending' || s === '1';
   }
 
   canUnassign(): boolean {
-    const s = this.shipment?.shipmentStatus;
-    return s === 'Assigned' || s === 'PickingUp';
+    const s = this.shipment?.shipmentStatus?.toString() ?? '';
+    return s === 'Assigned' || s === '3' || s === 'PickingUp' || s === '4';
   }
 
   getTotalItems(): number {
@@ -246,12 +255,26 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   // ─── Actions ──────────────────────────────────────────────────
 
+  updateOrderToPickedUp(order: ShipmentOrderDto): void {
+    this.isLoadingOrders = true;
+    this.driverService.updateOrderStatus(order.orderId, 6).subscribe({
+      next: () => {
+        this.showSuccess(`Order #${order.orderId} marked as Picked Up!`);
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.isLoadingOrders = false;
+        this.showError(`Failed to update Order #${order.orderId}.`);
+      }
+    });
+  }
+
   getNextAction(): { label: string; class: string; status: string } | null {
-    const s = this.shipment?.shipmentStatus;
-    if (s === 'PickingUp') {
+    const s = this.shipment?.shipmentStatus?.toString() ?? '';
+    if (s === 'PickingUp' || s === '4') {
       return { label: '🚚 Start Delivery Trip', class: 'btn-action-primary', status: 'OutForDelivery' };
     }
-    if (s === 'OutForDelivery') {
+    if (s === 'OutForDelivery' || s === '5') {
       return { label: '✅ Complete Delivery', class: 'btn-action-success', status: 'Delivered' };
     }
     return null;

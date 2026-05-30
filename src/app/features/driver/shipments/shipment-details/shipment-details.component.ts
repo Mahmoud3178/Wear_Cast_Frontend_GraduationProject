@@ -128,39 +128,42 @@ export class ShipmentDetailsComponent implements OnInit {
   }
 
   getStatusLabel(status: string | null | undefined): string {
+    const s = status?.toString() ?? '';
     const map: Record<string, string> = {
-      'Pending': 'Pending',
-      'Unassigned': 'Unassigned',
-      'Assigned': 'Assigned',
-      'PickingUp': 'Picking Up',
-      'OutForDelivery': 'Out For Delivery',
-      'Delivered': 'Delivered'
+      'Pending': 'Pending', '1': 'Pending',
+      'Unassigned': 'Unassigned', '2': 'Unassigned',
+      'Assigned': 'Assigned', '3': 'Assigned',
+      'PickingUp': 'Picking Up', '4': 'Picking Up',
+      'OutForDelivery': 'Out For Delivery', '5': 'Out For Delivery',
+      'Delivered': 'Delivered', '6': 'Delivered'
     };
-    return map[status ?? ''] ?? (status ?? '');
+    return map[s] ?? s;
   }
 
   getStatusClass(status: string | null | undefined): string {
+    const s = status?.toString() ?? '';
     const map: Record<string, string> = {
-      'Delivered': 'status-delivered',
-      'OutForDelivery': 'status-out',
-      'PickingUp': 'status-picking',
-      'Assigned': 'status-assigned',
-      'Unassigned': 'status-unassigned',
-      'Pending': 'status-pending'
+      'Delivered': 'status-delivered', '6': 'status-delivered',
+      'OutForDelivery': 'status-out', '5': 'status-out',
+      'PickingUp': 'status-picking', '4': 'status-picking',
+      'Assigned': 'status-assigned', '3': 'status-assigned',
+      'Unassigned': 'status-unassigned', '2': 'status-unassigned',
+      'Pending': 'status-pending', '1': 'status-pending'
     };
-    return map[status ?? ''] ?? 'status-pending';
+    return map[s] ?? 'status-pending';
   }
 
   getStatusIcon(status: string | null | undefined): string {
+    const s = status?.toString() ?? '';
     const map: Record<string, string> = {
-      'Delivered': '✓',
-      'OutForDelivery': '🚚',
-      'PickingUp': '📦',
-      'Assigned': '👤',
-      'Unassigned': '⏳',
-      'Pending': '⏳'
+      'Delivered': '✓', '6': '✓',
+      'OutForDelivery': '🚚', '5': '🚚',
+      'PickingUp': '📦', '4': '📦',
+      'Assigned': '👤', '3': '👤',
+      'Unassigned': '⏳', '2': '⏳',
+      'Pending': '⏳', '1': '⏳'
     };
-    return map[status ?? ''] ?? '•';
+    return map[s] ?? '•';
   }
 
   getOrderStatusClass(status: string | null | undefined): string {
@@ -176,11 +179,13 @@ export class ShipmentDetailsComponent implements OnInit {
   }
 
   isAssigned(): boolean {
-    return this.shipment?.shipmentStatus === 'Assigned';
+    const s = this.shipment?.shipmentStatus?.toString() ?? '';
+    return s === 'Assigned' || s === '3';
   }
 
   isDelivered(): boolean {
-    return this.shipment?.shipmentStatus === 'Delivered';
+    const s = this.shipment?.shipmentStatus?.toString() ?? '';
+    return s === 'Delivered' || s === '6';
   }
 
   getTimelineSteps() {
@@ -194,11 +199,11 @@ export class ShipmentDetailsComponent implements OnInit {
   }
 
   getNextAction(): { label: string; class: string; status: string } | null {
-    const s = this.shipment?.shipmentStatus;
-    if (s === 'PickingUp') {
+    const s = this.shipment?.shipmentStatus?.toString() ?? '';
+    if (s === 'PickingUp' || s === '4') {
       return { label: '🚚 Start Delivery Trip', class: 'btn-action-primary', status: 'OutForDelivery' };
     }
-    if (s === 'OutForDelivery') {
+    if (s === 'OutForDelivery' || s === '5') {
       return { label: '✅ Complete Delivery', class: 'btn-action-success', status: 'Delivered' };
     }
     return null;
