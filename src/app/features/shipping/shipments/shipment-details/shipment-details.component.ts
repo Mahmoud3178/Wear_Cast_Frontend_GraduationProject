@@ -99,12 +99,16 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   errorMessage = '';
 
   ngOnInit(): void {
+    console.log('[MANAGER ngOnInit] Component initialized.');
     const idParam = this.route.snapshot.paramMap.get('id');
+    console.log('[MANAGER ngOnInit] Parsed ID from route:', idParam);
     if (idParam && !isNaN(+idParam)) {
       this.shipmentId = +idParam;
+      console.log('[MANAGER ngOnInit] Calling loadShipment and loadOrders for shipment ID:', this.shipmentId);
       this.loadShipment();
       this.loadOrders();
     } else {
+      console.warn('[MANAGER ngOnInit] Invalid ID parameter. Stopping load.');
       this.isLoading = false;
       this.errorMessage = 'Invalid shipment ID.';
     }
@@ -113,13 +117,16 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   // ─── Load Shipment ────────────────────────────────────────────
 
   loadShipment(): void {
+    console.log('[MANAGER loadShipment] Started fetching shipment details...');
     this.http.get<AdminShipmentDetail>(`${this.apiUrl}/Shipments/${this.shipmentId}`)
       .subscribe({
         next: (data) => {
+          console.log('[MANAGER loadShipment] SUCCESS. Data received:', data);
           this.shipment = data ?? null;
-          this.checkLoadingState();
+          this.checkLoadingState('loadShipment');
         },
         error: (err) => {
+          console.error('[MANAGER loadShipment] ERROR:', err);
           this.showError('Failed to load shipment details.');
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -130,11 +137,17 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   // ─── Load Orders ──────────────────────────────────────────────
 
   loadOrders(): void {
+    console.log('[MANAGER loadOrders] Started fetching orders...');
     this.isLoadingOrders = true;
     this.http.get<any>(`${this.apiUrl}/Shipments/${this.shipmentId}/Orders`)
-      .pipe(finalize(() => { this.isLoadingOrders = false; }))
+      .pipe(finalize(() => { 
+        console.log('[MANAGER loadOrders] Finalize block executed.');
+        this.isLoadingOrders = false; 
+        this.checkLoadingState('loadOrders finalize');
+      }))
       .subscribe({
         next: (data: any) => {
+          console.log('[MANAGER loadOrders] SUCCESS. Raw Data:', data);
           try {
             if (Array.isArray(data)) {
               this.orders = data;
@@ -143,14 +156,17 @@ export class ShippingShipmentDetailsComponent implements OnInit {
             } else if (data && Array.isArray(data.Items)) {
               this.orders = data.Items;
             } else {
+              console.warn('[MANAGER loadOrders] Data format unknown, setting to empty array.');
               this.orders = [];
             }
           } catch {
+            console.error('[MANAGER loadOrders] Parsing error.');
             this.orders = [];
           }
-          this.checkLoadingState();
+          console.log('[MANAGER loadOrders] Processed orders array length:', this.orders?.length);
         },
-        error: () => {
+        error: (err) => {
+          console.error('[MANAGER loadOrders] ERROR:', err);
           this.orders = [];
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -158,11 +174,17 @@ export class ShippingShipmentDetailsComponent implements OnInit {
       });
   }
 
-  checkLoadingState(): void {
+  checkLoadingState(caller: string): void {
+    console.log(`[MANAGER checkLoadingState] Called by: ${caller}`);
+    console.log(`[MANAGER checkLoadingState] Current State -> shipment loaded: ${this.shipment !== null}, isLoadingOrders: ${this.isLoadingOrders}`);
+    
     // orders دلوقتي array دايمًا، بس بنستنى الـ shipment يجي
     if (this.shipment !== null && !this.isLoadingOrders) {
+      console.log('[MANAGER checkLoadingState] Both conditions met! Turning off spinner (isLoading = false)');
       this.isLoading = false;
       this.cdr.detectChanges();
+    } else {
+      console.log('[MANAGER checkLoadingState] Still waiting for data. Spinner remains true.');
     }
   }
 
