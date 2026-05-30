@@ -171,7 +171,7 @@
                  [(ngModel)]="searchDriverNationalId" (input)="onFilterChange()">
         </div>
         <div class="filter-field">
-          <label class="filter-label">Price Range ($)</label>
+          <label class="filter-label">Price Range</label>
           <div class="range-group">
             <input type="number" class="filter-input" placeholder="Min"
                    [(ngModel)]="minPrice" (input)="onFilterChange()">
@@ -251,7 +251,7 @@
 
             <!-- Price -->
             <td class="col-price">
-              <span class="price-value">${{ s.price | number:'1.2-2' }}</span>
+              <span class="price-value">{{ s.price | number:'1.2-2' }}</span>
             </td>
 
             <!-- Driver -->
