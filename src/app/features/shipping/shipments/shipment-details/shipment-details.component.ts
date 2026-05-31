@@ -465,13 +465,18 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   }
 
   getVehicleTypeLabel(type: any): string {
+    if (!type) return 'Vehicle';
     const map: Record<number, string> = {
       1: 'Bicycle',
       2: 'Motorcycle',
       3: 'Car',
       4: 'Van'
     };
-    return map[typeof type === 'number' ? type : Number(type)] ?? 'Vehicle';
+    const num = Number(type);
+    if (!isNaN(num) && map[num]) {
+      return map[num];
+    }
+    return String(type);
   }
 
   trackByOrderId(_: number, o: ShipmentOrderDto): number { return o?.orderId ?? 0; }
