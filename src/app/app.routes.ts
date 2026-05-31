@@ -2,7 +2,9 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/login/login.component';
 import { shippingRoleGuard } from './core/guards/shipping-role.guard';
 import { driverRoleGuard } from './core/guards/driver-role.guard';
-
+import { adminRoleGuard } from './core/guards/admin-role.guard';
+import { customerRoleGuard } from './core/guards/customer-role.guard';
+import { sellerRoleGuard } from './core/guards/seller-role.guard';
 export const routes: Routes = [
 
   {
@@ -114,6 +116,24 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/driver/driver.routes').then(m => m.DRIVER_ROUTES)
   },
+
+
+
+  {
+  path: 'admin',
+  canActivate: [adminRoleGuard],     // ← أضف
+  loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES)
+},
+{
+  path: 'customer',
+  canActivate: [customerRoleGuard],  // ← أضف
+  loadChildren: () => import('./features/customer/customer.routes').then(m => m.CUSTOMER_ROUTES)
+},
+{
+  path: 'seller',
+  canActivate: [sellerRoleGuard],    // ← أضف
+  loadChildren: () => import('./features/seller/seller.routes').then(m => m.SELLER_ROUTES)
+},
   {
     path: '',
     redirectTo: 'customer',
