@@ -64,12 +64,12 @@ export const CUSTOMER_ROUTES: Routes = [
           import('./notifications/customer-notifications.component')
             .then(m => m.CustomerNotificationsComponent)
       },
-            {
-        path: 'register',
-        loadComponent: () =>
-          import('./register-customer/register-customer.component')
-            .then(m => m.RegisterCustomerComponent)
-      },
+      //       {
+      //   path: 'register',
+      //   loadComponent: () =>
+      //     import('./register-customer/register-customer.component')
+      //       .then(m => m.RegisterCustomerComponent)
+      // },
       {
         path: '',
         redirectTo: 'home',

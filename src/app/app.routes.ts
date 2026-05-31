@@ -116,6 +116,18 @@ export const routes: Routes = [
     canActivate: [driverRoleGuard],
     loadChildren: () =>
       import('./features/driver/driver.routes').then(m => m.DRIVER_ROUTES)
-  }
-
+  },
+// ✅ Register pages — بدون guards
+{
+  path: 'customer/register',
+  loadComponent: () =>
+    import('./features/customer/register-customer/register-customer.component')
+      .then(m => m.RegisterCustomerComponent)
+},
+{
+  path: 'seller/register',
+  loadComponent: () =>
+    import('./features/seller/register-seller/register-seller.component')
+      .then(m => m.RegisterSellerComponent)
+},
 ];

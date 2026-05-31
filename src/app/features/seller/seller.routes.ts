@@ -75,12 +75,12 @@ export const SELLER_ROUTES: Routes = [
     import('./seller-managers/seller-managers.component')
       .then(m => m.SellerManagersComponent)
 },
-      {
-        path: 'register',
-        loadComponent: () =>
-          import('./register-seller/register-seller.component')
-            .then(m => m.RegisterSellerComponent)
-      },
+      // {
+      //   path: 'register',
+      //   loadComponent: () =>
+      //     import('./register-seller/register-seller.component')
+      //       .then(m => m.RegisterSellerComponent)
+      // },
       {
         path: '',
         redirectTo: 'dashboard',
