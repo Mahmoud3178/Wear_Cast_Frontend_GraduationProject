@@ -16,24 +16,53 @@
   </div>
 
   <!-- Filters & Search -->
-  <div class="premium-card p-4 mb-4 shadow-premium border-0">
-    <div class="row g-3 align-items-center">
-      <div class="col-12 col-md-6">
-        <div class="search-bar d-flex align-items-center px-3 py-2 rounded-4 border bg-white">
-          <i class="bi bi-search text-slate-400 me-2"></i>
-          <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" (keyup.enter)="onSearchChange()" class="form-control border-0 bg-transparent shadow-none p-0 text-sm" placeholder="Search by destination or customer...">
-        </div>
-      </div>
+  <div class="premium-card p-4 mb-4 shadow-premium border-0 animate-fade-in">
+    <div class="row g-3 mb-3 align-items-end">
+      <!-- CUSTOMER -->
       <div class="col-12 col-md-3">
-        <select [(ngModel)]="selectedStatus" (ngModelChange)="onSearchChange()" class="form-select rounded-4 border-slate-200 text-sm">
+        <label class="form-label text-xs fw-bold text-slate-500 uppercase-tracking mb-1">CUSTOMER</label>
+        <input type="text" [(ngModel)]="customerName" (ngModelChange)="onSearchChange()" class="form-control form-control-sm rounded-3 border-slate-200 text-sm py-2" placeholder="Search by name...">
+      </div>
+      <!-- CITY -->
+      <div class="col-12 col-md-2">
+        <label class="form-label text-xs fw-bold text-slate-500 uppercase-tracking mb-1">CITY</label>
+        <input type="text" [(ngModel)]="deliveryCity" (ngModelChange)="onSearchChange()" class="form-control form-control-sm rounded-3 border-slate-200 text-sm py-2" placeholder="Delivery city...">
+      </div>
+      <!-- STREET -->
+      <div class="col-12 col-md-3">
+        <label class="form-label text-xs fw-bold text-slate-500 uppercase-tracking mb-1">STREET</label>
+        <input type="text" [(ngModel)]="deliveryStreet" (ngModelChange)="onSearchChange()" class="form-control form-control-sm rounded-3 border-slate-200 text-sm py-2" placeholder="Street address...">
+      </div>
+      <!-- STATUS -->
+      <div class="col-12 col-md-2">
+        <label class="form-label text-xs fw-bold text-slate-500 uppercase-tracking mb-1">STATUS</label>
+        <select [(ngModel)]="selectedStatus" (ngModelChange)="onSearchChange()" class="form-select form-select-sm rounded-3 border-slate-200 text-sm py-2">
           <option [ngValue]="null">All Statuses</option>
+          <option value="1">Pending</option>
+          <option value="2">Unassigned</option>
           <option value="3">Assigned</option>
           <option value="4">Picking Up</option>
           <option value="5">Out For Delivery</option>
           <option value="6">Delivered</option>
         </select>
       </div>
-      <div class="col-12 col-md-3 text-md-end">
+      <!-- SORT BY -->
+      <div class="col-12 col-md-2">
+        <label class="form-label text-xs fw-bold text-slate-500 uppercase-tracking mb-1">SORT BY</label>
+        <select [(ngModel)]="sortBy" (ngModelChange)="onSearchChange()" class="form-select form-select-sm rounded-3 border-slate-200 text-sm py-2">
+          <option [ngValue]="1">Newest First</option>
+          <option [ngValue]="2">Oldest First</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Clear Button & Results Count -->
+    <div class="d-flex align-items-center mb-2">
+      <button class="btn btn-danger-soft rounded-pill px-3 py-1.5 text-sm fw-semibold d-inline-flex align-items-center gap-2 border-0" (click)="clearFilters()">
+        <i class="bi bi-x-lg"></i> Clear All
+      </button>
+      
+      <div class="ms-auto">
         <span class="text-sm text-slate-500 fw-medium">Showing {{ shipments.length }} results</span>
       </div>
     </div>

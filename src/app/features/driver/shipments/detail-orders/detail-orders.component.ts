@@ -37,6 +37,11 @@ export class DetailOrdersComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   searchQuery = '';
+  vendorName = '';
+  vendorCity = '';
+  selectedStatus: string | null = null;
+  orderIdSearch = '';
+  sortBy = 1; // 1 = Newest, 2 = Oldest
   
   allOrders: DetailedOrder[] = [];
   filteredOrders: DetailedOrder[] = [];
@@ -115,8 +120,7 @@ export class DetailOrdersComponent implements OnInit {
           };
         });
 
-        // Sort orders by order time descending
-        this.allOrders = consolidatedOrders.sort((a, b) => new Date(b.orderTime).getTime() - new Date(a.orderTime).getTime());
+        this.allOrders = consolidatedOrders;
         this.applyFilter();
         this.isLoading = false;
       },
@@ -129,19 +133,45 @@ export class DetailOrdersComponent implements OnInit {
   }
 
   applyFilter() {
-    const q = this.searchQuery.trim().toLowerCase();
-    if (!q) {
-      this.filteredOrders = [...this.allOrders];
-      return;
+    let filtered = [...this.allOrders];
+
+    if (this.vendorName) {
+      const q = this.vendorName.trim().toLowerCase();
+      filtered = filtered.filter(o => o.vendorName.toLowerCase().includes(q));
+    }
+    if (this.vendorCity) {
+      const q = this.vendorCity.trim().toLowerCase();
+      filtered = filtered.filter(o => o.vendorCity.toLowerCase().includes(q));
+    }
+    if (this.orderIdSearch) {
+      const q = this.orderIdSearch.trim().toLowerCase();
+      filtered = filtered.filter(o => 
+        o.orderId.toString().includes(q) || 
+        o.shipmentId.toString().includes(q)
+      );
+    }
+    if (this.selectedStatus) {
+      const q = this.selectedStatus.trim().toLowerCase();
+      filtered = filtered.filter(o => o.status.toLowerCase() === q);
     }
 
-    this.filteredOrders = this.allOrders.filter(o => 
-      o.orderId.toString().includes(q) ||
-      o.shipmentId.toString().includes(q) ||
-      o.vendorName.toLowerCase().includes(q) ||
-      o.vendorCity.toLowerCase().includes(q) ||
-      o.status.toLowerCase().includes(q)
-    );
+    // Sort by orderTime based on sortBy
+    if (this.sortBy === 1) {
+      filtered.sort((a, b) => new Date(b.orderTime).getTime() - new Date(a.orderTime).getTime());
+    } else {
+      filtered.sort((a, b) => new Date(a.orderTime).getTime() - new Date(b.orderTime).getTime());
+    }
+
+    this.filteredOrders = filtered;
+  }
+
+  clearFilters() {
+    this.vendorName = '';
+    this.vendorCity = '';
+    this.selectedStatus = null;
+    this.orderIdSearch = '';
+    this.sortBy = 1;
+    this.applyFilter();
   }
 
   updateOrderPickedUp(order: DetailedOrder) {

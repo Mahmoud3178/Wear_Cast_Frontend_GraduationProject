@@ -30,9 +30,7 @@
     <button type="button" class="filter-pill" [class.active]="readFilter === 'read'" (click)="setReadFilter('read')">
       Read
     </button>
-    <button type="button" class="filter-pill" [class.active]="selectedType === 1" (click)="filterByType(1)">
-      Shipment updates
-    </button>
+    
   </div>
 
   <div *ngIf="errorMessage" class="notif-error">{{ errorMessage }}</div>

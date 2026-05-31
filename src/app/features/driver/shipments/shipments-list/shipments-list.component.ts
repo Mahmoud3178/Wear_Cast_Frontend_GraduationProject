@@ -23,57 +23,54 @@ export class ShipmentsListComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  // Backend filters mapping to GetAllDriverShipmentsRequestDTO
   pageIndex = 1;
-  pageSize = 100; // Keeping it large for now to avoid pagination UI if not strictly required, or adjust as needed
-  sortBy = 1; // Assuming 1 is Newest
+  pageSize = 100;
+  
+  // Basic filters
+  customerName = ''; 
+  deliveryCity = '';
+  deliveryStreet = '';
   selectedStatus: string | null = null;
-  deliveryCity: string | null = null;
-  deliveryStreet: string | null = null;
-  customerFirstName: string | null = null;
-  customerLastName: string | null = null;
-
-  // Single search field that we'll try to smartly parse, or we can just use explicit fields
-  searchTerm = '';
+  sortBy: number = 1;
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       this.selectedStatus = params['status'] || null;
-      this.deliveryCity = params['city'] || null;
-      this.searchTerm = params['search'] || '';
+      this.deliveryCity = params['city'] || '';
+      this.customerName = params['customer'] || '';
+      this.deliveryStreet = params['street'] || '';
+      this.sortBy = params['sortBy'] ? +params['sortBy'] : 1;
       
-      this.parseSearchTerm();
       this.loadShipments();
     });
   }
 
-  parseSearchTerm() {
-    // Basic logic to split a search term into first/last name if it looks like a name, or just pass it as first name.
-    if (this.searchTerm && this.searchTerm.trim() !== '') {
-      const parts = this.searchTerm.trim().split(' ');
-      if (parts.length > 1) {
-        this.customerFirstName = parts[0];
-        this.customerLastName = parts.slice(1).join(' ');
-      } else {
-        this.customerFirstName = this.searchTerm.trim();
-        this.customerLastName = null;
-      }
-    } else {
-      this.customerFirstName = null;
-      this.customerLastName = null;
-    }
+  clearFilters() {
+    this.customerName = '';
+    this.deliveryCity = '';
+    this.deliveryStreet = '';
+    this.selectedStatus = null;
+    this.sortBy = 1;
+    
+    // Clear URL params as well by calling onSearchChange
+    this.onSearchChange();
+  }
+
+  getQueryParams() {
+    return {
+      status: this.selectedStatus || null,
+      city: this.deliveryCity || null,
+      customer: this.customerName || null,
+      street: this.deliveryStreet || null,
+      sortBy: this.sortBy
+    };
   }
 
   onSearchChange() {
     this.pageIndex = 1; // Reset to first page
-    // Update URL query params
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { 
-        status: this.selectedStatus || null,
-        city: this.deliveryCity || null,
-        search: this.searchTerm || null
-      },
+      queryParams: this.getQueryParams(),
       queryParamsHandling: 'merge'
     });
   }
@@ -96,17 +93,19 @@ export class ShipmentsListComponent implements OnInit {
       SortBy: this.sortBy
     };
 
-    if (this.selectedStatus && this.selectedStatus !== '') {
-      filters.ShipmentStatus = this.selectedStatus;
-    }
-    if (this.deliveryCity) {
-      filters.DeliveryCity = this.deliveryCity;
-    }
-    if (this.customerFirstName) {
-      filters.CustomerFirstName = this.customerFirstName;
-    }
-    if (this.customerLastName) {
-      filters.CustomerLastName = this.customerLastName;
+    if (this.selectedStatus && this.selectedStatus !== '') filters.ShipmentStatus = this.selectedStatus;
+    if (this.deliveryCity) filters.DeliveryCity = this.deliveryCity;
+    if (this.deliveryStreet) filters.DeliveryStreet = this.deliveryStreet;
+    
+    // Custom name parsing
+    if (this.customerName && this.customerName.trim() !== '') {
+      const parts = this.customerName.trim().split(' ');
+      if (parts.length > 1) {
+        filters.CustomerFirstName = parts[0];
+        filters.CustomerLastName = parts.slice(1).join(' ');
+      } else {
+        filters.CustomerFirstName = this.customerName.trim();
+      }
     }
 
     this.driverService.getAllDriverShipments(filters).subscribe({

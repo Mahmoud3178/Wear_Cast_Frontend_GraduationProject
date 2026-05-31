@@ -75,6 +75,30 @@
   transform: translateY(-1px);
 }
 
+.btn-outline-slate {
+  color: var(--slate-600);
+  border: 1px solid var(--slate-200);
+  background-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-slate:hover {
+  background-color: var(--slate-50);
+  color: var(--slate-900);
+  border-color: var(--slate-300);
+}
+
+.btn-danger-soft {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  transition: all 0.2s ease;
+}
+
+.btn-danger-soft:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
 .table th {
   font-weight: 700;
   border-bottom: 1px solid var(--slate-100);

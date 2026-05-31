@@ -17,7 +17,7 @@ import { AuthService } from '../../../../core/services/auth.service';
         </div>
         <div class="brand-text" *ngIf="!isCollapsed">
           <h5 class="mb-0 fw-bold tracking-tight text-white">WearCast</h5>
-          <span class="text-primary fw-medium text-xs text-uppercase tracking-wider">Logistics Pro</span>
+          
         </div>
       </div>
 

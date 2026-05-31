@@ -129,3 +129,14 @@
   justify-content: center;
   border-radius: 12px;
 }
+
+.btn-danger-soft {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  transition: all 0.2s ease;
+}
+
+.btn-danger-soft:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}

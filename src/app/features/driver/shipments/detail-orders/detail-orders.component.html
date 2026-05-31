@@ -64,16 +64,53 @@
     </div>
   </div>
 
-  <!-- Search and Actions Bar -->
-  <div *ngIf="!isLoading" class="premium-card p-3 mb-4 shadow-premium border-0 animate-fade-in">
-    <div class="d-flex align-items-center gap-3">
-      <div class="flex-grow-1 position-relative">
-        <i class="bi bi-search text-slate-400 position-absolute top-50 start-0 translate-middle-y ms-3"></i>
-        <input type="text" 
-               class="form-control form-control-refined ps-5 rounded-pill" 
-               placeholder="Search by Order ID, Shipment ID, Customer, Store, or City..."
-               [(ngModel)]="searchQuery"
-               (ngModelChange)="applyFilter()">
+  <!-- Filters & Search -->
+  <div *ngIf="!isLoading" class="premium-card p-4 mb-4 shadow-premium border-0 animate-fade-in">
+    <div class="row g-3 mb-3 align-items-end">
+      <!-- SEARCH IDs -->
+      <div class="col-12 col-md-3">
+        <label class="form-label text-xs fw-bold text-slate-500 uppercase-tracking mb-1">SEARCH</label>
+        <input type="text" [(ngModel)]="orderIdSearch" (ngModelChange)="applyFilter()" class="form-control form-control-sm rounded-3 border-slate-200 text-sm py-2" placeholder="Order ID or Shipment ID...">
+      </div>
+      <!-- STORE / VENDOR -->
+      <div class="col-12 col-md-3">
+        <label class="form-label text-xs fw-bold text-slate-500 uppercase-tracking mb-1">STORE</label>
+        <input type="text" [(ngModel)]="vendorName" (ngModelChange)="applyFilter()" class="form-control form-control-sm rounded-3 border-slate-200 text-sm py-2" placeholder="Search by store name...">
+      </div>
+      <!-- CITY -->
+      <div class="col-12 col-md-2">
+        <label class="form-label text-xs fw-bold text-slate-500 uppercase-tracking mb-1">CITY</label>
+        <input type="text" [(ngModel)]="vendorCity" (ngModelChange)="applyFilter()" class="form-control form-control-sm rounded-3 border-slate-200 text-sm py-2" placeholder="Pickup city...">
+      </div>
+      <!-- STATUS -->
+      <div class="col-12 col-md-2">
+        <label class="form-label text-xs fw-bold text-slate-500 uppercase-tracking mb-1">STATUS</label>
+        <select [(ngModel)]="selectedStatus" (ngModelChange)="applyFilter()" class="form-select form-select-sm rounded-3 border-slate-200 text-sm py-2">
+          <option [ngValue]="null">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Paid">Paid</option>
+          <option value="Ready">Ready</option>
+          <option value="PickedUp">Picked Up</option>
+        </select>
+      </div>
+      <!-- SORT BY -->
+      <div class="col-12 col-md-2">
+        <label class="form-label text-xs fw-bold text-slate-500 uppercase-tracking mb-1">SORT BY</label>
+        <select [(ngModel)]="sortBy" (ngModelChange)="applyFilter()" class="form-select form-select-sm rounded-3 border-slate-200 text-sm py-2">
+          <option [ngValue]="1">Newest First</option>
+          <option [ngValue]="2">Oldest First</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Clear Button & Results Count -->
+    <div class="d-flex align-items-center mb-2">
+      <button class="btn btn-danger-soft rounded-pill px-3 py-1.5 text-sm fw-semibold d-inline-flex align-items-center gap-2 border-0" (click)="clearFilters()">
+        <i class="bi bi-x-lg"></i> Clear All
+      </button>
+      
+      <div class="ms-auto">
+        <span class="text-sm text-slate-500 fw-medium">Showing {{ filteredOrders.length }} results</span>
       </div>
     </div>
   </div>
