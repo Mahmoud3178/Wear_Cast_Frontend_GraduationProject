@@ -31,7 +31,7 @@ export class ProductsComponent implements OnInit {
       .subscribe({
         next: (res: any) => {
           this.products = res.items || res.data || [];
-          this.totalCount = res.count || this.products.length;
+this.totalCount = res.records;
         },
         error: (err) => {
           console.error('Error loading products', err);
