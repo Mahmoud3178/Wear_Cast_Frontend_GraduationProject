@@ -141,7 +141,7 @@
     <div class="sd-main">
 
       <!-- Action Banner -->
-      <div class="action-banner" *ngIf="getNextAction() as action"
+      <div class="action-banner" *ngIf="nextAction as action"
            style="display: flex; align-items: center; justify-content: space-between; background: #fff;
                   padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;
                   box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e5eaf3;">
@@ -177,7 +177,7 @@
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="stat-val">{{ getTotalItems() }}</span>
+          <span class="stat-val">{{ totalItems }}</span>
           <span class="stat-lbl">Items</span>
         </div>
         <div class="stat-divider"></div>
@@ -192,7 +192,7 @@
         <div class="section-hdr"><h2 class="section-title">📅 Logistics Timeline</h2></div>
         <div class="timeline">
           <div
-            *ngFor="let step of getTimelineSteps()"
+            *ngFor="let step of timelineSteps"
             class="tl-step" [class.tl-done]="!!step.date" [class.tl-pending]="!step.date">
             <div class="tl-dot"></div>
             <div class="tl-body">

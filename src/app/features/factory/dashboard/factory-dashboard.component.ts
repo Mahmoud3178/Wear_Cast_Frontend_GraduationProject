@@ -17,6 +17,7 @@ export class FactoryDashboardComponent implements OnInit {
   factoryId: number | null;
   totalOrders = 0;
   totalProducts = 0;
+  totalUniqueCustomers = 0;
   loadingStats = false;
   statsError = '';
   wallet: FactoryWalletSummary | null = null;
@@ -93,9 +94,24 @@ export class FactoryDashboardComponent implements OnInit {
       pending -= 1;
       if (pending <= 0) this.loadingStats = false;
     };
+
+    // Load Metrics
+    this.factoryApi.getFactoryDashboardMetrics().subscribe({
+      next: metrics => {
+        this.totalProducts = metrics.totalProducts;
+        this.totalOrders = metrics.totalOrders;
+        this.totalUniqueCustomers = metrics.totalUniqueCustomers;
+        finishOne();
+      },
+      error: () => {
+        this.statsError = 'Could not load dashboard metrics.';
+        finishOne();
+      }
+    });
+
+    // Load Orders for Recent Customers
     this.factoryApi.getFactoryOrders(1, 200).subscribe({
       next: orders => {
-        this.totalOrders = orders.length;
         const names = orders
           .map(o => o.recipientName)
           .filter((name): name is string => typeof name === 'string' && name.trim().length > 0);
@@ -103,17 +119,6 @@ export class FactoryDashboardComponent implements OnInit {
         finishOne();
       },
       error: () => {
-        this.statsError = 'Could not load some dashboard stats.';
-        finishOne();
-      }
-    });
-    this.factoryApi.getDesignedProductsCatalog({ pageIndex: 1, pageSize: 1 }).subscribe({
-      next: page => {
-        this.totalProducts = page.records;
-        finishOne();
-      },
-      error: () => {
-        this.statsError = 'Could not load some dashboard stats.';
         finishOne();
       }
     });

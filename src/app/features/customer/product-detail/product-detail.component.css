@@ -332,23 +332,50 @@
   background: linear-gradient(180deg, #ffffff 0%, #fafdff 100%);
   color: #17324d;
   border-radius: 20px;
-  padding: 28px 32px;
+  padding: 24px 28px;
   width: 420px;
   max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 24px 60px rgba(76, 143, 234, 0.15);
   animation: slideUp 0.22s ease;
   border: 1px solid #d7e6f7;
+  box-sizing: border-box;
 }
 @keyframes slideUp { from { opacity: 0; transform: translate(-50%, -45%); } to { opacity: 1; transform: translate(-50%, -50%); } }
 
-.wc-size-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.wc-size-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-shrink: 0; }
 .wc-size-modal-header h3 { font-size: 19px; font-weight: 800; margin: 0; color: #17324d; }
 .wc-modal-close { background: none; border: none; color: #8fa6bf; font-size: 24px; cursor: pointer; padding: 4px; line-height: 1; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s; }
 .wc-modal-close:hover { color: #ef4444; background: #fee2e2; }
 
-.wc-size-modal-sub { font-size: 13px; color: #5f748c; margin: 0 0 20px; }
+.wc-size-modal-sub { font-size: 13px; color: #5f748c; margin: 0 0 20px; flex-shrink: 0; }
 
-.wc-size-table-modal { display: flex; flex-direction: column; border: 1.5px solid #d7e6f7; border-radius: 14px; overflow: hidden; margin-bottom: 20px; background: #ffffff; }
+.wc-size-table-modal {
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid #d7e6f7;
+  border-radius: 14px;
+  overflow-y: auto;
+  min-height: 100px;
+  flex: 1 1 auto;
+  margin-bottom: 20px;
+  background: #ffffff;
+}
+
+/* Custom premium scrollbar for size modal */
+.wc-size-table-modal::-webkit-scrollbar {
+  width: 6px;
+}
+.wc-size-table-modal::-webkit-scrollbar-track {
+  background: #f0f7fe;
+  border-radius: 0 14px 14px 0;
+}
+.wc-size-table-modal::-webkit-scrollbar-thumb {
+  background-color: #8fa6bf;
+  border-radius: 3px;
+}
 
 .wc-size-row {
   display: flex; align-items: center; gap: 10px;

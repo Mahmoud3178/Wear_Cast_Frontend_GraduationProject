@@ -171,6 +171,17 @@ export class FactoryProfileComponent implements OnInit {
     if (this.walletPage > 1) this.walletPage--;
   }
 
+  isIncoming(type: string, amount: number): boolean {
+    if (amount > 0) return true;
+    if (amount < 0) return false;
+    const t = (type || '').toLowerCase();
+    return t.includes('deposit') || t.includes('payment') || t.includes('credit') || t.includes('refund') || t.includes('receive');
+  }
+
+  getAbsoluteAmount(amount: number): number {
+    return Math.abs(amount);
+  }
+
   startEdit(): void {
     this.startEditFactory();
   }

@@ -184,26 +184,73 @@
       <div *ngIf="walletLoading" class="text-muted small mb-2">Loading wallet...</div>
 
       <ng-container *ngIf="!walletLoading && wallet as w">
-        <div class="border rounded-3 p-3 bg-light mb-3">
-          <span class="text-muted small d-block">Current balance</span>
-          <strong class="fs-4">EGP {{ w.balance | number:'1.2-2' }}</strong>
+        <!-- Premium Glassmorphic Balance Card -->
+        <div class="wallet-balance-card p-4 rounded-4 text-white mb-4 position-relative overflow-hidden"
+             style="background: linear-gradient(135deg, #0b1220 0%, #1e293b 100%); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);">
+          <!-- Decorative Background Glow -->
+          <div class="position-absolute end-0 bottom-0 opacity-25 rounded-circle" 
+               style="width: 150px; height: 150px; background: radial-gradient(circle, #38bdf8 0%, transparent 70%); transform: translate(30%, 30%);"></div>
+          
+          <div class="d-flex justify-content-between align-items-center position-relative z-1">
+            <div>
+              <span class="text-white-50 text-uppercase tracking-wider small fw-semibold d-block mb-1" style="font-size: 0.75rem; letter-spacing: 0.05em;">Current Balance</span>
+              <h2 class="display-6 fw-bold mb-0 text-white" style="letter-spacing: -0.02em;">EGP {{ w.balance | number:'1.2-2' }}</h2>
+            </div>
+            <div class="wallet-icon-box bg-white bg-opacity-10 p-3 rounded-3 text-info" style="backdrop-filter: blur(10px);">
+              <i class="bi bi-wallet2 fs-2"></i>
+            </div>
+          </div>
         </div>
 
-        <h4 class="h6">Recent transactions</h4>
-        <div *ngIf="!w.recentTransactions.length" class="text-muted small">No transactions yet.</div>
-        <div class="list-group" *ngIf="w.recentTransactions.length">
-          <div class="list-group-item" *ngFor="let tx of paginatedTransactions">
-            <div class="d-flex justify-content-between align-items-start gap-3">
-              <div>
-                <div class="fw-semibold">{{ tx.type }} · EGP {{ tx.amount | number:'1.2-2' }}</div>
-                <div class="small text-muted">{{ tx.description }}</div>
-                <div class="small text-muted" *ngIf="tx.referenceOrderId">Order #{{ tx.referenceOrderId }}</div>
-                <div class="small text-muted" *ngIf="tx.senderName || tx.senderEmail">
-                  {{ tx.senderName }}<span *ngIf="tx.senderName && tx.senderEmail"> · </span>{{ tx.senderEmail }}
+        <h4 class="h6 mb-3 fw-bold text-dark">Recent transactions</h4>
+        <div *ngIf="!w.recentTransactions.length" class="text-muted small p-4 text-center border border-dashed rounded-3">
+          <i class="bi bi-clock-history fs-3 d-block mb-2 text-muted opacity-50"></i>
+          No transactions yet.
+        </div>
+        
+        <div class="transaction-list-container d-flex flex-column gap-2" *ngIf="w.recentTransactions.length">
+          <div class="transaction-item-card p-3 rounded-3 bg-white border border-light d-flex justify-content-between align-items-center gap-3 transition-all"
+               *ngFor="let tx of paginatedTransactions"
+               style="transition: all 0.2s ease-in-out; border: 1px solid rgba(15, 23, 42, 0.05) !important;">
+            
+            <div class="d-flex align-items-center gap-3 min-w-0">
+              <!-- Type Indicator Icon -->
+              <div class="tx-type-icon-box rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                   [ngClass]="isIncoming(tx.type, tx.amount) ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'"
+                   style="width: 2.8rem; height: 2.8rem; font-size: 1.2rem;">
+                <i class="bi" [ngClass]="isIncoming(tx.type, tx.amount) ? 'bi-arrow-down-left' : 'bi-arrow-up-right'"></i>
+              </div>
+              
+              <div class="min-w-0">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="fw-semibold text-dark text-truncate" style="font-size: 0.95rem;">{{ tx.description }}</span>
+                  <span class="badge rounded-pill text-uppercase" 
+                        [ngClass]="isIncoming(tx.type, tx.amount) ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'"
+                        style="font-size: 0.7rem; font-weight: 600;">
+                    {{ tx.type }}
+                  </span>
+                </div>
+                
+                <div class="d-flex align-items-center gap-2 mt-1 text-muted" style="font-size: 0.8rem;">
+                  <span>{{ tx.createdOn | date:'medium' }}</span>
+                  <span *ngIf="tx.referenceOrderId" class="text-secondary fw-medium">· Order #{{ tx.referenceOrderId }}</span>
+                </div>
+                
+                <div class="small text-muted mt-1" *ngIf="tx.senderName || tx.senderEmail" style="font-size: 0.78rem;">
+                  <i class="bi bi-person small me-1"></i>
+                  <span>{{ tx.senderName }}</span>
+                  <span *ngIf="tx.senderName && tx.senderEmail" class="mx-1">·</span>
+                  <span class="text-secondary">{{ tx.senderEmail }}</span>
                 </div>
               </div>
-              <span class="small text-muted">{{ tx.createdOn | date:'medium' }}</span>
             </div>
+            
+            <div class="text-end flex-shrink-0">
+              <strong class="fs-5 fw-bold" [ngClass]="isIncoming(tx.type, tx.amount) ? 'text-success' : 'text-danger'">
+                {{ isIncoming(tx.type, tx.amount) ? '+' : '-' }} EGP {{ getAbsoluteAmount(tx.amount) | number:'1.2-2' }}
+              </strong>
+            </div>
+            
           </div>
         </div>
 

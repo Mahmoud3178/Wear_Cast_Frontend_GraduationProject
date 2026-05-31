@@ -456,3 +456,36 @@
     padding: 16px;
   }
 }
+
+/* Delete image overlay button on color thumbnails */
+.wc-delete-img-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  border-radius: 50%;
+  line-height: 1;
+  z-index: 10;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: #dc3545;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  cursor: pointer;
+}
+.wc-delete-img-btn:hover {
+  background-color: #bd2130;
+  transform: scale(1.1) !important;
+}
+.wc-thumb-wrap:hover .wc-delete-img-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+

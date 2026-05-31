@@ -168,6 +168,12 @@ export interface FactoryWalletSummary {
   recentTransactions: FactoryWalletTransaction[];
 }
 
+export interface FactoryDashboardMetrics {
+  totalProducts: number;
+  totalOrders: number;
+  totalUniqueCustomers: number;
+}
+
 export interface UpdateFactoryManagerProfileRequest {
   firstName: string;
   lastName: string;
@@ -595,7 +601,20 @@ export class FactoryApiService {
   }
 
   /** GET /api/factories/products/{productId}/colors — get all colors for a product. */
-  getProductColors(productId: number): Observable<{ colorId: number; name: string; hexCode: string; imageUrl: string | null; frontImageUrl?: string | null; backImageUrl?: string | null; rightImageUrl?: string | null; leftImageUrl?: string | null; }[]> {
+  getProductColors(productId: number): Observable<{
+    colorId: number;
+    name: string;
+    hexCode: string;
+    imageUrl: string | null;
+    frontImageUrl?: string | null;
+    frontImageId?: number | null;
+    backImageUrl?: string | null;
+    backImageId?: number | null;
+    rightImageUrl?: string | null;
+    rightImageId?: number | null;
+    leftImageUrl?: string | null;
+    leftImageId?: number | null;
+  }[]> {
     const url = `${this.base}/api/factories/products/${productId}/colors`;
     console.log('Fetching colors from:', url);
     return this.http.get<ApiEnvelope | any>(url).pipe(
@@ -609,15 +628,21 @@ export class FactoryApiService {
           let right = c.rightImageUrl ?? c.RightImageUrl ?? null;
           let left = c.leftImageUrl ?? c.LeftImageUrl ?? null;
           
+          let frontId: number | null = null;
+          let backId: number | null = null;
+          let rightId: number | null = null;
+          let leftId: number | null = null;
+          
           const imgs = c.images ?? c.Images;
           if (Array.isArray(imgs)) {
             imgs.forEach((img: any) => {
                const side = img.viewSide ?? img.ViewSide;
                const url = img.imageUrl ?? img.ImageUrl;
-               if (side === 'Front' || side === 1) front = url;
-               if (side === 'Back' || side === 2) back = url;
-               if (side === 'Right' || side === 3) right = url;
-               if (side === 'Left' || side === 4) left = url;
+               const imgId = img.imageId ?? img.ImageId ?? null;
+               if (side === 'Front' || side === 1) { front = url; frontId = imgId; }
+               if (side === 'Back' || side === 2) { back = url; backId = imgId; }
+               if (side === 'Right' || side === 3) { right = url; rightId = imgId; }
+               if (side === 'Left' || side === 4) { left = url; leftId = imgId; }
             });
           }
 
@@ -627,9 +652,13 @@ export class FactoryApiService {
             hexCode: c.hexCode ?? c.HexCode ?? '',
             imageUrl: c.imageUrl ?? c.ImageUrl ?? c.mainImageUrl ?? c.MainImageUrl ?? c.image ?? c.Image ?? null,
             frontImageUrl: front,
+            frontImageId: frontId,
             backImageUrl: back,
+            backImageId: backId,
             rightImageUrl: right,
-            leftImageUrl: left
+            rightImageId: rightId,
+            leftImageUrl: left,
+            leftImageId: leftId
           };
         });
         console.log('Mapped colors:', mapped);
@@ -878,6 +907,22 @@ export class FactoryApiService {
           };
         });
         return { balance, recentTransactions };
+      }),
+      catchError(e => this.mapErr(e))
+    );
+  }
+
+  /** GET /api/factories/dashboard/metrics */
+  getFactoryDashboardMetrics(): Observable<FactoryDashboardMetrics> {
+    const url = `${this.base}/api/factories/dashboard/metrics`;
+    return this.http.get<unknown>(url).pipe(
+      map(res => {
+        const payload = this.unwrapPayload<FactoryDashboardMetrics>(res) ?? {} as any;
+        return {
+          totalProducts: payload.totalProducts ?? payload.TotalProducts ?? 0,
+          totalOrders: payload.totalOrders ?? payload.TotalOrders ?? 0,
+          totalUniqueCustomers: payload.totalUniqueCustomers ?? payload.TotalUniqueCustomers ?? 0
+        };
       }),
       catchError(e => this.mapErr(e))
     );

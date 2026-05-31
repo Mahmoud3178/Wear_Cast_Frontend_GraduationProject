@@ -100,7 +100,7 @@
   <div *ngIf="!isLoading && shipment" class="sd-content animate-in">
 
     <!-- ACTION BANNER -->
-    <div class="action-banner" *ngIf="getNextAction() as action">
+    <div class="action-banner" *ngIf="nextAction as action">
       <div class="action-banner-info">
         <span class="action-icon">🎯</span>
         <div>
@@ -179,7 +179,7 @@
           </div>
           <div class="info-row">
             <span class="info-label">Total Items</span>
-            <span class="info-value">{{ getTotalItems() }}</span>
+            <span class="info-value">{{ totalItems }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">Status</span>
@@ -201,7 +201,7 @@
       </div>
       <div class="timeline">
         <div
-          *ngFor="let step of getTimelineSteps()"
+          *ngFor="let step of timelineSteps"
           class="timeline-step"
           [class.tl-done]="!!step.date"
           [class.tl-pending]="!step.date"

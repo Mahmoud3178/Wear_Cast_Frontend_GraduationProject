@@ -79,6 +79,10 @@ export class ShippingShipmentDetailsComponent implements OnInit {
   isLoadingShipment = false;         // ← إضافة المتغير الناقص
   isLoadingOrders = false;           // ← إضافة المتغير الناقص
 
+  timelineSteps: any[] = [];
+  nextAction: any = null;
+  totalItems = 0;
+
   // Assign
   showAssignModal = false;
   availableDrivers: DriverItem[] = [];
@@ -123,6 +127,7 @@ export class ShippingShipmentDetailsComponent implements OnInit {
         next: (data) => {
           console.log('[MANAGER loadShipment] SUCCESS. Data received:', data);
           this.shipment = data ?? null;
+          this.updateTimelineAndAction();
           this.checkLoadingState('loadShipment');
         },
         error: (err) => {
@@ -164,10 +169,12 @@ export class ShippingShipmentDetailsComponent implements OnInit {
             this.orders = [];
           }
           console.log('[MANAGER loadOrders] Processed orders array length:', this.orders?.length);
+          this.updateTimelineAndAction();
         },
         error: (err) => {
           console.error('[MANAGER loadOrders] ERROR:', err);
           this.orders = [];
+          this.updateTimelineAndAction();
           this.isLoading = false;
           this.cdr.detectChanges();
         }
@@ -186,6 +193,12 @@ export class ShippingShipmentDetailsComponent implements OnInit {
     } else {
       console.log('[MANAGER checkLoadingState] Still waiting for data. Spinner remains true.');
     }
+  }
+
+  updateTimelineAndAction(): void {
+    this.timelineSteps = this.getTimelineSteps();
+    this.nextAction = this.getNextAction();
+    this.totalItems = this.getTotalItems();
   }
 
   // ─── Status helpers ───────────────────────────────────────────

@@ -66,9 +66,13 @@ export interface SavedColor {
   hexCode: string;
   imageUrl: string | null;
   frontImageUrl?: string | null;
+  frontImageId?: number | null;
   backImageUrl?: string | null;
+  backImageId?: number | null;
   rightImageUrl?: string | null;
+  rightImageId?: number | null;
   leftImageUrl?: string | null;
+  leftImageId?: number | null;
 }
 
 export interface ExistingSizeRow {
@@ -558,15 +562,21 @@ export class FactoryProductWizardComponent implements OnInit, OnDestroy {
         let right = c.rightImageUrl ?? c.RightImageUrl ?? null;
         let left = c.leftImageUrl ?? c.LeftImageUrl ?? null;
         
+        let frontId: number | null = null;
+        let backId: number | null = null;
+        let rightId: number | null = null;
+        let leftId: number | null = null;
+        
         const imgs = c.images ?? c.Images;
         if (Array.isArray(imgs)) {
           imgs.forEach((img: any) => {
              const side = img.viewSide ?? img.ViewSide;
              const url = img.imageUrl ?? img.ImageUrl;
-             if (side === 'Front' || side === 1) front = url;
-             if (side === 'Back' || side === 2) back = url;
-             if (side === 'Right' || side === 3) right = url;
-             if (side === 'Left' || side === 4) left = url;
+             const imgId = img.imageId ?? img.ImageId ?? null;
+             if (side === 'Front' || side === 1) { front = url; frontId = imgId; }
+             if (side === 'Back' || side === 2) { back = url; backId = imgId; }
+             if (side === 'Right' || side === 3) { right = url; rightId = imgId; }
+             if (side === 'Left' || side === 4) { left = url; leftId = imgId; }
           });
         }
 
@@ -576,9 +586,13 @@ export class FactoryProductWizardComponent implements OnInit, OnDestroy {
           hexCode: c.hexCode ?? c.HexCode ?? '',
           imageUrl: c.imageUrl ?? c.ImageUrl ?? c.mainImageUrl ?? c.MainImageUrl ?? null,
           frontImageUrl: front,
+          frontImageId: frontId,
           backImageUrl: back,
+          backImageId: backId,
           rightImageUrl: right,
-          leftImageUrl: left
+          rightImageId: rightId,
+          leftImageUrl: left,
+          leftImageId: leftId
         };
       });
     }
@@ -688,6 +702,34 @@ export class FactoryProductWizardComponent implements OnInit, OnDestroy {
       error: (e: Error) => {
         this.busy = false;
         this.error = e.message || 'Delete failed.';
+      }
+    });
+  }
+
+  /** Delete a specific view side image */
+  deleteSideImage(color: SavedColor, side: 'front' | 'back' | 'right' | 'left', imageId: number | null | undefined): void {
+    if (!imageId) {
+      this.error = 'Cannot delete image: missing image ID.';
+      return;
+    }
+    if (!confirm(`Are you sure you want to delete the ${side} view image?`)) {
+      return;
+    }
+    this.busy = true;
+    this.error = '';
+    this.message = '';
+    this.factory.deleteProductImage(imageId).subscribe({
+      next: () => {
+        this.busy = false;
+        this.message = `Successfully deleted the ${side} view image.`;
+        if (side === 'front') { color.frontImageUrl = null; color.frontImageId = null; }
+        if (side === 'back') { color.backImageUrl = null; color.backImageId = null; }
+        if (side === 'right') { color.rightImageUrl = null; color.rightImageId = null; }
+        if (side === 'left') { color.leftImageUrl = null; color.leftImageId = null; }
+      },
+      error: (e: Error) => {
+        this.busy = false;
+        this.error = e.message || 'Failed to delete image.';
       }
     });
   }

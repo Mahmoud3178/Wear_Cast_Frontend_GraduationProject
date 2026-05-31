@@ -62,6 +62,10 @@ export class ShipmentDetailsComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  timelineSteps: any[] = [];
+  nextAction: any = null;
+  totalItems = 0;
+
   showCodeModal = false;
   enteredCode = '';
 
@@ -87,6 +91,7 @@ export class ShipmentDetailsComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.shipment = data ?? null;
+          this.updateTimelineAndAction();
           this.checkLoadingState();
         },
         error: (err) => {
@@ -110,10 +115,12 @@ export class ShipmentDetailsComponent implements OnInit {
           } else {
             this.orders = [];
           }
+          this.updateTimelineAndAction();
           this.checkLoadingState();
         },
         error: () => {
           this.orders = [];
+          this.updateTimelineAndAction();
           this.isLoading = false;
           this.cdr.detectChanges();
         }
@@ -125,6 +132,12 @@ export class ShipmentDetailsComponent implements OnInit {
       this.isLoading = false;
       this.cdr.detectChanges();
     }
+  }
+
+  updateTimelineAndAction(): void {
+    this.timelineSteps = this.getTimelineSteps();
+    this.nextAction = this.getNextAction();
+    this.totalItems = this.getTotalItems();
   }
 
   getStatusLabel(status: string | null | undefined): string {

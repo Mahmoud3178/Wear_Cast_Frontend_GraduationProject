@@ -660,18 +660,30 @@
                   <div *ngIf="color.frontImageUrl" class="wc-thumb-wrap border">
                     <img [src]="color.frontImageUrl" [alt]="color.name + ' front'" class="img-thumbnail border-0">
                     <span class="badge bg-secondary rounded-pill">Front</span>
+                    <button type="button" class="wc-delete-img-btn" (click)="deleteSideImage(color, 'front', color.frontImageId)" [disabled]="busy" title="Delete Front Image">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
                   </div>
                   <div *ngIf="color.backImageUrl" class="wc-thumb-wrap border">
                     <img [src]="color.backImageUrl" [alt]="color.name + ' back'" class="img-thumbnail border-0">
                     <span class="badge bg-secondary rounded-pill">Back</span>
+                    <button type="button" class="wc-delete-img-btn" (click)="deleteSideImage(color, 'back', color.backImageId)" [disabled]="busy" title="Delete Back Image">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
                   </div>
                   <div *ngIf="color.rightImageUrl" class="wc-thumb-wrap border">
                     <img [src]="color.rightImageUrl" [alt]="color.name + ' right'" class="img-thumbnail border-0">
                     <span class="badge bg-secondary rounded-pill">Right</span>
+                    <button type="button" class="wc-delete-img-btn" (click)="deleteSideImage(color, 'right', color.rightImageId)" [disabled]="busy" title="Delete Right Image">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
                   </div>
                   <div *ngIf="color.leftImageUrl" class="wc-thumb-wrap border">
                     <img [src]="color.leftImageUrl" [alt]="color.name + ' left'" class="img-thumbnail border-0">
                     <span class="badge bg-secondary rounded-pill">Left</span>
+                    <button type="button" class="wc-delete-img-btn" (click)="deleteSideImage(color, 'left', color.leftImageId)" [disabled]="busy" title="Delete Left Image">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
                   </div>
                 </div>
 
