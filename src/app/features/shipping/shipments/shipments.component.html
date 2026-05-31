@@ -53,7 +53,7 @@
               <span class="driver-name d-block mb-1">{{ getDriverLabel(driver) }}</span>
               <div class="d-flex flex-wrap gap-2 mb-1" style="font-size: 11px; color: #64748b;">
                 <span *ngIf="driver.driverCity" class="bg-light px-2 py-1 rounded">📍 {{ driver.driverCity }}</span>
-                <span class="bg-light px-2 py-1 rounded">🚗 {{ getVehicleTypeLabel(driver.vehicleType) }}</span>
+                <span class="bg-light px-2 py-1 rounded">🚗 {{ getVehicleTypeLabel(driver.vehicleType) }}<ng-container *ngIf="driver.vehiclePlateNumber"> ({{ driver.vehiclePlateNumber }})</ng-container></span>
               </div>
               <div class="d-flex gap-3" style="font-size: 11px; color: #64748b;">
                 <span><strong>{{ driver.numberOfActiveShipments || 0 }}</strong> Active</span>

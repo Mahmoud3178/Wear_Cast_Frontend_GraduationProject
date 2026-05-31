@@ -35,11 +35,13 @@ export interface DriverListItem {
   name?: string;
   status: any;
   vehicleType?: any;
+  vehiclePlateNumber?: string;
   driverCity?: string;
   numberOfAssignedShipments?: number;
   numberOfActiveShipments?: number;
   numberOfDeliveredShipments?: number;
 }
+
 
 @Component({
   selector: 'app-shipments',
@@ -239,7 +241,7 @@ export class ShipmentsComponent implements OnInit {
   }
 
   canAssign(status: string): boolean {
-    return status === 'Unassigned' || status === 'Pending';
+    return status === 'Unassigned';
   }
 
   canUnassign(status: string): boolean {
@@ -350,10 +352,10 @@ export class ShipmentsComponent implements OnInit {
 
   getVehicleTypeLabel(type: any): string {
     const map: Record<number, string> = {
-      0: 'Motorcycle',
-      1: 'Car',
-      2: 'Van',
-      3: 'Truck'
+      1: 'Bicycle',
+      2: 'Motorcycle',
+      3: 'Car',
+      4: 'Van'
     };
     return map[typeof type === 'number' ? type : Number(type)] ?? 'Vehicle';
   }

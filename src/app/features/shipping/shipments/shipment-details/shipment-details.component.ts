@@ -53,7 +53,12 @@ export interface DriverItem {
   driverName?: string | null;
   name?: string | null;
   status: any;
+  vehicleType?: any;
+  vehiclePlateNumber?: string;
   driverCity?: string | null;
+  numberOfAssignedShipments?: number;
+  numberOfActiveShipments?: number;
+  numberOfDeliveredShipments?: number;
 }
 
 @Component({
@@ -250,7 +255,7 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   canAssign(): boolean {
     const s = this.shipment?.shipmentStatus?.toString() ?? '';
-    return s === 'Unassigned' || s === '2' || s === 'Pending' || s === '1';
+    return s === 'Unassigned' || s === '2';
   }
 
   canUnassign(): boolean {
@@ -457,6 +462,16 @@ export class ShippingShipmentDetailsComponent implements OnInit {
 
   getDriverLabel(d: DriverItem): string {
     return d?.driverName || d?.name || `Driver #${d?.id}`;
+  }
+
+  getVehicleTypeLabel(type: any): string {
+    const map: Record<number, string> = {
+      1: 'Bicycle',
+      2: 'Motorcycle',
+      3: 'Car',
+      4: 'Van'
+    };
+    return map[typeof type === 'number' ? type : Number(type)] ?? 'Vehicle';
   }
 
   trackByOrderId(_: number, o: ShipmentOrderDto): number { return o?.orderId ?? 0; }

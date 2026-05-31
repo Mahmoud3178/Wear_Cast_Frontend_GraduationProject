@@ -54,14 +54,24 @@
         <div *ngIf="!isLoadingDrivers && availableDrivers.length > 0" class="drivers-list">
           <div
             *ngFor="let d of availableDrivers"
-            class="driver-item" [class.driver-sel]="selectedDriverId === d.id"
+            class="driver-item"
+            style="align-items: flex-start; padding: 12px;"
+            [class.driver-sel]="selectedDriverId === d.id"
             (click)="selectedDriverId = d.id">
-            <div class="d-avatar">{{ getDriverLabel(d).charAt(0).toUpperCase() }}</div>
-            <div class="d-info">
-              <span class="d-name">{{ getDriverLabel(d) }}</span>
-              <span class="d-city" *ngIf="d.driverCity">📍 {{ d.driverCity }}</span>
+            <div class="d-avatar mt-1">{{ getDriverLabel(d).charAt(0).toUpperCase() }}</div>
+            <div class="d-info flex-grow-1">
+              <span class="d-name d-block mb-1">{{ getDriverLabel(d) }}</span>
+              <div class="d-flex flex-wrap gap-2 mb-1" style="font-size: 11px; color: #64748b;">
+                <span class="bg-light px-2 py-1 rounded" *ngIf="d.driverCity">📍 {{ d.driverCity }}</span>
+                <span class="bg-light px-2 py-1 rounded">🚗 {{ getVehicleTypeLabel(d.vehicleType) }}<ng-container *ngIf="d.vehiclePlateNumber"> ({{ d.vehiclePlateNumber }})</ng-container></span>
+              </div>
+              <div class="d-flex gap-3" style="font-size: 11px; color: #64748b;">
+                <span><strong>{{ d.numberOfActiveShipments || 0 }}</strong> Active</span>
+                <span><strong>{{ d.numberOfAssignedShipments || 0 }}</strong> Assigned</span>
+                <span><strong>{{ d.numberOfDeliveredShipments || 0 }}</strong> Delivered</span>
+              </div>
             </div>
-            <div class="d-check" *ngIf="selectedDriverId === d.id">✓</div>
+            <div class="d-check mt-2" *ngIf="selectedDriverId === d.id">✓</div>
           </div>
         </div>
       </div>
