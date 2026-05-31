@@ -75,12 +75,18 @@ export const routes: Routes = [
   },
 
   // ✅ Protected routes — كل واحدة بـ guard مرة واحدة بس
-  {
-    path: 'admin',
-    canActivate: [adminRoleGuard],
-    loadChildren: () =>
-      import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES)
-  },
+{
+  path: 'admin/login',
+  loadComponent: () =>
+    import('./features/auth/login-admin/login-admin.component')
+      .then(m => m.LoginAdminComponent)
+},
+{
+  path: 'admin',
+  canActivate: [adminRoleGuard],
+  loadChildren: () =>
+    import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES)
+},
   {
     path: 'customer',
     canActivate: [customerRoleGuard],
