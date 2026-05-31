@@ -431,9 +431,9 @@ export class FactoryApiService {
     );
   }
 
-  /** Back-compat: loads up to 500 templates for dashboards and simple lists. */
+  /** Back-compat: loads up to 100 templates for dashboards and simple lists. */
   getDesignedProducts(): Observable<FactoryDesignedCatalogItem[]> {
-    return this.getDesignedProductsCatalog({ pageIndex: 1, pageSize: 500 }).pipe(
+    return this.getDesignedProductsCatalog({ pageIndex: 1, pageSize: 100 }).pipe(
       map(page => page.items)
     );
   }
@@ -1430,9 +1430,9 @@ export class FactoryApiService {
     );
   }
 
-  /** DELETE /api/factories/products/{productId}/colors/{colorId} */
+  /** DELETE /api/factories/products/colors/{colorId} */
   deleteProductColor(productId: number, colorId: number): Observable<void> {
-    const url = `${this.base}/api/factories/products/${productId}/colors/${colorId}`;
+    const url = `${this.base}/api/factories/products/colors/${colorId}`;
     return this.http.delete<ApiEnvelope | null>(url).pipe(
       map(body => {
         if (

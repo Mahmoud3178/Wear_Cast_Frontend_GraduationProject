@@ -22,6 +22,7 @@ export class FactoryDashboardComponent implements OnInit {
   wallet: FactoryWalletSummary | null = null;
   walletLoading = false;
   walletError = '';
+  recentCustomers: string[] = [];
 
   readonly quickLinks = [
     {
@@ -95,6 +96,10 @@ export class FactoryDashboardComponent implements OnInit {
     this.factoryApi.getFactoryOrders(1, 200).subscribe({
       next: orders => {
         this.totalOrders = orders.length;
+        const names = orders
+          .map(o => o.recipientName)
+          .filter((name): name is string => typeof name === 'string' && name.trim().length > 0);
+        this.recentCustomers = Array.from(new Set(names)).slice(0, 5);
         finishOne();
       },
       error: () => {
@@ -102,9 +107,9 @@ export class FactoryDashboardComponent implements OnInit {
         finishOne();
       }
     });
-    this.factoryApi.getDesignedProducts().subscribe({
-      next: products => {
-        this.totalProducts = products.length;
+    this.factoryApi.getDesignedProductsCatalog({ pageIndex: 1, pageSize: 1 }).subscribe({
+      next: page => {
+        this.totalProducts = page.records;
         finishOne();
       },
       error: () => {
@@ -112,5 +117,14 @@ export class FactoryDashboardComponent implements OnInit {
         finishOne();
       }
     });
+  }
+
+  getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return parts[0].slice(0, 2).toUpperCase();
   }
 }

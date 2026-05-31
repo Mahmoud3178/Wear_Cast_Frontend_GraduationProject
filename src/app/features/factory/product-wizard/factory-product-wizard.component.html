@@ -447,14 +447,14 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let sz of existingSizes" class="animate-scale-up">
+                    <tr *ngFor="let sz of existingSizes" class="animate-scale-up" [class.table-primary]="editingSizeId === sz.id">
                       <td class="ps-3 fw-bold text-primary-dark">{{ sz.size.replace('_', '') }}</td>
                       <td>{{ sz.a }} cm</td>
                       <td>{{ sz.b }} cm</td>
                       <td>{{ sz.c }} cm</td>
                       <td class="text-end pe-3">
                         <div class="d-inline-flex gap-2">
-                          <button type="button" class="btn btn-outline-secondary btn-sm p-1 px-2" (click)="startEditSize(sz)" title="Edit">
+                          <button type="button" class="btn btn-outline-secondary btn-sm p-1 px-2" (click)="startEditSize(sz)" [disabled]="editingSizeId === sz.id" title="Edit">
                             <i class="fa-solid fa-pen" style="font-size: 0.8rem;"></i>
                           </button>
                           <button type="button" class="btn btn-outline-danger btn-sm p-1 px-2" [disabled]="busy" (click)="deleteSize(sz)" title="Delete">
@@ -469,6 +469,31 @@
               <div *ngIf="existingSizes.length === 0" class="alert alert-light border py-3 text-center text-secondary small">
                 <i class="fa-solid fa-ruler d-block fs-3 mb-2 opacity-50"></i>
                 No size measurements added yet. Enter values in the row above to define size specs.
+              </div>
+
+              <!-- Edit inline sizing form -->
+              <div class="border rounded-3 p-3 bg-light animate-slide-up mt-3" *ngIf="editingSizeId != null">
+                <p class="fw-bold text-dark small mb-2"><i class="fa-solid fa-pen text-primary me-1"></i> Edit Size Row</p>
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-3">
+                    <label class="form-label small text-secondary">Size Letter</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="sizeEditForm.size" name="editSz">
+                      <option *ngFor="let s of sizeOptions" [ngValue]="s.value">{{ s.label }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2"><label class="form-label small text-secondary">A (Chest cm)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="sizeEditForm.a" name="editA" step="0.01"></div>
+                  <div class="col-md-2"><label class="form-label small text-secondary">B (Length cm)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="sizeEditForm.b" name="editB" step="0.01"></div>
+                  <div class="col-md-2"><label class="form-label small text-secondary">C (Sleeve cm)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="sizeEditForm.c" name="editC" step="0.01"></div>
+                  <div class="col-md-3 d-flex gap-2">
+                    <button type="button" class="btn btn-primary btn-sm flex-grow-1 d-inline-flex align-items-center justify-content-center gap-1" [disabled]="busy" (click)="saveEditedSize()">
+                      <i class="fa-solid fa-floppy-disk"></i>
+                      <span>Save</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="busy" (click)="cancelEditSize()">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
